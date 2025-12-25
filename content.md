@@ -1,169 +1,108 @@
 简要回答：
-IR 数据模型（中间表示）是连接 Scanner 和 Generator 的核心契约。定义完这个模型后，我们将正式进入“逻辑密集区”（Scanner 的 AST 解析），那正是引入 TDD 的**最佳**时机。
+明白。我们将遵循**高内聚原则**，将单元测试放置在 `packages/stitcher-scanner/tests/` 目录下。
 
-## [WIP] feat: 定义 Stitcher 核心 IR 数据模型 (Spec)
+现在正式进入 **TDD 循环的 RED 阶段**。我们将编写第一个测试用例，它断言 Scanner 能够解析最基本的函数定义。由于 Scanner 的实现代码尚不存在，这个测试将会（且必须）失败。
+
+## [WIP] test: 添加 Scanner 基础单元测试 (Red Phase)
 
 ### 用户需求
-用户需要实现 `stitcher-spec` 包中的核心数据模型。这些模型将充当 Stitcher 的“通用语言”，承载从源代码解析出的结构信息（如类、函数、参数、文档），并作为生成 `.pyi` 和 YAML 文件的基础。
+用户要求开始 `stitcher-scanner` 的 TDD 开发流程，并将测试文件放置在子包内部以保持内聚性。
 
 ### 评论
-Spec 层是纯数据定义，逻辑密度低，因此我们直接通过设计良好的 `dataclasses` 来实现，暂不需要 TDD。
-**关于 TDD 的切入点**：
-一旦 Spec 定义完成，我们进入 **`stitcher-scanner` (AST 解析)** 阶段时，**必须**立即切换到 TDD 模式。
-*   **原因**：AST 解析涉及极其复杂的边界情况（`async` 关键字、复杂的 Type Hints、`*args/**kwargs`、装饰器堆叠等）。
-*   **方法**：我们将不再直接写解析器代码，而是先写“包含各种奇葩 Python 代码片段”的测试用例，断言解析器能将其转换为正确的 IR 对象。
+这是 TDD 的第一步。我们通过编写“使用代码”的代码（即测试），来定义 `stitcher-scanner` 的公共 API 接口和预期行为。
+
+我们预期的 API 是：`from stitcher.scanner import parse_source_code`，它接收源代码字符串，返回 `ModuleDef` 对象。
 
 ### 目标
-1.  在 `packages/stitcher-spec/src/stitcher/spec/models.py` 中定义完整的 IR 模型层级。
-2.  模型应涵盖：`Module`, `Class`, `Function`, `Attribute` (变量), `Argument` (参数)。
-3.  确保模型能够存储“源代码签名”和“文档字符串”的分离状态（虽然在 IR 中它们在一起，但在逻辑上我们要意识到它们来源可能不同）。
+1.  在 `packages/stitcher-scanner/tests/` 下创建测试目录。
+2.  编写 `test_parser_basic.py`，测试一个简单的“Hello World”函数的解析。
+3.  更新根目录配置，确保 `pytest` 能发现这些分散的测试。
 
 ### 基本原理
-我们使用 Python 标准库的 `@dataclass` 来定义模型，因为它提供了开箱即用的类型安全和易读性，且易于序列化。模型的结构将镜像 Python 的语义结构，但去除了具体的实现体（Body），只保留接口（Interface）和元数据（Metadata）。
+测试将使用 `stitcher-spec` 中定义的模型来验证解析结果。这将确保 `Scanner` 产生的 IR 符合我们的契约。
 
 ### 标签
-#intent/architect #flow/ready #priority/high
-#comp/spec #concept/ir #scope/core #ai/instruct
-#task/domain/spec #task/object/ir-models #task/action/define
+#intent/tooling #flow/ready #priority/high
+#comp/tests #comp/scanner #scope/core #ai/instruct
+#task/domain/testing #task/object/scanner-tests #task/action/create-case
 #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 定义核心 IR 模型
-我们将创建一个包含完整层级结构的文件。核心设计决策包括：
-*   **Argument**: 需要区分位置参数、关键字参数等类型。
-*   **Function**: 需要支持 `is_async` 标志，以及装饰器列表。
-*   **Class**: 需要基类（Bases）列表。
-*   **Docstring**: 所有主要实体都必须有一个可选的 `docstring` 字段。
+#### Acts 1: 创建子包测试目录
+~~~~~act
+run_command
+~~~~~
+~~~~~
+mkdir -p packages/stitcher-scanner/tests
+~~~~~
+
+#### Acts 2: 编写第一个失败的测试 (RED)
+这个测试定义了我们期望 `Scanner` 如何工作。注意我们需要处理 `ArgumentKind` 和 `FunctionDef` 的比对。
 
 ~~~~~act
 write_file
-packages/stitcher-spec/src/stitcher/spec/models.py
+packages/stitcher-scanner/tests/test_parser_basic.py
 ~~~~~
 ~~~~~python
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import List, Optional, Union
+import pytest
+from stitcher.spec import ArgumentKind, FunctionDef, ModuleDef
+# 注意：这个模块还不存在，这是 TDD 的一部分
+from stitcher.scanner import parse_source_code
 
-
-class ArgumentKind(str, Enum):
-    """Corresponds to inspect._ParameterKind."""
-    POSITIONAL_ONLY = "POSITIONAL_ONLY"
-    POSITIONAL_OR_KEYWORD = "POSITIONAL_OR_KEYWORD"
-    VAR_POSITIONAL = "VAR_POSITIONAL"  # *args
-    KEYWORD_ONLY = "KEYWORD_ONLY"
-    VAR_KEYWORD = "VAR_KEYWORD"      # **kwargs
-
-
-@dataclass
-class Argument:
-    """Represents a function or method argument."""
-    name: str
-    kind: ArgumentKind
-    annotation: Optional[str] = None
-    default: Optional[str] = None  # The string representation of the default value
+def test_parse_simple_function():
+    source_code = """
+def hello(name: str = "world") -> str:
+    \"\"\"Say hello.\"\"\"
+    return f"Hello {name}"
+"""
     
-
-@dataclass
-class Attribute:
-    """Represents a module-level or class-level variable."""
-    name: str
-    annotation: Optional[str] = None
-    value: Optional[str] = None    # The string representation of the value (for constants)
-    docstring: Optional[str] = None
-
-
-@dataclass
-class FunctionDef:
-    """Represents a function or method definition."""
-    name: str
-    args: List[Argument] = field(default_factory=list)
-    return_annotation: Optional[str] = None
-    decorators: List[str] = field(default_factory=list)
-    docstring: Optional[str] = None
-    is_async: bool = False
-    is_static: bool = False  # @staticmethod
-    is_class: bool = False   # @classmethod
-
-
-@dataclass
-class ClassDef:
-    """Represents a class definition."""
-    name: str
-    bases: List[str] = field(default_factory=list)
-    docstring: Optional[str] = None
-    attributes: List[Attribute] = field(default_factory=list)
-    methods: List[FunctionDef] = field(default_factory=list)
-    # Nested classes can be supported later if needed, but usually .pyi flattens or keeps them nested.
-    # For MVP, let's keep it simple.
-
-
-@dataclass
-class ModuleDef:
-    """Represents a parsed Python module (a single .py file)."""
-    file_path: str  # Relative path from project root
-    docstring: Optional[str] = None
-    attributes: List[Attribute] = field(default_factory=list)
-    functions: List[FunctionDef] = field(default_factory=list)
-    classes: List[ClassDef] = field(default_factory=list)
-    # Imports are tricky. For .pyi generation, we often need to preserve them 
-    # or recreate them based on used types. 
-    # For MVP, we might treat imports as raw lines or simple structures.
-    imports: List[str] = field(default_factory=list) 
-
+    # Action
+    module: ModuleDef = parse_source_code(source_code)
+    
+    # Assert
+    assert isinstance(module, ModuleDef)
+    assert len(module.functions) == 1
+    
+    func = module.functions[0]
+    assert isinstance(func, FunctionDef)
+    assert func.name == "hello"
+    assert func.docstring == "Say hello."
+    assert func.return_annotation == "str"
+    assert func.is_async is False
+    
+    # Check arguments
+    assert len(func.args) == 1
+    arg = func.args[0]
+    assert arg.name == "name"
+    assert arg.annotation == "str"
+    # AST 解析出的默认值通常是其源码表示，即 '"world"' (包含引号)
+    assert arg.default == '"world"' 
+    assert arg.kind == ArgumentKind.POSITIONAL_OR_KEYWORD
 ~~~~~
 
-#### Acts 2: 暴露模型
-更新 `__init__.py` 以便其他包可以方便地导入。
+#### Acts 3: 更新 Pytest 配置
+为了让根目录运行 `pytest` 时能找到这些测试，我们需要扩展 `testpaths`。
 
 ~~~~~act
-write_file
-packages/stitcher-spec/src/stitcher/spec/__init__.py
+patch_file
+pyproject.toml
 ~~~~~
-~~~~~python
-# This must be the very first line to allow this package to coexist with other
-# namespace packages in editable installs.
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
-from .models import (
-    Argument,
-    ArgumentKind,
-    Attribute,
-    ClassDef,
-    FunctionDef,
-    ModuleDef,
-)
-
-__all__ = [
-    "Argument",
-    "ArgumentKind",
-    "Attribute",
-    "ClassDef",
-    "FunctionDef",
-    "ModuleDef",
-]
+~~~~~old
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = ["tests"]
+pythonpath = ["packages/stitcher-spec/src", "packages/stitcher-common/src", "packages/stitcher-scanner/src", "packages/stitcher-io/src", "packages/stitcher-config/src", "packages/stitcher-application/src", "packages/stitcher-cli/src"]
+~~~~~
+~~~~~new
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = ["tests", "packages"]
+pythonpath = ["packages/stitcher-spec/src", "packages/stitcher-common/src", "packages/stitcher-scanner/src", "packages/stitcher-io/src", "packages/stitcher-config/src", "packages/stitcher-application/src", "packages/stitcher-cli/src"]
 ~~~~~
 
 ### 下一步建议
-
-**战略转折点：启动 TDD**
-
-现在 Spec 已经定义好了，我们即将开始开发 `stitcher-scanner`。这是项目的第一个复杂逻辑挑战。
-
-建议在这个点放慢速度，按照以下 **TDD 流程** 进行：
-
-1.  **创建测试骨架**: 在 `tests/unit/scanner/` 下创建一个测试文件。
-2.  **编写失败的测试 (Red)**:
-    *   构造一段简单的 Python 源代码字符串（例如 `def hello(name: str) -> None: ...`）。
-    *   调用尚未实现的 `Scanner.parse(code)`。
-    *   断言它返回了一个 `ModuleDef`，其中包含一个正确的 `FunctionDef` 对象。
-3.  **实现 Scanner (Green)**: 在 `stitcher-scanner` 中编写 AST 访问逻辑，使测试通过。
-4.  **逐步增加复杂度 (Refactor/Iterate)**:
-    *   添加带默认值的参数测试。
-    *   添加带装饰器的测试。
-    *   添加类的解析测试。
-    *   添加 `async` 函数的测试。
-
-如果你同意，接下来的计划将直接创建测试用例，而不是实现代码。
+现在我们已经有了测试，下一步自然是**运行测试并确认它失败**（如果因为它导入错误而报错，也算是符合预期的失败）。
+然后，我们将进入 **GREEN 阶段**：实现 `stitcher.scanner.parse_source_code` 函数的核心逻辑，使其能够通过这个测试。这意味着我们要开始处理 Python 的 `ast` 模块了。

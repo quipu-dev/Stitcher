@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 定义 Stitcher 核心 IR 数据模型 (Spec)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766669929.4527102, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 添加 Scanner 基础单元测试 (Red Phase)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766670049.7229416, "duration_ms": 0}}
