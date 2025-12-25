@@ -1,219 +1,116 @@
-简要回答：
-收到。采用 **LibCST** 是一个非常有远见的决策，它为未来的代码回写（Code Mod）能力打下了基础。
+好的，我们继续 TDD 循环。现在是 **RED** 阶段，我们将添加一个更复杂的测试用例来驱动下一步的开发：解析类定义。
 
-我们将分为两步走：
-1.  **引入依赖**：在 `stitcher-scanner` 中添加 `libcst`。
-2.  **实现逻辑 (Green)**：使用 `libcst` 的 Visitor 模式实现 `parse_source_code`，从 CST（具体语法树）中提取 IR 模型，使测试通过。
-
-## [WIP] feat(scanner): 引入 LibCST 并实现基础解析逻辑 (Green Phase)
+## [WIP] test(scanner): 添加 Class 解析单元测试 (Red Phase)
 
 ### 用户需求
-使用 `LibCST` 替代 `ast` 来实现 `Scanner` 模块，以满足未来代码重构（`eject` 等功能）对格式保留的需求。实现 `parse_source_code` 函数以通过现有的单元测试。
+在 TDD 循环中，为 `stitcher-scanner` 添加一个新的测试用例，该用例专门验证对包含方法的基本类定义的解析能力。
 
 ### 评论
-使用 LibCST 解析参数列表比原生 AST 稍微复杂一点，因为 LibCST 将参数分为了 `posonly_params`, `params` (positional_or_keyword), `star_arg`, `kwonly_params`, `star_kwarg` 几个部分。我们需要按顺序遍历这些部分来重建扁平的参数列表，并正确标记 `ArgumentKind`。
+这是 TDD 的一个标准迭代。我们通过引入一个新的、更复杂的代码结构（Class），来强制我们的 `IRBuildingVisitor` 演进，使其能够处理嵌套定义和类的元数据（如基类）。这个测试在当前实现下必然会失败，因为它还没有实现 `visit_ClassDef`。
 
 ### 目标
-1.  在 `packages/stitcher-scanner/pyproject.toml` 中添加 `libcst` 依赖。
-2.  创建 `packages/stitcher-scanner/src/stitcher/scanner/parser.py`，实现核心解析逻辑。
-3.  在 `packages/stitcher-scanner/src/stitcher/scanner/__init__.py` 中暴露接口。
-4.  运行测试，确保变绿。
+1.  在 `test_parser_basic.py` 中添加一个新的测试函数 `test_parse_simple_class_with_method`。
+2.  该测试断言解析器能正确识别类名、基类、文档字符串以及其内部的方法定义。
+3.  运行 `pytest` 并确认新测试失败，而旧测试依然通过。
 
 ### 基本原理
-我们将创建一个 `IRBuildingVisitor` 继承自 `cst.CSTVisitor`。当遍历到 `FunctionDef` 等节点时，提取信息并构建 `stitcher-spec` 中的数据类实例。对于默认值的源码提取，我们利用 LibCST 的 `cst.Module([]).code_for_node(node)` 能力（或针对简单 Literal 直接提取）。
+通过 `patch_file` 操作，我们在现有的测试文件中追加一个新的测试用例。这个用例构造了一个包含类的 Python 代码片段，并定义了对其解析后生成的 `ModuleDef` 和 `ClassDef` 对象的预期结构。
 
 ### 标签
-#intent/build #flow/ready #priority/high
-#comp/scanner #concept/parser #scope/core #ai/instruct
-#task/domain/implementation #task/object/scanner-logic #task/action/implement
+#intent/tooling #flow/ready #priority/high
+#comp/tests #comp/scanner #scope/core #ai/instruct
+#task/domain/testing #task/object/scanner-tests #task/action/create-case
 #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 添加 LibCST 依赖
+#### Acts 1: 更新测试导入
+我们需要导入 `ClassDef` 模型以用于断言。
+
 ~~~~~act
 patch_file
-packages/stitcher-scanner/pyproject.toml
+packages/stitcher-scanner/tests/test_parser_basic.py
 ~~~~~
-~~~~~old
-dependencies = [
-    "stitcher-spec",
-    "stitcher-common",
-]
+~~~~~python.old
+import pytest
+from stitcher.spec import ArgumentKind, FunctionDef, ModuleDef
+# 注意：这个模块还不存在，这是 TDD 的一部分
+from stitcher.scanner import parse_source_code
 ~~~~~
-~~~~~new
-dependencies = [
-    "stitcher-spec",
-    "stitcher-common",
-    "libcst",
-]
+~~~~~python.new
+import pytest
+from stitcher.spec import ArgumentKind, ClassDef, FunctionDef, ModuleDef
+# 注意：这个模块还不存在，这是 TDD 的一部分
+from stitcher.scanner import parse_source_code
 ~~~~~
 
-#### Acts 2: 实现 LibCST 解析器
-这是一个较大的文件，包含 Visitor 类和入口函数。
+#### Acts 2: 添加 Class 解析测试用例
+我们将新的测试用例追加到文件末尾。
 
 ~~~~~act
-write_file
-packages/stitcher-scanner/src/stitcher/scanner/parser.py
+patch_file
+packages/stitcher-scanner/tests/test_parser_basic.py
 ~~~~~
-~~~~~python
-from typing import List, Optional, Union
-
-import libcst as cst
-from stitcher.spec import (
-    Argument,
-    ArgumentKind,
-    Attribute,
-    ClassDef,
-    FunctionDef,
-    ModuleDef,
-)
-
-
-class IRBuildingVisitor(cst.CSTVisitor):
-    def __init__(self):
-        self.functions: List[FunctionDef] = []
-        # Future: attributes, classes, etc.
-
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
-        # 1. Extract Name
-        func_name = node.name.value
-
-        # 2. Extract Docstring
-        docstring = node.get_docstring()
-        # LibCST returns False if no docstring, strict str if present.
-        if isinstance(docstring, bool):
-            docstring = None
-
-        # 3. Extract Return Annotation
-        return_annotation = None
-        if node.returns:
-            # annotation is a cst.Annotation, which has 'annotation' field (expression)
-            # We need the source code representation of the type.
-            # Using a dummy module to generate code for the node is a common LibCST pattern for snippets.
-            return_annotation = cst.Module([]).code_for_node(node.returns.annotation).strip()
-
-        # 4. Extract Arguments
-        args = self._parse_parameters(node.params)
-
-        # 5. Extract Async
-        is_async = node.asynchronous is not None
-
-        # 6. Build Object
-        func_def = FunctionDef(
-            name=func_name,
-            args=args,
-            return_annotation=return_annotation,
-            docstring=docstring,
-            is_async=is_async,
-            # decorators and other fields to be implemented later
-        )
-        self.functions.append(func_def)
-
-        # Don't visit children for now (to avoid collecting nested functions into the top level)
-        # In a real implementation, we need a stack to handle nesting.
-        return False
-
-    def _parse_parameters(self, params: cst.Parameters) -> List[Argument]:
-        result = []
-        dummy_module = cst.Module([])
-
-        def extract_arg(
-            param: Union[cst.Param, cst.ParamStar], 
-            kind: ArgumentKind
-        ) -> Argument:
-            # cst.Param has 'name' (Name), 'annotation' (Annotation), 'default' (Expr)
-            # cst.ParamStar only has name if it's *args (not just *)
-            
-            if isinstance(param, cst.ParamStar):
-                # Handle *args (bare * has no name)
-                name = param.name.value if isinstance(param.name, cst.Name) else ""
-                annotation = None
-                if isinstance(param.annotation, cst.Annotation):
-                    annotation = dummy_module.code_for_node(param.annotation.annotation).strip()
-                return Argument(name=name, kind=kind, annotation=annotation)
-
-            # Normal cst.Param
-            name = param.name.value
-            annotation = None
-            if param.annotation:
-                annotation = dummy_module.code_for_node(param.annotation.annotation).strip()
-            
-            default_val = None
-            if param.default:
-                # Get the source code of the default value expression
-                default_val = dummy_module.code_for_node(param.default).strip()
-
-            return Argument(
-                name=name,
-                kind=kind,
-                annotation=annotation,
-                default=default_val
-            )
-
-        # 1. Positional Only (Python 3.8+ /)
-        for p in params.posonly_params:
-            result.append(extract_arg(p, ArgumentKind.POSITIONAL_ONLY))
-
-        # 2. Positional or Keyword
-        for p in params.params:
-            result.append(extract_arg(p, ArgumentKind.POSITIONAL_OR_KEYWORD))
-
-        # 3. *args
-        if isinstance(params.star_arg, cst.ParamStar):
-            result.append(extract_arg(params.star_arg, ArgumentKind.VAR_POSITIONAL))
-
-        # 4. Keyword Only
-        for p in params.kwonly_params:
-            result.append(extract_arg(p, ArgumentKind.KEYWORD_ONLY))
-
-        # 5. **kwargs
-        if params.star_kwarg:
-            result.append(extract_arg(params.star_kwarg, ArgumentKind.VAR_KEYWORD))
-
-        return result
-
-
-def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
-    """
-    Parses Python source code into Stitcher IR.
-    """
-    try:
-        cst_module = cst.parse_module(source_code)
-    except cst.ParserSyntaxError as e:
-        # For now, let it bubble up or wrap in a StitcherError
-        raise ValueError(f"Syntax error in {file_path}: {e}") from e
-
-    visitor = IRBuildingVisitor()
-    cst_module.visit(visitor)
-
-    return ModuleDef(
-        file_path=file_path,
-        docstring=cst_module.get_docstring() if isinstance(cst_module.get_docstring(), str) else None,
-        functions=visitor.functions,
-        # classes and attributes to be added
-    )
+~~~~~python.old
+    arg = func.args[0]
+    assert arg.name == "name"
+    assert arg.annotation == "str"
+    # AST 解析出的默认值通常是其源码表示，即 '"world"' (包含引号)
+    assert arg.default == '"world"' 
+    assert arg.kind == ArgumentKind.POSITIONAL_OR_KEYWORD
 ~~~~~
+~~~~~python.new
+    arg = func.args[0]
+    assert arg.name == "name"
+    assert arg.annotation == "str"
+    # AST 解析出的默认值通常是其源码表示，即 '"world"' (包含引号)
+    assert arg.default == '"world"' 
+    assert arg.kind == ArgumentKind.POSITIONAL_OR_KEYWORD
 
-#### Acts 3: 暴露接口
-~~~~~act
-write_file
-packages/stitcher-scanner/src/stitcher/scanner/__init__.py
-~~~~~
-~~~~~python
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-from .parser import parse_source_code
+def test_parse_simple_class_with_method():
+    source_code = """
+class MyClass(BaseClass):
+    \"\"\"A simple class.\"\"\"
+    
+    def my_method(self, value: int) -> bool:
+        \"\"\"A simple method.\"\"\"
+        return True
+"""
+    # Action
+    module: ModuleDef = parse_source_code(source_code)
 
-__all__ = ["parse_source_code"]
+    # Assert Module
+    assert len(module.classes) == 1
+    assert len(module.functions) == 0
+
+    # Assert Class
+    cls = module.classes[0]
+    assert isinstance(cls, ClassDef)
+    assert cls.name == "MyClass"
+    assert cls.docstring == "A simple class."
+    # LibCST gives us the code for the base expressions
+    assert cls.bases == ["BaseClass"]
+
+    # Assert Method
+    assert len(cls.methods) == 1
+    method = cls.methods[0]
+    assert isinstance(method, FunctionDef)
+    assert method.name == "my_method"
+    assert method.docstring == "A simple method."
+    assert method.return_annotation == "bool"
+
+    # Assert Method Arguments
+    assert len(method.args) == 2
+    assert method.args[0].name == "self"
+    assert method.args[0].kind == ArgumentKind.POSITIONAL_OR_KEYWORD
+    assert method.args[1].name == "value"
+    assert method.args[1].annotation == "int"
+    assert method.args[1].kind == ArgumentKind.POSITIONAL_OR_KEYWORD
 ~~~~~
 
 ### 下一步建议
-现在代码已实现，请：
-1. `uv pip install -e .[dev]`
-2. 运行 `pytest` 验证测试是否通过。
-
-
-一旦通过（Green），我们就可以继续在 TDD 循环中添加更复杂的用例（如 Class解析、Decorator处理等）。
+1.  运行 `pytest` 确认测试失败。
+2.  进入 **GREEN** 阶段：修改 `IRBuildingVisitor`，实现 `visit_ClassDef` 方法，并正确处理嵌套结构，使新测试通过。
