@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stitcher-application"
+version = "0.1.0"
+description = "Orchestration layer for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "stitcher-spec",
+    "stitcher-common",
+    "stitcher-scanner",
+    "stitcher-io",
+    "stitcher-config",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+
+[tool.uv.sources]
+stitcher-spec = { workspace = true }
+stitcher-common = { workspace = true }
+stitcher-scanner = { workspace = true }
+stitcher-io = { workspace = true }
+stitcher-config = { workspace = true }

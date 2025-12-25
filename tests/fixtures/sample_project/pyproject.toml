@@ -1,0 +1,2 @@
+[tool.stitcher]
+scan_paths = ["src/app"]

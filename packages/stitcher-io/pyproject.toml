@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stitcher-io"
+version = "0.1.0"
+description = "File I/O and persistence layer for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "stitcher-spec",
+    "stitcher-common",
+    "PyYAML",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+
+[tool.uv.sources]
+stitcher-spec = { workspace = true }
+stitcher-common = { workspace = true }

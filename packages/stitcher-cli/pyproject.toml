@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stitcher-cli"
+version = "0.1.0"
+description = "Command-line interface for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "stitcher-application",
+    "typer[all]",
+]
+
+[project.scripts]
+stitcher = "stitcher.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+
+[tool.uv.sources]
+stitcher-application = { workspace = true }
