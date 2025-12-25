@@ -29,7 +29,7 @@ def test_generate_simple_pyi():
                 return_annotation="bool",
                 docstring="A test function.",
                 is_async=True,
-                decorators=["@my_decorator"],
+                decorators=["my_decorator"],
             )
         ],
         classes=[
