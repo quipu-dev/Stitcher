@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat: 初始化项目并实现核心存根生成 MVP 流程", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766671796.886626, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: Implement MessageBus and wire up CLI application", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766672029.6037285, "duration_ms": 0}}

@@ -1,0 +1,7 @@
+{
+    "app.run.start": "Stitcher running...",
+    "generate.file.success": "✅ Generated stub: {path}",
+    "generate.run.complete": "✨ Generation complete. {count} files created.",
+    "error.config.not_found": "⚠️  No [tool.stitcher] config found in pyproject.toml. Nothing to do.",
+    "error.generic": "❌ An unexpected error occurred: {error}"
+}
