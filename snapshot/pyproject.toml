@@ -29,7 +29,7 @@ stitcher-application = { workspace = true }
 stitcher-cli = { workspace = true }
 
 [tool.pytest.ini_options]
-addopts = "-ra -q"
+addopts = "-ra --cov=stitcher --cov-report=term-missing"
 testpaths = ["tests", "packages"]
 norecursedirs = ["tests/fixtures"]
 pythonpath = ["packages/stitcher-spec/src", "packages/stitcher-common/src", "packages/stitcher-scanner/src", "packages/stitcher-io/src", "packages/stitcher-config/src", "packages/stitcher-application/src", "packages/stitcher-cli/src"]
