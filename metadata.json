@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix(io): 纠正 StubGenerator 测试中的 decorator 数据", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766671022.3320463, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(io): 调整 StubGenerator 以支持单行函数格式", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766671103.453959, "duration_ms": 0}}

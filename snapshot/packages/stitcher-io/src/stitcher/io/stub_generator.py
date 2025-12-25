@@ -150,15 +150,15 @@ class StubGenerator:
         ret_str = f" -> {func.return_annotation}" if func.return_annotation else ""
         
         def_line = f"{indent}{prefix}def {func.name}({args_str}){ret_str}:"
-        lines.append(def_line)
 
         # Body
-        body_indent = self._indent(level + 1)
         if func.docstring:
+            lines.append(def_line)
             lines.append(self._format_docstring(func.docstring, level + 1))
-            lines.append(f"{body_indent}...")
+            lines.append(f"{self._indent(level + 1)}...")
         else:
-            lines.append(f"{body_indent}...")
+            # For functions without docstrings, use a single line format.
+            lines.append(f"{def_line} ...")
             
         return "\n".join(lines)
 
