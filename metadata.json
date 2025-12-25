@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(config): Implement plugin discovery from entry points", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766672820.3232648, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(scanner): Implement dynamic plugin inspector", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766672913.2812002, "duration_ms": 0}}
