@@ -13,8 +13,60 @@ from stitcher.spec import (
 
 class IRBuildingVisitor(cst.CSTVisitor):
     def __init__(self):
+        # Module level containers
         self.functions: List[FunctionDef] = []
-        # Future: attributes, classes, etc.
+        self.classes: List[ClassDef] = []
+        
+        # Scope management: A stack of currently active ClassDefs being built.
+        # If stack is empty, we are at module level.
+        self._class_stack: List[ClassDef] = []
+
+    def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
+        # 1. Extract Name
+        class_name = node.name.value
+
+        # 2. Extract Docstring
+        docstring = node.get_docstring()
+        if isinstance(docstring, bool):
+            docstring = None
+
+        # 3. Extract Bases
+        bases = []
+        dummy_module = cst.Module([])
+        for base in node.bases:
+            # base.value is the expression (Name, Attribute, Call etc.)
+            base_code = dummy_module.code_for_node(base.value).strip()
+            bases.append(base_code)
+
+        # 4. Create ClassDef object and push to stack
+        cls_def = ClassDef(
+            name=class_name,
+            bases=bases,
+            docstring=docstring,
+            methods=[],
+            attributes=[]
+        )
+        self._class_stack.append(cls_def)
+
+        # Continue visiting children (to find methods)
+        return True
+
+    def leave_ClassDef(self, node: cst.ClassDef) -> None:
+        # Pop the finished class from stack
+        finished_cls = self._class_stack.pop()
+        
+        # If we are inside another class (nested class), add it there?
+        # For now, let's only support top-level classes or flatten them.
+        # But to satisfy the requirement "methods belong to class", stack logic handles methods correctly.
+        # We need to decide where to put this class.
+        
+        if self._class_stack:
+            # It's a nested class. For MVP, we might ignore nested classes in IR 
+            # or treat them specially. Let's just ignore for now or log warning.
+            pass 
+        else:
+            # Top-level class
+            self.classes.append(finished_cls)
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
         # 1. Extract Name
@@ -22,16 +74,12 @@ class IRBuildingVisitor(cst.CSTVisitor):
 
         # 2. Extract Docstring
         docstring = node.get_docstring()
-        # LibCST returns False if no docstring, strict str if present.
         if isinstance(docstring, bool):
             docstring = None
 
         # 3. Extract Return Annotation
         return_annotation = None
         if node.returns:
-            # annotation is a cst.Annotation, which has 'annotation' field (expression)
-            # We need the source code representation of the type.
-            # Using a dummy module to generate code for the node is a common LibCST pattern for snippets.
             return_annotation = cst.Module([]).code_for_node(node.returns.annotation).strip()
 
         # 4. Extract Arguments
@@ -47,12 +95,18 @@ class IRBuildingVisitor(cst.CSTVisitor):
             return_annotation=return_annotation,
             docstring=docstring,
             is_async=is_async,
-            # decorators and other fields to be implemented later
         )
-        self.functions.append(func_def)
 
-        # Don't visit children for now (to avoid collecting nested functions into the top level)
-        # In a real implementation, we need a stack to handle nesting.
+        # 7. Add to appropriate scope
+        if self._class_stack:
+            # We are inside a class, so this is a method
+            current_class = self._class_stack[-1]
+            current_class.methods.append(func_def)
+        else:
+            # We are at module level
+            self.functions.append(func_def)
+
+        # Don't visit children of a function (we don't care about inner functions/classes for .pyi)
         return False
 
     def _parse_parameters(self, params: cst.Parameters) -> List[Argument]:
@@ -132,5 +186,6 @@ def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
         file_path=file_path,
         docstring=cst_module.get_docstring() if isinstance(cst_module.get_docstring(), str) else None,
         functions=visitor.functions,
-        # classes and attributes to be added
+        classes=visitor.classes,
+        # attributes to be added
     )
