@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import dataclasses
 from pathlib import Path
 from typing import List
 

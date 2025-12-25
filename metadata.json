@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test(e2e): 添加基于配置的项目扫描集成测试 (Red Phase)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766671384.636848, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M loader.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766671489.483497, "duration_ms": 0}}
