@@ -1,278 +1,207 @@
-好的，我们立即开始实施路线图的第二和第三阶段。我们将首先在 `stitcher-cli` 中构建用户界面的“呈现”部分，然后将它与 `stitcher-application` 的业务逻辑“缝合”在一起，并让应用层通过消息总线进行通信。
+好的，我们现在进入路线图的最后阶段：重构测试以验证**意图**，而不是**实现**。这将使我们的测试套件对未来的代码重构（例如，改变文件写入方式或引入异步 I/O）具有更强的免疫力。
 
-## [WIP] feat(cli,app): 实现 CLI 渲染器并连接应用层
+**RED -> GREEN -> REFACTOR** 循环中的 **REFACTOR** 阶段，现在开始。
+
+## [WIP] refactor(tests): Refactor E2E tests to assert MessageBus intent
 
 ### 用户需求
-根据 `CLI_and_Messaging_Roadmap.md`，实现一个具体的 `CliRenderer`，修改 CLI 命令以调用 `StitcherApp`，并更新 `StitcherApp` 以使用消息总线报告其操作进度和结果。
+遵循“验证意图而非实现”的测试原则，重构现有的端到端集成测试。测试应通过 Mock 消息总线来断言正确的语义事件是否被触发，而不是直接检查文件系统的状态。
 
 ### 评论
-这是将我们之前构建的所有独立模块整合为一个功能性应用的时刻。通过在 CLI 入口点注入 `CliRenderer`，我们完成了依赖注入的关键一步。`StitcherApp` 现在可以专注于其核心职责，同时通过 `bus` 单例向外部世界广播事件，而完全不知道这些事件最终是如何呈现的。
+这是对我们测试策略的一次重要升级。通过断言 `bus.success("generate.file.success", ...)` 是否被调用，我们直接验证了业务逻辑的核心产出——“一个文件生成成功”这个**事件**。我们不再关心这个事件最终导致了什么副作用（比如在磁盘上创建了一个文件），这使得测试与具体的 I/O 实现完全解耦，从而变得更加健壮和专注。
 
 ### 目标
-1.  在 `stitcher-cli` 中创建 `rendering.py` 并实现 `CliRenderer`。
-2.  重构 `stitcher-cli` 的 `main.py`：
-    *   注入 `CliRenderer`。
-    *   将 `generate` 命令连接到 `StitcherApp.run_from_config()`。
-    *   让 `init` 和 `check` 命令通过 `bus` 报告其“未实现”状态。
-3.  修改 `StitcherApp` 以使用 `bus` 报告进度。
+1.  在 `test_end_to_end.py` 中创建一个 `pytest` fixture，用于 Mock `stitcher.app.core.bus`。
+2.  重构 `test_app_scan_and_generate_single_file`，移除文件系统断言，改为断言 `mock_bus.success` 被以正确的参数调用了一次。
+3.  重构 `test_app_run_from_config`，移除文件系统断言，改为断言 `mock_bus.success` 被以正确的参数调用了三次（两个文件，一个总结）。
+4.  确保所有测试通过。
 
 ### 基本原理
-我们遵循“配置-注入-执行”模式。应用的根（`main.py`）负责配置和注入依赖（`Renderer`）。一旦配置完成，应用的其他部分（`StitcherApp`）就可以透明地使用这些依赖（通过 `bus` 单例），而无需知道其具体实现。
+我们遵循 `d3-principle-python-testing-mock-intent` 原则。测试的核心目标是验证 `StitcherApp` 是否正确地向消息总线报告了其工作成果。这比检查文件内容更能代表业务逻辑的正确性，因为“向总线报告成功”是业务逻辑的一部分，而“写入文件”是渲染/副作用的一部分。
 
 ### 标签
-#intent/build #flow/ready #priority/high
-#comp/cli #comp/app #concept/ui #ai/instruct
-#task/domain/implementation #task/object/cli-wiring #task/action/implement
+#intent/refine #flow/ready #priority/medium
+#comp/tests #comp/app #scope/dx #ai/instruct
+#task/domain/testing #task/object/e2e-tests #task/action/refactor
 #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 实现 CLI 渲染器
-这是消息总线的“扬声器”，负责将消息意图转换为终端上的彩色文本。
-
-~~~~~act
-write_file
-packages/stitcher-cli/src/stitcher/cli/rendering.py
-~~~~~
-~~~~~python
-import typer
-from stitcher.common.messaging import MessageStore, protocols
-
-class CliRenderer(protocols.Renderer):
-    """
-    Renders messages to the command line using Typer for colored output.
-    """
-    def __init__(self, store: MessageStore):
-        self._store = store
-
-    def render(self, msg_id: str, level: str, **kwargs):
-        message = self._store.get(msg_id, **kwargs)
-        
-        color = None
-        if level == "success":
-            color = typer.colors.GREEN
-        elif level == "warning":
-            color = typer.colors.YELLOW
-        elif level == "error":
-            color = typer.colors.RED
-            
-        typer.secho(message, fg=color)
-~~~~~
-
-#### Acts 2: 添加新的消息模板
-我们需要一个消息来报告未实现的功能。
+#### Acts 1: 导入 Mock 工具并创建 Fixture
+我们首先在测试文件中添加 `unittest.mock` 的导入，并创建一个可复用的 fixture 来 Mock `bus`。
 
 ~~~~~act
 patch_file
-packages/stitcher-common/src/stitcher/common/locales/en/cli.json
-~~~~~
-~~~~~json.old
-{
-    "app.run.start": "Stitcher running...",
-    "generate.file.success": "✅ Generated stub: {path}",
-    "generate.run.complete": "✨ Generation complete. {count} files created.",
-    "error.config.not_found": "⚠️  No [tool.stitcher] config found in pyproject.toml. Nothing to do.",
-    "error.generic": "❌ An unexpected error occurred: {error}"
-}
-~~~~~
-~~~~~json.new
-{
-    "app.run.start": "Stitcher running...",
-    "generate.file.success": "✅ Generated stub: {path}",
-    "generate.run.complete": "✨ Generation complete. {count} files created.",
-    "cli.command.not_implemented": "ℹ️  Command '{command}' is not yet implemented.",
-    "error.config.not_found": "⚠️  No [tool.stitcher] config found in pyproject.toml. Nothing to do.",
-    "error.generic": "❌ An unexpected error occurred: {error}"
-}
-~~~~~
-
-#### Acts 3: 连接 CLI 与应用层
-这是整个流程的“缝合”点。
-
-~~~~~act
-write_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python
-from pathlib import Path
-import typer
-
-from stitcher.app import StitcherApp
-from stitcher.common import bus
-from .rendering import CliRenderer
-
-app = typer.Typer(
-    name="stitcher",
-    help="Stitcher-Python: Bridging the gap between dynamic code and static analysis.",
-    no_args_is_help=True,
-)
-
-# --- Dependency Injection at the very start ---
-# The CLI is the composition root. It decides *which* renderer to use.
-cli_renderer = CliRenderer(store=bus.store)
-bus.set_renderer(cli_renderer)
-# ---------------------------------------------
-
-@app.command()
-def generate():
-    """Generate .pyi stubs based on pyproject.toml config."""
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-    app_instance.run_from_config()
-
-@app.command()
-def init():
-    """Initialize Stitcher in the current project."""
-    bus.info("cli.command.not_implemented", command="init")
-
-@app.command()
-def check():
-    """Verify consistency between code and docs."""
-    bus.info("cli.command.not_implemented", command="check")
-
-if __name__ == "__main__":
-    app()
-~~~~~
-
-#### Acts 4: 在应用层使用消息总线
-现在，`StitcherApp` 将通过 `bus` 报告其活动，而不是静默工作。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+tests/integration/test_end_to_end.py
 ~~~~~
 ~~~~~python.old
-from stitcher.config import load_config_from_path
+import pytest
+import shutil
+from pathlib import Path
+from textwrap import dedent
 
-class StitcherApp:
-    def __init__(self, root_path: Path):
-        self.root_path = root_path
-        # The app 'has a' generator, it uses it as a tool.
-        self.generator = StubGenerator()
-
-    def run_from_config(self) -> List[Path]:
-        """
-        Loads config, discovers files, and generates stubs.
-        """
-        config = load_config_from_path(self.root_path)
-        
-        if not config.scan_paths:
-            # Handle case where config is empty or not found.
-            # We could default to scanning the root path, or do nothing.
-            # Let's do nothing for now, to be explicit.
-            return []
-            
-        files_to_scan = []
-        for scan_path_str in config.scan_paths:
-            scan_path = self.root_path / scan_path_str
-            if scan_path.is_dir():
-                # Recursively find all .py files in the directory
-                files_to_scan.extend(scan_path.rglob("*.py"))
-            elif scan_path.is_file():
-                # If it's a single file, add it
-                files_to_scan.append(scan_path)
-        
-        # Deduplicate in case of overlapping paths
-        unique_files = sorted(list(set(files_to_scan)))
-        
-        # Delegate the actual generation to the already tested method
-        return self.run_generate(files=unique_files)
-
-    def run_generate(self, files: List[Path]) -> List[Path]:
-        """
-        Scans the given files and generates .pyi stubs for them.
-        Returns the list of generated .pyi file paths.
-        """
-        generated_files: List[Path] = []
-        
-        for source_file in files:
-            # 1. Read the source content
-            content = source_file.read_text(encoding="utf-8")
-            
-            # 2. Scan the content to get the IR
-            # Pass the file path for better error messages in the future
-            module_def = parse_source_code(content, file_path=str(source_file))
-            
-            # 3. Generate the .pyi string from the IR
-            pyi_content = self.generator.generate(module_def)
-            
-            # 4. Determine output path and write the file
-            output_path = source_file.with_suffix(".pyi")
-            output_path.write_text(pyi_content, encoding="utf-8")
-            
-            generated_files.append(output_path)
-            
-        return generated_files
+# This module doesn't exist yet, driving its creation
+from stitcher.app import StitcherApp
 ~~~~~
 ~~~~~python.new
-from stitcher.common import bus
-from stitcher.config import load_config_from_path
+import pytest
+import shutil
+from pathlib import Path
+from textwrap import dedent
+from unittest.mock import MagicMock
 
+# This module doesn't exist yet, driving its creation
+from stitcher.app import StitcherApp
 
-class StitcherApp:
-    def __init__(self, root_path: Path):
-        self.root_path = root_path
-        # The app 'has a' generator, it uses it as a tool.
-        self.generator = StubGenerator()
+@pytest.fixture
+def mock_bus(monkeypatch) -> MagicMock:
+    """Mocks the global bus singleton where it's used in the app layer."""
+    mock = MagicMock()
+    monkeypatch.setattr("stitcher.app.core.bus", mock)
+    return mock
+~~~~~
 
-    def run_from_config(self) -> List[Path]:
-        """
-        Loads config, discovers files, and generates stubs.
-        """
-        config = load_config_from_path(self.root_path)
-        
-        if not config.scan_paths:
-            bus.warning("error.config.not_found")
-            return []
-            
-        files_to_scan = []
-        for scan_path_str in config.scan_paths:
-            scan_path = self.root_path / scan_path_str
-            if scan_path.is_dir():
-                files_to_scan.extend(scan_path.rglob("*.py"))
-            elif scan_path.is_file():
-                files_to_scan.append(scan_path)
-        
-        unique_files = sorted(list(set(files_to_scan)))
-        
-        generated_files = self.run_generate(files=unique_files)
-        
-        if generated_files:
-            bus.success("generate.run.complete", count=len(generated_files))
+#### Acts 2: 重构单文件生成测试
+现在我们用新的断言逻辑替换 `test_app_scan_and_generate_single_file` 的实现。
 
-        return generated_files
+~~~~~act
+patch_file
+tests/integration/test_end_to_end.py
+~~~~~
+~~~~~python.old
+def test_app_scan_and_generate_single_file(tmp_path):
+    # 1. Arrange: Create a source python file
+    source_content = dedent("""
+        def greet(name: str) -> str:
+            \"\"\"Returns a greeting.\"\"\"
+            return f"Hello, {name}!"
+    """)
+    source_file = tmp_path / "greet.py"
+    source_file.write_text(source_content, encoding="utf-8")
+    
+    # 2. Act: Initialize App and run generation
+    app = StitcherApp(root_path=tmp_path)
+    # We expect this method to scan the file and generate a .pyi next to it
+    generated_files = app.run_generate(files=[source_file])
+    
+    # 3. Assert: Verify the .pyi file exists and has correct content
+    expected_pyi_path = tmp_path / "greet.pyi"
+    
+    assert expected_pyi_path.exists()
+    assert expected_pyi_path in generated_files
+    
+    pyi_content = expected_pyi_path.read_text(encoding="utf-8")
+    
+    # Verify core components are present
+    assert "def greet(name: str) -> str:" in pyi_content
+    assert '"""Returns a greeting."""' in pyi_content
+    assert "..." in pyi_content
+~~~~~
+~~~~~python.new
+def test_app_scan_and_generate_single_file(tmp_path, mock_bus):
+    # 1. Arrange
+    source_content = dedent("""
+        def greet(name: str) -> str:
+            \"\"\"Returns a greeting.\"\"\"
+            return f"Hello, {name}!"
+    """)
+    source_file = tmp_path / "greet.py"
+    source_file.write_text(source_content, encoding="utf-8")
+    
+    # 2. Act
+    app = StitcherApp(root_path=tmp_path)
+    app.run_generate(files=[source_file])
+    
+    # 3. Assert: Verify the correct "intent" was signaled to the bus
+    expected_pyi_path = tmp_path / "greet.pyi"
+    expected_relative_path = expected_pyi_path.relative_to(tmp_path)
 
-    def run_generate(self, files: List[Path]) -> List[Path]:
-        """
-        Scans the given files and generates .pyi stubs for them.
-        Returns the list of generated .pyi file paths.
-        """
-        generated_files: List[Path] = []
-        
-        for source_file in files:
-            try:
-                content = source_file.read_text(encoding="utf-8")
-                module_def = parse_source_code(content, file_path=str(source_file))
-                pyi_content = self.generator.generate(module_def)
-                
-                output_path = source_file.with_suffix(".pyi")
-                output_path.write_text(pyi_content, encoding="utf-8")
-                
-                bus.success("generate.file.success", path=output_path.relative_to(self.root_path))
-                generated_files.append(output_path)
-            except Exception as e:
-                bus.error("error.generic", error=e)
+    mock_bus.success.assert_called_once_with(
+        "generate.file.success",
+        path=expected_relative_path
+    )
+    mock_bus.error.assert_not_called()
+~~~~~
 
-        return generated_files
+#### Acts 3: 重构基于配置的测试
+同样，我们用新的断言逻辑替换 `test_app_run_from_config` 的实现。
+
+~~~~~act
+patch_file
+tests/integration/test_end_to_end.py
+~~~~~
+~~~~~python.old
+def test_app_run_from_config(tmp_path):
+    # 1. Arrange: Copy the fixture project into a temporary directory
+    fixture_root = Path(__file__).parent.parent / "fixtures" / "sample_project"
+    project_root = tmp_path / "sample_project"
+    shutil.copytree(fixture_root, project_root)
+
+    # 2. Act
+    app = StitcherApp(root_path=project_root)
+    # This new method should discover config and run generation
+    generated_files = app.run_from_config()
+
+    # 3. Assert
+    main_pyi = project_root / "src" / "app" / "main.pyi"
+    helpers_pyi = project_root / "src" / "app" / "utils" / "helpers.pyi"
+    test_pyi = project_root / "tests" / "test_helpers.pyi"
+
+    assert main_pyi.exists()
+    assert helpers_pyi.exists()
+    assert not test_pyi.exists() # Crucially, this should NOT be generated
+
+    assert main_pyi in generated_files
+    assert helpers_pyi in generated_files
+
+    main_content = main_pyi.read_text()
+    assert "def start():" in main_content
+    assert '"""Starts the application."""' in main_content
+~~~~~
+~~~~~python.new
+def test_app_run_from_config(tmp_path, mock_bus):
+    # 1. Arrange
+    fixture_root = Path(__file__).parent.parent / "fixtures" / "sample_project"
+    project_root = tmp_path / "sample_project"
+    shutil.copytree(fixture_root, project_root)
+
+    # 2. Act
+    app = StitcherApp(root_path=project_root)
+    app.run_from_config()
+
+    # 3. Assert
+    main_pyi = project_root / "src" / "app" / "main.pyi"
+    helpers_pyi = project_root / "src" / "app" / "utils" / "helpers.pyi"
+    
+    # Assert that success was called for each generated file
+    mock_bus.success.assert_any_call(
+        "generate.file.success",
+        path=main_pyi.relative_to(project_root)
+    )
+    mock_bus.success.assert_any_call(
+        "generate.file.success",
+        path=helpers_pyi.relative_to(project_root)
+    )
+    
+    # Assert that the final summary message was sent
+    mock_bus.success.assert_any_call(
+        "generate.run.complete",
+        count=2
+    )
+    
+    # Verify total number of success calls
+    assert mock_bus.success.call_count == 3
+    mock_bus.error.assert_not_called()
 ~~~~~
 
 ### 下一步建议
-我们已经完成了一个功能完备、架构清晰的 CLI 工具。现在，我们应该遵循路线图的第四阶段：**更新测试以验证意图**。
+我们已经成功地将测试策略现代化，并完成了从 CLI 框架搭建到核心逻辑实现，再到解耦通信的完整 MVP。
 
-我建议修改 `test_end_to_end.py`：
-1.  使用 `monkeypatch` 来 Mock 全局 `bus` 对象。
-2.  将测试断言从 `assert file.exists()` 和 `file.read_text()` 更改为 `mock_bus.success.assert_called_with(...)`。
-
-这将使我们的测试更健壮、更专注于业务逻辑，而不再依赖于文件系统的具体实现。
+现在，我们终于可以开始解决最初的核心痛点了：**任务 1.4: 插件发现机制**。
+我建议的下一步是：
+1.  **扩展 Fixture**: 在 `tests/fixtures/sample_project` 中添加一个 `plugins` 目录，并修改 `pyproject.toml` 来定义 `entry_points`。
+2.  **编写新的集成测试**: 创建一个测试，断言 `StitcherApp` 能够发现插件并为插件“具象化”的模块生成 `.pyi` 文件（即使该文件在源码中不存在）。
+3.  **实现 `stitcher-config`**: 扩展 `ConfigLoader` 以解析 `entry_points`。
+4.  **实现 `StitcherApp`**: 扩展 `run_from_config` 以处理插件模块。
