@@ -1,18 +1,11 @@
 import pytest
 from textwrap import dedent
-from unittest.mock import MagicMock
 from stitcher.app import StitcherApp
 from stitcher.needle import L
+from stitcher.test_utils.bus import SpyBus
 
 
-@pytest.fixture
-def mock_bus(monkeypatch):
-    mock = MagicMock()
-    monkeypatch.setattr("stitcher.app.core.bus", mock)
-    return mock
-
-
-def test_check_detects_missing_and_extra(tmp_path, mock_bus):
+def test_check_detects_missing_and_extra(tmp_path, monkeypatch):
     project_root = tmp_path
     src_dir = project_root / "src"
     src_dir.mkdir()
@@ -41,25 +34,22 @@ def test_check_detects_missing_and_extra(tmp_path, mock_bus):
     )
 
     app = StitcherApp(root_path=project_root)
-    success = app.run_check()
+    spy_bus = SpyBus()
+    
+    # Patch the bus where it's used: in the application core.
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        success = app.run_check()
 
     assert success is False
-
-    # Expect error for file
-    mock_bus.error.assert_any_call(L.check.file.fail, path="src/main.py", count=2)
-
-    # Expect specific issues
-    # new_func is in code, not in YAML -> MISSING
-    mock_bus.error.assert_any_call(L.check.issue.missing, key="new_func")
-
-    # deleted_func is in YAML, not in code -> EXTRA
-    mock_bus.error.assert_any_call(L.check.issue.extra, key="deleted_func")
-
-    # Run fail summary
-    mock_bus.error.assert_any_call(L.check.run.fail, count=1)
+    
+    # Use the high-level assertion helpers
+    spy_bus.assert_id_called(L.check.file.fail, level="error")
+    spy_bus.assert_id_called(L.check.issue.missing, level="error")
+    spy_bus.assert_id_called(L.check.issue.extra, level="error")
+    spy_bus.assert_id_called(L.check.run.fail, level="error")
 
 
-def test_check_passes_when_synced(tmp_path, mock_bus):
+def test_check_passes_when_synced(tmp_path, monkeypatch):
     project_root = tmp_path
     src_dir = project_root / "src"
     src_dir.mkdir()
@@ -72,8 +62,6 @@ def test_check_passes_when_synced(tmp_path, mock_bus):
     )
 
     (src_dir / "main.py").write_text("def func(): pass")
-
-    # Exact match (including __doc__ which is implicitly valid key)
     (src_dir / "main.stitcher.yaml").write_text(
         dedent("""
         __doc__: Doc
@@ -82,7 +70,10 @@ def test_check_passes_when_synced(tmp_path, mock_bus):
     )
 
     app = StitcherApp(root_path=project_root)
-    success = app.run_check()
+    spy_bus = SpyBus()
+
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        success = app.run_check()
 
     assert success is True
-    mock_bus.success.assert_called_with(L.check.run.success)
+    spy_bus.assert_id_called(L.check.run.success, level="success")

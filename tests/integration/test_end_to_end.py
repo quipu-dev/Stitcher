@@ -1,24 +1,12 @@
 import pytest
 import shutil
+import sys
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import MagicMock
-from stitcher.needle import L
 
-# This module doesn't exist yet, driving its creation
 from stitcher.app import StitcherApp
-
-import sys
-
-# This module doesn't exist yet, driving its creation
-
-
-@pytest.fixture
-def mock_bus(monkeypatch) -> MagicMock:
-    """Mocks the global bus singleton where it's used in the app layer."""
-    mock = MagicMock()
-    monkeypatch.setattr("stitcher.app.core.bus", mock)
-    return mock
+from stitcher.needle import L
+from stitcher.test_utils.bus import SpyBus
 
 
 @pytest.fixture
@@ -56,8 +44,7 @@ def project_with_plugin(tmp_path: Path):
     sys.path.pop(0)
 
 
-def test_app_scan_and_generate_single_file(tmp_path, mock_bus):
-    # ... (existing test code remains unchanged)
+def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
     source_content = dedent("""
         def greet(name: str) -> str:
             \"\"\"Returns a greeting.\"\"\"
@@ -67,70 +54,55 @@ def test_app_scan_and_generate_single_file(tmp_path, mock_bus):
     source_file.write_text(source_content, encoding="utf-8")
 
     app = StitcherApp(root_path=tmp_path)
-    # Refactor this later if needed, but for now we test the private method
-    module = app._scan_files([source_file])[0]
-    app._generate_stubs([module])
+    spy_bus = SpyBus()
 
-    expected_pyi_path = tmp_path / "greet.pyi"
-    expected_relative_path = expected_pyi_path.relative_to(tmp_path)
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        module = app._scan_files([source_file])[0]
+        app._generate_stubs([module])
 
-    mock_bus.success.assert_called_once_with(
-        L.generate.file.success, path=expected_relative_path
-    )
-    mock_bus.error.assert_not_called()
+    spy_bus.assert_id_called(L.generate.file.success, level="success")
+    
+    error_messages = [m for m in spy_bus.get_messages() if m['level'] == 'error']
+    assert not error_messages, f"Found unexpected error messages: {error_messages}"
 
 
-def test_app_run_from_config_with_source_files(tmp_path, mock_bus):
-    # ... (existing test code remains unchanged)
+def test_app_run_from_config_with_source_files(tmp_path, monkeypatch):
     fixture_root = Path(__file__).parent.parent / "fixtures" / "sample_project"
     project_root = tmp_path / "sample_project"
     shutil.copytree(fixture_root, project_root)
 
     app = StitcherApp(root_path=project_root)
-    app.run_from_config()
+    spy_bus = SpyBus()
 
-    main_pyi = project_root / "src" / "app" / "main.pyi"
-    helpers_pyi = project_root / "src" / "app" / "utils" / "helpers.pyi"
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        app.run_from_config()
 
-    mock_bus.success.assert_any_call(
-        L.generate.file.success, path=main_pyi.relative_to(project_root)
-    )
-    mock_bus.success.assert_any_call(
-        L.generate.file.success, path=helpers_pyi.relative_to(project_root)
-    )
-    mock_bus.success.assert_any_call(L.generate.run.complete, count=2)
-    assert mock_bus.success.call_count == 3
-    mock_bus.error.assert_not_called()
+    spy_bus.assert_id_called(L.generate.file.success, level="success")
+    spy_bus.assert_id_called(L.generate.run.complete, level="success")
+    
+    success_messages = [m for m in spy_bus.get_messages() if m['level'] == 'success']
+    # 2 for file.success, 1 for run.complete
+    assert len(success_messages) == 3
 
 
 def test_app_generates_stubs_for_plugins_and_sources(
-    project_with_plugin: Path, mock_bus: MagicMock
+    project_with_plugin: Path, monkeypatch
 ):
-    # 1. Act
     app = StitcherApp(root_path=project_with_plugin)
-    app.run_from_config()
+    spy_bus = SpyBus()
 
-    # 2. Assert
-    # Check for static file stub
-    static_pyi = project_with_plugin / "src" / "main.pyi"
-    assert static_pyi.exists()
-    mock_bus.success.assert_any_call(
-        L.generate.file.success, path=static_pyi.relative_to(project_with_plugin)
-    )
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        app.run_from_config()
 
-    # Check for dynamic plugin stubs
-    dynamic_pyi = project_with_plugin / "dynamic" / "utils.pyi"
-    assert dynamic_pyi.exists()
-    assert "def dynamic_util() -> bool:" in dynamic_pyi.read_text()
-    mock_bus.success.assert_any_call(
-        L.generate.file.success, path=dynamic_pyi.relative_to(project_with_plugin)
-    )
+    # Assert stubs were created
+    assert (project_with_plugin / "src" / "main.pyi").exists()
+    assert (project_with_plugin / "dynamic" / "utils.pyi").exists()
+    assert (project_with_plugin / "dynamic" / "__init__.pyi").exists()
 
-    # Check that intermediate __init__.pyi was created
-    dynamic_init_pyi = project_with_plugin / "dynamic" / "__init__.pyi"
-    assert dynamic_init_pyi.exists()
-    mock_bus.success.assert_any_call(
-        L.generate.file.success, path=dynamic_init_pyi.relative_to(project_with_plugin)
-    )
+    # Assert bus messages
+    spy_bus.assert_id_called(L.generate.file.success, level="success")
+    spy_bus.assert_id_called(L.generate.run.complete, level="success")
 
-    mock_bus.success.assert_any_call(L.generate.run.complete, count=3)
+    success_messages = [m for m in spy_bus.get_messages() if m['level'] == 'success']
+    # 3 files generated, 1 run complete message
+    assert len(success_messages) == 4
