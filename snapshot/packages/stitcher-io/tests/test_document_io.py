@@ -46,3 +46,22 @@ def test_yaml_adapter_handles_malformed(tmp_path: Path):
     data = adapter.load(file_path)
     # Current implementation swallows errors and returns empty dict
     assert data == {}
+
+
+def test_yaml_adapter_multiline_format(tmp_path: Path):
+    """
+    Verify that multiline strings are saved using Literal Block Style (|).
+    """
+    adapter = YamlAdapter()
+    file_path = tmp_path / "multiline.yaml"
+    data = {"key": "Line 1\nLine 2"}
+
+    adapter.save(file_path, data)
+
+    content = file_path.read_text(encoding="utf-8")
+    # Check for Literal Block Style indicator
+    assert "key: |" in content
+    # Check that content is indented and NOT escaped
+    assert "  Line 1" in content
+    assert "  Line 2" in content
+    assert "\\n" not in content
