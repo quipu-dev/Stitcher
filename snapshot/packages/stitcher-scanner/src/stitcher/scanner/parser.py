@@ -107,9 +107,20 @@ class IRBuildingVisitor(cst.CSTVisitor):
             base_code = dummy_module.code_for_node(base.value).strip()
             bases.append(base_code)
 
-        # 4. Create ClassDef object and push to stack
+        # 4. Extract Decorators
+        decorators = []
+        for dec in node.decorators:
+            dec_code = dummy_module.code_for_node(dec.decorator).strip()
+            decorators.append(dec_code)
+
+        # 5. Create ClassDef object and push to stack
         cls_def = ClassDef(
-            name=class_name, bases=bases, docstring=docstring, methods=[], attributes=[]
+            name=class_name,
+            bases=bases,
+            decorators=decorators,
+            docstring=docstring,
+            methods=[],
+            attributes=[],
         )
         self._class_stack.append(cls_def)
 

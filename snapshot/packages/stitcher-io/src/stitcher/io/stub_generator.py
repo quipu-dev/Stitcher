@@ -171,6 +171,10 @@ class StubGenerator:
         indent = self._indent(level)
         lines = []
 
+        # Decorators
+        for dec in cls.decorators:
+            lines.append(f"{indent}@{dec}")
+
         # Class Def
         bases_str = ""
         if cls.bases:

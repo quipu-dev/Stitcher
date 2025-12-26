@@ -84,6 +84,7 @@ class ClassDef:
 
     name: str
     bases: List[str] = field(default_factory=list)
+    decorators: List[str] = field(default_factory=list)
     docstring: Optional[str] = None
     attributes: List[Attribute] = field(default_factory=list)
     methods: List[FunctionDef] = field(default_factory=list)
