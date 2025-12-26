@@ -301,8 +301,20 @@ def _enrich_typing_imports(module: ModuleDef):
     'typing' imports.
     """
     TYPING_SYMBOLS = {
-        "List", "Dict", "Tuple", "Set", "Optional", "Union", "Any",
-        "Callable", "Sequence", "Iterable", "Type", "Final", "ClassVar", "Mapping",
+        "List",
+        "Dict",
+        "Tuple",
+        "Set",
+        "Optional",
+        "Union",
+        "Any",
+        "Callable",
+        "Sequence",
+        "Iterable",
+        "Type",
+        "Final",
+        "ClassVar",
+        "Mapping",
     }
 
     required_symbols = set()
@@ -317,13 +329,13 @@ def _enrich_typing_imports(module: ModuleDef):
         for symbol in TYPING_SYMBOLS:
             if re.search(rf"\b{symbol}\b", ann):
                 required_symbols.add(symbol)
-    
+
     if not required_symbols:
         return
 
     # 3. Add imports for required symbols that are not already imported.
     existing_imports_text = "\n".join(module.imports)
-    
+
     for symbol in sorted(list(required_symbols)):
         # Heuristic: if the symbol appears as a word in the imports, assume it's covered.
         if not re.search(rf"\b{symbol}\b", existing_imports_text):

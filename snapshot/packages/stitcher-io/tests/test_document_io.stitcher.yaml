@@ -1,0 +1,3 @@
+"test_yaml_adapter_block_format_consistency": |-
+  Verify that all strings (multiline or single-line) are saved
+  using Literal Block Style (|-) for consistency.

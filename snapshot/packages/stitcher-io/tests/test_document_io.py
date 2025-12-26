@@ -55,19 +55,16 @@ def test_yaml_adapter_block_format_consistency(tmp_path: Path):
     """
     adapter = YamlAdapter()
     file_path = tmp_path / "docs.yaml"
-    data = {
-        "multi": "Line 1\nLine 2",
-        "single": "Just one line"
-    }
+    data = {"multi": "Line 1\nLine 2", "single": "Just one line"}
 
     adapter.save(file_path, data)
 
     content = file_path.read_text(encoding="utf-8")
-    
+
     # Both should use block style with strip chomping (|-) and quoted keys
     assert '"multi": |-' in content
     assert '"single": |-' in content
-    
+
     # Check indentation
     assert "  Line 1" in content
     assert "  Just one line" in content

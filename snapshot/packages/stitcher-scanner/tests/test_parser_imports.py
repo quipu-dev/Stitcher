@@ -97,5 +97,5 @@ def test_auto_inject_any_for_unannotated_attribute():
     MY_CONSTANT = 123
     """)
     module = parse_source_code(source)
-    
+
     assert "from typing import Any" in module.imports

@@ -1,0 +1,11 @@
+"PatchedMessageBus": |-
+  An override of MessageBus to intercept calls before rendering.
+"SpyBus": |-
+  A test utility to spy on messages sent via the global bus.
+"SpyBus.assert_id_called": |-
+  Asserts that a message with the given ID was sent.
+"SpyBus.patch": |-
+  A context manager that patches a target module's `bus` instance
+  with this spy instance.
+"SpyRenderer": |-
+  A renderer that captures structured message data.

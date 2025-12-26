@@ -1,0 +1,8 @@
+"create_func": |-
+  Helper to create a FunctionDef.
+"test_fingerprint_stability": |-
+  Test that compute_fingerprint is deterministic and sensitive to changes.
+"test_manager_check_detects_mismatch": |-
+  Test that check_signatures logic correctly identifies differences.
+"test_manager_save_and_load": |-
+  Test that SignatureManager correctly persists fingerprints to JSON.

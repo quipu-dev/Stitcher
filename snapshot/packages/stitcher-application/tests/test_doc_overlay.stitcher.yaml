@@ -1,0 +1,4 @@
+"test_apply_docs_overlay": |-
+  Verifies that external docs overwrite source docs in the IR.
+"test_apply_docs_partial_overlay": |-
+  Verifies that if a key is missing in YAML, source doc is preserved.

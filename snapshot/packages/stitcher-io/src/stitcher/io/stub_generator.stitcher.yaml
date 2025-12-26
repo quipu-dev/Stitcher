@@ -1,0 +1,2 @@
+"StubGenerator.generate": |-
+  Generates the content of a .pyi file from a ModuleDef IR.

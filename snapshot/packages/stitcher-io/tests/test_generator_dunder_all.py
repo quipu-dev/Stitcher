@@ -9,14 +9,14 @@ def test_generate_with_dunder_all():
         imports=["import os"],
         dunder_all='["func"]',
     )
-    
+
     gen = StubGenerator()
     output = gen.generate(module)
-    
+
     expected = dedent("""
     import os
     
     __all__ = ["func"]
     """)
-    
+
     assert expected.strip() in output.strip()

@@ -1,0 +1,6 @@
+"_find_plugins": |-
+  Scans the entire workspace for stitcher plugins in pyproject.toml files.
+"_find_pyproject_toml": |-
+  Traverse upwards to find pyproject.toml.
+"load_config_from_path": |-
+  Finds and loads stitcher config from pyproject.toml, and discovers plugins.

@@ -1,0 +1,24 @@
+"DocumentManager": |-
+  Service responsible for managing documentation assets.
+  Handles extraction of docstrings from IR and persistence via adapters.
+"DocumentManager._extract_all_keys": |-
+  Extracts all addressable FQNs from the module IR.
+"DocumentManager._extract_from_class": |-
+  Recursively extracts docstrings from a class and its methods.
+"DocumentManager._extract_from_function": |-
+  Recursively extracts docstrings from a function.
+"DocumentManager.apply_docs_to_module": |-
+  Loads external docs and applies them to the ModuleDef IR in-place.
+  Prioritizes external docs over existing source docs.
+"DocumentManager.check_module": |-
+  Compares module structure against external docs.
+  Returns a dict of issues: {'missing': set(...), 'extra': set(...)}
+"DocumentManager.flatten_module_docs": |-
+  Converts a ModuleDef IR into a flat dictionary of docstrings.
+  Keys are relative FQNs (e.g. "MyClass.method").
+"DocumentManager.load_docs_for_module": |-
+  Loads documentation from the corresponding .stitcher.yaml file.
+  Returns empty dict if file does not exist.
+"DocumentManager.save_docs_for_module": |-
+  Extracts docs from the module and saves them to a sidecar .stitcher.yaml file.
+  Returns the path to the saved file.

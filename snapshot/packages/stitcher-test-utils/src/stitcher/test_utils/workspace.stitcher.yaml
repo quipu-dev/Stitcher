@@ -1,0 +1,12 @@
+"WorkspaceFactory": |-
+  A test utility providing a fluent API to build virtual project workspaces.
+"WorkspaceFactory.build": |-
+  Creates all specified files and directories in the workspace.
+"WorkspaceFactory.with_config": |-
+  Adds/Updates [tool.stitcher] section in pyproject.toml.
+"WorkspaceFactory.with_docs": |-
+  Adds a .stitcher.yaml documentation file.
+"WorkspaceFactory.with_entry_points": |-
+  Adds/Updates [project.entry-points] section in pyproject.toml.
+"WorkspaceFactory.with_source": |-
+  Adds a Python source file.

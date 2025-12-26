@@ -1,0 +1,12 @@
+"Needle": |-
+  The runtime kernel for semantic addressing.
+"Needle._find_project_root": |-
+  Finds the project root by searching upwards for common markers.
+  Search priority: pyproject.toml -> .git
+"Needle.get": |-
+  Resolves a semantic pointer to a string value with graceful fallback.
+
+  Lookup Order:
+  1. Target Language
+  2. Default Language (en)
+  3. Identity (the key itself)
