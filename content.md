@@ -1,166 +1,190 @@
-好的，我们来执行路线图的第二阶段。
+好的，我们来完成应用层的迁移。这标志着 `stitcher-needle` 的核心思想正式在业务代码中落地。
 
-我将生成一个计划，将 `stitcher-needle` 集成到 `stitcher-common` 中。这会建立一个统一的 `L` 对象导入点，并升级消息总线以无缝处理新的 `SemanticPointer` 类型。
+我将生成一个计划，使用 `patch_file` 精确地替换所有硬编码的消息 ID，并添加必要的 `L` 对象导入。
 
-## [WIP] feat: 将 stitcher-needle 集成到 stitcher-common
+## [WIP] feat: 迁移应用与 CLI 层至 SemanticPointer (L)
 
 ### 用户需求
-根据路线图，现在需要将新创建的 `stitcher-needle` 包集成到 `stitcher-common` 中。核心任务是建立一个统一的导入点 (`from stitcher.common import L`)，并修改 `MessageBus` 使其能够接受 `SemanticPointer` 对象作为消息 ID。
+根据 `rg` 的输出结果，将 `stitcher-application` 和 `stitcher-cli` 中所有对 `bus` 的调用，从使用硬编码的字符串消息 ID，迁移为使用 `L` 语义指针。
 
 ### 评论
-这是架构整合的关键一步。通过让 `stitcher-common` 成为 `L` 对象的唯一“官方”导出者，我们为整个项目建立了一个清晰、一致的语义寻址入口。修改 `MessageBus` 是对“在边界处显式转换”设计原则的第一次实践，它以最小的侵入性将指针的便利性与现有系统的稳定性结合起来。
+这是一个里程碑式的重构。虽然代码改动量不大，但它在概念上完成了从“基于字符串的脆弱约定”到“基于对象的类型安全引用”的转变。这将极大地提升开发者体验（DX），并为未来基于 `L` 对象的静态分析和自动补全打下基础。
 
 ### 目标
-1.  在 `stitcher-common` 的 `pyproject.toml` 中添加对 `stitcher-needle` 的依赖。
-2.  从 `stitcher.common` 的顶层 `__init__.py` 中重新导出 `L` 对象。
-3.  更新 `MessageBus` 的公共方法 (`info`, `success` 等)，使其类型提示接受 `Union[str, SemanticPointer]`。
-4.  在 `MessageBus` 的方法内部，将传入的 `SemanticPointer` 安全地转换为字符串，再传递给下游组件。
+1.  在 `stitcher.cli.main` 中，将 `bus.info("...")` 调用替换为 `bus.info(L....)`。
+2.  在 `stitcher.app.core` 中，将所有 `bus.error`, `bus.success`, `bus.warning` 调用替换为使用 `L` 对象。
+3.  在上述两个文件中添加 `from stitcher.common import L` 的导入语句。
 
 ### 基本原理
-我们将 `stitcher-needle` 添加为 `stitcher-common` 的工作区依赖，以利用 `uv` 的项目内包解析能力。在 `MessageBus` 的公共接口层进行 `str()` 转换是最佳实践，因为它将适配逻辑限制在单一入口点，避免了对 `Renderer` 协议、`MessageStore` 等内部组件的连锁修改，保持了内部 API 的纯粹和稳定。
+我们将使用多个精确的 `patch_file` 操作来执行替换，确保每次修改都具有足够的上下文，避免误操作。为每个文件添加导入是完成迁移的必要步骤，使其能够正确解析 `L` 对象。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/common #comp/runtime #scope/api #scope/core #ai/instruct #task/domain/runtime #task/object/needle-kernel #task/action/implementation #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/cli #comp/application #scope/core #scope/dx #ai/instruct #task/domain/runtime #task/object/needle-kernel #task/action/implementation #task/state/continue
 
 ---
 ### Script
 
-#### Acts 1: 更新 `stitcher-common` 的依赖
+#### Acts 1: 更新 `stitcher-cli`
 
-首先，我们在 `pyproject.toml` 中声明 `stitcher-common` 对 `stitcher-needle` 的依赖。
-
-~~~~~act
-patch_file
-packages/stitcher-common/pyproject.toml
-~~~~~
-~~~~~old
-[project]
-name = "stitcher-common"
-version = "0.1.0"
-description = "Common utilities and protocols for Stitcher."
-requires-python = ">=3.10"
-dependencies = []
-
-[tool.hatch.build.targets.wheel]
-~~~~~
-~~~~~new
-[project]
-name = "stitcher-common"
-version = "0.1.0"
-description = "Common utilities and protocols for Stitcher."
-requires-python = ">=3.10"
-dependencies = [
-    "stitcher-needle",
-]
-
-[tool.hatch.build.targets.wheel]
-~~~~~
+首先，我们修改 CLI 入口文件，添加导入并替换消息 ID。
 
 ~~~~~act
 patch_file
-packages/stitcher-common/pyproject.toml
+packages/stitcher-cli/src/stitcher/cli/main.py
 ~~~~~
-~~~~~old
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
-~~~~~
-~~~~~new
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
-
-[tool.uv.sources]
-stitcher-needle = { workspace = true }
-~~~~~
-
-#### Acts 2: 从 `stitcher-common` 导出 `L`
-
-我们在 `stitcher.common` 的顶层 `__init__.py` 中重新导出 `L`，并将其加入 `__all__` 列表。
-
-~~~~~act
-patch_file
-packages/stitcher-common/src/stitcher/common/__init__.py
-~~~~~
-~~~~~old
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
-# Make bus easily accessible
-from .messaging import bus
-~~~~~
-~~~~~new
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
-# Make core singletons easily accessible
-from .messaging import bus
-from stitcher.needle import L
-
-__all__ = ["bus", "L"]
-~~~~~
-
-#### Acts 3: 升级 `MessageBus` 以接受 `SemanticPointer`
-
-最后，我们修改 `MessageBus` 的公共方法，使其能够透明地处理 `SemanticPointer` 对象。
-
-~~~~~act
-patch_file
-packages/stitcher-common/src/stitcher/common/messaging/bus.py
-~~~~~
-~~~~~old
-import json
-import logging
+~~~~~python.old
 from pathlib import Path
-from typing import Any, Dict, Optional
+import typer
 
-from .protocols import Renderer
+from stitcher.app import StitcherApp
+from stitcher.common import bus
+from .rendering import CliRenderer
 ~~~~~
-~~~~~new
-import json
-import logging
+~~~~~python.new
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+import typer
 
-from stitcher.needle import SemanticPointer
-from .protocols import Renderer
+from stitcher.app import StitcherApp
+from stitcher.common import L, bus
+from .rendering import CliRenderer
 ~~~~~
 
 ~~~~~act
 patch_file
-packages/stitcher-common/src/stitcher/common/messaging/bus.py
+packages/stitcher-cli/src/stitcher/cli/main.py
 ~~~~~
-~~~~~old
-    def _render(self, level: str, msg_id: str, **kwargs: Any) -> None:
-        if not self._renderer:
-            # Silently fail if no renderer is attached, or log to a fallback logger
-            return
-        self._renderer.render(msg_id, level, **kwargs)
+~~~~~python.old
+@app.command()
+def init():
+    """Initialize Stitcher in the current project."""
+    bus.info("cli.command.not_implemented", command="init")
 
-    def info(self, msg_id: str, **kwargs: Any) -> None:
-        self._render("info", msg_id, **kwargs)
-
-    def success(self, msg_id: str, **kwargs: Any) -> None:
-        self._render("success", msg_id, **kwargs)
-        
-    def warning(self, msg_id: str, **kwargs: Any) -> None:
-        self._render("warning", msg_id, **kwargs)
-
-    def error(self, msg_id: str, **kwargs: Any) -> None:
-        self._render("error", msg_id, **kwargs)
+@app.command()
+def check():
+    """Verify consistency between code and docs."""
+    bus.info("cli.command.not_implemented", command="check")
 ~~~~~
-~~~~~new
-    def _render(self, level: str, msg_id: str, **kwargs: Any) -> None:
-        if not self._renderer:
-            # Silently fail if no renderer is attached, or log to a fallback logger
-            return
-        self._renderer.render(msg_id, level, **kwargs)
+~~~~~python.new
+@app.command()
+def init():
+    """Initialize Stitcher in the current project."""
+    bus.info(L.cli.command.not_implemented, command="init")
 
-    def info(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
-        self._render("info", str(msg_id), **kwargs)
+@app.command()
+def check():
+    """Verify consistency between code and docs."""
+    bus.info(L.cli.command.not_implemented, command="check")
+~~~~~
 
-    def success(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
-        self._render("success", str(msg_id), **kwargs)
+#### Acts 2: 更新 `stitcher-application`
+
+接着，我们对应用核心逻辑进行相同的迁移操作。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+from stitcher.io import StubGenerator
+from stitcher.spec import ModuleDef, FunctionDef
+from stitcher.common import bus
+from stitcher.config import load_config_from_path
+~~~~~
+~~~~~python.new
+from stitcher.io import StubGenerator
+from stitcher.spec import ModuleDef, FunctionDef
+from stitcher.common import L, bus
+from stitcher.config import load_config_from_path
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+                module_def = parse_source_code(content, file_path=relative_path)
+                modules.append(module_def)
+            except Exception as e:
+                bus.error("error.generic", error=e)
+        return modules
+~~~~~
+~~~~~python.new
+                module_def = parse_source_code(content, file_path=relative_path)
+                modules.append(module_def)
+            except Exception as e:
+                bus.error(L.error.generic, error=e)
+        return modules
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+                virtual_modules[func_path].functions.append(func_def)
+
+            except InspectionError as e:
+                bus.error("error.plugin.inspection", error=e)
+
+        return list(virtual_modules.values())
+~~~~~
+~~~~~python.new
+                virtual_modules[func_path].functions.append(func_def)
+
+            except InspectionError as e:
+                bus.error(L.error.plugin.inspection, error=e)
+
+        return list(virtual_modules.values())
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+            output_path.write_text(pyi_content, encoding="utf-8")
+            
+            relative_path = output_path.relative_to(self.root_path)
+            bus.success("generate.file.success", path=relative_path)
+            generated_files.append(output_path)
+        return generated_files
+~~~~~
+~~~~~python.new
+            output_path.write_text(pyi_content, encoding="utf-8")
+            
+            relative_path = output_path.relative_to(self.root_path)
+            bus.success(L.generate.file.success, path=relative_path)
+            generated_files.append(output_path)
+        return generated_files
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+        all_modules = source_modules + plugin_modules
+        if not all_modules:
+            bus.warning("warning.no_files_or_plugins_found")
+            return []
+
+        generated_files = self._generate_stubs(all_modules)
         
-    def warning(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
-        self._render("warning", str(msg_id), **kwargs)
+        if generated_files:
+            bus.success("generate.run.complete", count=len(generated_files))
 
-    def error(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
-        self._render("error", str(msg_id), **kwargs)
+        return generated_files
+~~~~~
+~~~~~python.new
+        all_modules = source_modules + plugin_modules
+        if not all_modules:
+            bus.warning(L.warning.no_files_or_plugins_found)
+            return []
+
+        generated_files = self._generate_stubs(all_modules)
+        
+        if generated_files:
+            bus.success(L.generate.run.complete, count=len(generated_files))
+
+        return generated_files
 ~~~~~

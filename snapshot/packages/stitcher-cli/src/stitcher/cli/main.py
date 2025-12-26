@@ -2,7 +2,7 @@ from pathlib import Path
 import typer
 
 from stitcher.app import StitcherApp
-from stitcher.common import bus
+from stitcher.common import L, bus
 from .rendering import CliRenderer
 
 app = typer.Typer(
@@ -27,12 +27,12 @@ def generate():
 @app.command()
 def init():
     """Initialize Stitcher in the current project."""
-    bus.info("cli.command.not_implemented", command="init")
+    bus.info(L.cli.command.not_implemented, command="init")
 
 @app.command()
 def check():
     """Verify consistency between code and docs."""
-    bus.info("cli.command.not_implemented", command="check")
+    bus.info(L.cli.command.not_implemented, command="check")
 
 if __name__ == "__main__":
     app()
