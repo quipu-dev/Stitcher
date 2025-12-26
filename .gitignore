@@ -3,6 +3,10 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Stitcher generated artifacts
+**/*.pyi
+.stitcher/signatures/
+
 # C extensions
 *.so
 

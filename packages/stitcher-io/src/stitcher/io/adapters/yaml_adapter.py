@@ -48,12 +48,25 @@ class YamlAdapter(DocumentAdapter):
         # Sort keys for deterministic output
         sorted_data = dict(sorted(data.items()))
 
+        # Custom Dumper to enforce literal block style for multiline strings
+        class MultilineDumper(yaml.SafeDumper):
+            pass
+
+        def str_presenter(dumper, data):
+            if "\n" in data:
+                return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+            return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+        MultilineDumper.add_representer(str, str_presenter)
+
         with path.open("w", encoding="utf-8") as f:
             # allow_unicode=True is essential for i18n
             # default_flow_style=False ensures block style (easier to read)
-            yaml.safe_dump(
+            # We use yaml.dump with our custom Dumper which inherits from SafeDumper
+            yaml.dump(
                 sorted_data,
                 f,
+                Dumper=MultilineDumper,
                 allow_unicode=True,
                 default_flow_style=False,
                 sort_keys=False,  # We already sorted

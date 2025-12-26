@@ -20,6 +20,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
         self.classes: List[ClassDef] = []
         self.attributes: List[Attribute] = []
         self.imports: List[str] = []
+        self.dunder_all: Optional[str] = None
 
         # Scope management: A stack of currently active ClassDefs being built.
         # If stack is empty, we are at module level.
@@ -51,13 +52,19 @@ class IRBuildingVisitor(cst.CSTVisitor):
             return False
 
         name = node.target.value
-        annotation = self._dummy_module.code_for_node(
-            node.annotation.annotation
-        ).strip()
-
         value = None
         if node.value:
             value = self._dummy_module.code_for_node(node.value).strip()
+
+        # Special handling for __all__
+        if name == "__all__" and not self._class_stack:
+            if value:
+                self.dunder_all = value
+            return False
+
+        annotation = self._dummy_module.code_for_node(
+            node.annotation.annotation
+        ).strip()
 
         self._add_attribute(Attribute(name=name, annotation=annotation, value=value))
         return False
@@ -74,6 +81,11 @@ class IRBuildingVisitor(cst.CSTVisitor):
 
         name = target.value
         value = self._dummy_module.code_for_node(node.value).strip()
+
+        # Special handling for __all__
+        if name == "__all__" and not self._class_stack:
+            self.dunder_all = value
+            return False
 
         self._add_attribute(Attribute(name=name, annotation=None, value=value))
         return False
@@ -273,59 +285,49 @@ def _collect_annotations(module: ModuleDef) -> Set[str]:
     return annotations
 
 
+def _has_unannotated_attributes(module: ModuleDef) -> bool:
+    """Check if any attribute in the module IR lacks an annotation."""
+    if any(attr.annotation is None for attr in module.attributes):
+        return True
+    for cls in module.classes:
+        if any(attr.annotation is None for attr in cls.attributes):
+            return True
+    return False
+
+
 def _enrich_typing_imports(module: ModuleDef):
     """
-    Scans used annotations and injects missing 'typing' imports.
+    Scans used annotations and module structure, then injects necessary
+    'typing' imports.
     """
-    # Common symbols from 'typing' that are often used without quotes
-    # We deliberately exclude generic 'List'/'Dict' if the user imports
-    # standard collections, but for safety in .pyi (which often supports older Pythons),
-    # adding them from typing is usually safe if missing.
     TYPING_SYMBOLS = {
-        "List",
-        "Dict",
-        "Tuple",
-        "Set",
-        "Optional",
-        "Union",
-        "Any",
-        "Callable",
-        "Sequence",
-        "Iterable",
-        "Type",
-        "Final",
-        "ClassVar",
-        "Mapping",
+        "List", "Dict", "Tuple", "Set", "Optional", "Union", "Any",
+        "Callable", "Sequence", "Iterable", "Type", "Final", "ClassVar", "Mapping",
     }
 
+    required_symbols = set()
+
+    # 1. Proactively add 'Any' if generator will need it for unannotated attributes.
+    if _has_unannotated_attributes(module):
+        required_symbols.add("Any")
+
+    # 2. Reactively find symbols used in explicit annotations.
     annotations = _collect_annotations(module)
-    if not annotations:
+    for ann in annotations:
+        for symbol in TYPING_SYMBOLS:
+            if re.search(rf"\b{symbol}\b", ann):
+                required_symbols.add(symbol)
+    
+    if not required_symbols:
         return
 
-    # A simple combined string of all current imports for quick check
+    # 3. Add imports for required symbols that are not already imported.
     existing_imports_text = "\n".join(module.imports)
-
-    missing_symbols = set()
-
-    for ann in annotations:
-        # Check for each symbol
-        for symbol in TYPING_SYMBOLS:
-            # We use regex word boundary to avoid partial matches (e.g. matching 'List' in 'MyList')
-            if re.search(rf"\b{symbol}\b", ann):
-                # Check if it's already imported
-                # This is a heuristic: if "List" appears in imports text, assume it's covered.
-                # It handles "from typing import List" and "import typing" (if user wrote typing.List)
-                # But wait, if user wrote "typing.List", then 'List' matches \bList\b.
-                # If existing imports has "import typing", we shouldn't add "from typing import List"?
-                # Actually, if they wrote "typing.List", the annotation string is "typing.List".
-                # If we just add "from typing import List", it doesn't hurt.
-                # But if they wrote "List" and have NO import, we MUST add it.
-
-                if not re.search(rf"\b{symbol}\b", existing_imports_text):
-                    missing_symbols.add(symbol)
-
-    for symbol in sorted(missing_symbols):
-        module.imports.append(f"from typing import {symbol}")
+    
+    for symbol in sorted(list(required_symbols)):
+        # Heuristic: if the symbol appears as a word in the imports, assume it's covered.
+        if not re.search(rf"\b{symbol}\b", existing_imports_text):
+            module.imports.append(f"from typing import {symbol}")
 
 
 def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
@@ -350,6 +352,7 @@ def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
         classes=visitor.classes,
         attributes=visitor.attributes,
         imports=visitor.imports,
+        dunder_all=visitor.dunder_all,
     )
 
     _enrich_typing_imports(module_def)

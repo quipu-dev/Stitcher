@@ -89,3 +89,13 @@ def test_detect_typing_in_attributes_and_returns():
     assert "from typing import Dict" in combined
     assert "from typing import Any" in combined
     assert "from typing import Union" in combined
+
+
+def test_auto_inject_any_for_unannotated_attribute():
+    """If an attribute has no type, generator defaults to 'Any', so we need the import."""
+    source = dedent("""
+    MY_CONSTANT = 123
+    """)
+    module = parse_source_code(source)
+    
+    assert "from typing import Any" in module.imports

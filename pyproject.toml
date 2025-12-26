@@ -37,3 +37,21 @@ addopts = "-ra --cov=stitcher --cov-report=term-missing"
 testpaths = ["tests", "packages"]
 norecursedirs = ["tests/fixtures"]
 pythonpath = ["packages/stitcher-spec/src", "packages/stitcher-common/src", "packages/stitcher-scanner/src", "packages/stitcher-io/src", "packages/stitcher-config/src", "packages/stitcher-application/src", "packages/stitcher-cli/src", "packages/stitcher-needle/src"]
+
+[tool.stitcher]
+scan_paths = ["packages"]
+
+[tool.pyright]
+include = ["packages", "tests"]
+# 显式告知 IDE 所有子包的源码位置，解决 Monorepo 解析问题
+extraPaths = [
+    "packages/stitcher-spec/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-scanner/src",
+    "packages/stitcher-io/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-application/src",
+    "packages/stitcher-cli/src",
+    "packages/stitcher-needle/src",
+    "packages/stitcher-test-utils/src",
+]

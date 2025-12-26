@@ -30,6 +30,11 @@ class StubGenerator:
                 lines.append(imp)
             lines.append("")
 
+        # 2.5. __all__
+        if module.dunder_all:
+            lines.append(f"__all__ = {module.dunder_all}")
+            lines.append("")
+
         # 3. Module Attributes
         for attr in module.attributes:
             lines.append(self._generate_attribute(attr, 0))

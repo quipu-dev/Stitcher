@@ -10,7 +10,7 @@ requires-python = ">=3.10"
 dependencies = [
     "stitcher-application",
     "stitcher-needle",
-    "typer[all]",
+    "typer",
 ]
 
 [project.scripts]

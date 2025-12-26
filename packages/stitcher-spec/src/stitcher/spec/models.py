@@ -104,3 +104,5 @@ class ModuleDef:
     # or recreate them based on used types.
     # For MVP, we might treat imports as raw lines or simple structures.
     imports: List[str] = field(default_factory=list)
+    # The raw string representation of the __all__ assignment value (e.g. '["a", "b"]')
+    dunder_all: Optional[str] = None
