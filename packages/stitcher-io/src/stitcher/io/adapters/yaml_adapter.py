@@ -53,9 +53,9 @@ class YamlAdapter(DocumentAdapter):
             pass
 
         def str_presenter(dumper, data):
-            if "\n" in data:
-                return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
-            return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+            # Force literal block style for ALL strings to ensure consistency
+            # and readability for documentation assets.
+            return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
 
         MultilineDumper.add_representer(str, str_presenter)
 

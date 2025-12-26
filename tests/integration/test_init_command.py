@@ -29,7 +29,11 @@ def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch):
     # 3. Assert
     expected_yaml = project_root / "src/main.stitcher.yaml"
     assert expected_yaml in created_files
-    assert "my_func: This is a docstring." in expected_yaml.read_text()
+    
+    content = expected_yaml.read_text()
+    # Check for block style with quoted key
+    assert '"my_func": |-' in content
+    assert "  This is a docstring." in content
 
     spy_bus.assert_id_called(L.init.file.created, level="success")
     spy_bus.assert_id_called(L.init.run.complete, level="success")
