@@ -1,0 +1,8 @@
+"test_parse_attributes": |-
+  Test parsing of module-level and class-level attributes.
+"test_parse_complex_types": |-
+  Test parsing of complex type annotations.
+"test_parse_decorators": |-
+  Test parsing of function and method decorators.
+"test_parse_special_methods": |-
+  Test identification of static and class methods.

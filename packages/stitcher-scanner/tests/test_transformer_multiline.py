@@ -3,11 +3,6 @@ from stitcher.scanner.transformer import inject_docstrings
 
 
 def test_inject_preserves_multiline_indentation():
-    """
-    Verifies that when injecting a multi-line docstring, all lines
-    are correctly indented. This reproduces a bug where subsequent
-    lines lost their indentation.
-    """
     # 1. Source code as if after 'strip' command (no docstring)
     source_code_stripped = dedent("""
     def my_func(arg1: int):
@@ -37,10 +32,6 @@ def test_inject_preserves_multiline_indentation():
 
 
 def test_inject_preserves_indentation_nested_class():
-    """
-    Verifies that indentation is correctly calculated for nested structures
-    (e.g., a method inside a class).
-    """
     source_code = dedent("""
     class MyClass:
         def my_method(self):

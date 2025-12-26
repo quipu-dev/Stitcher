@@ -1,0 +1,10 @@
+"InjectorTransformer._create_docstring_node": |-
+  Creates a properly quoted docstring node.
+"StripperTransformer._is_docstring": |-
+  Check if a statement is a standalone string expression (docstring).
+"StripperTransformer._process_body": |-
+  Removes docstring from body. If body becomes empty, inserts 'pass'.
+"inject_docstrings": |-
+  Injects docstrings from the dictionary into the source code.
+"strip_docstrings": |-
+  Removes all docstrings from the source code.

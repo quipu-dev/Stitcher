@@ -1,0 +1,24 @@
+"StitcherApp._generate_stubs": |-
+  Generates .pyi files from a list of ModuleDefs.
+"StitcherApp._get_files_from_config": |-
+  Helper to discover all source files based on config.
+"StitcherApp._process_plugins": |-
+  Parses plugins and builds a virtual ModuleDef tree.
+"StitcherApp._scan_files": |-
+  Parses a list of source files into ModuleDef IRs.
+"StitcherApp.run_check": |-
+  Checks consistency between source code and documentation files.
+  Returns True if passed, False if critical issues found.
+"StitcherApp.run_eject": |-
+  Injects docstrings from YAML files back into source code.
+"StitcherApp.run_from_config": |-
+  Loads config, discovers files and plugins, and generates all stubs.
+"StitcherApp.run_hydrate": |-
+  Extracts docstrings from source code and merges them into YAML files.
+  - strip: Removes docstrings from source after successful hydration.
+  - force: Code-first conflict resolution.
+  - reconcile: YAML-first conflict resolution.
+"StitcherApp.run_init": |-
+  Scans source files and extracts docstrings into external .stitcher.yaml files.
+"StitcherApp.run_strip": |-
+  Strips docstrings from all source files.

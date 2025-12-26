@@ -6,10 +6,6 @@ from stitcher.io.interfaces import DocumentAdapter
 
 
 class YamlAdapter(DocumentAdapter):
-    """
-    Adapter for reading and writing .yaml documentation files.
-    """
-
     def load(self, path: Path) -> Dict[str, str]:
         if not path.exists():
             return {}

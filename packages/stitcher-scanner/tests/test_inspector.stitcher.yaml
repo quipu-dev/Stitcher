@@ -1,0 +1,5 @@
+"temp_module": |-
+  Creates a temporary, importable module for testing.
+"test_parse_plugin_entry_point": |-
+  Test parsing a live, imported function via its entry point string
+  into our FunctionDef IR.

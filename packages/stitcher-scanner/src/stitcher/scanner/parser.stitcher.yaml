@@ -1,0 +1,9 @@
+"_collect_annotations": |-
+  Recursively collects all type annotation strings from the module IR.
+"_enrich_typing_imports": |-
+  Scans used annotations and module structure, then injects necessary
+  'typing' imports.
+"_has_unannotated_attributes": |-
+  Check if any attribute in the module IR lacks an annotation.
+"parse_source_code": |-
+  Parses Python source code into Stitcher IR.

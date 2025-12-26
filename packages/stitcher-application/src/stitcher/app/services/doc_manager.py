@@ -6,11 +6,6 @@ from stitcher.io import DocumentAdapter, YamlAdapter
 
 
 class DocumentManager:
-    """
-    Service responsible for managing documentation assets.
-    Handles extraction of docstrings from IR and persistence via adapters.
-    """
-
     def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):
         self.root_path = root_path
         # Default to YamlAdapter if none provided
@@ -19,7 +14,6 @@ class DocumentManager:
     def _extract_from_function(
         self, func: FunctionDef, prefix: str = ""
     ) -> Dict[str, str]:
-        """Recursively extracts docstrings from a function."""
         docs = {}
         full_name = f"{prefix}{func.name}"
 
@@ -31,7 +25,6 @@ class DocumentManager:
         return docs
 
     def _extract_from_class(self, cls: ClassDef, prefix: str = "") -> Dict[str, str]:
-        """Recursively extracts docstrings from a class and its methods."""
         docs = {}
         full_name = f"{prefix}{cls.name}"
 
@@ -47,10 +40,6 @@ class DocumentManager:
         return docs
 
     def flatten_module_docs(self, module: ModuleDef) -> Dict[str, str]:
-        """
-        Converts a ModuleDef IR into a flat dictionary of docstrings.
-        Keys are relative FQNs (e.g. "MyClass.method").
-        """
         docs: Dict[str, str] = {}
 
         # 1. Module Docstring
@@ -79,10 +68,6 @@ class DocumentManager:
         return docs
 
     def save_docs_for_module(self, module: ModuleDef) -> Path:
-        """
-        Extracts docs from the module and saves them to a sidecar .stitcher.yaml file.
-        Returns the path to the saved file.
-        """
         data = self.flatten_module_docs(module)
 
         if not data:
@@ -103,10 +88,6 @@ class DocumentManager:
         return output_path
 
     def load_docs_for_module(self, module: ModuleDef) -> Dict[str, str]:
-        """
-        Loads documentation from the corresponding .stitcher.yaml file.
-        Returns empty dict if file does not exist.
-        """
         # ModuleDef.file_path is relative to project root (e.g. src/app.py)
         # We look for src/app.stitcher.yaml
         if not module.file_path:
@@ -138,10 +119,6 @@ class DocumentManager:
                 attr.docstring = docs[attr_key]
 
     def apply_docs_to_module(self, module: ModuleDef) -> None:
-        """
-        Loads external docs and applies them to the ModuleDef IR in-place.
-        Prioritizes external docs over existing source docs.
-        """
         docs = self.load_docs_for_module(module)
         if not docs:
             return
@@ -164,10 +141,6 @@ class DocumentManager:
                 attr.docstring = docs[attr.name]
 
     def check_module(self, module: ModuleDef) -> Dict[str, set]:
-        """
-        Compares module structure against external docs.
-        Returns a dict of issues: {'missing': set(...), 'extra': set(...), 'conflict': set(...)}
-        """
         # 1. Get keys from Code
         public_keys = self._extract_keys(module, public_only=True)
         all_keys = self._extract_keys(module, public_only=False)
@@ -203,10 +176,6 @@ class DocumentManager:
     def hydrate_module(
         self, module: ModuleDef, force: bool = False, reconcile: bool = False
     ) -> Dict[str, Any]:
-        """
-        Merges docstrings from Code into YAML.
-        Returns a dict with 'success': bool, 'updated_keys': list, 'conflicts': list, 'reconciled_keys': list
-        """
         source_docs = self.flatten_module_docs(module)
         if not source_docs:
             return {
@@ -267,7 +236,6 @@ class DocumentManager:
         }
 
     def _extract_keys(self, module: ModuleDef, public_only: bool) -> set:
-        """Extracts addressable FQNs from the module IR."""
         keys = set()
 
         # Module itself

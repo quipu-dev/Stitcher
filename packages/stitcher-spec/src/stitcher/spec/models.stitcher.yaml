@@ -1,0 +1,16 @@
+"Argument": |-
+  Represents a function or method argument.
+"ArgumentKind": |-
+  Corresponds to inspect._ParameterKind.
+"Attribute": |-
+  Represents a module-level or class-level variable.
+"ClassDef": |-
+  Represents a class definition.
+"FunctionDef": |-
+  Represents a function or method definition.
+"FunctionDef.compute_fingerprint": |-
+  Computes a stable hash of the function signature (excluding docstring).
+  Includes: name, args (name, kind, annotation, default), return annotation,
+  async status, and static/class flags.
+"ModuleDef": |-
+  Represents a parsed Python module (a single .py file).

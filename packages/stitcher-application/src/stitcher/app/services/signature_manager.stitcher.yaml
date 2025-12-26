@@ -1,0 +1,17 @@
+"SignatureManager": |-
+  Manages the persistence and verification of code structure fingerprints.
+  Stores fingerprints in .stitcher/signatures/ mirroring the source tree.
+"SignatureManager._get_sig_path": |-
+  Determines the storage path for a module's signatures.
+  e.g. src/app.py -> .stitcher/signatures/src/app.json
+"SignatureManager.check_signatures": |-
+  Compares current module structure against stored signatures.
+  Returns a dict of changed items: { "FQN": "signature_mismatch" }
+"SignatureManager.compute_module_fingerprints": |-
+  Computes fingerprints for all addressable functions/methods in the module.
+  Returns: { "FQN": "hash" }
+"SignatureManager.load_signatures": |-
+  Loads the stored signatures for a module.
+  Returns empty dict if no signature file exists.
+"SignatureManager.save_signatures": |-
+  Computes and saves the current signatures of the module to disk.

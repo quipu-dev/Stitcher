@@ -9,8 +9,6 @@ from stitcher.needle import SemanticPointer
 
 
 class SpyRenderer(Renderer):
-    """A renderer that captures structured message data."""
-
     def __init__(self):
         self.messages: List[Dict[str, Any]] = []
 
@@ -24,8 +22,6 @@ class SpyRenderer(Renderer):
 
 
 class PatchedMessageBus(MessageBus):
-    """An override of MessageBus to intercept calls before rendering."""
-
     def _render(self, level: str, msg_id: SemanticPointer, **kwargs: Any) -> None:
         # Instead of rendering to string, we record the semantic call
         if isinstance(self._renderer, SpyRenderer):
@@ -36,8 +32,6 @@ class PatchedMessageBus(MessageBus):
 
 
 class SpyBus:
-    """A test utility to spy on messages sent via the global bus."""
-
     def __init__(self):
         self._spy_renderer = SpyRenderer()
         # Create a new bus instance that uses our special renderer
@@ -46,10 +40,6 @@ class SpyBus:
 
     @contextmanager
     def patch(self, monkeypatch: Any, target: str):
-        """
-        A context manager that patches a target module's `bus` instance
-        with this spy instance.
-        """
         monkeypatch.setattr(target, self._test_bus)
         yield self
         # Teardown is handled by monkeypatch
@@ -58,7 +48,6 @@ class SpyBus:
         return self._spy_renderer.messages
 
     def assert_id_called(self, msg_id: SemanticPointer, level: Optional[str] = None):
-        """Asserts that a message with the given ID was sent."""
         key = str(msg_id)
         found = False
         for msg in self.get_messages():

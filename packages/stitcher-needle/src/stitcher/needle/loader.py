@@ -26,10 +26,6 @@ class Loader:
                 return  # Stop after first matching handler
 
     def load_directory(self, root_path: Path) -> Dict[str, str]:
-        """
-        Scans a directory for supported config files and merges their top-level
-        keys into a single flat registry.
-        """
         registry: Dict[str, str] = {}
 
         if not root_path.is_dir():

@@ -7,7 +7,6 @@ HasBody = Union[cst.Module, cst.ClassDef, cst.FunctionDef]
 
 class StripperTransformer(cst.CSTTransformer):
     def _is_docstring(self, node: cst.BaseSmallStatement) -> bool:
-        """Check if a statement is a standalone string expression (docstring)."""
         if isinstance(node, cst.Expr) and isinstance(node.value, cst.SimpleString):
             return True
         return False
@@ -15,9 +14,6 @@ class StripperTransformer(cst.CSTTransformer):
     def _process_body(
         self, body: Union[cst.BaseSuite, cst.SimpleStatementSuite]
     ) -> Union[cst.BaseSuite, cst.SimpleStatementSuite]:
-        """
-        Removes docstring from body. If body becomes empty, inserts 'pass'.
-        """
         if isinstance(body, cst.SimpleStatementSuite):
             # One-liner: def foo(): "doc" -> def foo(): pass
             # SimpleStatementSuite contains a list of small statements
@@ -114,7 +110,6 @@ class InjectorTransformer(cst.CSTTransformer):
         return f"{'.'.join(self.scope_stack)}.{name}"
 
     def _create_docstring_node(self, doc_content: str) -> cst.SimpleStatementLine:
-        """Creates a properly quoted docstring node."""
         # Use triple double quotes for everything for consistency
         # Escape existing triple quotes if necessary (simple approach)
         safe_content = doc_content.replace('"""', '\\"\\"\\"')
@@ -267,7 +262,6 @@ class InjectorTransformer(cst.CSTTransformer):
 
 
 def strip_docstrings(source_code: str) -> str:
-    """Removes all docstrings from the source code."""
     module = cst.parse_module(source_code)
     transformer = StripperTransformer()
     modified = module.visit(transformer)
@@ -275,7 +269,6 @@ def strip_docstrings(source_code: str) -> str:
 
 
 def inject_docstrings(source_code: str, docs: Dict[str, str]) -> str:
-    """Injects docstrings from the dictionary into the source code."""
     module = cst.parse_module(source_code)
     transformer = InjectorTransformer(docs)
     modified = module.visit(transformer)

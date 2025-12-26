@@ -21,7 +21,6 @@ bus.set_renderer(cli_renderer)
 
 @app.command(help=needle.get(L.cli.command.generate.help))
 def generate():
-    """Generate .pyi stubs based on pyproject.toml config."""
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
     app_instance.run_from_config()
@@ -29,7 +28,6 @@ def generate():
 
 @app.command(help=needle.get(L.cli.command.init.help))
 def init():
-    """Initialize Stitcher in the current project."""
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
     app_instance.run_init()
@@ -37,7 +35,6 @@ def init():
 
 @app.command(help=needle.get(L.cli.command.check.help))
 def check():
-    """Verify consistency between code and docs."""
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
     success = app_instance.run_check()
@@ -47,7 +44,6 @@ def check():
 
 @app.command(help=needle.get(L.cli.command.strip.help))
 def strip():
-    """Remove docstrings from source files."""
     if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
         bus.warning(L.strip.run.aborted)
         raise typer.Abort()
@@ -59,7 +55,6 @@ def strip():
 
 @app.command(help=needle.get(L.cli.command.eject.help))
 def eject():
-    """Inject docstrings from .stitcher.yaml files back into code."""
     if not typer.confirm(bus.render_to_string(L.eject.run.confirm)):
         bus.warning(L.eject.run.aborted)
         raise typer.Abort()
@@ -85,9 +80,6 @@ def hydrate(
         help=needle.get(L.cli.option.reconcile.help),
     ),
 ):
-    """
-    Extract new docstrings from source code and merge them into .stitcher.yaml.
-    """
     if force and reconcile:
         bus.error("Cannot use --force and --reconcile simultaneously.")
         raise typer.Exit(code=1)

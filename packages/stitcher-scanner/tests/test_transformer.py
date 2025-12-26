@@ -16,7 +16,6 @@ def test_strip_docstrings_basic():
 
 
 def test_strip_docstrings_replaces_with_pass():
-    """If a function only has a docstring, stripping it should leave a pass."""
     source = dedent("""
     def func():
         \"\"\"Only docstring here.\"\"\"

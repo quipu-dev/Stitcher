@@ -1,0 +1,2 @@
+"MessageBus.render_to_string": |-
+  Resolves a message to a string without sending it to the renderer.

@@ -7,7 +7,6 @@ from stitcher.config import load_config_from_path
 
 @pytest.fixture
 def workspace(tmp_path: Path) -> Path:
-    """Creates a mock workspace with plugins."""
     # Main project config
     (tmp_path / "pyproject.toml").write_text(
         dedent("""
@@ -36,10 +35,6 @@ def workspace(tmp_path: Path) -> Path:
 
 
 def test_load_config_discovers_plugins(workspace: Path):
-    """
-    Verify that load_config_from_path correctly finds and parses
-    stitcher.plugins entry points from all pyproject.toml files.
-    """
     # Act
     config = load_config_from_path(workspace)
 

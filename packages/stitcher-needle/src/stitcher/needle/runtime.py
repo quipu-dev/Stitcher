@@ -7,10 +7,6 @@ from .pointer import SemanticPointer
 
 
 class Needle:
-    """
-    The runtime kernel for semantic addressing.
-    """
-
     def __init__(self, roots: Optional[List[Path]] = None):
         self.default_lang = "en"
         self._registry: Dict[str, Dict[str, str]] = {}  # lang -> {fqn: value}
@@ -24,15 +20,10 @@ class Needle:
             self.roots = [self._find_project_root()]
 
     def add_root(self, path: Path):
-        """Adds a new search root to the beginning of the list."""
         if path not in self.roots:
             self.roots.insert(0, path)
 
     def _find_project_root(self, start_dir: Optional[Path] = None) -> Path:
-        """
-        Finds the project root by searching upwards for common markers.
-        Search priority: pyproject.toml -> .git
-        """
         current_dir = (start_dir or Path.cwd()).resolve()
         while current_dir.parent != current_dir:  # Stop at filesystem root
             if (current_dir / "pyproject.toml").is_file():
@@ -66,13 +57,6 @@ class Needle:
         self._loaded_langs.add(lang)
 
     def _resolve_lang(self, explicit_lang: Optional[str] = None) -> str:
-        """
-        Determines the current language based on hierarchy:
-        1. Explicitly passed 'lang' argument.
-        2. STITCHER_LANG environment variable.
-        3. System LANG environment variable (e.g., zh_CN.UTF-8 -> zh).
-        4. Default (en).
-        """
         if explicit_lang:
             return explicit_lang
 
@@ -93,14 +77,6 @@ class Needle:
     def get(
         self, pointer: Union[SemanticPointer, str], lang: Optional[str] = None
     ) -> str:
-        """
-        Resolves a semantic pointer to a string value with graceful fallback.
-
-        Lookup Order:
-        1. Target Language (resolved via _resolve_lang)
-        2. Default Language (en)
-        3. Identity (the key itself)
-        """
         key = str(pointer)
         target_lang = self._resolve_lang(lang)
 

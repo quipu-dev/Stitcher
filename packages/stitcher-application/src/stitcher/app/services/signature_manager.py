@@ -6,29 +6,16 @@ from stitcher.spec import ModuleDef
 
 
 class SignatureManager:
-    """
-    Manages the persistence and verification of code structure fingerprints.
-    Stores fingerprints in .stitcher/signatures/ mirroring the source tree.
-    """
-
     def __init__(self, root_path: Path):
         self.root_path = root_path
         self.sig_root = root_path / ".stitcher" / "signatures"
 
     def _get_sig_path(self, module: ModuleDef) -> Path:
-        """
-        Determines the storage path for a module's signatures.
-        e.g. src/app.py -> .stitcher/signatures/src/app.json
-        """
         # module.file_path is relative to project root
         rel_path = Path(module.file_path)
         return self.sig_root / rel_path.with_suffix(".json")
 
     def compute_module_fingerprints(self, module: ModuleDef) -> Dict[str, str]:
-        """
-        Computes fingerprints for all addressable functions/methods in the module.
-        Returns: { "FQN": "hash" }
-        """
         fingerprints = {}
 
         # 1. Functions
@@ -46,9 +33,6 @@ class SignatureManager:
         return fingerprints
 
     def save_signatures(self, module: ModuleDef) -> None:
-        """
-        Computes and saves the current signatures of the module to disk.
-        """
         fingerprints = self.compute_module_fingerprints(module)
         if not fingerprints:
             # If no fingerprints (e.g. empty file), we might want to clean up any old file
@@ -64,10 +48,6 @@ class SignatureManager:
             json.dump(fingerprints, f, indent=2, sort_keys=True)
 
     def load_signatures(self, module: ModuleDef) -> Dict[str, str]:
-        """
-        Loads the stored signatures for a module.
-        Returns empty dict if no signature file exists.
-        """
         sig_path = self._get_sig_path(module)
         if not sig_path.exists():
             return {}
@@ -79,10 +59,6 @@ class SignatureManager:
             return {}
 
     def check_signatures(self, module: ModuleDef) -> Dict[str, str]:
-        """
-        Compares current module structure against stored signatures.
-        Returns a dict of changed items: { "FQN": "signature_mismatch" }
-        """
         current_sigs = self.compute_module_fingerprints(module)
         stored_sigs = self.load_signatures(module)
 

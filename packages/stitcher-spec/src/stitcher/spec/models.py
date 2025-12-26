@@ -5,8 +5,6 @@ from typing import List, Optional
 
 
 class ArgumentKind(str, Enum):
-    """Corresponds to inspect._ParameterKind."""
-
     POSITIONAL_ONLY = "POSITIONAL_ONLY"
     POSITIONAL_OR_KEYWORD = "POSITIONAL_OR_KEYWORD"
     VAR_POSITIONAL = "VAR_POSITIONAL"  # *args
@@ -16,8 +14,6 @@ class ArgumentKind(str, Enum):
 
 @dataclass
 class Argument:
-    """Represents a function or method argument."""
-
     name: str
     kind: ArgumentKind
     annotation: Optional[str] = None
@@ -26,8 +22,6 @@ class Argument:
 
 @dataclass
 class Attribute:
-    """Represents a module-level or class-level variable."""
-
     name: str
     annotation: Optional[str] = None
     value: Optional[str] = (
@@ -38,8 +32,6 @@ class Attribute:
 
 @dataclass
 class FunctionDef:
-    """Represents a function or method definition."""
-
     name: str
     args: List[Argument] = field(default_factory=list)
     return_annotation: Optional[str] = None
@@ -50,11 +42,6 @@ class FunctionDef:
     is_class: bool = False  # @classmethod
 
     def compute_fingerprint(self) -> str:
-        """
-        Computes a stable hash of the function signature (excluding docstring).
-        Includes: name, args (name, kind, annotation, default), return annotation,
-        async status, and static/class flags.
-        """
         # Build a stable string representation of the signature
         parts = [
             f"name:{self.name}",
@@ -80,8 +67,6 @@ class FunctionDef:
 
 @dataclass
 class ClassDef:
-    """Represents a class definition."""
-
     name: str
     bases: List[str] = field(default_factory=list)
     decorators: List[str] = field(default_factory=list)
@@ -94,8 +79,6 @@ class ClassDef:
 
 @dataclass
 class ModuleDef:
-    """Represents a parsed Python module (a single .py file)."""
-
     file_path: str  # Relative path from project root
     docstring: Optional[str] = None
     attributes: List[Attribute] = field(default_factory=list)

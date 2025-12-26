@@ -44,7 +44,6 @@ class MessageBus:
     def render_to_string(
         self, msg_id: Union[str, SemanticPointer], **kwargs: Any
     ) -> str:
-        """Resolves a message to a string without sending it to the renderer."""
         template = needle.get(msg_id)
         try:
             return template.format(**kwargs)

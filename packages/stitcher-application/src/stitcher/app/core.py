@@ -25,7 +25,6 @@ class StitcherApp:
         self.sig_manager = SignatureManager(root_path)
 
     def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
-        """Parses a list of source files into ModuleDef IRs."""
         modules = []
         for source_file in files_to_scan:
             try:
@@ -39,7 +38,6 @@ class StitcherApp:
         return modules
 
     def _process_plugins(self, plugins: Dict[str, str]) -> List[ModuleDef]:
-        """Parses plugins and builds a virtual ModuleDef tree."""
         # A dictionary to hold our virtual modules, keyed by their intended file path
         virtual_modules: Dict[Path, ModuleDef] = defaultdict(
             lambda: ModuleDef(file_path="")
@@ -81,7 +79,6 @@ class StitcherApp:
         return list(virtual_modules.values())
 
     def _generate_stubs(self, modules: List[ModuleDef]) -> List[Path]:
-        """Generates .pyi files from a list of ModuleDefs."""
         generated_files: List[Path] = []
         for module in modules:
             # Step 1: Hydrate IR with external docs (The "Stitching" process)
@@ -107,7 +104,6 @@ class StitcherApp:
         return generated_files
 
     def run_from_config(self) -> List[Path]:
-        """Loads config, discovers files and plugins, and generates all stubs."""
         config = load_config_from_path(self.root_path)
 
         # 1. Process source files
@@ -139,9 +135,6 @@ class StitcherApp:
         return generated_files
 
     def run_init(self) -> List[Path]:
-        """
-        Scans source files and extracts docstrings into external .stitcher.yaml files.
-        """
         config = load_config_from_path(self.root_path)
 
         # 1. Discover and scan source files
@@ -182,10 +175,6 @@ class StitcherApp:
         return created_files
 
     def run_check(self) -> bool:
-        """
-        Checks consistency between source code and documentation files.
-        Returns True if passed, False if critical issues found.
-        """
         config = load_config_from_path(self.root_path)
 
         files_to_scan = []
@@ -253,12 +242,6 @@ class StitcherApp:
     def run_hydrate(
         self, strip: bool = False, force: bool = False, reconcile: bool = False
     ) -> bool:
-        """
-        Extracts docstrings from source code and merges them into YAML files.
-        - strip: Removes docstrings from source after successful hydration.
-        - force: Code-first conflict resolution.
-        - reconcile: YAML-first conflict resolution.
-        """
         bus.info(L.hydrate.run.start)
         config = load_config_from_path(self.root_path)
         modules = self._scan_files(self._get_files_from_config(config))
@@ -346,7 +329,6 @@ class StitcherApp:
         return True
 
     def run_strip(self) -> List[Path]:
-        """Strips docstrings from all source files."""
         config = load_config_from_path(self.root_path)
         files_to_scan = self._get_files_from_config(config)
         modified_files: List[Path] = []
@@ -371,7 +353,6 @@ class StitcherApp:
         return modified_files
 
     def run_eject(self) -> List[Path]:
-        """Injects docstrings from YAML files back into source code."""
         config = load_config_from_path(self.root_path)
         modules = self._scan_files(self._get_files_from_config(config))
         modified_files: List[Path] = []
@@ -405,7 +386,6 @@ class StitcherApp:
         return modified_files
 
     def _get_files_from_config(self, config) -> List[Path]:
-        """Helper to discover all source files based on config."""
         files_to_scan = []
         for scan_path_str in config.scan_paths:
             scan_path = self.root_path / scan_path_str

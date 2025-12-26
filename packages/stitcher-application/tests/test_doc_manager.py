@@ -20,18 +20,6 @@ class MockAdapter(DocumentAdapter):
 
 @pytest.fixture
 def sample_module_ir():
-    """
-    def func():
-        '''Func doc'''
-
-    class MyClass:
-        '''Class doc'''
-        attr: int
-        '''Attr doc'''
-
-        def method(self):
-            '''Method doc'''
-    """
     return ModuleDef(
         file_path="src/main.py",
         docstring="Module doc",

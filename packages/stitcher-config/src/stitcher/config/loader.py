@@ -16,7 +16,6 @@ class StitcherConfig:
 
 
 def _find_pyproject_toml(search_path: Path) -> Path:
-    """Traverse upwards to find pyproject.toml."""
     current_dir = search_path.resolve()
     while current_dir.parent != current_dir:
         pyproject_path = current_dir / "pyproject.toml"
@@ -27,7 +26,6 @@ def _find_pyproject_toml(search_path: Path) -> Path:
 
 
 def _find_plugins(workspace_root: Path) -> Dict[str, str]:
-    """Scans the entire workspace for stitcher plugins in pyproject.toml files."""
     plugins: Dict[str, str] = {}
     for toml_file in workspace_root.rglob("**/pyproject.toml"):
         try:
@@ -45,7 +43,6 @@ def _find_plugins(workspace_root: Path) -> Dict[str, str]:
 
 
 def load_config_from_path(search_path: Path) -> StitcherConfig:
-    """Finds and loads stitcher config from pyproject.toml, and discovers plugins."""
     plugins = _find_plugins(search_path)
 
     try:

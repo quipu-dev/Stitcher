@@ -1,0 +1,10 @@
+"MockNeedle": |-
+  A test utility to mock the global `needle` runtime.
+"MockNeedle._mock_get": |-
+  The mock implementation of needle.get().
+"MockNeedle.patch": |-
+  A context manager that patches the global needle's `get` method
+  for the duration of the `with` block.
+
+  Args:
+      monkeypatch: The pytest monkeypatch fixture.

@@ -14,9 +14,6 @@ class StubGenerator:
         self._indent_str = " " * indent_spaces
 
     def generate(self, module: ModuleDef) -> str:
-        """
-        Generates the content of a .pyi file from a ModuleDef IR.
-        """
         lines = []
 
         # 1. Module Docstring

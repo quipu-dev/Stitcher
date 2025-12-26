@@ -49,10 +49,6 @@ def test_yaml_adapter_handles_malformed(tmp_path: Path):
 
 
 def test_yaml_adapter_block_format_consistency(tmp_path: Path):
-    """
-    Verify that all strings (multiline or single-line) are saved
-    using Literal Block Style (|-) for consistency.
-    """
     adapter = YamlAdapter()
     file_path = tmp_path / "docs.yaml"
     data = {"multi": "Line 1\nLine 2", "single": "Just one line"}

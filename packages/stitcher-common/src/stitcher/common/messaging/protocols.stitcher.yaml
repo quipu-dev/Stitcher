@@ -1,0 +1,9 @@
+"Renderer": |-
+  Protocol for message renderers. A renderer's only job is to
+  present a final, formatted string to the user.
+"Renderer.render": |-
+  Renders the message.
+
+  Args:
+      message: The fully resolved string to be displayed.
+      level: The log level ("info", "warning", "error", "success").

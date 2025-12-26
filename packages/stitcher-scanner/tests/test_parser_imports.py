@@ -21,7 +21,6 @@ def test_collect_top_level_imports():
 
 
 def test_collect_nested_imports_in_type_checking():
-    """Imports inside if TYPE_CHECKING should be flattened to top-level."""
     source = dedent("""
     from typing import TYPE_CHECKING
     
@@ -41,7 +40,6 @@ def test_collect_nested_imports_in_type_checking():
 
 
 def test_auto_inject_typing_imports():
-    """Should automatically add missing typing imports used in annotations."""
     source = dedent("""
     def process(items: List[int]) -> Optional[str]:
         return None
@@ -56,7 +54,6 @@ def test_auto_inject_typing_imports():
 
 
 def test_do_not_duplicate_existing_typing():
-    """Should not add typing imports if they are already present."""
     source = dedent("""
     from typing import List
     
@@ -92,7 +89,6 @@ def test_detect_typing_in_attributes_and_returns():
 
 
 def test_auto_inject_any_for_unannotated_attribute():
-    """If an attribute has no type, generator defaults to 'Any', so we need the import."""
     source = dedent("""
     MY_CONSTANT = 123
     """)

@@ -5,13 +5,10 @@ from stitcher.spec import Argument, ArgumentKind, FunctionDef
 
 
 class InspectionError(Exception):
-    """Custom exception for errors during plugin inspection."""
-
     pass
 
 
 def _map_param_kind(kind: inspect._ParameterKind) -> ArgumentKind:
-    """Maps inspect's ParameterKind enum to our own."""
     if kind == inspect.Parameter.POSITIONAL_ONLY:
         return ArgumentKind.POSITIONAL_ONLY
     if kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
@@ -26,7 +23,6 @@ def _map_param_kind(kind: inspect._ParameterKind) -> ArgumentKind:
 
 
 def _get_annotation_str(annotation: Any) -> str:
-    """Gets a string representation of a type annotation."""
     if annotation == inspect.Parameter.empty:
         return ""
 
@@ -41,19 +37,6 @@ def _get_annotation_str(annotation: Any) -> str:
 
 
 def parse_plugin_entry(entry_point_str: str) -> FunctionDef:
-    """
-    Dynamically imports and inspects a callable from an entry point string
-    and converts it into a Stitcher FunctionDef IR object.
-
-    Args:
-        entry_point_str: The import string (e.g., "my_pkg.main:my_func").
-
-    Returns:
-        A FunctionDef instance representing the inspected callable.
-
-    Raises:
-        InspectionError: If the entry point cannot be loaded or inspected.
-    """
     try:
         module_str, callable_str = entry_point_str.split(":", 1)
         module = importlib.import_module(module_str)

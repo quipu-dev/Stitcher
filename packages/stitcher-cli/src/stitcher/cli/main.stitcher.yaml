@@ -1,0 +1,12 @@
+"check": |-
+  Verify consistency between code and docs.
+"eject": |-
+  Inject docstrings from .stitcher.yaml files back into code.
+"generate": |-
+  Generate .pyi stubs based on pyproject.toml config.
+"hydrate": |-
+  Extract new docstrings from source code and merge them into .stitcher.yaml.
+"init": |-
+  Initialize Stitcher in the current project.
+"strip": |-
+  Remove docstrings from source files.

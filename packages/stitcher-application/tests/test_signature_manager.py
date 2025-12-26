@@ -5,7 +5,6 @@ from stitcher.app.services import SignatureManager
 
 
 def create_func(name="func", args=None, ret=None):
-    """Helper to create a FunctionDef."""
     return FunctionDef(
         name=name,
         args=args or [],
@@ -14,9 +13,6 @@ def create_func(name="func", args=None, ret=None):
 
 
 def test_fingerprint_stability():
-    """
-    Test that compute_fingerprint is deterministic and sensitive to changes.
-    """
     # 1. Base case
     arg_a = Argument(
         name="a", kind=ArgumentKind.POSITIONAL_OR_KEYWORD, annotation="int"
@@ -49,9 +45,6 @@ def test_fingerprint_stability():
 
 
 def test_manager_save_and_load(tmp_path: Path):
-    """
-    Test that SignatureManager correctly persists fingerprints to JSON.
-    """
     # Arrange
     manager = SignatureManager(root_path=tmp_path)
     module = ModuleDef(file_path="src/main.py", functions=[create_func(name="foo")])
@@ -74,9 +67,6 @@ def test_manager_save_and_load(tmp_path: Path):
 
 
 def test_manager_check_detects_mismatch(tmp_path: Path):
-    """
-    Test that check_signatures logic correctly identifies differences.
-    """
     manager = SignatureManager(root_path=tmp_path)
     module = ModuleDef(
         file_path="src/main.py", functions=[create_func(name="foo", ret="int")]
