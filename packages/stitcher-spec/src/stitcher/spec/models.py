@@ -63,11 +63,13 @@ class FunctionDef:
             f"class:{self.is_class}",
             f"ret:{self.return_annotation or ''}",
         ]
-        
+
         for arg in self.args:
-            arg_sig = f"{arg.name}:{arg.kind}:{arg.annotation or ''}:{arg.default or ''}"
+            arg_sig = (
+                f"{arg.name}:{arg.kind}:{arg.annotation or ''}:{arg.default or ''}"
+            )
             parts.append(arg_sig)
-            
+
         # We deliberately exclude decorators from the fingerprint for now,
         # as they often change without affecting the core API contract relevant to docs.
         # We also strictly exclude self.docstring.

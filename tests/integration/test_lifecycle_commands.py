@@ -43,7 +43,7 @@ def test_eject_command_injects_docstrings(tmp_path, monkeypatch):
     source_path = "src/main.py"
     initial_code = "def func(): pass"
     docs_data = {"func": "Injected docstring."}
-    
+
     project_root = (
         factory.with_config({"scan_paths": ["src"]})
         .with_source(source_path, initial_code)
@@ -61,6 +61,6 @@ def test_eject_command_injects_docstrings(tmp_path, monkeypatch):
     # Assert
     final_code = (project_root / source_path).read_text()
     assert '"""Injected docstring."""' in final_code
-    
+
     spy_bus.assert_id_called(L.eject.file.success)
     spy_bus.assert_id_called(L.eject.run.complete)

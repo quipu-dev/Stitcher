@@ -96,7 +96,7 @@ class StitcherApp:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             output_path.write_text(pyi_content, encoding="utf-8")
-            
+
             # Step 3: Update signatures (Snapshot current state)
             # When we generate stubs, we assume the code is the new source of truth
             self.sig_manager.save_signatures(module)
@@ -165,7 +165,7 @@ class StitcherApp:
         for module in modules:
             # Initialize signatures (Snapshot baseline)
             self.sig_manager.save_signatures(module)
-            
+
             # save_docs_for_module returns an empty path if no docs found/saved
             output_path = self.doc_manager.save_docs_for_module(module)
             if output_path and output_path.name:
@@ -208,13 +208,13 @@ class StitcherApp:
         for module in modules:
             doc_issues = self.doc_manager.check_module(module)
             sig_issues = self.sig_manager.check_signatures(module)
-            
+
             missing = doc_issues["missing"]
             extra = doc_issues["extra"]
             mismatched = sig_issues  # Dict[fqn, reason]
 
             file_rel_path = module.file_path  # string
-            
+
             total_issues = len(missing) + len(extra) + len(mismatched)
 
             if total_issues == 0:
@@ -223,9 +223,7 @@ class StitcherApp:
                 continue
 
             failed_files += 1
-            bus.error(
-                L.check.file.fail, path=file_rel_path, count=total_issues
-            )
+            bus.error(L.check.file.fail, path=file_rel_path, count=total_issues)
 
             # Sort for deterministic output
             for key in sorted(list(missing)):
@@ -264,7 +262,7 @@ class StitcherApp:
 
         if modified_files:
             bus.success(L.strip.run.complete, count=len(modified_files))
-        
+
         return modified_files
 
     def run_eject(self) -> List[Path]:
@@ -278,10 +276,10 @@ class StitcherApp:
             docs = self.doc_manager.load_docs_for_module(module)
             if not docs:
                 continue
-            
+
             total_docs_found += len(docs)
             source_path = self.root_path / module.file_path
-            
+
             try:
                 original_content = source_path.read_text(encoding="utf-8")
                 injected_content = inject_docstrings(original_content, docs)
@@ -298,7 +296,7 @@ class StitcherApp:
             bus.success(L.eject.run.complete, count=len(modified_files))
         elif total_docs_found == 0:
             bus.info(L.eject.no_docs_found)
-            
+
         return modified_files
 
     def _get_files_from_config(self, config) -> List[Path]:
