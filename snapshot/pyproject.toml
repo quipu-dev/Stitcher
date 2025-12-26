@@ -15,6 +15,7 @@ dev = [
     "stitcher-cli",
     "stitcher-application",
     "stitcher-needle",
+    "stitcher-test-utils",
 ]
 
 [tool.uv.workspace]
