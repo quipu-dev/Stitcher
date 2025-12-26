@@ -320,9 +320,9 @@ def _enrich_typing_imports(module: ModuleDef):
                 # Actually, if they wrote "typing.List", the annotation string is "typing.List".
                 # If we just add "from typing import List", it doesn't hurt.
                 # But if they wrote "List" and have NO import, we MUST add it.
-                
+
                 if not re.search(rf"\b{symbol}\b", existing_imports_text):
-                     missing_symbols.add(symbol)
+                    missing_symbols.add(symbol)
 
     for symbol in sorted(missing_symbols):
         module.imports.append(f"from typing import {symbol}")
@@ -351,7 +351,7 @@ def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
         attributes=visitor.attributes,
         imports=visitor.imports,
     )
-    
+
     _enrich_typing_imports(module_def)
-    
+
     return module_def

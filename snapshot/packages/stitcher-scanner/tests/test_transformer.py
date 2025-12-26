@@ -1,4 +1,3 @@
-import pytest
 from textwrap import dedent
 from stitcher.scanner.transformer import strip_docstrings, inject_docstrings
 
@@ -50,12 +49,12 @@ def test_inject_docstrings_basic():
         pass
     """)
     docs = {"func": "New docstring"}
-    
+
     # We expect the transformer to insert the docstring
     result = inject_docstrings(source, docs)
     assert '"""New docstring"""' in result
-    # It might keep 'pass' or remove it depending on logic. 
-    # Ideally, if we inject doc, 'pass' is redundant but harmless. 
+    # It might keep 'pass' or remove it depending on logic.
+    # Ideally, if we inject doc, 'pass' is redundant but harmless.
     # Let's just check doc is there.
 
 
@@ -66,7 +65,7 @@ def test_inject_docstrings_replacement():
         return 1
     """)
     docs = {"func": "New doc"}
-    
+
     result = inject_docstrings(source, docs)
     assert '"""New doc"""' in result
     assert "Old doc" not in result
@@ -79,11 +78,8 @@ def test_inject_nested_fqn():
         def m(self):
             pass
     """)
-    docs = {
-        "A": "Class A doc",
-        "A.m": "Method m doc"
-    }
-    
+    docs = {"A": "Class A doc", "A.m": "Method m doc"}
+
     result = inject_docstrings(source, docs)
     assert '"""Class A doc"""' in result
     assert '"""Method m doc"""' in result
@@ -92,7 +88,7 @@ def test_inject_nested_fqn():
 def test_inject_multiline_handling():
     source = "def func(): pass"
     docs = {"func": "Line 1\nLine 2"}
-    
+
     result = inject_docstrings(source, docs)
     # Should use triple quotes and contain newlines
     assert '"""Line 1\nLine 2"""' in result or '"""\nLine 1\nLine 2\n"""' in result

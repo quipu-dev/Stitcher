@@ -25,12 +25,10 @@ class StripperTransformer(cst.CSTTransformer):
             for stmt in body.body:
                 if not self._is_docstring(stmt):
                     new_body.append(stmt)
-            
+
             if not new_body:
                 # If became empty, convert to a single 'pass'
-                return cst.SimpleStatementSuite(
-                    body=[cst.Pass()]
-                )
+                return cst.SimpleStatementSuite(body=[cst.Pass()])
             return body.with_changes(body=new_body)
 
         elif isinstance(body, cst.IndentedBlock):
@@ -41,38 +39,42 @@ class StripperTransformer(cst.CSTTransformer):
                 # which contain small statements.
                 # We check if the FIRST line is a docstring expression.
                 if isinstance(first_stmt, cst.SimpleStatementLine):
-                    if len(first_stmt.body) == 1 and self._is_docstring(first_stmt.body[0]):
+                    if len(first_stmt.body) == 1 and self._is_docstring(
+                        first_stmt.body[0]
+                    ):
                         # Skip this line (it's the docstring)
                         new_body.extend(body.body[1:])
                     else:
                         new_body.extend(body.body)
                 else:
                     new_body.extend(body.body)
-            
+
             if not new_body:
                 # If empty, add pass
                 # We need to ensure we have a valid indentation block structure
                 return body.with_changes(
                     body=[cst.SimpleStatementLine(body=[cst.Pass()])]
                 )
-            
+
             return body.with_changes(body=new_body)
-        
+
         return body
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:
         # Module body is just a sequence of statements, not wrapped in IndentedBlock
         new_body = []
         if updated_node.body:
             first_stmt = updated_node.body[0]
             if isinstance(first_stmt, cst.SimpleStatementLine):
-                 if len(first_stmt.body) == 1 and self._is_docstring(first_stmt.body[0]):
-                     new_body.extend(updated_node.body[1:])
-                 else:
-                     new_body.extend(updated_node.body)
+                if len(first_stmt.body) == 1 and self._is_docstring(first_stmt.body[0]):
+                    new_body.extend(updated_node.body[1:])
+                else:
+                    new_body.extend(updated_node.body)
             else:
-                 new_body.extend(updated_node.body)
-        
+                new_body.extend(updated_node.body)
+
         return updated_node.with_changes(body=new_body)
 
     def leave_FunctionDef(
@@ -102,7 +104,7 @@ class InjectorTransformer(cst.CSTTransformer):
         # Escape existing triple quotes if necessary (simple approach)
         safe_content = doc_content.replace('"""', '\\"\\"\\"')
         quoted = f'"""{safe_content}"""'
-        
+
         return cst.SimpleStatementLine(
             body=[cst.Expr(value=cst.SimpleString(value=quoted))]
         )
@@ -115,7 +117,6 @@ class InjectorTransformer(cst.CSTTransformer):
         body: Union[cst.BaseSuite, cst.SimpleStatementSuite],
         doc_content: str,
     ) -> Union[cst.BaseSuite, cst.SimpleStatementSuite]:
-
         new_doc_node = self._create_docstring_node(doc_content)
 
         if isinstance(body, cst.SimpleStatementSuite):
@@ -130,7 +131,7 @@ class InjectorTransformer(cst.CSTTransformer):
                 # If it's just 'pass', we can remove it since we now have a docstring
                 if isinstance(stmt, cst.Pass):
                     continue
-                
+
                 # Wrap small statement into a line
                 new_stmts.append(cst.SimpleStatementLine(body=[stmt]))
 
@@ -138,22 +139,24 @@ class InjectorTransformer(cst.CSTTransformer):
 
         elif isinstance(body, cst.IndentedBlock):
             new_body_stmts = []
-            has_docstring = False
-            
+
             if body.body:
                 first = body.body[0]
-                if isinstance(first, cst.SimpleStatementLine) and len(first.body) == 1 and self._is_docstring(first.body[0]):
-                     # Replace existing docstring
-                     new_body_stmts.append(new_doc_node)
-                     new_body_stmts.extend(body.body[1:])
-                     has_docstring = True
+                if (
+                    isinstance(first, cst.SimpleStatementLine)
+                    and len(first.body) == 1
+                    and self._is_docstring(first.body[0])
+                ):
+                    # Replace existing docstring
+                    new_body_stmts.append(new_doc_node)
+                    new_body_stmts.extend(body.body[1:])
                 else:
                     # No existing docstring
                     new_body_stmts.append(new_doc_node)
                     new_body_stmts.extend(body.body)
             else:
-                 # Empty body
-                 new_body_stmts.append(new_doc_node)
+                # Empty body
+                new_body_stmts.append(new_doc_node)
 
             return body.with_changes(body=new_body_stmts)
 
@@ -165,29 +168,13 @@ class InjectorTransformer(cst.CSTTransformer):
         self.scope_stack.append(node.name.value)
         return True
 
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.ClassDef:
+    def leave_ClassDef(
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+    ) -> cst.ClassDef:
         # Before popping, inject docstring for THIS class
         # Note: current stack includes this class name
         fqn = ".".join(self.scope_stack)
-        
-        if fqn in self.docs:
-             updated_node = updated_node.with_changes(
-                 body=self._inject_into_body(updated_node.body, self.docs[fqn])
-             )
-        
-        self.scope_stack.pop()
-        return updated_node
 
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
-        # Don't push function name to scope stack yet, 
-        # because methods are children of class, but inner functions are implementation details?
-        # Standard logic: FQN includes function name.
-        self.scope_stack.append(node.name.value)
-        return True
-
-    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:
-        fqn = ".".join(self.scope_stack)
-        
         if fqn in self.docs:
             updated_node = updated_node.with_changes(
                 body=self._inject_into_body(updated_node.body, self.docs[fqn])
@@ -195,18 +182,44 @@ class InjectorTransformer(cst.CSTTransformer):
 
         self.scope_stack.pop()
         return updated_node
-    
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:
+
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
+        # Don't push function name to scope stack yet,
+        # because methods are children of class, but inner functions are implementation details?
+        # Standard logic: FQN includes function name.
+        self.scope_stack.append(node.name.value)
+        return True
+
+    def leave_FunctionDef(
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+    ) -> cst.FunctionDef:
+        fqn = ".".join(self.scope_stack)
+
+        if fqn in self.docs:
+            updated_node = updated_node.with_changes(
+                body=self._inject_into_body(updated_node.body, self.docs[fqn])
+            )
+
+        self.scope_stack.pop()
+        return updated_node
+
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:
         # Module docstring uses key "__doc__" or possibly file path based logic externally?
         # Usually "__doc__" is passed for module level.
         if "__doc__" in self.docs:
             # Module body is just list of statements
             new_doc_node = self._create_docstring_node(self.docs["__doc__"])
             new_body = []
-            
+
             if updated_node.body:
                 first = updated_node.body[0]
-                if isinstance(first, cst.SimpleStatementLine) and len(first.body) == 1 and self._is_docstring(first.body[0]):
+                if (
+                    isinstance(first, cst.SimpleStatementLine)
+                    and len(first.body) == 1
+                    and self._is_docstring(first.body[0])
+                ):
                     # Replace
                     new_body.append(new_doc_node)
                     new_body.extend(updated_node.body[1:])
@@ -216,9 +229,9 @@ class InjectorTransformer(cst.CSTTransformer):
                     new_body.extend(updated_node.body)
             else:
                 new_body.append(new_doc_node)
-            
+
             return updated_node.with_changes(body=new_body)
-            
+
         return updated_node
 
 

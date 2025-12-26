@@ -3,6 +3,7 @@ import typer
 
 from stitcher.app import StitcherApp
 from stitcher.common import bus
+from stitcher.needle import L
 from .rendering import CliRenderer
 
 app = typer.Typer(
@@ -73,6 +74,7 @@ def eject():
 def render_to_string_patch(self, msg_id, **kwargs):
     template = L.needle.get(msg_id)
     return template.format(**kwargs)
+
 
 bus.render_to_string = render_to_string_patch.__get__(bus)
 

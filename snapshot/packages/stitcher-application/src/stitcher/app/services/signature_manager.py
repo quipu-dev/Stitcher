@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 from stitcher.spec import ModuleDef
 
@@ -59,7 +59,7 @@ class SignatureManager:
         # Ensure the directory exists (redundant check but safe)
         if not sig_path.parent.exists():
             sig_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with sig_path.open("w", encoding="utf-8") as f:
             json.dump(fingerprints, f, indent=2, sort_keys=True)
 
@@ -85,15 +85,15 @@ class SignatureManager:
         """
         current_sigs = self.compute_module_fingerprints(module)
         stored_sigs = self.load_signatures(module)
-        
+
         issues = {}
-        
+
         for fqn, current_hash in current_sigs.items():
             stored_hash = stored_sigs.get(fqn)
-            
+
             # If stored_hash is None, it's a new function (covered by 'missing' check in doc_manager).
             # We only care if it EXISTS in storage but differs.
             if stored_hash and stored_hash != current_hash:
                 issues[fqn] = "signature_mismatch"
-                
+
         return issues

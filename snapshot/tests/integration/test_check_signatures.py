@@ -22,7 +22,7 @@ def test_check_detects_signature_change(tmp_path, monkeypatch):
         \"\"\"Process an integer.\"\"\"
         return value * 2
     """).strip()
-    
+
     project_root = (
         factory.with_config({"scan_paths": ["src"]})
         .with_source("src/processor.py", initial_code)
@@ -30,19 +30,19 @@ def test_check_detects_signature_change(tmp_path, monkeypatch):
     )
 
     app = StitcherApp(root_path=project_root)
-    
+
     # 2. Run Init (Baseline)
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
-        
+
     _assert_no_errors(spy_bus)
     spy_bus.assert_id_called(L.init.run.complete, level="success")
-    
+
     # Verify fingerprint file exists
     sig_file = project_root / ".stitcher/signatures/src/processor.json"
     assert sig_file.exists(), "Fingerprint file was not created during Init"
-    
+
     # 3. Modify Code
     modified_code = dedent("""
     def process(value: str) -> int:
@@ -50,14 +50,16 @@ def test_check_detects_signature_change(tmp_path, monkeypatch):
         return len(value) * 2
     """).strip()
     (project_root / "src/processor.py").write_text(modified_code, encoding="utf-8")
-    
+
     # 4. Run Check
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
         success = app.run_check()
-        
+
     # 5. Assertions
-    assert success is False, "Check passed but should have failed due to signature mismatch"
+    assert success is False, (
+        "Check passed but should have failed due to signature mismatch"
+    )
     spy_bus.assert_id_called(L.check.issue.mismatch, level="error")
 
 
@@ -74,31 +76,31 @@ def test_generate_updates_signatures(tmp_path, monkeypatch):
         .with_docs("src/main.stitcher.yaml", {"func": "doc"})
         .build()
     )
-    
+
     app = StitcherApp(root_path=project_root)
-    
+
     # 2. Run Init
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
-        
+
     # 3. Modify Code
     (project_root / "src/main.py").write_text("def func(a: str): ...", encoding="utf-8")
-    
+
     # 4. Run Generate (Should update signatures)
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_from_config()
-        
+
     _assert_no_errors(spy_bus)
     spy_bus.assert_id_called(L.generate.run.complete, level="success")
-    
-    # Verify fingerprint file timestamp or content? 
+
+    # Verify fingerprint file timestamp or content?
     # Better to verify via Check.
-    
+
     # 5. Run Check (Should now pass)
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
         success = app.run_check()
-        
+
     assert success is True, "Check failed but should have passed after Generate"
     spy_bus.assert_id_called(L.check.run.success, level="success")
