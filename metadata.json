@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: Align Needle runtime test with new SST structure", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766718719.39357, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: Relocate locales to root and implement robust discovery", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766719070.5643978, "duration_ms": 0}}

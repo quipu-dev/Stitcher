@@ -3,12 +3,12 @@ from pathlib import Path
 from stitcher.needle import Needle, L
 
 def test_needle_loading_and_fallback(tmp_path: Path):
-    # 1. Setup SST structure according to the NEW specification
-    root = tmp_path
-    locales_dir = root / "locales"
+    # 1. Setup the FINAL SST structure inside the mock project root
+    project_root = tmp_path
+    needle_dir = project_root / "stitcher" / "needle"
     
     # English (Default)
-    en_dir = locales_dir / "en"
+    en_dir = needle_dir / "en"
     (en_dir / "cli").mkdir(parents=True)
     (en_dir / "auth").mkdir()
 
@@ -22,7 +22,7 @@ def test_needle_loading_and_fallback(tmp_path: Path):
     }))
 
     # Chinese (Target)
-    zh_dir = locales_dir / "zh"
+    zh_dir = needle_dir / "zh"
     (zh_dir / "cli").mkdir(parents=True)
     
     (zh_dir / "cli" / "main.json").write_text(json.dumps({
@@ -30,8 +30,8 @@ def test_needle_loading_and_fallback(tmp_path: Path):
     }))
 
     # 2. Initialize Runtime
-    # The runtime will look for a `locales` dir inside the provided root_path
-    rt = Needle(root_path=root, default_lang="en")
+    # The runtime should now automatically find the `stitcher` dir within the root_path
+    rt = Needle(root_path=project_root, default_lang="en")
 
     # 3. Test: Target Language Hit
     # L.cli.hello should be found in zh's cli/main.json

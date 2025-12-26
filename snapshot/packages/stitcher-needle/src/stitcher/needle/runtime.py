@@ -18,23 +18,32 @@ class Needle:
         self._loader = Loader()
         self._loaded_langs: set = set()
 
-    def _find_project_root(self) -> Path:
+    def _find_project_root(self, start_dir: Optional[Path] = None) -> Path:
         """
-        The canonical source for locales is inside the stitcher-common package.
+        Finds the project root by searching upwards for common markers.
+        Search priority: pyproject.toml -> .git
         """
-        # Assumes this file is at .../stitcher/needle/runtime.py
-        # We want .../stitcher/common/
-        return Path(__file__).parent.parent.parent / "common"
+        current_dir = (start_dir or Path.cwd()).resolve()
+        while current_dir.parent != current_dir:  # Stop at filesystem root
+            # Priority 1: pyproject.toml (strongest Python project signal)
+            if (current_dir / "pyproject.toml").is_file():
+                return current_dir
+            # Priority 2: .git directory (strong version control signal)
+            if (current_dir / ".git").is_dir():
+                return current_dir
+            current_dir = current_dir.parent
+        # Fallback to the starting directory if no markers are found
+        return start_dir or Path.cwd()
 
     def _ensure_lang_loaded(self, lang: str):
         if lang in self._loaded_langs:
             return
 
-        # SST path: stitcher-common/src/stitcher/common/locales/<lang>/
-        locales_dir = self.root_path / "locales" / lang
+        # NEW SST path: <project_root>/stitcher/needle/<lang>/
+        needle_dir = self.root_path / "stitcher" / "needle" / lang
         
         # Load and cache
-        self._registry[lang] = self._loader.load_directory(locales_dir)
+        self._registry[lang] = self._loader.load_directory(needle_dir)
         self._loaded_langs.add(lang)
 
     def get(
