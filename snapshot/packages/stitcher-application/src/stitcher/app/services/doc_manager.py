@@ -186,26 +186,33 @@ class DocumentManager:
         return {"missing": missing, "extra": extra}
 
     def _extract_all_keys(self, module: ModuleDef) -> set:
-        """Extracts all addressable FQNs from the module IR."""
+        """Extracts all addressable public FQNs from the module IR."""
         keys = set()
 
         # Module itself
-        # Only expect __doc__ if the source code actually has a docstring.
         if module.docstring:
             keys.add("__doc__")
 
+        def is_public(name: str) -> bool:
+            return not name.startswith("_")
+
         for func in module.functions:
-            keys.add(func.name)
+            if is_public(func.name):
+                keys.add(func.name)
 
         for cls in module.classes:
-            keys.add(cls.name)
-            for method in cls.methods:
-                keys.add(f"{cls.name}.{method.name}")
-            for attr in cls.attributes:
-                keys.add(f"{cls.name}.{attr.name}")
+            if is_public(cls.name):
+                keys.add(cls.name)
+                for method in cls.methods:
+                    if is_public(method.name):
+                        keys.add(f"{cls.name}.{method.name}")
+                for attr in cls.attributes:
+                    if is_public(attr.name):
+                        keys.add(f"{cls.name}.{attr.name}")
 
         # Module attributes
         for attr in module.attributes:
-            keys.add(attr.name)
+            if is_public(attr.name):
+                keys.add(attr.name)
 
         return keys
