@@ -3,12 +3,12 @@ import typer
 
 from stitcher.app import StitcherApp
 from stitcher.common import bus
-from stitcher.needle import L
+from stitcher.needle import L, needle
 from .rendering import CliRenderer
 
 app = typer.Typer(
     name="stitcher",
-    help="Stitcher-Python: Bridging the gap between dynamic code and static analysis.",
+    help=needle.get(L.cli.app.description),
     no_args_is_help=True,
 )
 
@@ -19,7 +19,7 @@ bus.set_renderer(cli_renderer)
 # ---------------------------------------------
 
 
-@app.command()
+@app.command(help=needle.get(L.cli.command.generate.help))
 def generate():
     """Generate .pyi stubs based on pyproject.toml config."""
     project_root = Path.cwd()
@@ -27,7 +27,7 @@ def generate():
     app_instance.run_from_config()
 
 
-@app.command()
+@app.command(help=needle.get(L.cli.command.init.help))
 def init():
     """Initialize Stitcher in the current project."""
     project_root = Path.cwd()
@@ -35,7 +35,7 @@ def init():
     app_instance.run_init()
 
 
-@app.command()
+@app.command(help=needle.get(L.cli.command.check.help))
 def check():
     """Verify consistency between code and docs."""
     project_root = Path.cwd()
@@ -45,7 +45,7 @@ def check():
         raise typer.Exit(code=1)
 
 
-@app.command()
+@app.command(help=needle.get(L.cli.command.strip.help))
 def strip():
     """Remove docstrings from source files."""
     if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
@@ -57,7 +57,7 @@ def strip():
     app_instance.run_strip()
 
 
-@app.command()
+@app.command(help=needle.get(L.cli.command.eject.help))
 def eject():
     """Inject docstrings from .stitcher.yaml files back into code."""
     if not typer.confirm(bus.render_to_string(L.eject.run.confirm)):
@@ -69,20 +69,20 @@ def eject():
     app_instance.run_eject()
 
 
-@app.command()
+@app.command(help=needle.get(L.cli.command.hydrate.help))
 def hydrate(
     strip: bool = typer.Option(
-        False, "--strip", help="Remove docstrings from source code after hydration."
+        False, "--strip", help=needle.get(L.cli.option.strip.help)
     ),
     force: bool = typer.Option(
         False,
         "--force",
-        help="Code-first: Overwrite YAML content if it differs from source code.",
+        help=needle.get(L.cli.option.force.help),
     ),
     reconcile: bool = typer.Option(
         False,
         "--reconcile",
-        help="YAML-first: Ignore source docstrings if they conflict with existing YAML.",
+        help=needle.get(L.cli.option.reconcile.help),
     ),
 ):
     """

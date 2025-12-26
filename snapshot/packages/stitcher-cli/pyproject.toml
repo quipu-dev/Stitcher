@@ -18,6 +18,7 @@ stitcher = "stitcher.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/stitcher"]
+include = ["/src/stitcher/cli/assets"]
 
 [tool.uv.sources]
 stitcher-application = { workspace = true }
