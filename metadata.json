@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 更新测试以符合正确的文档字符串缩进规范", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766752156.9245932, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix(scanner): 实现上下文感知的文档字符串注入", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766752229.6061928, "duration_ms": 0}}

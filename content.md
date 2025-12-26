@@ -1,52 +1,60 @@
-这是一个典型的“好的失败”。`test_inject_multiline_handling` 测试用例失败，是因为它是在我们实现多行缩进修复逻辑**之前**编写的，因此它的断言预期的是一种不符合 PEP 257 规范的、未缩进的错误格式。
+太棒了。所有测试均已通过，系统现在更加健壮，并严格遵循 PEP 257 规范。我将生成一个计划，将这些更改作为完整的工作单元提交。
 
-现在我们的 `InjectorTransformer` 已经能够正确地生成带有缩进的多行文档字符串，我们需要更新这个过时的测试用例，使其符合新的（且正确的）行为标准。
-
-## [WIP] fix: 更新测试以符合正确的文档字符串缩进规范
+## [COMMIT] fix(scanner): 实现上下文感知的文档字符串注入
 
 ### 用户需求
-修复全量测试中的 `test_inject_multiline_handling` 失败。
+修复在 `eject` 过程中多行文档字符串丢失缩进的问题，并解决测试套件中被报告的静态类型错误。
 
-### 错误分析
-该测试用例期望多行文档字符串的第二行**不包含**缩进（即 `"""Line 1\nLine 2"""`）。然而，随着“上下文感知注入”功能的实现，Stitcher 现在会正确地为第二行添加 4 个空格的缩进。测试断言与正确的新行为发生了冲突。
+### 评论
+这次提交显著提升了 `eject` 命令的可靠性。通过从硬编码缩进转向动态的、基于栈的路径追踪方法，Stitcher 现在可以处理复杂的代码结构和不同的缩进风格，同时保持对 PEP 257 的合规性。此外，修复 `pyrefly` 报告的错误也提升了整体代码库的健康度。
 
 ### 目标
-更新 `packages/stitcher-scanner/tests/test_transformer.py` 中的 `test_inject_multiline_handling` 测试用例，使其断言预期的缩进格式。
+1. 提交在 `InjectorTransformer` 中实现的 `indent_stack` 逻辑。
+2. 提交对 `test_pointer.py` 和 `test_parser_advanced.py` 中类型错误的修复。
+3. 提交更新后的及新增的测试用例。
 
 ### 基本原理
-根据 PEP 257 规范，多行文档字符串在代码中应当保持一致的缩进。我们将测试中的 `assert` 语句修改为包含预期的 4 个空格缩进，从而使测试能够通过并准确反映系统的正确行为。
+一个完整的逻辑工作单元已经完成。Bug 已经过复现、分析、在架构层面得到修复，并通过了全量测试验证。将这些相关的修复和测试一同提交符合版本控制的最佳实践。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/tests #scope/dx #ai/instruct #task/domain/testing #task/object/test-expectation #task/action/update #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/scanner #comp/tests #concept/parser #scope/core #task/domain/codemod #task/object/docstring-indentation #task/action/bug-fix #task/state/end #task/status/completed
 
 ---
+
 ### Script
 
-#### Acts 1: 更新测试断言
+#### Acts 1: 提交变更
 
-我们将修改 `test_transformer.py` 中的断言逻辑，使其包含对缩进的预期。
+我们将所有修改过的文件以及新创建的测试文件添加到暂存区，并创建一个详细的提交。
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-needle/tests/test_pointer.py
+packages/stitcher-scanner/src/stitcher/scanner/transformer.py
+packages/stitcher-scanner/tests/test_parser_advanced.py
 packages/stitcher-scanner/tests/test_transformer.py
+packages/stitcher-scanner/tests/test_transformer_multiline.py
 ~~~~~
-~~~~~python.old
-def test_inject_multiline_handling():
-    source = "def func(): pass"
-    docs = {"func": "Line 1\nLine 2"}
 
-    result = inject_docstrings(source, docs)
-    # Should use triple quotes and contain newlines
-    assert '"""Line 1\nLine 2"""' in result or '"""\nLine 1\nLine 2\n"""' in result
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python.new
-def test_inject_multiline_handling():
-    source = "def func(): pass"
-    docs = {"func": "Line 1\nLine 2"}
+~~~~~text
+fix(scanner): implement context-aware docstring injection
 
-    result = inject_docstrings(source, docs)
-    # Should use triple quotes and contain newlines with proper indentation (4 spaces)
-    assert '"""Line 1\n    Line 2"""' in result or '"""\n    Line 1\n    Line 2\n    """' in result
+Implemented a context-aware injection mechanism for docstrings to ensure PEP 257 compliance during the 'eject' process.
+
+Previously, multi-line docstrings lost their indentation on subsequent lines because the injector didn't account for the nesting level of the target function or class. This resulted in malformed Python code that violated style guides and broke docstring parsing tools.
+
+Key changes:
+- Added an 'indent_stack' to 'InjectorTransformer' to track absolute indentation context using LibCST's traversal.
+- Updated '_inject_into_body' to calculate the correct indentation for docstring contents based on the current stack and node properties.
+- Fixed several static type errors in the test suite reported by 'pyrefly' (bad indexing in needle tests and missing None checks in scanner tests).
+- Updated existing tests to reflect correct indentation expectations and added new regression tests for nested structures.
+
+This change ensures that docstring content remains decoupled from its presentation while being injected with high fidelity to the source's structural constraints.
 ~~~~~
+
 ### 下一步建议
-请执行此计划并重新运行全量测试。现在所有 61 个测试（包括新增加的 2 个多行测试）都应该能顺利通过。这标志着我们不仅修复了 Bug，还成功提升了整个系统的架构质量。
+- **提取逻辑增强**：虽然现在注入逻辑很完美，但考虑在提取阶段（`run_init`）也引入类似 `inspect.cleandoc` 的逻辑，以确保 YAML 文件中存储的始终是“纯净内容”，不受源文件中可能存在的非标准缩进影响。
+- **性能评估**：对于超大型代码库，LibCST 转换器的运行开销是值得关注的，后续可以考虑增加相关的基准测试。
