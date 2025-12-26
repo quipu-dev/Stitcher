@@ -1,0 +1,11 @@
+{
+    "check.file.pass": "✅ {path}: 已同步。",
+    "check.file.fail": "❌ {path}: 发现 {count} 个错误。",
+    "check.file.warn": "⚠️  {path}: 发现 {count} 个警告。",
+    "check.issue.missing": "   - [缺失] {key} (存在于代码中，但在 YAML 中缺失)",
+    "check.issue.extra": "   - [多余]   {key} (存在于 YAML 中，但在代码中缺失)",
+    "check.issue.conflict": "   - [冲突] {key} (代码与 YAML 中的内容不一致)",
+    "check.run.success": "✨ 所有检查通过。文档已同步。",
+    "check.run.success_with_warnings": "⚠️  检查通过，在 {count} 个文件中发现警告。",
+    "check.run.fail": "🚫 检查失败。在 {count} 个文件中发现错误。"
+}

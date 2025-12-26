@@ -1,0 +1,3 @@
+{
+    "cli.command.not_implemented": "ℹ️  命令 '{command}' 尚未实现。"
+}

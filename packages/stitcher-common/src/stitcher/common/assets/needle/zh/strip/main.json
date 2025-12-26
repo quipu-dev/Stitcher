@@ -1,0 +1,6 @@
+{
+    "strip.run.confirm": "⚠️  此操作将永久从源文件中删除文档字符串。除非您使用版本控制，否则此操作不可逆。确定要继续吗？",
+    "strip.run.aborted": "剥离操作已中止。",
+    "strip.file.success": "✅ 已从 {path} 剥离文档字符串",
+    "strip.run.complete": "✨ 剥离完成。{count} 个文件已修改。"
+}
