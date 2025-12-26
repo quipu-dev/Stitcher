@@ -1,266 +1,212 @@
-## [WIP] feat: 实现 `stitcher init` 命令
+## [WIP] feat: 升级 `generate` 命令以支持文档解耦
 
 ### 用户需求
-实现 **任务 2.2: `stitcher init` 命令**。该命令用于将项目源代码中的文档字符串（docstrings）提取并迁移到外部的 YAML 文件中，从而完成文档解耦的初始化工作。
+完成 **任务 2.3: 升级 `stitcher generate`**。核心需求是修改生成逻辑，使其不再仅仅依赖源代码中的文档字符串，而是优先读取并使用外部 `.stitcher.yaml` 文件中的文档内容。这是实现文档与代码解耦的关键一步。
 
 ### 评论
-这是用户接触文档解耦特性的第一步。体验必须流畅且直观。通过复用现有的扫描逻辑和服务层的 `DocumentManager`，我们可以快速组装出这个功能。同时，我们需要在 Needle 中添加相应的反馈消息，确保用户知道哪些文件被创建了。
+这将真正激活文档 I/O 模块的价值。我们需要在 `StitcherApp` 的生成流程中插入一个“文档合并/覆盖”的步骤。逻辑应当是：**Source (Code) + Overlay (YAML) -> Final IR -> .pyi**。
 
 ### 目标
-1.  在 `stitcher-needle` 中定义 `init` 命令相关的用户反馈消息。
-2.  在 `StitcherApp` 中集成 `DocumentManager` 并实现 `run_init` 核心逻辑。
-3.  在 `stitcher-cli` 中挂载 `init` 命令。
-4.  通过集成测试验证全流程：从 `.py` 源码 -> 运行 init -> 生成 `.stitcher.yaml`。
+1.  在 `ModuleDef` 层面或更高层面实现文档合并逻辑。
+2.  修改 `StitcherApp._generate_stubs` 流程，在生成代码前，先加载对应的 `.stitcher.yaml`（如果存在），并更新内存中的 `ModuleDef` 对象。
+3.  确保插件（Plugin）生成的虚拟模块也能（在未来）支持这种覆盖，虽然目前主要针对物理文件。
+4.  验证：修改 YAML 文件后，再次运行 `generate`，生成的 `.pyi` 应反映 YAML 中的内容，而非源代码中的内容。
 
 ### 基本原理
-`init` 命令的工作流如下：
-1.  读取配置，确定扫描路径（`scan_paths`）。
-2.  复用 `_scan_files` 逻辑，将所有 `.py` 文件解析为 `ModuleDef`。
-3.  遍历解析结果，调用 `DocumentManager.save_docs_for_module`。
-4.  对于每一个生成的 `.stitcher.yaml`，通过消息总线通知用户。
+1.  **加载阶段**：`DocumentManager` 需要提供一个 `load_docs_for_module(module)` 方法，返回该模块对应的文档字典。
+2.  **合并阶段**：我们需要一个 `apply_docs_to_module(module, docs)` 函数，遍历 IR 树（Module -> Classes -> Functions），根据 FQN Key 将文档字典中的内容注入回 IR 对象。
+3.  **生成阶段**：`StubGenerator` 使用更新后的 IR 生成 `.pyi`，此时它已经是“被缝合（Stitched）”过的状态。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/cli #comp/runtime #scope/core #ai/instruct #task/domain/cli #task/object/command-init #task/action/implementation #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/doc-management #task/object/command-generate #task/action/upgrade #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 添加 Needle 消息资源
+#### Acts 1: 扩展 DocumentManager 以支持加载和应用文档
 
-~~~~~act
-run_command
-~~~~~
-~~~~~
-mkdir -p .stitcher/needle/en/init
-~~~~~
-
-~~~~~act
-write_file
-.stitcher/needle/en/init/main.json
-~~~~~
-~~~~~json
-{
-    "init.file.created": "📝 Created doc file: {path}",
-    "init.run.complete": "🎉 Initialization complete. {count} document files created.",
-    "init.no_docs_found": "🤔 No docstrings found in source files. No .stitcher.yaml files created."
-}
-~~~~~
-
-#### Acts 2: 更新 StitcherApp 核心逻辑
-
-我们需要在 `StitcherApp` 中实例化 `DocumentManager`，并添加 `run_init` 方法。
+我们需要在 `DocumentManager` 中添加加载和应用文档的逻辑。
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+packages/stitcher-application/src/stitcher/app/services/doc_manager.py
 ~~~~~
 ~~~~~python.old
-from stitcher.scanner import parse_source_code, parse_plugin_entry, InspectionError
-from stitcher.io import StubGenerator
-from stitcher.spec import ModuleDef
-from stitcher.common import bus
-from stitcher.needle import L
-from stitcher.config import load_config_from_path
-
-
-class StitcherApp:
-    def __init__(self, root_path: Path):
-        self.root_path = root_path
-        self.generator = StubGenerator()
-
-    def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
+        self.adapter.save(output_path, data)
+        return output_path
 ~~~~~
 ~~~~~python.new
-from stitcher.scanner import parse_source_code, parse_plugin_entry, InspectionError
-from stitcher.io import StubGenerator
-from stitcher.spec import ModuleDef
-from stitcher.common import bus
-from stitcher.needle import L
-from stitcher.config import load_config_from_path
-from stitcher.app.services import DocumentManager
+        self.adapter.save(output_path, data)
+        return output_path
 
-
-class StitcherApp:
-    def __init__(self, root_path: Path):
-        self.root_path = root_path
-        self.generator = StubGenerator()
-        self.doc_manager = DocumentManager(root_path)
-
-    def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
-~~~~~
-~~~~~python.old
-        if generated_files:
-            bus.success(L.generate.run.complete, count=len(generated_files))
-
-        return generated_files
-~~~~~
-~~~~~python.new
-        if generated_files:
-            bus.success(L.generate.run.complete, count=len(generated_files))
-
-        return generated_files
-
-    def run_init(self) -> List[Path]:
+    def load_docs_for_module(self, module: ModuleDef) -> Dict[str, str]:
         """
-        Scans source files and extracts docstrings into external .stitcher.yaml files.
+        Loads documentation from the corresponding .stitcher.yaml file.
+        Returns empty dict if file does not exist.
         """
-        config = load_config_from_path(self.root_path)
-        
-        # 1. Discover and scan source files
-        files_to_scan = []
-        for scan_path_str in config.scan_paths:
-            scan_path = self.root_path / scan_path_str
-            if scan_path.is_dir():
-                files_to_scan.extend(scan_path.rglob("*.py"))
-            elif scan_path.is_file():
-                files_to_scan.append(scan_path)
-                
-        unique_files = sorted(list(set(files_to_scan)))
-        modules = self._scan_files(unique_files)
-        
-        if not modules:
-            bus.warning(L.warning.no_files_or_plugins_found)
-            return []
+        # ModuleDef.file_path is relative to project root (e.g. src/app.py)
+        # We look for src/app.stitcher.yaml
+        if not module.file_path:
+            return {}
             
-        # 2. Extract and save docs
-        created_files: List[Path] = []
+        module_path = self.root_path / module.file_path
+        doc_path = module_path.with_suffix(".stitcher.yaml")
+        
+        return self.adapter.load(doc_path)
+
+    def _apply_to_function(self, func: FunctionDef, docs: Dict[str, str], prefix: str = ""):
+        full_name = f"{prefix}{func.name}"
+        if full_name in docs:
+            func.docstring = docs[full_name]
+
+    def _apply_to_class(self, cls: ClassDef, docs: Dict[str, str], prefix: str = ""):
+        full_name = f"{prefix}{cls.name}"
+        if full_name in docs:
+            cls.docstring = docs[full_name]
+            
+        for method in cls.methods:
+            self._apply_to_function(method, docs, prefix=f"{full_name}.")
+            
+        for attr in cls.attributes:
+            attr_key = f"{full_name}.{attr.name}"
+            if attr_key in docs:
+                attr.docstring = docs[attr_key]
+
+    def apply_docs_to_module(self, module: ModuleDef) -> None:
+        """
+        Loads external docs and applies them to the ModuleDef IR in-place.
+        Prioritizes external docs over existing source docs.
+        """
+        docs = self.load_docs_for_module(module)
+        if not docs:
+            return
+
+        # 1. Module Docstring
+        if "__doc__" in docs:
+            module.docstring = docs["__doc__"]
+            
+        # 2. Functions
+        for func in module.functions:
+            self._apply_to_function(func, docs)
+            
+        # 3. Classes
+        for cls in module.classes:
+            self._apply_to_class(cls, docs)
+            
+        # 4. Attributes
+        for attr in module.attributes:
+            if attr.name in docs:
+                attr.docstring = docs[attr.name]
+~~~~~
+
+#### Acts 2: 更新 StitcherApp 生成流程
+
+在 `_generate_stubs` 中调用 `apply_docs_to_module`。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+    def _generate_stubs(self, modules: List[ModuleDef]) -> List[Path]:
+        """Generates .pyi files from a list of ModuleDefs."""
+        generated_files: List[Path] = []
         for module in modules:
-            # save_docs_for_module returns an empty path if no docs found/saved
-            output_path = self.doc_manager.save_docs_for_module(module)
-            if output_path and output_path.name:
-                relative_path = output_path.relative_to(self.root_path)
-                bus.success(L.init.file.created, path=relative_path)
-                created_files.append(output_path)
-                
-        # 3. Report results
-        if created_files:
-            bus.success(L.init.run.complete, count=len(created_files))
-        else:
-            bus.info(L.init.no_docs_found)
-            
-        return created_files
-~~~~~
-
-#### Acts 3: 更新 CLI 命令
-
-更新 `stitcher-cli` 中的 `init` 命令。
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python.old
-@app.command()
-def init():
-    """Initialize Stitcher in the current project."""
-    bus.info(L.cli.command.not_implemented, command="init")
+            pyi_content = self.generator.generate(module)
+            # Output path is relative to the project root
+            output_path = self.root_path / Path(module.file_path).with_suffix(".pyi")
 ~~~~~
 ~~~~~python.new
-@app.command()
-def init():
-    """Initialize Stitcher in the current project."""
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-    app_instance.run_init()
+    def _generate_stubs(self, modules: List[ModuleDef]) -> List[Path]:
+        """Generates .pyi files from a list of ModuleDefs."""
+        generated_files: List[Path] = []
+        for module in modules:
+            # Step 1: Hydrate IR with external docs (The "Stitching" process)
+            self.doc_manager.apply_docs_to_module(module)
+
+            # Step 2: Generate code
+            pyi_content = self.generator.generate(module)
+            # Output path is relative to the project root
+            output_path = self.root_path / Path(module.file_path).with_suffix(".pyi")
 ~~~~~
 
-#### Acts 4: 添加集成测试
+#### Acts 3: 添加测试用例
+
+验证覆盖逻辑：源文件有文档 A，YAML 文件有文档 B，生成结果应为 B。
 
 ~~~~~act
 write_file
-tests/integration/test_init_command.py
+packages/stitcher-application/tests/test_doc_overlay.py
 ~~~~~
 ~~~~~python
 import pytest
 from pathlib import Path
-from textwrap import dedent
-from unittest.mock import MagicMock
-from stitcher.app import StitcherApp
+from stitcher.spec import ModuleDef, FunctionDef
+from stitcher.app.services import DocumentManager
+from stitcher.io import YamlAdapter
 
 
-@pytest.fixture
-def mock_bus(monkeypatch):
-    mock = MagicMock()
-    monkeypatch.setattr("stitcher.app.core.bus", mock)
-    # Also need to mock the service layer bus usage if we want to capture those messages, 
-    # but here we test App -> Bus mainly. 
-    # Actually, doc_manager uses bus? Check doc_manager impl.
-    # Checked: doc_manager currently imports bus but doesn't seem to emit messages directly 
-    # in save_docs_for_module. StitcherApp emits the messages. Good.
-    return mock
-
-
-def test_init_extracts_docs_to_yaml(tmp_path, mock_bus):
-    # 1. Setup a project with source code containing docstrings
-    project_root = tmp_path / "my_project"
-    src_dir = project_root / "src"
-    src_dir.mkdir(parents=True)
-    
-    # pyproject.toml
-    (project_root / "pyproject.toml").write_text(dedent("""
-        [tool.stitcher]
-        scan_paths = ["src"]
-    """))
-    
-    # Source file
-    source_code = dedent("""
-        def my_func():
-            \"\"\"This is a docstring.\"\"\"
-            pass
-            
-        class MyClass:
-            \"\"\"Class doc.\"\"\"
-            def method(self):
-                \"\"\"Method doc.\"\"\"
-                pass
-    """)
-    (src_dir / "main.py").write_text(source_code)
-    
-    # 2. Run init
-    app = StitcherApp(root_path=project_root)
-    created_files = app.run_init()
-    
-    # 3. Verify
-    expected_yaml = src_dir / "main.stitcher.yaml"
-    assert expected_yaml in created_files
-    assert expected_yaml.exists()
-    
-    content = expected_yaml.read_text()
-    assert "my_func: This is a docstring." in content
-    assert "MyClass: Class doc." in content
-    assert "MyClass.method: Method doc." in content
-    
-    # Verify bus messages
-    mock_bus.success.assert_any_call(
-        "init.file.created", path=expected_yaml.relative_to(project_root)
+def test_apply_docs_overlay(tmp_path: Path):
+    """
+    Verifies that external docs overwrite source docs in the IR.
+    """
+    # 1. Setup IR with "Source Docs"
+    module = ModuleDef(
+        file_path="src/main.py",
+        docstring="Source Module Doc",
+        functions=[
+            FunctionDef(name="func", docstring="Source Func Doc")
+        ]
     )
-    mock_bus.success.assert_any_call("init.run.complete", count=1)
+    
+    # 2. Setup External Docs (Mocking file system via YamlAdapter)
+    # create src/main.stitcher.yaml
+    doc_file = tmp_path / "src" / "main.stitcher.yaml"
+    doc_file.parent.mkdir(parents=True)
+    
+    adapter = YamlAdapter()
+    external_docs = {
+        "__doc__": "YAML Module Doc",
+        "func": "YAML Func Doc"
+    }
+    adapter.save(doc_file, external_docs)
+    
+    # 3. Apply
+    manager = DocumentManager(root_path=tmp_path)
+    manager.apply_docs_to_module(module)
+    
+    # 4. Assert IR is updated
+    assert module.docstring == "YAML Module Doc"
+    assert module.functions[0].docstring == "YAML Func Doc"
 
 
-def test_init_skips_files_without_docs(tmp_path, mock_bus):
-    project_root = tmp_path / "no_docs_project"
-    src_dir = project_root / "src"
-    src_dir.mkdir(parents=True)
+def test_apply_docs_partial_overlay(tmp_path: Path):
+    """
+    Verifies that if a key is missing in YAML, source doc is preserved.
+    """
+    module = ModuleDef(
+        file_path="src/main.py",
+        functions=[
+            FunctionDef(name="func1", docstring="Source 1"),
+            FunctionDef(name="func2", docstring="Source 2")
+        ]
+    )
     
-    (project_root / "pyproject.toml").write_text(dedent("""
-        [tool.stitcher]
-        scan_paths = ["src"]
-    """))
+    doc_file = tmp_path / "src" / "main.stitcher.yaml"
+    doc_file.parent.mkdir(parents=True)
     
-    (src_dir / "main.py").write_text("def no_doc(): pass")
+    adapter = YamlAdapter()
+    # Only overriding func1
+    adapter.save(doc_file, {"func1": "YAML 1"})
     
-    app = StitcherApp(root_path=project_root)
-    created_files = app.run_init()
+    manager = DocumentManager(root_path=tmp_path)
+    manager.apply_docs_to_module(module)
     
-    assert len(created_files) == 0
-    mock_bus.info.assert_called_with("init.no_docs_found")
+    assert module.functions[0].docstring == "YAML 1"
+    assert module.functions[1].docstring == "Source 2"
 ~~~~~
 
 ### 下一步建议
-我们已经完成了文档的提取（init）。接下来的逻辑闭环是：在生成 `.pyi` 文件时（generate），能够优先读取这些外部 YAML 文件中的文档，而不是源代码中的文档（如果存在的话）。这将完成 **任务 2.3: 升级 `stitcher generate`**。
+我们现在完成了核心的“解耦闭环”：`init` 导出文档，`generate` 缝合文档。
+下一个关键步骤是 **任务 2.4: `stitcher check` 命令**。这个命令对于 CI/CD 至关重要，它确保代码和文档没有“漂移”（Drift）。例如，如果在代码中删除了一个函数，但在 YAML 中还保留着它的文档，或者反之，`check` 命令应该报错。这将极大地提升项目的健康度。

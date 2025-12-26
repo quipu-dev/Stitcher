@@ -101,3 +101,62 @@ class DocumentManager:
         
         self.adapter.save(output_path, data)
         return output_path
+
+    def load_docs_for_module(self, module: ModuleDef) -> Dict[str, str]:
+        """
+        Loads documentation from the corresponding .stitcher.yaml file.
+        Returns empty dict if file does not exist.
+        """
+        # ModuleDef.file_path is relative to project root (e.g. src/app.py)
+        # We look for src/app.stitcher.yaml
+        if not module.file_path:
+            return {}
+            
+        module_path = self.root_path / module.file_path
+        doc_path = module_path.with_suffix(".stitcher.yaml")
+        
+        return self.adapter.load(doc_path)
+
+    def _apply_to_function(self, func: FunctionDef, docs: Dict[str, str], prefix: str = ""):
+        full_name = f"{prefix}{func.name}"
+        if full_name in docs:
+            func.docstring = docs[full_name]
+
+    def _apply_to_class(self, cls: ClassDef, docs: Dict[str, str], prefix: str = ""):
+        full_name = f"{prefix}{cls.name}"
+        if full_name in docs:
+            cls.docstring = docs[full_name]
+            
+        for method in cls.methods:
+            self._apply_to_function(method, docs, prefix=f"{full_name}.")
+            
+        for attr in cls.attributes:
+            attr_key = f"{full_name}.{attr.name}"
+            if attr_key in docs:
+                attr.docstring = docs[attr_key]
+
+    def apply_docs_to_module(self, module: ModuleDef) -> None:
+        """
+        Loads external docs and applies them to the ModuleDef IR in-place.
+        Prioritizes external docs over existing source docs.
+        """
+        docs = self.load_docs_for_module(module)
+        if not docs:
+            return
+
+        # 1. Module Docstring
+        if "__doc__" in docs:
+            module.docstring = docs["__doc__"]
+            
+        # 2. Functions
+        for func in module.functions:
+            self._apply_to_function(func, docs)
+            
+        # 3. Classes
+        for cls in module.classes:
+            self._apply_to_class(cls, docs)
+            
+        # 4. Attributes
+        for attr in module.attributes:
+            if attr.name in docs:
+                attr.docstring = docs[attr.name]

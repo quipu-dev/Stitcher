@@ -77,6 +77,10 @@ class StitcherApp:
         """Generates .pyi files from a list of ModuleDefs."""
         generated_files: List[Path] = []
         for module in modules:
+            # Step 1: Hydrate IR with external docs (The "Stitching" process)
+            self.doc_manager.apply_docs_to_module(module)
+
+            # Step 2: Generate code
             pyi_content = self.generator.generate(module)
             # Output path is relative to the project root
             output_path = self.root_path / Path(module.file_path).with_suffix(".pyi")
