@@ -111,21 +111,30 @@ class InjectorTransformer(cst.CSTTransformer):
         return isinstance(node, cst.Expr) and isinstance(node.value, cst.SimpleString)
 
     def _inject_into_body(
-        self, 
-        body: Union[cst.BaseSuite, cst.SimpleStatementSuite], 
-        doc_content: str
+        self,
+        body: Union[cst.BaseSuite, cst.SimpleStatementSuite],
+        doc_content: str,
     ) -> Union[cst.BaseSuite, cst.SimpleStatementSuite]:
-        
+
         new_doc_node = self._create_docstring_node(doc_content)
 
         if isinstance(body, cst.SimpleStatementSuite):
-            # Convert simple suite to indented block for cleanliness if adding docstring?
-            # Or assume we can just replace. 
-            # If it was "def f(): pass", converting to docstring is tricky without changing type.
-            # Let's stick to IndentedBlock for injection usually, but if source is SimpleStatementSuite
-            # we might need to convert it. LibCST makes changing node types hard.
-            # For MVP: If it's a simple suite, we replace its content.
-            return body  # TODO: Handle conversion to IndentedBlock if needed for style
+            # Convert "def f(): stmt" to:
+            # def f():
+            #     """doc"""
+            #     stmt
+            new_stmts = [new_doc_node]
+
+            # Process existing statements in the one-liner
+            for stmt in body.body:
+                # If it's just 'pass', we can remove it since we now have a docstring
+                if isinstance(stmt, cst.Pass):
+                    continue
+                
+                # Wrap small statement into a line
+                new_stmts.append(cst.SimpleStatementLine(body=[stmt]))
+
+            return cst.IndentedBlock(body=new_stmts)
 
         elif isinstance(body, cst.IndentedBlock):
             new_body_stmts = []

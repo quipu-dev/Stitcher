@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现文档生命周期管理的核心 AST 变换器 (Strip/Eject)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766729499.3657403, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 `inject_docstrings` 对单行函数的支持", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766729563.8202236, "duration_ms": 0}}

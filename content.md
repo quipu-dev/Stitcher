@@ -1,269 +1,37 @@
-这是实现 `strip` 和 `eject` 核心逻辑（AST 变换）的计划。这两个命令的核心在于如何“无损”地修改源代码——只动文档字符串，不动其他逻辑和格式。LibCST 的 Transformer 模式是处理此任务的最佳选择。
+这里有修复 `InjectorTransformer` 无法向单行函数体注入文档字符串的计划。
 
-## [WIP] feat: 实现文档生命周期管理的核心 AST 变换器 (Strip/Eject)
+## [WIP] fix: 修复 `inject_docstrings` 对单行函数的支持
+
+### 错误分析
+测试 `test_inject_multiline_handling` 失败，因为 `InjectorTransformer._inject_into_body` 方法目前对 `cst.SimpleStatementSuite`（例如 `def f(): pass`）的处理是直接返回原节点，没有执行注入。
+要解决这个问题，我们需要将 `SimpleStatementSuite` 转换为 `IndentedBlock`，以便能够容纳新插入的文档字符串语句。
 
 ### 用户需求
-用户需要两个新的操作来管理文档的生命周期：
-1.  **Strip (瘦身)**: 安全地移除源代码中的文档字符串，以消除冗余并强制使用外部 YAML 作为唯一事实来源。
-2.  **Eject (退出)**: 将 YAML 中的文档精准地写回源代码，允许项目回归传统模式。
-这要求底层 Scanner 具备**修改代码**的能力，而不仅仅是解析。
-
-### 评论
-实现 `Eject` 的难点在于**上下文感知**和**格式保持**。
--   **上下文感知**: Transformer 需要像 Parser 一样维护当前的类/方法栈，以便构建正确的 FQN（如 `MyClass.method`）来查找对应的文档。
--   **格式保持**: LibCST 擅长于此，但我们需要正确构造 `SimpleString` 节点，确保多行文档字符串的缩进和引号风格（推荐统一使用 `"""`）是正确的。
+用户希望 `inject_docstrings` 能够处理所有形式的函数体，包括紧凑的单行形式。
 
 ### 目标
-1.  在 `stitcher-scanner` 中引入 `transformer.py` 模块。
-2.  实现 `strip_docstrings(source: str) -> str`: 移除模块、类和函数的文档字符串。如果移除后函数体为空，自动插入 `pass`。
-3.  实现 `inject_docstrings(source: str, docs: Dict[str, str]) -> str`: 根据 FQN 将文档字符串注入回代码中。
-4.  编写单元测试验证变换的准确性和安全性。
-
-### 基本原理
--   **Stripper**: 遍历 CST，检测 body 的第一个语句是否为单纯的字符串表达式。如果是，将其移除。特别注意：如果移除后 body 变为空，必须插入一个 `Pass` 节点以保持语法合法性。
--   **Injector**: 维护一个 `scope_stack` 来追踪当前的 FQN。对于每个类/函数/模块，在 `docs` 字典中查找是否有对应的内容。如果有，构造一个新的 `Expr(SimpleString(...))` 节点并插入/替换到 body 头部。
+修改 `transformer.py`：
+1.  在 `_inject_into_body` 中实现从 `SimpleStatementSuite` 到 `IndentedBlock` 的转换逻辑。
+2.  在转换过程中，如果原函数体仅包含 `pass`，则在注入文档后将其移除，以保持代码整洁。
 
 ### 标签
-#intent/build #flow/ready #priority/high
+#intent/fix #flow/ready #priority/high
 #comp/scanner #concept/parser #scope/core
 #ai/instruct
-#task/domain/dev-tools #task/object/lifecycle-management #task/action/implementation
-#task/state/begin
+#task/domain/dev-tools #task/object/lifecycle-management #task/action/bug-fix
+#task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 Transformer 的测试用例
-
-我们先定义这两种操作的预期行为，特别是边缘情况（如空函数体）。
+#### Acts 1: 增强 `InjectorTransformer` 以支持单行块转换
 
 ~~~~~act
-write_file
-packages/stitcher-scanner/tests/test_transformer.py
-~~~~~
-~~~~~python
-import pytest
-from textwrap import dedent
-from stitcher.scanner.transformer import strip_docstrings, inject_docstrings
-
-
-def test_strip_docstrings_basic():
-    source = dedent("""
-    def func():
-        \"\"\"I am a docstring.\"\"\"
-        return 1
-    """)
-    expected = dedent("""
-    def func():
-        return 1
-    """)
-    assert strip_docstrings(source) == expected
-
-
-def test_strip_docstrings_replaces_with_pass():
-    """If a function only has a docstring, stripping it should leave a pass."""
-    source = dedent("""
-    def func():
-        \"\"\"Only docstring here.\"\"\"
-    """)
-    # LibCST usually preserves indentation logic, but let's check basic validity
-    result = strip_docstrings(source)
-    assert "pass" in result
-    assert '"""' not in result
-
-
-def test_strip_class_and_module_docs():
-    source = dedent("""
-    \"\"\"Module doc.\"\"\"
-    
-    class A:
-        \"\"\"Class doc.\"\"\"
-        def m(self):
-            \"\"\"Method doc.\"\"\"
-            pass
-    """)
-    result = strip_docstrings(source)
-    assert '"""' not in result
-    assert "class A:" in result
-    assert "def m(self):" in result
-
-
-def test_inject_docstrings_basic():
-    source = dedent("""
-    def func():
-        pass
-    """)
-    docs = {"func": "New docstring"}
-    
-    # We expect the transformer to insert the docstring
-    result = inject_docstrings(source, docs)
-    assert '"""New docstring"""' in result
-    # It might keep 'pass' or remove it depending on logic. 
-    # Ideally, if we inject doc, 'pass' is redundant but harmless. 
-    # Let's just check doc is there.
-
-
-def test_inject_docstrings_replacement():
-    source = dedent("""
-    def func():
-        \"\"\"Old doc.\"\"\"
-        return 1
-    """)
-    docs = {"func": "New doc"}
-    
-    result = inject_docstrings(source, docs)
-    assert '"""New doc"""' in result
-    assert "Old doc" not in result
-    assert "return 1" in result
-
-
-def test_inject_nested_fqn():
-    source = dedent("""
-    class A:
-        def m(self):
-            pass
-    """)
-    docs = {
-        "A": "Class A doc",
-        "A.m": "Method m doc"
-    }
-    
-    result = inject_docstrings(source, docs)
-    assert '"""Class A doc"""' in result
-    assert '"""Method m doc"""' in result
-
-
-def test_inject_multiline_handling():
-    source = "def func(): pass"
-    docs = {"func": "Line 1\nLine 2"}
-    
-    result = inject_docstrings(source, docs)
-    # Should use triple quotes and contain newlines
-    assert '"""Line 1\nLine 2"""' in result or '"""\nLine 1\nLine 2\n"""' in result
-~~~~~
-
-#### Acts 2: 实现 `transformer.py`
-
-这个模块将包含 `StripperTransformer` 和 `InjectorTransformer`。
-
-~~~~~act
-write_file
+patch_file
 packages/stitcher-scanner/src/stitcher/scanner/transformer.py
 ~~~~~
-~~~~~python
-import libcst as cst
-from typing import Dict, List, Optional, Union
-
-# Type alias for nodes that have a body attribute
-HasBody = Union[cst.Module, cst.ClassDef, cst.FunctionDef]
-
-
-class StripperTransformer(cst.CSTTransformer):
-    def _is_docstring(self, node: cst.BaseSmallStatement) -> bool:
-        """Check if a statement is a standalone string expression (docstring)."""
-        if isinstance(node, cst.Expr) and isinstance(node.value, cst.SimpleString):
-            return True
-        return False
-
-    def _process_body(
-        self, body: Union[cst.BaseSuite, cst.SimpleStatementSuite]
-    ) -> Union[cst.BaseSuite, cst.SimpleStatementSuite]:
-        """
-        Removes docstring from body. If body becomes empty, inserts 'pass'.
-        """
-        if isinstance(body, cst.SimpleStatementSuite):
-            # One-liner: def foo(): "doc" -> def foo(): pass
-            # SimpleStatementSuite contains a list of small statements
-            new_body = []
-            for stmt in body.body:
-                if not self._is_docstring(stmt):
-                    new_body.append(stmt)
-            
-            if not new_body:
-                # If became empty, convert to a single 'pass'
-                return cst.SimpleStatementSuite(
-                    body=[cst.Pass()]
-                )
-            return body.with_changes(body=new_body)
-
-        elif isinstance(body, cst.IndentedBlock):
-            new_body = []
-            if body.body:
-                first_stmt = body.body[0]
-                # In an IndentedBlock, the statements are typically SimpleStatementLine
-                # which contain small statements.
-                # We check if the FIRST line is a docstring expression.
-                if isinstance(first_stmt, cst.SimpleStatementLine):
-                    if len(first_stmt.body) == 1 and self._is_docstring(first_stmt.body[0]):
-                        # Skip this line (it's the docstring)
-                        new_body.extend(body.body[1:])
-                    else:
-                        new_body.extend(body.body)
-                else:
-                    new_body.extend(body.body)
-            
-            if not new_body:
-                # If empty, add pass
-                # We need to ensure we have a valid indentation block structure
-                return body.with_changes(
-                    body=[cst.SimpleStatementLine(body=[cst.Pass()])]
-                )
-            
-            return body.with_changes(body=new_body)
-        
-        return body
-
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:
-        # Module body is just a sequence of statements, not wrapped in IndentedBlock
-        new_body = []
-        if updated_node.body:
-            first_stmt = updated_node.body[0]
-            if isinstance(first_stmt, cst.SimpleStatementLine):
-                 if len(first_stmt.body) == 1 and self._is_docstring(first_stmt.body[0]):
-                     new_body.extend(updated_node.body[1:])
-                 else:
-                     new_body.extend(updated_node.body)
-            else:
-                 new_body.extend(updated_node.body)
-        
-        return updated_node.with_changes(body=new_body)
-
-    def leave_FunctionDef(
-        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
-    ) -> cst.FunctionDef:
-        return updated_node.with_changes(body=self._process_body(updated_node.body))
-
-    def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
-    ) -> cst.ClassDef:
-        return updated_node.with_changes(body=self._process_body(updated_node.body))
-
-
-class InjectorTransformer(cst.CSTTransformer):
-    def __init__(self, docs: Dict[str, str]):
-        self.docs = docs
-        self.scope_stack: List[str] = []
-
-    def _get_current_fqn(self, name: str) -> str:
-        if not self.scope_stack:
-            return name
-        return f"{'.'.join(self.scope_stack)}.{name}"
-
-    def _create_docstring_node(self, doc_content: str) -> cst.SimpleStatementLine:
-        """Creates a properly quoted docstring node."""
-        # Use triple double quotes for everything for consistency
-        # Escape existing triple quotes if necessary (simple approach)
-        safe_content = doc_content.replace('"""', '\\"\\"\\"')
-        quoted = f'"""{safe_content}"""'
-        
-        return cst.SimpleStatementLine(
-            body=[cst.Expr(value=cst.SimpleString(value=quoted))]
-        )
-
-    def _is_docstring(self, node: cst.BaseSmallStatement) -> bool:
-        return isinstance(node, cst.Expr) and isinstance(node.value, cst.SimpleString)
-
+~~~~~python.old
     def _inject_into_body(
         self, 
         body: Union[cst.BaseSuite, cst.SimpleStatementSuite], 
@@ -283,132 +51,38 @@ class InjectorTransformer(cst.CSTTransformer):
 
         elif isinstance(body, cst.IndentedBlock):
             new_body_stmts = []
-            has_docstring = False
-            
-            if body.body:
-                first = body.body[0]
-                if isinstance(first, cst.SimpleStatementLine) and len(first.body) == 1 and self._is_docstring(first.body[0]):
-                     # Replace existing docstring
-                     new_body_stmts.append(new_doc_node)
-                     new_body_stmts.extend(body.body[1:])
-                     has_docstring = True
-                else:
-                    # No existing docstring
-                    new_body_stmts.append(new_doc_node)
-                    new_body_stmts.extend(body.body)
-            else:
-                 # Empty body
-                 new_body_stmts.append(new_doc_node)
-
-            return body.with_changes(body=new_body_stmts)
-
-        return body
-
-    # --- Visit/Leave pairs to manage Scope ---
-
-    def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
-        self.scope_stack.append(node.name.value)
-        return True
-
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.ClassDef:
-        # Before popping, inject docstring for THIS class
-        # Note: current stack includes this class name
-        fqn = ".".join(self.scope_stack)
-        
-        if fqn in self.docs:
-             updated_node = updated_node.with_changes(
-                 body=self._inject_into_body(updated_node.body, self.docs[fqn])
-             )
-        
-        self.scope_stack.pop()
-        return updated_node
-
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
-        # Don't push function name to scope stack yet, 
-        # because methods are children of class, but inner functions are implementation details?
-        # Standard logic: FQN includes function name.
-        self.scope_stack.append(node.name.value)
-        return True
-
-    def leave_FunctionDef(self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef) -> cst.FunctionDef:
-        fqn = ".".join(self.scope_stack)
-        
-        if fqn in self.docs:
-            updated_node = updated_node.with_changes(
-                body=self._inject_into_body(updated_node.body, self.docs[fqn])
-            )
-
-        self.scope_stack.pop()
-        return updated_node
-    
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:
-        # Module docstring uses key "__doc__" or possibly file path based logic externally?
-        # Usually "__doc__" is passed for module level.
-        if "__doc__" in self.docs:
-            # Module body is just list of statements
-            new_doc_node = self._create_docstring_node(self.docs["__doc__"])
-            new_body = []
-            
-            if updated_node.body:
-                first = updated_node.body[0]
-                if isinstance(first, cst.SimpleStatementLine) and len(first.body) == 1 and self._is_docstring(first.body[0]):
-                    # Replace
-                    new_body.append(new_doc_node)
-                    new_body.extend(updated_node.body[1:])
-                else:
-                    # Prepend
-                    new_body.append(new_doc_node)
-                    new_body.extend(updated_node.body)
-            else:
-                new_body.append(new_doc_node)
-            
-            return updated_node.with_changes(body=new_body)
-            
-        return updated_node
-
-
-def strip_docstrings(source_code: str) -> str:
-    """Removes all docstrings from the source code."""
-    module = cst.parse_module(source_code)
-    transformer = StripperTransformer()
-    modified = module.visit(transformer)
-    return modified.code
-
-
-def inject_docstrings(source_code: str, docs: Dict[str, str]) -> str:
-    """Injects docstrings from the dictionary into the source code."""
-    module = cst.parse_module(source_code)
-    transformer = InjectorTransformer(docs)
-    modified = module.visit(transformer)
-    return modified.code
-~~~~~
-
-#### Acts 3: 导出新功能
-
-~~~~~act
-patch_file
-packages/stitcher-scanner/src/stitcher/scanner/__init__.py
-~~~~~
-~~~~~python.old
-from .parser import parse_source_code
-from .inspector import parse_plugin_entry, InspectionError
-
-__all__ = ["parse_source_code", "parse_plugin_entry", "InspectionError"]
 ~~~~~
 ~~~~~python.new
-from .parser import parse_source_code
-from .inspector import parse_plugin_entry, InspectionError
-from .transformer import strip_docstrings, inject_docstrings
+    def _inject_into_body(
+        self,
+        body: Union[cst.BaseSuite, cst.SimpleStatementSuite],
+        doc_content: str,
+    ) -> Union[cst.BaseSuite, cst.SimpleStatementSuite]:
 
-__all__ = [
-    "parse_source_code",
-    "parse_plugin_entry",
-    "InspectionError",
-    "strip_docstrings",
-    "inject_docstrings",
-]
+        new_doc_node = self._create_docstring_node(doc_content)
+
+        if isinstance(body, cst.SimpleStatementSuite):
+            # Convert "def f(): stmt" to:
+            # def f():
+            #     """doc"""
+            #     stmt
+            new_stmts = [new_doc_node]
+
+            # Process existing statements in the one-liner
+            for stmt in body.body:
+                # If it's just 'pass', we can remove it since we now have a docstring
+                if isinstance(stmt, cst.Pass):
+                    continue
+                
+                # Wrap small statement into a line
+                new_stmts.append(cst.SimpleStatementLine(body=[stmt]))
+
+            return cst.IndentedBlock(body=new_stmts)
+
+        elif isinstance(body, cst.IndentedBlock):
+            new_body_stmts = []
 ~~~~~
 
 ### 下一步建议
-运行测试 `packages/stitcher-scanner/tests/test_transformer.py`。
-如果通过，下一步是在 `stitcher-application` 中实现 `run_strip` 和 `run_eject` 方法，它们将负责文件 I/O 并调用这些变换器。
+再次运行 `packages/stitcher-scanner/tests/test_transformer.py`。
+通过后，即可着手实现 `stitcher-application` 中的 `strip` 和 `eject` 命令集成。
