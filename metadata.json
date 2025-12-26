@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现基于接口的资源加载器与 Needle 运行时", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766717452.2132685, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 将 stitcher-needle 集成到 stitcher-common", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766718073.519825, "duration_ms": 0}}

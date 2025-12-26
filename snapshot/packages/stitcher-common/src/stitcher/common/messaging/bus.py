@@ -1,8 +1,9 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
+from stitcher.needle import SemanticPointer
 from .protocols import Renderer
 
 logger = logging.getLogger(__name__)
@@ -64,17 +65,17 @@ class MessageBus:
             return
         self._renderer.render(msg_id, level, **kwargs)
 
-    def info(self, msg_id: str, **kwargs: Any) -> None:
-        self._render("info", msg_id, **kwargs)
+    def info(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("info", str(msg_id), **kwargs)
 
-    def success(self, msg_id: str, **kwargs: Any) -> None:
-        self._render("success", msg_id, **kwargs)
+    def success(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("success", str(msg_id), **kwargs)
         
-    def warning(self, msg_id: str, **kwargs: Any) -> None:
-        self._render("warning", msg_id, **kwargs)
+    def warning(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("warning", str(msg_id), **kwargs)
 
-    def error(self, msg_id: str, **kwargs: Any) -> None:
-        self._render("error", msg_id, **kwargs)
+    def error(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("error", str(msg_id), **kwargs)
 
 # Global singleton instance
 _default_store = MessageStore(locale="en")

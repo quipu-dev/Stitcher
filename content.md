@@ -1,340 +1,166 @@
-## [WIP] feat: 实现基于接口的资源加载器与 Needle 运行时
+好的，我们来执行路线图的第二阶段。
+
+我将生成一个计划，将 `stitcher-needle` 集成到 `stitcher-common` 中。这会建立一个统一的 `L` 对象导入点，并升级消息总线以无缝处理新的 `SemanticPointer` 类型。
+
+## [WIP] feat: 将 stitcher-needle 集成到 stitcher-common
 
 ### 用户需求
-实现 `stitcher-needle` 的资源加载与运行时逻辑。必须采用“接口先行”的设计模式，定义抽象的文件处理接口，以支持未来扩展（如 YAML 支持）。同时实现默认的 JSON 处理器、SST 目录扫描逻辑以及具有优雅降级能力的运行时核心。
+根据路线图，现在需要将新创建的 `stitcher-needle` 包集成到 `stitcher-common` 中。核心任务是建立一个统一的导入点 (`from stitcher.common import L`)，并修改 `MessageBus` 使其能够接受 `SemanticPointer` 对象作为消息 ID。
 
 ### 评论
-采用接口模式是极具前瞻性的决策。它不仅解耦了具体的解析逻辑，还允许我们在保持核心包“零依赖”的同时，通过可选扩展（Extras）引入重型依赖（如 PyYAML）。SST (物理分片语义分类法) 的扫描逻辑将确保文件系统结构能正确映射为内存中的 FQN (全限定名) 字典。
+这是架构整合的关键一步。通过让 `stitcher-common` 成为 `L` 对象的唯一“官方”导出者，我们为整个项目建立了一个清晰、一致的语义寻址入口。修改 `MessageBus` 是对“在边界处显式转换”设计原则的第一次实践，它以最小的侵入性将指针的便利性与现有系统的稳定性结合起来。
 
 ### 目标
-1.  定义 `FileHandler` 协议，规范 `match` 和 `load` 行为。
-2.  实现内置的 `JsonHandler`。
-3.  实现 `Loader`，负责扫描 `stitcher/needle/<lang>` 目录，利用 Handler 加载文件，并将嵌套字典展平为 FQN 键值对。
-4.  实现 `Needle` 运行时类，封装加载逻辑并提供带有三级降级策略的 `get` 方法。
-5.  在包入口导出 `Needle` 实例，并编写综合测试。
+1.  在 `stitcher-common` 的 `pyproject.toml` 中添加对 `stitcher-needle` 的依赖。
+2.  从 `stitcher.common` 的顶层 `__init__.py` 中重新导出 `L` 对象。
+3.  更新 `MessageBus` 的公共方法 (`info`, `success` 等)，使其类型提示接受 `Union[str, SemanticPointer]`。
+4.  在 `MessageBus` 的方法内部，将传入的 `SemanticPointer` 安全地转换为字符串，再传递给下游组件。
 
 ### 基本原理
-*   **接口隔离**: 使用 `typing.Protocol` 定义接口，无需继承即可实现多态。
-*   **展平逻辑**: 为了 O(1) 的查找速度，我们在加载阶段将嵌套的 JSON 结构（如 `{"a": {"b": "val"}}`）展平为一维字典（`{"a.b": "val"}`）。
-*   **优雅降级**: 运行时的健壮性来自于“身份即内容”的哲学。当所有查找失败时，返回 Key 本身保证了程序永远不会因为缺翻译而崩溃。
+我们将 `stitcher-needle` 添加为 `stitcher-common` 的工作区依赖，以利用 `uv` 的项目内包解析能力。在 `MessageBus` 的公共接口层进行 `str()` 转换是最佳实践，因为它将适配逻辑限制在单一入口点，避免了对 `Renderer` 协议、`MessageStore` 等内部组件的连锁修改，保持了内部 API 的纯粹和稳定。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/runtime #scope/core #ai/instruct #task/domain/runtime #task/object/needle-loader #task/action/implementation #task/state/continue
+#intent/build #flow/ready #priority/high #comp/common #comp/runtime #scope/api #scope/core #ai/instruct #task/domain/runtime #task/object/needle-kernel #task/action/implementation #task/state/continue
 
 ---
 ### Script
 
-#### Acts 1: 定义文件处理接口与 JSON 实现
+#### Acts 1: 更新 `stitcher-common` 的依赖
 
-首先定义 `FileHandler` 协议，并实现标准的 JSON 处理器。
-
-~~~~~act
-write_file
-packages/stitcher-needle/src/stitcher/needle/interfaces.py
-~~~~~
-~~~~~python
-from typing import Any, Dict, Protocol
-from pathlib import Path
-
-
-class FileHandler(Protocol):
-    """
-    Protocol for file handlers that can parse specific formats.
-    """
-
-    def match(self, path: Path) -> bool:
-        """Returns True if this handler can process the given file."""
-        ...
-
-    def load(self, path: Path) -> Dict[str, Any]:
-        """Parses the file and returns a dictionary."""
-        ...
-~~~~~
+首先，我们在 `pyproject.toml` 中声明 `stitcher-common` 对 `stitcher-needle` 的依赖。
 
 ~~~~~act
-write_file
-packages/stitcher-needle/src/stitcher/needle/handlers.py
+patch_file
+packages/stitcher-common/pyproject.toml
 ~~~~~
-~~~~~python
-import json
-from pathlib import Path
-from typing import Any, Dict
-from .interfaces import FileHandler
+~~~~~old
+[project]
+name = "stitcher-common"
+version = "0.1.0"
+description = "Common utilities and protocols for Stitcher."
+requires-python = ">=3.10"
+dependencies = []
 
-
-class JsonHandler:
-    """Standard handler for JSON files."""
-
-    def match(self, path: Path) -> bool:
-        return path.suffix.lower() == ".json"
-
-    def load(self, path: Path) -> Dict[str, Any]:
-        with path.open("r", encoding="utf-8") as f:
-            return json.load(f)
+[tool.hatch.build.targets.wheel]
 ~~~~~
+~~~~~new
+[project]
+name = "stitcher-common"
+version = "0.1.0"
+description = "Common utilities and protocols for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "stitcher-needle",
+]
 
-#### Acts 2: 实现 Loader (SST 扫描与展平)
-
-Loader 负责遍历目录，调用匹配的 Handler，并将结果展平。
+[tool.hatch.build.targets.wheel]
+~~~~~
 
 ~~~~~act
-write_file
-packages/stitcher-needle/src/stitcher/needle/loader.py
+patch_file
+packages/stitcher-common/pyproject.toml
 ~~~~~
-~~~~~python
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+~~~~~old
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+~~~~~
+~~~~~new
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
 
-from .interfaces import FileHandler
-from .handlers import JsonHandler
-
-
-def _flatten_dict(
-    d: Dict[str, Any], parent_key: str = "", sep: str = "."
-) -> Dict[str, str]:
-    """
-    Recursively flattens a nested dictionary into a single-level dictionary
-    with dot-separated keys.
-    """
-    items: List[tuple] = []
-    for k, v in d.items():
-        new_key = f"{parent_key}{sep}{k}" if parent_key else k
-        if isinstance(v, dict):
-            items.extend(_flatten_dict(v, new_key, sep=sep).items())
-        else:
-            items.append((new_key, str(v)))
-    return dict(items)
-
-
-class Loader:
-    def __init__(self, handlers: Optional[List[FileHandler]] = None):
-        # Default to JsonHandler if none provided
-        self.handlers = handlers or [JsonHandler()]
-
-    def _load_file(self, path: Path) -> Dict[str, Any]:
-        for handler in self.handlers:
-            if handler.match(path):
-                try:
-                    return handler.load(path)
-                except Exception:
-                    # In a robust system we might log this, but Needle aims to be silent/resilient
-                    return {}
-        return {}
-
-    def load_directory(self, root_path: Path) -> Dict[str, str]:
-        """
-        Scans a directory following Stitcher SST rules and returns a flattened registry.
-        
-        SST Structure:
-        root/
-          __init__.json  -> keys mapped as "key"
-          category/
-            __init__.json -> keys mapped as "category.key"
-            file.json     -> keys mapped as "category.file.key"
-        """
-        registry: Dict[str, str] = {}
-
-        if not root_path.exists():
-            return registry
-
-        # Walk the directory
-        for dirpath, _, filenames in os.walk(root_path):
-            dir_path_obj = Path(dirpath)
-            
-            # Calculate the relative path parts to determine namespace
-            # e.g., /app/stitcher/needle/en/cli/ui -> parts=("cli", "ui")
-            try:
-                rel_parts = dir_path_obj.relative_to(root_path).parts
-            except ValueError:
-                continue
-
-            for filename in filenames:
-                file_path = dir_path_obj / filename
-                
-                # Load content
-                content = self._load_file(file_path)
-                if not content:
-                    continue
-
-                # Determine the prefix based on file position
-                # 1. Root __init__.json -> prefix=""
-                if not rel_parts and filename.startswith("__init__"):
-                    prefix = ""
-                # 2. Subdir __init__.json -> prefix="category."
-                elif rel_parts and filename.startswith("__init__"):
-                    prefix = ".".join(rel_parts)
-                # 3. Regular file -> prefix="category.filename." (without suffix)
-                else:
-                    file_stem = file_path.stem
-                    # Combine directory parts and filename
-                    prefix_parts = rel_parts + (file_stem,)
-                    prefix = ".".join(prefix_parts)
-
-                # Flatten and merge
-                flattened = _flatten_dict(content, parent_key=prefix)
-                registry.update(flattened)
-
-        return registry
+[tool.uv.sources]
+stitcher-needle = { workspace = true }
 ~~~~~
 
-#### Acts 3: 实现 Needle 运行时
+#### Acts 2: 从 `stitcher-common` 导出 `L`
 
-集成 Loader，实现三级降级查找。
+我们在 `stitcher.common` 的顶层 `__init__.py` 中重新导出 `L`，并将其加入 `__all__` 列表。
 
 ~~~~~act
-write_file
-packages/stitcher-needle/src/stitcher/needle/runtime.py
+patch_file
+packages/stitcher-common/src/stitcher/common/__init__.py
 ~~~~~
-~~~~~python
-import os
-from pathlib import Path
-from typing import Dict, Optional, Union
-
-from .loader import Loader
-from .pointer import SemanticPointer
-
-
-class Needle:
-    """
-    The runtime kernel for semantic addressing.
-    """
-
-    def __init__(self, root_path: Optional[Path] = None, default_lang: str = "en"):
-        self.root_path = root_path or self._find_project_root()
-        self.default_lang = default_lang
-        self._registry: Dict[str, Dict[str, str]] = {}  # lang -> {fqn: value}
-        self._loader = Loader()
-        self._loaded_langs: set = set()
-
-    def _find_project_root(self) -> Path:
-        """
-        Simple heuristic to find where 'stitcher' directory might be.
-        Defaults to current working directory.
-        """
-        return Path.cwd()
-
-    def _ensure_lang_loaded(self, lang: str):
-        if lang in self._loaded_langs:
-            return
-
-        # SST path: project_root/stitcher/needle/<lang>/
-        needle_dir = self.root_path / "stitcher" / "needle" / lang
-        
-        # Load and cache
-        self._registry[lang] = self._loader.load_directory(needle_dir)
-        self._loaded_langs.add(lang)
-
-    def get(
-        self, 
-        pointer: Union[SemanticPointer, str], 
-        lang: Optional[str] = None
-    ) -> str:
-        """
-        Resolves a semantic pointer to a string value with graceful fallback.
-        
-        Lookup Order:
-        1. Target Language
-        2. Default Language (en)
-        3. Identity (the key itself)
-        """
-        key = str(pointer)
-        target_lang = lang or os.getenv("STITCHER_LANG", self.default_lang)
-
-        # 1. Try target language
-        self._ensure_lang_loaded(target_lang)
-        val = self._registry.get(target_lang, {}).get(key)
-        if val is not None:
-            return val
-
-        # 2. Try default language (if different)
-        if target_lang != self.default_lang:
-            self._ensure_lang_loaded(self.default_lang)
-            val = self._registry.get(self.default_lang, {}).get(key)
-            if val is not None:
-                return val
-
-        # 3. Fallback to Identity
-        return key
-
-# Global Runtime Instance
-needle = Needle()
-~~~~~
-
-#### Acts 4: 导出与测试
-
-更新 `__init__.py` 导出新组件，并编写集成测试。
-
-~~~~~act
-write_file
-packages/stitcher-needle/src/stitcher/needle/__init__.py
-~~~~~
-~~~~~python
+~~~~~old
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-from .pointer import L, SemanticPointer
-from .runtime import needle, Needle
-from .loader import Loader
-from .interfaces import FileHandler
+# Make bus easily accessible
+from .messaging import bus
+~~~~~
+~~~~~new
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-__all__ = ["L", "SemanticPointer", "needle", "Needle", "Loader", "FileHandler"]
+# Make core singletons easily accessible
+from .messaging import bus
+from stitcher.needle import L
+
+__all__ = ["bus", "L"]
+~~~~~
+
+#### Acts 3: 升级 `MessageBus` 以接受 `SemanticPointer`
+
+最后，我们修改 `MessageBus` 的公共方法，使其能够透明地处理 `SemanticPointer` 对象。
+
+~~~~~act
+patch_file
+packages/stitcher-common/src/stitcher/common/messaging/bus.py
+~~~~~
+~~~~~old
+import json
+import logging
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+from .protocols import Renderer
+~~~~~
+~~~~~new
+import json
+import logging
+from pathlib import Path
+from typing import Any, Dict, Optional, Union
+
+from stitcher.needle import SemanticPointer
+from .protocols import Renderer
 ~~~~~
 
 ~~~~~act
-write_file
-packages/stitcher-needle/tests/test_runtime.py
+patch_file
+packages/stitcher-common/src/stitcher/common/messaging/bus.py
 ~~~~~
-~~~~~python
-import json
-from pathlib import Path
-from stitcher.needle import Needle, L
+~~~~~old
+    def _render(self, level: str, msg_id: str, **kwargs: Any) -> None:
+        if not self._renderer:
+            # Silently fail if no renderer is attached, or log to a fallback logger
+            return
+        self._renderer.render(msg_id, level, **kwargs)
 
-def test_needle_loading_and_fallback(tmp_path: Path):
-    # 1. Setup SST structure
-    root = tmp_path
-    needle_dir = root / "stitcher" / "needle"
-    
-    # English (Default)
-    en_dir = needle_dir / "en"
-    en_dir.mkdir(parents=True)
-    
-    # en/cli.json
-    (en_dir / "cli.json").write_text(json.dumps({
-        "hello": "Hello World",
-        "only_en": "I am English"
-    }))
-    
-    # en/auth/login.json
-    (en_dir / "auth").mkdir()
-    (en_dir / "auth" / "login.json").write_text(json.dumps({
-        "fail": "Login Failed"
-    }))
+    def info(self, msg_id: str, **kwargs: Any) -> None:
+        self._render("info", msg_id, **kwargs)
 
-    # Chinese (Target)
-    zh_dir = needle_dir / "zh"
-    zh_dir.mkdir(parents=True)
-    
-    # zh/cli.json
-    (zh_dir / "cli.json").write_text(json.dumps({
-        "hello": "你好世界"
-    }))
+    def success(self, msg_id: str, **kwargs: Any) -> None:
+        self._render("success", msg_id, **kwargs)
+        
+    def warning(self, msg_id: str, **kwargs: Any) -> None:
+        self._render("warning", msg_id, **kwargs)
 
-    # 2. Initialize Runtime
-    rt = Needle(root_path=root, default_lang="en")
+    def error(self, msg_id: str, **kwargs: Any) -> None:
+        self._render("error", msg_id, **kwargs)
+~~~~~
+~~~~~new
+    def _render(self, level: str, msg_id: str, **kwargs: Any) -> None:
+        if not self._renderer:
+            # Silently fail if no renderer is attached, or log to a fallback logger
+            return
+        self._renderer.render(msg_id, level, **kwargs)
 
-    # 3. Test: Target Language Hit
-    # L.cli.hello -> "你好世界" (in zh)
-    assert rt.get(L.cli.hello, lang="zh") == "你好世界"
+    def info(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("info", str(msg_id), **kwargs)
 
-    # 4. Test: Fallback to Default Language
-    # L.cli.only_en -> "I am English" (missing in zh, fallback to en)
-    assert rt.get(L.cli.only_en, lang="zh") == "I am English"
+    def success(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("success", str(msg_id), **kwargs)
+        
+    def warning(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("warning", str(msg_id), **kwargs)
 
-    # 5. Test: Namespace Flattening
-    # L.auth.login.fail -> "Login Failed"
-    assert rt.get(L.auth.login.fail) == "Login Failed"
-
-    # 6. Test: Ultimate Identity Fallback
-    # L.unknown.key -> "unknown.key"
-    assert rt.get(L.unknown.key) == "unknown.key"
+    def error(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("error", str(msg_id), **kwargs)
 ~~~~~
