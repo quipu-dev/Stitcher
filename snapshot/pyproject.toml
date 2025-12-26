@@ -30,6 +30,7 @@ stitcher-config = { workspace = true }
 stitcher-application = { workspace = true }
 stitcher-cli = { workspace = true }
 stitcher-needle = { workspace = true }
+stitcher-test-utils = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "-ra --cov=stitcher --cov-report=term-missing"
