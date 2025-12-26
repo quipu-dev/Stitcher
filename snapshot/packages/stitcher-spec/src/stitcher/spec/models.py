@@ -1,3 +1,4 @@
+import hashlib
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
@@ -47,6 +48,32 @@ class FunctionDef:
     is_async: bool = False
     is_static: bool = False  # @staticmethod
     is_class: bool = False  # @classmethod
+
+    def compute_fingerprint(self) -> str:
+        """
+        Computes a stable hash of the function signature (excluding docstring).
+        Includes: name, args (name, kind, annotation, default), return annotation,
+        async status, and static/class flags.
+        """
+        # Build a stable string representation of the signature
+        parts = [
+            f"name:{self.name}",
+            f"async:{self.is_async}",
+            f"static:{self.is_static}",
+            f"class:{self.is_class}",
+            f"ret:{self.return_annotation or ''}",
+        ]
+        
+        for arg in self.args:
+            arg_sig = f"{arg.name}:{arg.kind}:{arg.annotation or ''}:{arg.default or ''}"
+            parts.append(arg_sig)
+            
+        # We deliberately exclude decorators from the fingerprint for now,
+        # as they often change without affecting the core API contract relevant to docs.
+        # We also strictly exclude self.docstring.
+
+        sig_str = "|".join(parts)
+        return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
 
 
 @dataclass
