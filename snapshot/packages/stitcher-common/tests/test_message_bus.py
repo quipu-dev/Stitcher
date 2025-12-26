@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import MagicMock
-from stitcher.common.messaging import bus as message_bus_singleton
 from stitcher.common.messaging.bus import MessageBus
 from stitcher.common.messaging.protocols import Renderer
 from stitcher.needle import L
@@ -33,21 +32,20 @@ def test_bus_does_not_fail_without_renderer(test_bus: MessageBus):
         pytest.fail(f"MessageBus raised an exception without a renderer: {e}")
 
 
-def test_bus_forwards_to_renderer(test_bus: MessageBus):
+def test_bus_forwards_to_renderer(test_bus: MessageBus, monkeypatch):
     """Test that messages are correctly formatted and forwarded."""
     mock_renderer = MockRenderer()
     test_bus.set_renderer(mock_renderer)
 
-    # Mock the needle dependency to isolate the bus logic
-    mock_needle = MagicMock()
-    mock_needle.get.return_value = "Hello {name}"
-    
-    # We need to patch where needle is used: in the bus module.
-    # Note: we patch the singleton instance's needle since that's what's used.
-    # A cleaner design might inject needle, but for now this works.
-    message_bus_singleton._loader = MagicMock() # prevent file loading
-    message_bus_singleton._registry = {'en': {"greeting": "Hello {name}"}}
+    # Define a mock lookup function for needle.get
+    templates = {"greeting": "Hello {name}"}
 
+    def mock_get(key, **kwargs):
+        # The 'lang' kwarg might be passed, so we accept **kwargs
+        return templates.get(str(key), str(key))
+
+    # Correctly patch the 'needle' object *where it is used*
+    monkeypatch.setattr("stitcher.common.messaging.bus.needle.get", mock_get)
 
     # Test each level
     test_bus.info(L.greeting, name="World")
@@ -62,13 +60,16 @@ def test_bus_forwards_to_renderer(test_bus: MessageBus):
     assert mock_renderer.messages[2] == {"level": "warning", "message": "Hello Careful"}
     assert mock_renderer.messages[3] == {"level": "error", "message": "Hello Failure"}
 
-def test_bus_identity_fallback(test_bus: MessageBus):
+
+def test_bus_identity_fallback(test_bus: MessageBus, monkeypatch):
     """Test that if a key is not found, the key itself is rendered."""
     mock_renderer = MockRenderer()
     test_bus.set_renderer(mock_renderer)
 
-    # Ensure needle is empty for this key
-    message_bus_singleton._registry = {}
+    # Patch needle.get to simulate it not finding any key
+    monkeypatch.setattr(
+        "stitcher.common.messaging.bus.needle.get", lambda key, **kwargs: str(key)
+    )
 
     test_bus.info(L.nonexistent.key)
 
