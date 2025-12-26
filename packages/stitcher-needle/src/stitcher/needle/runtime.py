@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, List
 
 from .loader import Loader
 from .pointer import SemanticPointer
@@ -11,12 +11,22 @@ class Needle:
     The runtime kernel for semantic addressing.
     """
 
-    def __init__(self, root_path: Optional[Path] = None, default_lang: str = "en"):
-        self.root_path = root_path or self._find_project_root()
-        self.default_lang = default_lang
+    def __init__(self, roots: Optional[List[Path]] = None):
+        self.default_lang = "en"
         self._registry: Dict[str, Dict[str, str]] = {}  # lang -> {fqn: value}
         self._loader = Loader()
         self._loaded_langs: set = set()
+
+        if roots:
+            self.roots = roots
+        else:
+            # Default behavior: find project root and add it.
+            self.roots = [self._find_project_root()]
+
+    def add_root(self, path: Path):
+        """Adds a new search root to the beginning of the list."""
+        if path not in self.roots:
+            self.roots.insert(0, path)
 
     def _find_project_root(self, start_dir: Optional[Path] = None) -> Path:
         """
@@ -25,25 +35,34 @@ class Needle:
         """
         current_dir = (start_dir or Path.cwd()).resolve()
         while current_dir.parent != current_dir:  # Stop at filesystem root
-            # Priority 1: pyproject.toml (strongest Python project signal)
             if (current_dir / "pyproject.toml").is_file():
                 return current_dir
-            # Priority 2: .git directory (strong version control signal)
             if (current_dir / ".git").is_dir():
                 return current_dir
             current_dir = current_dir.parent
-        # Fallback to the starting directory if no markers are found
         return start_dir or Path.cwd()
 
     def _ensure_lang_loaded(self, lang: str):
         if lang in self._loaded_langs:
             return
 
-        # Final SST path: <project_root>/.stitcher/needle/<lang>/
-        needle_dir = self.root_path / ".stitcher" / "needle" / lang
+        # Initialize an empty dict for the language
+        merged_registry: Dict[str, str] = {}
 
-        # Load and cache
-        self._registry[lang] = self._loader.load_directory(needle_dir)
+        # Iterate through all registered roots. Order is important.
+        # Earlier roots are defaults, later roots are overrides.
+        for root in self.roots:
+            # Path Option 1: .stitcher/needle/<lang> (for project-specific overrides)
+            hidden_path = root / ".stitcher" / "needle" / lang
+            if hidden_path.is_dir():
+                merged_registry.update(self._loader.load_directory(hidden_path))
+
+            # Path Option 2: needle/<lang> (for packaged assets)
+            asset_path = root / "needle" / lang
+            if asset_path.is_dir():
+                merged_registry.update(self._loader.load_directory(asset_path))
+
+        self._registry[lang] = merged_registry
         self._loaded_langs.add(lang)
 
     def get(

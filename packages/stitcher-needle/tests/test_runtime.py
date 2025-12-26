@@ -3,46 +3,48 @@ from pathlib import Path
 from stitcher.needle import Needle, L
 
 
-def test_needle_loading_and_fallback(tmp_path: Path):
-    # 1. Setup the FINAL SST structure inside the mock project root
-    project_root = tmp_path
-    needle_dir = project_root / ".stitcher" / "needle"
+def test_needle_multi_root_loading_and_override(tmp_path: Path):
+    # 1. Setup a workspace with two separate roots
 
-    # English (Default)
-    en_dir = needle_dir / "en"
-    (en_dir / "cli").mkdir(parents=True)
-    (en_dir / "auth").mkdir()
-
-    (en_dir / "cli" / "main.json").write_text(
-        json.dumps({"cli.hello": "Hello World", "cli.only_en": "I am English"})
+    # Root 1: Simulates a packaged asset directory
+    pkg_asset_root = tmp_path / "pkg" / "assets"
+    (pkg_asset_root / "needle" / "en" / "cli").mkdir(parents=True)
+    (pkg_asset_root / "needle" / "en" / "cli" / "main.json").write_text(
+        json.dumps(
+            {"cli.default": "I am a default", "cli.override_me": "Default Value"}
+        )
     )
 
-    (en_dir / "auth" / "login.json").write_text(
-        json.dumps({"auth.login.fail": "Login Failed"})
+    # Root 2: Simulates a user's project directory with overrides
+    project_root = tmp_path / "my_project"
+    project_root.mkdir()
+    (project_root / "pyproject.toml").touch()  # Makes it a project root
+
+    user_override_dir = project_root / ".stitcher" / "needle" / "en"
+    user_override_dir.mkdir(parents=True)
+    (user_override_dir / "overrides.json").write_text(
+        json.dumps(
+            {"cli.override_me": "User Override!", "cli.user_only": "I am from the user"}
+        )
     )
 
-    # Chinese (Target)
-    zh_dir = needle_dir / "zh"
-    (zh_dir / "cli").mkdir(parents=True)
+    # 2. Initialize Runtime and add roots
+    # Initialize with project_root, then add package root.
+    # The project root will be checked last, thus overriding package assets.
+    rt = Needle(roots=[project_root])
+    rt.add_root(pkg_asset_root)  # add_root prepends
 
-    (zh_dir / "cli" / "main.json").write_text(json.dumps({"cli.hello": "你好世界"}))
+    # Final search order should be: [pkg_asset_root, project_root]
 
-    # 2. Initialize Runtime
-    # The runtime should now automatically find the `stitcher` dir within the root_path
-    rt = Needle(root_path=project_root, default_lang="en")
+    # 3. Test assertions
+    # Found in default assets
+    assert rt.get(L.cli.default) == "I am a default"
 
-    # 3. Test: Target Language Hit
-    # L.cli.hello should be found in zh's cli/main.json
-    assert rt.get(L.cli.hello, lang="zh") == "你好世界"
+    # Found in user overrides
+    assert rt.get(L.cli.user_only) == "I am from the user"
 
-    # 4. Test: Fallback to Default Language
-    # L.cli.only_en is missing in zh, should fallback to en
-    assert rt.get(L.cli.only_en, lang="zh") == "I am English"
+    # Value from user should take precedence over default
+    assert rt.get(L.cli.override_me) == "User Override!"
 
-    # 5. Test: FQN loading from subdirectories
-    # L.auth.login.fail should be found in en's auth/login.json
-    assert rt.get(L.auth.login.fail) == "Login Failed"
-
-    # 6. Test: Ultimate Identity Fallback
-    # L.unknown.key is not in any file
+    # Ultimate Identity Fallback
     assert rt.get(L.unknown.key) == "unknown.key"
