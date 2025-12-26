@@ -1,152 +1,62 @@
 简要回答：
-测试失败的原因有两个细节：
-1.  **Chomping 符号**: PyYAML 默认生成的块样式符号是 `|-`（表示剔除末尾多余换行符），而不是简单的 `|`。
-2.  **Key 的引用**: 因为我们的 Key 可能包含点号（如 `MyClass.method`），PyYAML 为了安全起见对 Key 进行了双引号包裹（如 `"MyClass":`）。
-3.  **结构差异**: 现在的输出不再是单行，因此 `key: value` 这种子字符串匹配在物理层面上失效了。
+非常棒。我们现在拥有了高度可读、格式一致且健壮的文档资产。我将创建一个提交，固化这次关于开发者体验（DX）的改进。
 
-我们将更新测试用例中的断言，使其适应新的、一致的块格式。
-
-## [WIP] test: 更新测试以匹配统一的 YAML 块格式
-
-### 错误分析
-由于我们强制将所有字符串输出为 YAML 的 Literal Block Style (`|-`)，原本基于单行输出假设的测试断言失效了。例如，原本期望 `my_func: doc`，现在实际输出为：
-```yaml
-"my_func": |-
-  doc
-```
-此外，PyYAML 在这种模式下对 Key 进行了引用。
+## [COMMIT] style(io): 统一 YAML 输出，强制所有文档使用块样式 (|-)
 
 ### 用户需求
-修复受 YAML 样式变更影响的集成测试和单元测试，确保测试能正确验证新的块状存储格式。
+用户希望生成的 `.stitcher.yaml` 文档资产无论单行还是多行，都应采用统一的 YAML 块样式（Literal Block Style, `|-`），以增强可读性和维护体验。
 
 ### 评论
-测试必须紧跟实现。这次样式的变更虽然是视觉上的，但由于涉及到物理存储格式的改变，必须同步更新那些直接对文件内容进行字符串匹配的测试。
+这个改进消除了文档资产的视觉和物理格式混乱，完美匹配了文档作为“唯一事实来源”的哲学。这是对 DX 极为重要的微调。
 
 ### 目标
-1.  修改 `tests/integration/test_init_command.py`，更新对 `init` 生成内容的匹配逻辑。
-2.  修改 `packages/stitcher-io/tests/test_document_io.py`，处理双引号 Key 和 `|-` 指示符。
+1.  提交对 `YamlAdapter` 的修改，使其无条件地对所有字符串使用 `style='|'`。
+2.  提交对 `test_document_io.py` 和 `test_init_command.py` 的测试更新，以匹配新的、统一的 YAML 格式。
+
+### 基本原理
+通过在 PyYAML 的 `representer` 中无条件地指定 Literal Block Style，我们确保了文档资产在 Git Diff 中表现稳定，并且在编辑器中看起来像标准的 Python 文档字符串块，极大地优化了编辑流程。
 
 ### 标签
-#intent/test #flow/ready #priority/medium #comp/tests #ai/instruct
-#task/domain/testing #task/object/yaml-assertions #task/action/update
-#task/state/continue
+#intent/tune #flow/ready #priority/medium #comp/io #comp/tests #scope/dx
+#task/domain/io #task/object/yaml-adapter #task/action/commit
+#task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 更新集成测试断言
+#### Acts 1: 提交 YAML 样式和测试修复
 
-修改 `tests/integration/test_init_command.py`。
+将所有相关的代码和测试文件添加到暂存区。
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-io/src/stitcher/io/adapters/yaml_adapter.py
+packages/stitcher-io/tests/test_document_io.py
 tests/integration/test_init_command.py
 ~~~~~
-~~~~~old
-    # 3. Assert
-    expected_yaml = project_root / "src/main.stitcher.yaml"
-    assert expected_yaml in created_files
-    assert "my_func: This is a docstring." in expected_yaml.read_text()
-
-    spy_bus.assert_id_called(L.init.file.created, level="success")
-~~~~~
-~~~~~new
-    # 3. Assert
-    expected_yaml = project_root / "src/main.stitcher.yaml"
-    assert expected_yaml in created_files
-    
-    content = expected_yaml.read_text()
-    # Check for block style with quoted key
-    assert '"my_func": |-' in content
-    assert "  This is a docstring." in content
-
-    spy_bus.assert_id_called(L.init.file.created, level="success")
-~~~~~
-
-#### Acts 2: 更新 YamlAdapter 单元测试断言
-
-修改 `packages/stitcher-io/tests/test_document_io.py`。
 
 ~~~~~act
-patch_file
-packages/stitcher-io/tests/test_document_io.py
+git_commit
 ~~~~~
-~~~~~old
-    # Verify file content is deterministic (sorted)
-    content = file_path.read_text(encoding="utf-8")
-    # "MyClass" comes before "MyClass.method" (lexicographical)
-    # But "func" comes last.
-    # Let's just check raw content contains keys
-    assert "MyClass:" in content
-    assert "中文测试" in content
-~~~~~
-~~~~~new
-    # Verify file content is deterministic (sorted)
-    content = file_path.read_text(encoding="utf-8")
-    # "MyClass" comes before "MyClass.method" (lexicographical)
-    # But "func" comes last.
-    # Let's just check raw content contains keys (which are now quoted)
-    assert '"MyClass": |-' in content
-    assert "  中文测试" in content
-~~~~~
+~~~~~text
+style(io): Enforce consistent YAML block style for all documentation
 
-~~~~~act
-patch_file
-packages/stitcher-io/tests/test_document_io.py
-~~~~~
-~~~~~old
-def test_yaml_adapter_block_format_consistency(tmp_path: Path):
-    """
-    Verify that all strings (multiline or single-line) are saved
-    using Literal Block Style (|) for consistency.
-    """
-    adapter = YamlAdapter()
-    file_path = tmp_path / "docs.yaml"
-    data = {
-        "multi": "Line 1\nLine 2",
-        "single": "Just one line"
-    }
+The default PyYAML behavior led to mixed formatting (single-quoted, double-quoted,
+and block styles) for docstrings in the .stitcher.yaml files, leading to poor
+readability and difficulty in maintenance.
 
-    adapter.save(file_path, data)
+This change enforces the Literal Block Style (`|-`) for ALL string values in the
+DocumentManager output.
 
-    content = file_path.read_text(encoding="utf-8")
-    
-    # Both should use block style
-    assert "multi: |" in content
-    assert "single: |" in content
-    
-    # Check indentation
-    assert "  Line 1" in content
-    assert "  Just one line" in content
-~~~~~
-~~~~~new
-def test_yaml_adapter_block_format_consistency(tmp_path: Path):
-    """
-    Verify that all strings (multiline or single-line) are saved
-    using Literal Block Style (|-) for consistency.
-    """
-    adapter = YamlAdapter()
-    file_path = tmp_path / "docs.yaml"
-    data = {
-        "multi": "Line 1\nLine 2",
-        "single": "Just one line"
-    }
-
-    adapter.save(file_path, data)
-
-    content = file_path.read_text(encoding="utf-8")
-    
-    # Both should use block style with strip chomping (|-) and quoted keys
-    assert '"multi": |-' in content
-    assert '"single": |-' in content
-    
-    # Check indentation
-    assert "  Line 1" in content
-    assert "  Just one line" in content
+This ensures:
+1. All docstrings appear as clean, block-indented text.
+2. The asset files maintain visual consistency, regardless of whether the original
+   docstring was single-line or multiline.
+3. Tests were updated to assert against the new, canonical block format.
 ~~~~~
 
 ### 下一步建议
-1.  **运行全量测试**: 执行 `pytest`。
-2.  **重运行 Dogfooding**: 再次执行 `stitcher init` 刷新你的本地资产。
-3.  **检查产出**: 确保 `.stitcher.yaml` 文件现在的外观符合你的审美要求（统一的 `|-` 块样式）。
+我们已经完成了 Dogfooding 的环境设置和核心工具质量的提升。建议根据 [stitcher-python 开发路线图.md] 继续接下来的任务。一个合适的后续方向是：
+
+-   **任务 2.4: `stitcher check` 命令**：实现签名比对和文档一致性检查，这是集成到 CI/CD 流程中的关键。
