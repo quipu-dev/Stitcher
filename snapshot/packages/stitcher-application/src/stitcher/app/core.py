@@ -9,6 +9,7 @@ from stitcher.common import bus
 from stitcher.needle import L
 from stitcher.config import load_config_from_path
 from stitcher.app.services import DocumentManager
+from stitcher.app.services.checker import ConsistencyChecker
 
 
 class StitcherApp:
@@ -16,6 +17,7 @@ class StitcherApp:
         self.root_path = root_path
         self.generator = StubGenerator()
         self.doc_manager = DocumentManager(root_path)
+        self.checker = ConsistencyChecker(self.doc_manager)
 
     def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
         """Parses a list of source files into ModuleDef IRs."""
@@ -166,3 +168,53 @@ class StitcherApp:
             bus.info(L.init.no_docs_found)
             
         return created_files
+
+    def run_check(self) -> bool:
+        """
+        Scans and checks all source files for consistency.
+        Returns True if inconsistencies are found, False otherwise.
+        """
+        config = load_config_from_path(self.root_path)
+        
+        # Discover and scan source files
+        files_to_scan = []
+        for scan_path_str in config.scan_paths:
+            scan_path = self.root_path / scan_path_str
+            if scan_path.is_dir():
+                files_to_scan.extend(scan_path.rglob("*.py"))
+            elif scan_path.is_file():
+                files_to_scan.append(scan_path)
+                
+        unique_files = sorted(list(set(files_to_scan)))
+        modules = self._scan_files(unique_files)
+        
+        if not modules:
+            bus.warning(L.warning.no_files_or_plugins_found)
+            return False # No errors found
+
+        total_inconsistencies = 0
+        has_errors = False
+        
+        for module in modules:
+            relative_path = Path(module.file_path)
+            bus.info(L.check.header, path=relative_path)
+            
+            result = self.checker.check_module(module)
+            
+            if result.is_consistent:
+                bus.success(L.check.success)
+            else:
+                has_errors = True
+                for key in sorted(list(result.missing_keys)):
+                    bus.warning(L.check.error.missing, key=key)
+                    total_inconsistencies += 1
+                for key in sorted(list(result.stale_keys)):
+                    bus.error(L.check.error.stale, key=key)
+                    total_inconsistencies += 1
+        
+        if has_errors:
+            bus.error(L.check.run.failure, count=total_inconsistencies)
+        else:
+            bus.success(L.check.run.success)
+            
+        return has_errors

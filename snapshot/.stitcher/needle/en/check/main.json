@@ -1,0 +1,8 @@
+{
+    "check.header": "🔎 Checking consistency for: {path}",
+    "check.success": "✅ OK",
+    "check.error.missing": "  - 🟡 MISSING: '{key}' found in code but not in docs.",
+    "check.error.stale": "  - 🔴 STALE: '{key}' found in docs but not in code.",
+    "check.run.success": "✅ All files are consistent.",
+    "check.run.failure": "❌ Found {count} inconsistencies. Please fix them."
+}

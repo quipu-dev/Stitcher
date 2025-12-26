@@ -38,7 +38,11 @@ def init():
 @app.command()
 def check():
     """Verify consistency between code and docs."""
-    bus.info(L.cli.command.not_implemented, command="check")
+    project_root = Path.cwd()
+    app_instance = StitcherApp(root_path=project_root)
+    has_errors = app_instance.run_check()
+    if has_errors:
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
