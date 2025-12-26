@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(tests): 在测试断言中强制使用 L 对象", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766722354.882457, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实现 `stitcher check` 命令", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766722516.492492, "duration_ms": 0}}

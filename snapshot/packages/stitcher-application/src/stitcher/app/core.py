@@ -166,3 +166,55 @@ class StitcherApp:
             bus.info(L.init.no_docs_found)
             
         return created_files
+
+    def run_check(self) -> bool:
+        """
+        Checks consistency between source code and documentation files.
+        Returns True if passed, False if issues found.
+        """
+        config = load_config_from_path(self.root_path)
+        
+        files_to_scan = []
+        for scan_path_str in config.scan_paths:
+            scan_path = self.root_path / scan_path_str
+            if scan_path.is_dir():
+                files_to_scan.extend(scan_path.rglob("*.py"))
+            elif scan_path.is_file():
+                files_to_scan.append(scan_path)
+                
+        unique_files = sorted(list(set(files_to_scan)))
+        modules = self._scan_files(unique_files)
+        
+        if not modules:
+            bus.warning(L.warning.no_files_or_plugins_found)
+            return True # No files to check implies success? Or warning.
+
+        failed_files = 0
+        
+        for module in modules:
+            issues = self.doc_manager.check_module(module)
+            missing = issues["missing"]
+            extra = issues["extra"]
+            
+            file_rel_path = module.file_path # string
+            
+            if not missing and not extra:
+                # Optional: verbose mode could show success
+                # bus.success(L.check.file.pass, path=file_rel_path)
+                continue
+            
+            failed_files += 1
+            bus.error(L.check.file.fail, path=file_rel_path, count=len(missing)+len(extra))
+            
+            # Sort for deterministic output
+            for key in sorted(list(missing)):
+                bus.error(L.check.issue.missing, key=key)
+            for key in sorted(list(extra)):
+                bus.error(L.check.issue.extra, key=key)
+                
+        if failed_files > 0:
+            bus.error(L.check.run.fail, count=failed_files)
+            return False
+        
+        bus.success(L.check.run.success)
+        return True
