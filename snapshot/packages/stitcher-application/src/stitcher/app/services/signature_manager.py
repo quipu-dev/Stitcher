@@ -51,10 +51,14 @@ class SignatureManager:
         """
         fingerprints = self.compute_module_fingerprints(module)
         if not fingerprints:
+            # If no fingerprints (e.g. empty file), we might want to clean up any old file
+            # But for now, just returning is safer.
             return
 
         sig_path = self._get_sig_path(module)
-        sig_path.parent.mkdir(parents=True, exist_ok=True)
+        # Ensure the directory exists (redundant check but safe)
+        if not sig_path.parent.exists():
+            sig_path.parent.mkdir(parents=True, exist_ok=True)
         
         with sig_path.open("w", encoding="utf-8") as f:
             json.dump(fingerprints, f, indent=2, sort_keys=True)

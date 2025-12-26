@@ -52,6 +52,25 @@ class FunctionDef:
     def compute_fingerprint(self) -> str:
         """
         Computes a stable hash of the function signature (excluding docstring).
+        """
+        parts = [
+            f"name:{self.name}",
+            f"async:{self.is_async}",
+            f"static:{self.is_static}",
+            f"class:{self.is_class}",
+            f"ret:{self.return_annotation or ''}",
+        ]
+        
+        for arg in self.args:
+            arg_sig = f"{arg.name}:{arg.kind}:{arg.annotation or ''}:{arg.default or ''}"
+            parts.append(arg_sig)
+            
+        sig_str = "|".join(parts)
+        return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
+
+    def compute_fingerprint(self) -> str:
+        """
+        Computes a stable hash of the function signature (excluding docstring).
         Includes: name, args (name, kind, annotation, default), return annotation,
         async status, and static/class flags.
         """
