@@ -1,0 +1,5 @@
+{
+    "error.config.not_found": "⚠️  No [tool.stitcher] config found in pyproject.toml. Nothing to do.",
+    "error.generic": "❌ An unexpected error occurred: {error}",
+    "error.plugin.inspection": "❌ Error inspecting plugin: {error}"
+}

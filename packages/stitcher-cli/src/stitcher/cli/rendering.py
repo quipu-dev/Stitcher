@@ -1,16 +1,11 @@
 import typer
-from stitcher.common.messaging import MessageStore, protocols
+from stitcher.common.messaging import protocols
 
 class CliRenderer(protocols.Renderer):
     """
     Renders messages to the command line using Typer for colored output.
     """
-    def __init__(self, store: MessageStore):
-        self._store = store
-
-    def render(self, msg_id: str, level: str, **kwargs):
-        message = self._store.get(msg_id, **kwargs)
-        
+    def render(self, message: str, level: str):
         color = None
         if level == "success":
             color = typer.colors.GREEN

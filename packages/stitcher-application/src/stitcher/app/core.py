@@ -6,6 +6,7 @@ from stitcher.scanner import parse_source_code, parse_plugin_entry, InspectionEr
 from stitcher.io import StubGenerator
 from stitcher.spec import ModuleDef, FunctionDef
 from stitcher.common import bus
+from stitcher.needle import L
 from stitcher.config import load_config_from_path
 
 
@@ -25,7 +26,7 @@ class StitcherApp:
                 module_def = parse_source_code(content, file_path=relative_path)
                 modules.append(module_def)
             except Exception as e:
-                bus.error("error.generic", error=e)
+                bus.error(L.error.generic, error=e)
         return modules
 
     def _process_plugins(self, plugins: Dict[str, str]) -> List[ModuleDef]:
@@ -66,7 +67,7 @@ class StitcherApp:
                 virtual_modules[func_path].functions.append(func_def)
 
             except InspectionError as e:
-                bus.error("error.plugin.inspection", error=e)
+                bus.error(L.error.plugin.inspection, error=e)
 
         return list(virtual_modules.values())
 
@@ -84,7 +85,7 @@ class StitcherApp:
             output_path.write_text(pyi_content, encoding="utf-8")
             
             relative_path = output_path.relative_to(self.root_path)
-            bus.success("generate.file.success", path=relative_path)
+            bus.success(L.generate.file.success, path=relative_path)
             generated_files.append(output_path)
         return generated_files
 
@@ -110,12 +111,12 @@ class StitcherApp:
         # 3. Combine and generate
         all_modules = source_modules + plugin_modules
         if not all_modules:
-            bus.warning("warning.no_files_or_plugins_found")
+            bus.warning(L.warning.no_files_or_plugins_found)
             return []
 
         generated_files = self._generate_stubs(all_modules)
         
         if generated_files:
-            bus.success("generate.run.complete", count=len(generated_files))
+            bus.success(L.generate.run.complete, count=len(generated_files))
 
         return generated_files

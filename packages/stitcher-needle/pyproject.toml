@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stitcher-needle"
+version = "0.1.0"
+description = "Zero-dependency semantic addressing runtime for Stitcher."
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]

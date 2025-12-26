@@ -9,6 +9,7 @@ description = "Command-line interface for Stitcher."
 requires-python = ">=3.10"
 dependencies = [
     "stitcher-application",
+    "stitcher-needle",
     "typer[all]",
 ]
 
@@ -20,3 +21,4 @@ packages = ["src/stitcher"]
 
 [tool.uv.sources]
 stitcher-application = { workspace = true }
+stitcher-needle = { workspace = true }

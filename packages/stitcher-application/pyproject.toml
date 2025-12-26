@@ -13,6 +13,7 @@ dependencies = [
     "stitcher-scanner",
     "stitcher-io",
     "stitcher-config",
+    "stitcher-needle",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -24,3 +25,4 @@ stitcher-common = { workspace = true }
 stitcher-scanner = { workspace = true }
 stitcher-io = { workspace = true }
 stitcher-config = { workspace = true }
+stitcher-needle = { workspace = true }
