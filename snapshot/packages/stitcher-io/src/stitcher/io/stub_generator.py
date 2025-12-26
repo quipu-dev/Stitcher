@@ -85,15 +85,11 @@ class StubGenerator:
         # Let's do a slightly better job:
 
         parts = []
-        state = (
-            ArgumentKind.POSITIONAL_OR_KEYWORD
-        )  # Default start state logic (simplified)
 
         # Check if we have pos-only args
         has_pos_only = any(a.kind == ArgumentKind.POSITIONAL_ONLY for a in args)
         pos_only_emitted = False
 
-        has_kw_only = any(a.kind == ArgumentKind.KEYWORD_ONLY for a in args)
         kw_only_marker_emitted = False
 
         for i, arg in enumerate(args):

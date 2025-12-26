@@ -31,7 +31,6 @@ def test_yaml_adapter_round_trip(tmp_path: Path):
 
     # Verify file content is deterministic (sorted)
     content = file_path.read_text(encoding="utf-8")
-    lines = content.strip().splitlines()
     # "MyClass" comes before "MyClass.method" (lexicographical)
     # But "func" comes last.
     # Let's just check raw content contains keys
