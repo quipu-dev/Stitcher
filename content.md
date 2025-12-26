@@ -1,317 +1,269 @@
-你的洞察力非常出色。你说得对，直接在测试用例中重复 `monkeypatch` 的设置逻辑违反了 DRY (Don't Repeat Yourself) 原则。创建一个专门的、可重用的测试工具 (Test Utility) 是一个最佳实践，可以极大地提升测试代码的可读性和可维护性。
+Excellent question. Your intuition is spot on—creating a dedicated test utility for `needle` has established a powerful pattern. Now, we can apply this same architectural thinking to identify other areas in the test suite that would benefit from similar reusable, high-level abstractions.
 
-你提供的 `cascade.testing` 模块是一个完美的范例，它展示了如何为项目的核心协议（如 `Solver`, `Executor`）提供专用的测试替身（Test Doubles），如 Mocks 和 Spies。我们可以借鉴这个模式，为 `stitcher` 项目也创建一个专门的测试工具包。
 
-我将生成一个计划，该计划会创建一个新的 `stitcher-test-utils` 包，并在其中实现一个 `MockNeedle` 工具类。这个类将封装 `monkeypatch` 的逻辑，使得在测试中模拟 `needle` 的行为变得声明式和简洁。
+通过扫描整个项目的测试文件，我识别出以下几个重复出现的、适合抽象成专用测试工具的模式：
 
-## [WIP] refactor: 引入 MockNeedle 测试工具以集中化 Mock 逻辑
+1.  **`MessageBus` Mocking (高价值)**:
+    *   **当前模式**: 在多个集成测试中（`test_check_command.py`, `test_end_to_end.py`, `test_init_command.py`），我们都创建了一个 `mock_bus` fixture，它使用 `MagicMock` 和 `monkeypatch` 来替换全局的 `bus` 实例。断言时，我们使用的是 `mock_bus.error.assert_any_call(...)` 这样的底层 `unittest.mock` API。
+    *   **问题**: 这种方式虽然有效，但与 `unittest.mock` 的实现细节耦合过紧。测试代码需要知道 `bus` 的内部方法（如 `.error`, `.success`），并且断言可读性不高，尤其是在检查传递的参数时。
+    *   **提取机会**: 我们可以创建一个 `SpyBus` 工具，它借鉴 `cascade.testing.SpySubscriber` 的思想。这个工具会自动 patch 全局 `bus`，并提供高级的、领域特定的断言方法，例如 `spy.assert_id_called(L.check.run.fail)` 或 `spy.get_messages_of_level("error")`。这会让测试意图更清晰。
+
+2.  **虚拟项目/工作区搭建 (高价值)**:
+    *   **当前模式**: 大量的测试（几乎所有集成测试）都需要在 `tmp_path` 上手动创建文件和目录来模拟一个真实的项目结构。这包括 `pyproject.toml`、`src/main.py`、`src/main.stitcher.yaml` 等。这些设置代码非常冗长且重复。
+    *   **问题**: 手动的文件系统操作使得测试的 "Arrange" 阶段变得臃肿，难以阅读，并且容易出错（例如，写错路径或文件名）。
+    *   **提取机会**: 我们可以创建一个 `WorkspaceFactory` 或 `ProjectBuilder`。这是一个非常强大的工具，它能提供一个流畅的（fluent）API 来以声明方式构建测试项目。例如：
+        ```python
+        factory = WorkspaceFactory(tmp_path)
+        factory.with_config({"scan_paths": ["src"]})
+        factory.with_source("main.py", "def func(): pass")
+        factory.with_docs("main.stitcher.yaml", {"func": "A docstring."})
+        project_root = factory.build()
+        ```
+        这将极大地简化集成测试的设置。
+
+3.  **IR (中间表示) 对象工厂 (中等价值)**:
+    *   **当前模式**: 在 `test_doc_manager.py` 和 `test_stub_generator.py` 等单元测试中，我们需要手动构造 `ModuleDef`, `FunctionDef` 等 IR 对象。这些对象的创建过程也比较冗长。
+    *   **问题**: 手动实例化这些 dataclass 使得 fixture 和测试数据变得庞大。
+    *   **提取机会**: 我们可以创建一个 `IRFactory`，提供一些辅助函数来快速生成常用的 IR 结构，例如 `IRFactory.create_function(name="my_func", ...)`。这可以使针对 `stitcher-io` 和 `stitcher-application` 中处理 IR 的组件的单元测试更加简洁。
+
+
+在以上三个候选项中，`MessageBus` Mocking (`SpyBus`) 是与我们刚刚完成的 `MockNeedle` 最直接的类比，并且能立即清理所有集成测试中的 Mock 逻辑。因此，我建议我们首先实现它。
+
+我将生成一个计划，在 `stitcher-test-utils` 包中创建 `SpyBus`，并用它来重构其中一个集成测试。
+
+## [WIP] feat(test-utils): 实现 SpyBus 以简化 MessageBus 的测试
 
 ### 用户需求
-1.  遵循 DRY 原则，将 `needle` 的 Mock 逻辑从测试用例中抽离出来。
-2.  借鉴 `cascade.testing` 的模式，为 `stitcher` 创建一个可重用的测试工具。
-3.  实现一个 `MockNeedle` 类，该类可以轻松地配置并用于在测试期间替换全局的 `needle` 实例。
-4.  重构现有的 `test_message_bus.py` 以使用这个新的测试工具。
+1.  分析现有测试代码，识别可被抽象为通用测试工具的 Mock 模式。
+2.  创建一个 `SpyBus` 工具，用于在测试中捕获和断言 `MessageBus` 发出的消息。
+3.  重构现有集成测试，用 `SpyBus` 替代手动的 `MagicMock` 和 `monkeypatch` 设置。
 
 ### 评论
-这是一个对项目测试基础设施的重大改进。通过建立一个专门的测试工具包，我们不仅解决了当前的代码重复问题，还为未来的测试建立了一个清晰、一致的模式。
+我们正在将测试基础设施提升到一个新的水平。`SpyBus` 将是我们测试工具箱中的又一件利器，它遵循了我们在 `MockNeedle` 中建立的成功模式。
 
-`MockNeedle` 工具将把复杂的 `monkeypatch` 设置细节封装起来，让测试用例的编写者可以更专注于业务逻辑的断言，而不是 Mock 的实现细节。这大大提升了开发者体验（DX）和测试代码的健壮性。
+通过将底层的 `monkeypatch` 和 `MagicMock` 调用封装在一个具有领域特定API（如 `assert_id_called`）的工具中，我们的测试将变得：
+-   **更具可读性**: 测试代码直接反映了业务逻辑的意图（“是否发送了某个特定的语义消息？”）。
+-   **更健壮**: Mock 的实现细节被集中管理，减少了因测试设置错误而导致的问题。
+-   **更符合DRY原则**: 所有集成测试都可以复用同一个 `SpyBus`，无需重复编写 Mock 设置代码。
 
 ### 目标
-1.  创建一个新的 workspace a包 `packages/stitcher-test-utils`，用于存放所有通用的测试工具。
-2.  在该包中，实现 `MockNeedle` 类。这个类将：
-    *   在初始化时接收一个字典，用于预设模板键值对。
-    *   提供一个 `.patch(monkeypatch)` 的上下文管理器方法，该方法在进入时使用 `monkeypatch` 替换 `needle.get`，并在退出时自动恢复。
-3.  更新根 `pyproject.toml` 文件，将新的 `stitcher-test-utils` 包加入 workspace。
-4.  重构 `packages/stitcher-common/tests/test_message_bus.py`，移除手动的 `monkeypatch` 设置，转而使用 `MockNeedle`。
+1.  在 `packages/stitcher-test-utils/src/stitcher/test_utils/` 目录下创建新文件 `bus.py`。
+2.  在该文件中实现 `SpyBus` 类。它应该是一个上下文管理器，能够：
+    *   在进入时自动 patch 全局的 `bus` 实例。
+    *   收集所有通过 `bus` 发送的消息，并将其结构化存储。
+    *   提供清晰的断言辅助方法，如 `get_messages()`, `assert_id_called(pointer)` 等。
+3.  选择 `tests/integration/test_check_command.py` 作为重构目标。
+4.  修改该测试文件，移除 `mock_bus` fixture，并使用 `SpyBus` 来执行和断言。
 
 ### 基本原理
-我们将创建一个新的 `stitcher-test-utils` 包来承载测试工具，以保持清晰的项目结构。`MockNeedle` 类将作为核心工具。其关键在于 `.patch(monkeypatch)` 方法，它实现了一个上下文管理器 (`@contextmanager`)，内部调用 `monkeypatch.setattr`。
+`SpyBus` 的核心将是一个内部的 `MockRenderer`，用于捕获所有消息。它的 `.patch(monkeypatch)` 上下文管理器将负责两件事：
+1.  创建一个 `MessageBus` 的新实例。
+2.  将这个新实例注入到被测代码引用的位置（`stitcher.app.core.bus`）。
 
-这种设计模式的优势在于：
--   **封装**: 将 Mock 的底层实现（`monkeypatch.setattr` 的具体路径）封装在工具内部，调用者无需关心。
--   **声明性**: 测试代码变得更具声明性，如 `with MockNeedle({...}).patch(monkeypatch):`，清晰地表达了“在此代码块内，needle 的行为是这样的”。
--   **可重用性**: 任何需要模拟 `needle` 的测试都可以复用 `MockNeedle`，确保了一致性。
+这种方法确保了我们捕获的是应用层代码实际发出的消息，同时保持了测试的完全隔离。断言辅助方法会将底层的消息列表（例如 `[{'level': 'error', 'id': L.check.fail, 'params': {...}}]`）的搜索逻辑封装起来，提供一个简单的API。
 
 ### 标签
-#intent/refine #intent/tooling #flow/ready #priority/high #comp/tests #scope/dx #ai/brainstorm #task/domain/testing #task/object/mocking-utility #task/action/implementation #task/state/continue
+#intent/tooling #intent/refine #flow/ready #priority/high #comp/tests #scope/dx #ai/instruct #task/domain/testing #task/object/testing-utility #task/action/implementation #task/state/continue
 
 ---
 ### Script
 
-#### Acts 1: 创建 `stitcher-test-utils` 包结构
+#### Acts 1: 创建 `SpyBus` 测试工具
 
-我们首先创建新包的目录结构和 `pyproject.toml` 配置文件。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~bash
-mkdir -p packages/stitcher-test-utils/src/stitcher/test_utils
-touch packages/stitcher-test-utils/src/stitcher/__init__.py
-touch packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py
-~~~~~
+我们首先在新包中创建 `bus.py` 并实现 `SpyBus`。
 
 ~~~~~act
 write_file
-packages/stitcher-test-utils/pyproject.toml
-~~~~~
-~~~~~toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
-name = "stitcher-test-utils"
-version = "0.1.0"
-description = "Internal testing utilities for the Stitcher project."
-requires-python = ">=3.10"
-dependencies = [
-    "stitcher-needle",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
-
-[tool.uv.sources]
-stitcher-needle = { workspace = true }
-~~~~~
-
-#### Acts 2: 实现 `MockNeedle` 测试工具
-
-现在，我们在新包中创建 `needle.py` 文件并实现 `MockNeedle` 类。
-
-~~~~~act
-write_file
-packages/stitcher-test-utils/src/stitcher/test_utils/needle.py
+packages/stitcher-test-utils/src/stitcher/test_utils/bus.py
 ~~~~~
 ~~~~~python
 from contextlib import contextmanager
-from typing import Dict, Any
+from typing import List, Dict, Any, Optional
+
+from stitcher.common.messaging.bus import MessageBus
+from stitcher.common.messaging.protocols import Renderer
+from stitcher.needle import SemanticPointer, needle
+
+# Store the original bus instance from stitcher.common
+from stitcher.common import bus as original_bus_singleton
 
 
-class MockNeedle:
-    """
-    A test utility to mock the global `needle` runtime.
-    """
+class SpyRenderer(Renderer):
+    """A renderer that captures structured message data."""
 
-    def __init__(self, templates: Dict[str, str]):
-        self._templates = templates
+    def __init__(self):
+        self.messages: List[Dict[str, Any]] = []
 
-    def _mock_get(self, key: Any, **kwargs: Any) -> str:
-        """The mock implementation of needle.get()."""
-        key_str = str(key)
-        return self._templates.get(key_str, key_str)
+    def render(self, message: str, level: str) -> None:
+        # This is the final rendered string, but we want the semantic data.
+        # The SpyBus will pass us the semantic data directly.
+        pass
+
+    def record(self, level: str, msg_id: SemanticPointer, params: Dict[str, Any]):
+        self.messages.append({"level": level, "id": str(msg_id), "params": params})
+
+
+class PatchedMessageBus(MessageBus):
+    """An override of MessageBus to intercept calls before rendering."""
+
+    def _render(
+        self, level: str, msg_id: SemanticPointer, **kwargs: Any
+    ) -> None:
+        # Instead of rendering to string, we record the semantic call
+        if isinstance(self._renderer, SpyRenderer):
+            self._renderer.record(level, msg_id, kwargs)
+        
+        # We can still call the original render to a string if we want to test that too
+        super()._render(level, msg_id, **kwargs)
+
+
+class SpyBus:
+    """A test utility to spy on messages sent via the global bus."""
+
+    def __init__(self):
+        self._spy_renderer = SpyRenderer()
+        # Create a new bus instance that uses our special renderer
+        self._test_bus = PatchedMessageBus()
+        self._test_bus.set_renderer(self._spy_renderer)
 
     @contextmanager
-    def patch(self, monkeypatch: Any):
+    def patch(self, monkeypatch: Any, target: str):
         """
-        A context manager that patches the global needle's `get` method
-        for the duration of the `with` block.
+        A context manager that patches a target module's `bus` instance
+        with this spy instance.
+        """
+        monkeypatch.setattr(target, self._test_bus)
+        yield self
+        # Teardown is handled by monkeypatch
 
-        Args:
-            monkeypatch: The pytest monkeypatch fixture.
-        """
-        # The target path must be where `needle` is used by the code under test.
-        # In our case, MessageBus imports it.
-        target_path = "stitcher.common.messaging.bus.needle.get"
-        try:
-            monkeypatch.setattr(target_path, self._mock_get)
-            yield
-        finally:
-            # monkeypatch handles teardown automatically, but this ensures clarity.
-            pass
+    def get_messages(self) -> List[Dict[str, Any]]:
+        return self._spy_renderer.messages
+
+    def assert_id_called(self, msg_id: SemanticPointer, level: Optional[str] = None):
+        """Asserts that a message with the given ID was sent."""
+        key = str(msg_id)
+        found = False
+        for msg in self.get_messages():
+            if msg["id"] == key and (level is None or msg["level"] == level):
+                found = True
+                break
+        
+        if not found:
+            raise AssertionError(f"Message with ID '{key}' was not sent.")
 ~~~~~
 
-#### Acts 3: 更新 Workspace 配置
+#### Acts 2: 更新 `__init__.py` 导出新工具
 
-我们将新的 `stitcher-test-utils` 添加到根 `pyproject.toml` 的 workspace 成员中。
+我们将 `SpyBus` 添加到 `test_utils` 包的导出列表中。
 
 ~~~~~act
 patch_file
-pyproject.toml
+packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py
 ~~~~~
-~~~~~toml.old
-[tool.uv.workspace]
-members = ["packages/*"]
+~~~~~python.old
+
 ~~~~~
-~~~~~toml.new
-[tool.uv.workspace]
-members = ["packages/*", "packages/stitcher-test-utils"]
+~~~~~python.new
+from .bus import SpyBus
+from .needle import MockNeedle
+
+__all__ = ["SpyBus", "MockNeedle"]
 ~~~~~
 
-#### Acts 4: 重构 `test_message_bus.py` 以使用 `MockNeedle`
+#### Acts 3: 重构 `test_check_command.py` 以使用 `SpyBus`
 
-最后，我们用更简洁的方式重写测试文件。
+现在我们用新的 `SpyBus` 工具来简化 `test_check_command.py`。
 
 ~~~~~act
 write_file
-packages/stitcher-common/tests/test_message_bus.py
+tests/integration/test_check_command.py
 ~~~~~
 ~~~~~python
 import pytest
-from stitcher.common.messaging.bus import MessageBus
-from stitcher.common.messaging.protocols import Renderer
+from textwrap import dedent
+from stitcher.app import StitcherApp
 from stitcher.needle import L
-
-# Import the new testing utility
-# We might need to adjust pythonpath for this to be found by tests.
-# The root pyproject.toml's pythonpath should handle this.
-# from stitcher.test_utils.needle import MockNeedle
-
-# Let's define MockNeedle here temporarily to avoid import issues
-# during this plan's execution, and assume the final test runner
-# will have the correct pythonpath.
-from contextlib import contextmanager
-from typing import Dict, Any
+from stitcher.test_utils.bus import SpyBus
 
 
-class MockNeedle:
-    def __init__(self, templates: Dict[str, str]):
-        self._templates = templates
+def test_check_detects_missing_and_extra(tmp_path, monkeypatch):
+    project_root = tmp_path
+    src_dir = project_root / "src"
+    src_dir.mkdir()
 
-    def _mock_get(self, key: Any, **kwargs: Any) -> str:
-        key_str = str(key)
-        return self._templates.get(key_str, key_str)
+    (project_root / "pyproject.toml").write_text(
+        dedent("""
+        [tool.stitcher]
+        scan_paths = ["src"]
+    """)
+    )
 
-    @contextmanager
-    def patch(self, monkeypatch: Any, target_path: str):
-        try:
-            monkeypatch.setattr(target_path, self._mock_get)
-            yield
-        finally:
+    # 1. Source has 'new_func', lacks 'deleted_func'
+    (src_dir / "main.py").write_text(
+        dedent("""
+        def new_func():
             pass
+    """)
+    )
 
+    # 2. YAML has 'deleted_func', lacks 'new_func'
+    (src_dir / "main.stitcher.yaml").write_text(
+        dedent("""
+        __doc__: Module doc
+        deleted_func: Old doc
+    """)
+    )
 
-class MockRenderer(Renderer):
-    def __init__(self):
-        self.messages = []
-
-    def render(self, message: str, level: str) -> None:
-        self.messages.append({"level": level, "message": message})
-
-
-@pytest.fixture
-def test_bus():
-    return MessageBus()
-
-
-def test_bus_does_not_fail_without_renderer(test_bus: MessageBus):
-    try:
-        test_bus.info("some.id")
-    except Exception as e:
-        pytest.fail(f"MessageBus raised an exception without a renderer: {e}")
-
-
-def test_bus_forwards_to_renderer(test_bus: MessageBus, monkeypatch):
-    mock_renderer = MockRenderer()
-    test_bus.set_renderer(mock_renderer)
-
-    mock_needle = MockNeedle({"greeting": "Hello {name}"})
+    app = StitcherApp(root_path=project_root)
+    spy_bus = SpyBus()
     
-    with mock_needle.patch(monkeypatch, "stitcher.common.messaging.bus.needle.get"):
-        test_bus.info(L.greeting, name="World")
-        test_bus.success(L.greeting, name="Stitcher")
+    # Patch the bus where it's used: in the application core.
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        success = app.run_check()
 
-    assert len(mock_renderer.messages) == 2
-    assert mock_renderer.messages[0] == {"level": "info", "message": "Hello World"}
-    assert mock_renderer.messages[1] == {"level": "success", "message": "Hello Stitcher"}
-
-
-def test_bus_identity_fallback(test_bus: MessageBus, monkeypatch):
-    mock_renderer = MockRenderer()
-    test_bus.set_renderer(mock_renderer)
-
-    # Use the mock with an empty template dict to force fallback
-    mock_needle = MockNeedle({})
-
-    with mock_needle.patch(monkeypatch, "stitcher.common.messaging.bus.needle.get"):
-        test_bus.info(L.nonexistent.key)
-
-    assert len(mock_renderer.messages) == 1
-    assert mock_renderer.messages[0] == {"level": "info", "message": "nonexistent.key"}
-~~~~~
-
-#### Acts 5: 更新根 `pyproject.toml` 的 `pythonpath`
-
-为了让测试能够找到新创建的 `stitcher-test-utils` 包，我们需要将其 `src` 目录添加到 `pytest` 的 `pythonpath` 配置中。
-
-~~~~~act
-patch_file
-pyproject.toml
-~~~~~
-~~~~~toml.old
-pythonpath = ["packages/stitcher-spec/src", "packages/stitcher-common/src", "packages/stitcher-scanner/src", "packages/stitcher-io/src", "packages/stitcher-config/src", "packages/stitcher-application/src", "packages/stitcher-cli/src", "packages/stitcher-needle/src"]
-~~~~~
-~~~~~toml.new
-pythonpath = ["packages/stitcher-spec/src", "packages/stitcher-common/src", "packages/stitcher-scanner/src", "packages/stitcher-io/src", "packages/stitcher-config/src", "packages/stitcher-application/src", "packages/stitcher-cli/src", "packages/stitcher-needle/src", "packages/stitcher-test-utils/src"]
-~~~~~
-
-#### Acts 6: 清理重构后的 `test_message_bus.py`
-
-在确认 `pythonpath` 和包结构都已配置正确后，我们可以移除测试文件中的临时 `MockNeedle` 定义，并使用正确的导入语句。
-
-~~~~~act
-write_file
-packages/stitcher-common/tests/test_message_bus.py
-~~~~~
-~~~~~python
-import pytest
-from stitcher.common.messaging.bus import MessageBus
-from stitcher.common.messaging.protocols import Renderer
-from stitcher.needle import L
-from stitcher.test_utils.needle import MockNeedle
-
-
-class MockRenderer(Renderer):
-    def __init__(self):
-        self.messages = []
-
-    def render(self, message: str, level: str) -> None:
-        self.messages.append({"level": level, "message": message})
-
-
-@pytest.fixture
-def test_bus():
-    return MessageBus()
-
-
-def test_bus_does_not_fail_without_renderer(test_bus: MessageBus):
-    try:
-        test_bus.info("some.id")
-    except Exception as e:
-        pytest.fail(f"MessageBus raised an exception without a renderer: {e}")
-
-
-def test_bus_forwards_to_renderer(test_bus: MessageBus, monkeypatch):
-    mock_renderer = MockRenderer()
-    test_bus.set_renderer(mock_renderer)
-
-    mock_needle = MockNeedle({"greeting": "Hello {name}"})
+    assert success is False
     
-    with mock_needle.patch(monkeypatch):
-        test_bus.info(L.greeting, name="World")
-        test_bus.success(L.greeting, name="Stitcher")
-
-    assert len(mock_renderer.messages) == 2
-    assert mock_renderer.messages[0] == {"level": "info", "message": "Hello World"}
-    assert mock_renderer.messages[1] == {"level": "success", "message": "Hello Stitcher"}
+    # Use the high-level assertion helpers
+    spy_bus.assert_id_called(L.check.file.fail, level="error")
+    spy_bus.assert_id_called(L.check.issue.missing, level="error")
+    spy_bus.assert_id_called(L.check.issue.extra, level="error")
+    spy_bus.assert_id_called(L.check.run.fail, level="error")
 
 
-def test_bus_identity_fallback(test_bus: MessageBus, monkeypatch):
-    mock_renderer = MockRenderer()
-    test_bus.set_renderer(mock_renderer)
+def test_check_passes_when_synced(tmp_path, monkeypatch):
+    project_root = tmp_path
+    src_dir = project_root / "src"
+    src_dir.mkdir()
 
-    mock_needle = MockNeedle({})
+    (project_root / "pyproject.toml").write_text(
+        dedent("""
+        [tool.stitcher]
+        scan_paths = ["src"]
+    """)
+    )
 
-    with mock_needle.patch(monkeypatch):
-        test_bus.info(L.nonexistent.key)
+    (src_dir / "main.py").write_text("def func(): pass")
+    (src_dir / "main.stitcher.yaml").write_text(
+        dedent("""
+        __doc__: Doc
+        func: Doc
+    """)
+    )
 
-    assert len(mock_renderer.messages) == 1
-    assert mock_renderer.messages[0] == {"level": "info", "message": "nonexistent.key"}
+    app = StitcherApp(root_path=project_root)
+    spy_bus = SpyBus()
+
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        success = app.run_check()
+
+    assert success is True
+    spy_bus.assert_id_called(L.check.run.success, level="success")
 ~~~~~
 
 ### 下一步建议
-我们已经成功地将 Mock 逻辑重构到了一个独立的、可重用的测试工具包中，并更新了相关测试以使用它。这是一个重要的里程碑，为项目未来的测试工作奠定了坚实的基础。
+我们成功地创建了 `SpyBus` 并用它重构了一个集成测试，使其更加清晰和健壮。
 
-现在，所有相关的修改都已经完成。我建议将这一系列重构作为一个完整的逻辑单元提交。如果你同意，我将生成一个 `[COMMIT]` 计划来保存这些成果。
+-   **全面应用**: 我们可以继续将 `SpyBus` 应用到 `test_end_to_end.py` 和 `test_init_command.py` 中，以统一整个测试套件的风格。
+-   **构建 `WorkspaceFactory`**: 现在，下一个最合乎逻辑且价值最高的目标是解决虚拟项目搭建的问题。我们可以开始设计和实现 `WorkspaceFactory` 工具，以消除集成测试中大量的 `tmp_path.write_text` 调用。
+
+如果你同意，下一步我们可以将这些已完成的重构工作进行提交。
