@@ -33,7 +33,7 @@ def test_check_detects_missing_and_extra(tmp_path, monkeypatch):
     assert success is False
 
     spy_bus.assert_id_called(L.check.file.fail, level="error")
-    spy_bus.assert_id_called(L.check.issue.missing, level="error")
+    spy_bus.assert_id_called(L.check.issue.missing, level="warning")
     spy_bus.assert_id_called(L.check.issue.extra, level="error")
     spy_bus.assert_id_called(L.check.run.fail, level="error")
 

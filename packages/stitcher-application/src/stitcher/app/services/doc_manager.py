@@ -168,44 +168,56 @@ class DocumentManager:
         Compares module structure against external docs.
         Returns a dict of issues: {'missing': set(...), 'extra': set(...)}
         """
-        # 1. Get keys from Code (Source of Truth for Existence)
-        code_keys = self._extract_all_keys(module)
+        # 1. Get keys from Code
+        public_keys = self._extract_keys(module, public_only=True)
+        all_keys = self._extract_keys(module, public_only=False)
 
         # 2. Get keys from YAML
         yaml_docs = self.load_docs_for_module(module)
         doc_keys = set(yaml_docs.keys())
 
         # 3. Diff
-        missing = code_keys - doc_keys
-        extra = doc_keys - code_keys
+        # Missing: Must be public AND not in YAML
+        missing = public_keys - doc_keys
+
+        # Extra: In YAML AND not in Code (at all, even private)
+        extra = doc_keys - all_keys
 
         # Allow __doc__ to be present in YAML even if not explicitly demanded by code analysis
-        # This supports the case where a user documents a module in YAML that has no docstring in code.
         extra.discard("__doc__")
 
         return {"missing": missing, "extra": extra}
 
-    def _extract_all_keys(self, module: ModuleDef) -> set:
-        """Extracts all addressable FQNs from the module IR."""
+    def _extract_keys(self, module: ModuleDef, public_only: bool) -> set:
+        """Extracts addressable FQNs from the module IR."""
         keys = set()
 
         # Module itself
-        # Only expect __doc__ if the source code actually has a docstring.
         if module.docstring:
             keys.add("__doc__")
 
+        def include(name: str) -> bool:
+            if public_only:
+                return not name.startswith("_")
+            return True
+
         for func in module.functions:
-            keys.add(func.name)
+            if include(func.name):
+                keys.add(func.name)
 
         for cls in module.classes:
-            keys.add(cls.name)
-            for method in cls.methods:
-                keys.add(f"{cls.name}.{method.name}")
-            for attr in cls.attributes:
-                keys.add(f"{cls.name}.{attr.name}")
+            if include(cls.name):
+                keys.add(cls.name)
+                for method in cls.methods:
+                    if include(method.name):
+                        keys.add(f"{cls.name}.{method.name}")
+                for attr in cls.attributes:
+                    if include(attr.name):
+                        keys.add(f"{cls.name}.{attr.name}")
 
         # Module attributes
         for attr in module.attributes:
-            keys.add(attr.name)
+            if include(attr.name):
+                keys.add(attr.name)
 
         return keys

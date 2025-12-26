@@ -184,7 +184,7 @@ class StitcherApp:
     def run_check(self) -> bool:
         """
         Checks consistency between source code and documentation files.
-        Returns True if passed, False if issues found.
+        Returns True if passed, False if critical issues found.
         """
         config = load_config_from_path(self.root_path)
 
@@ -201,9 +201,10 @@ class StitcherApp:
 
         if not modules:
             bus.warning(L.warning.no_files_or_plugins_found)
-            return True  # No files to check implies success? Or warning.
+            return True
 
         failed_files = 0
+        total_warnings = 0
 
         for module in modules:
             doc_issues = self.doc_manager.check_module(module)
@@ -211,23 +212,26 @@ class StitcherApp:
 
             missing = doc_issues["missing"]
             extra = doc_issues["extra"]
-            mismatched = sig_issues  # Dict[fqn, reason]
+            mismatched = sig_issues
 
-            file_rel_path = module.file_path  # string
-
-            total_issues = len(missing) + len(extra) + len(mismatched)
+            error_count = len(extra) + len(mismatched)
+            warning_count = len(missing)
+            total_issues = error_count + warning_count
 
             if total_issues == 0:
-                # Optional: verbose mode could show success
-                # bus.success(L.check.file.pass, path=file_rel_path)
                 continue
 
-            failed_files += 1
-            bus.error(L.check.file.fail, path=file_rel_path, count=total_issues)
+            file_rel_path = module.file_path
 
-            # Sort for deterministic output
+            if error_count > 0:
+                failed_files += 1
+                bus.error(L.check.file.fail, path=file_rel_path, count=total_issues)
+            else:
+                bus.warning(L.check.file.warn, path=file_rel_path, count=total_issues)
+                total_warnings += 1
+
             for key in sorted(list(missing)):
-                bus.error(L.check.issue.missing, key=key)
+                bus.warning(L.check.issue.missing, key=key)
             for key in sorted(list(extra)):
                 bus.error(L.check.issue.extra, key=key)
             for key in sorted(list(mismatched.keys())):
@@ -237,7 +241,10 @@ class StitcherApp:
             bus.error(L.check.run.fail, count=failed_files)
             return False
 
-        bus.success(L.check.run.success)
+        if total_warnings > 0:
+            bus.success(L.check.run.success_with_warnings, count=total_warnings)
+        else:
+            bus.success(L.check.run.success)
         return True
 
     def run_strip(self) -> List[Path]:

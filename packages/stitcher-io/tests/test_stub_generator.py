@@ -81,9 +81,9 @@ def test_generate_simple_pyi():
     # 2. Arrange: Define the expected golden .pyi output string.
     expected_pyi = dedent("""
         \"\"\"This is a test module.\"\"\"
-        
-        VERSION: str
-        
+
+        VERSION: str = "0.1.0"
+
         @my_decorator
         async def my_function(arg1: int, arg2: str = 'default') -> bool:
             \"\"\"A test function.\"\"\"
@@ -91,10 +91,10 @@ def test_generate_simple_pyi():
 
         class MyClass(Base):
             \"\"\"A test class.\"\"\"
-            CLASS_VAR: Optional[int]
-            
+            CLASS_VAR: Optional[int] = None
+
             def __init__(self, val: float) -> None: ...
-            
+
             def do_work(self) -> str:
                 \"\"\"Does some work.\"\"\"
                 ...
