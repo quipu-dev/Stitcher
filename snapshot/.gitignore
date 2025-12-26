@@ -6,9 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# stitcher stub
-**/*.pyi
-
 # Distribution / packaging
 .Python
 build/

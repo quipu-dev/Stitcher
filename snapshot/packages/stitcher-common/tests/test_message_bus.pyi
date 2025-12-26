@@ -1,0 +1,19 @@
+import pytest
+from stitcher.common.messaging.bus import MessageBus
+from stitcher.common.messaging.protocols import Renderer
+from stitcher.needle import L
+from stitcher.test_utils.needle import MockNeedle
+
+@pytest.fixture
+def test_bus(): ...
+
+def test_bus_does_not_fail_without_renderer(test_bus: MessageBus): ...
+
+def test_bus_forwards_to_renderer(test_bus: MessageBus, monkeypatch): ...
+
+def test_bus_identity_fallback(test_bus: MessageBus, monkeypatch): ...
+
+class MockRenderer(Renderer):
+    def __init__(self): ...
+
+    def render(self, message: str, level: str) -> None: ...

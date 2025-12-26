@@ -1,0 +1,6 @@
+from stitcher.spec import ArgumentKind, ClassDef, FunctionDef, ModuleDef
+from stitcher.scanner import parse_source_code
+
+def test_parse_simple_function(): ...
+
+def test_parse_simple_class_with_method(): ...

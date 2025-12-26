@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M .gitignore", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766731084.9717488, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M .gitignore, A __init__.pyi, A core.pyi ... and 48 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766731141.3984978, "duration_ms": 0}}
