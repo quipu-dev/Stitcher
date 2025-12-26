@@ -8,12 +8,14 @@ from stitcher.spec import ModuleDef
 from stitcher.common import bus
 from stitcher.needle import L
 from stitcher.config import load_config_from_path
+from stitcher.app.services import DocumentManager
 
 
 class StitcherApp:
     def __init__(self, root_path: Path):
         self.root_path = root_path
         self.generator = StubGenerator()
+        self.doc_manager = DocumentManager(root_path)
 
     def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
         """Parses a list of source files into ModuleDef IRs."""
@@ -75,6 +77,10 @@ class StitcherApp:
         """Generates .pyi files from a list of ModuleDefs."""
         generated_files: List[Path] = []
         for module in modules:
+            # Step 1: Hydrate IR with external docs (The "Stitching" process)
+            self.doc_manager.apply_docs_to_module(module)
+
+            # Step 2: Generate code
             pyi_content = self.generator.generate(module)
             # Output path is relative to the project root
             output_path = self.root_path / Path(module.file_path).with_suffix(".pyi")
@@ -120,3 +126,95 @@ class StitcherApp:
             bus.success(L.generate.run.complete, count=len(generated_files))
 
         return generated_files
+
+    def run_init(self) -> List[Path]:
+        """
+        Scans source files and extracts docstrings into external .stitcher.yaml files.
+        """
+        config = load_config_from_path(self.root_path)
+        
+        # 1. Discover and scan source files
+        files_to_scan = []
+        for scan_path_str in config.scan_paths:
+            scan_path = self.root_path / scan_path_str
+            if scan_path.is_dir():
+                files_to_scan.extend(scan_path.rglob("*.py"))
+            elif scan_path.is_file():
+                files_to_scan.append(scan_path)
+                
+        unique_files = sorted(list(set(files_to_scan)))
+        modules = self._scan_files(unique_files)
+        
+        if not modules:
+            bus.warning(L.warning.no_files_or_plugins_found)
+            return []
+            
+        # 2. Extract and save docs
+        created_files: List[Path] = []
+        for module in modules:
+            # save_docs_for_module returns an empty path if no docs found/saved
+            output_path = self.doc_manager.save_docs_for_module(module)
+            if output_path and output_path.name:
+                relative_path = output_path.relative_to(self.root_path)
+                bus.success(L.init.file.created, path=relative_path)
+                created_files.append(output_path)
+                
+        # 3. Report results
+        if created_files:
+            bus.success(L.init.run.complete, count=len(created_files))
+        else:
+            bus.info(L.init.no_docs_found)
+            
+        return created_files
+
+    def run_check(self) -> bool:
+        """
+        Checks consistency between source code and documentation files.
+        Returns True if passed, False if issues found.
+        """
+        config = load_config_from_path(self.root_path)
+        
+        files_to_scan = []
+        for scan_path_str in config.scan_paths:
+            scan_path = self.root_path / scan_path_str
+            if scan_path.is_dir():
+                files_to_scan.extend(scan_path.rglob("*.py"))
+            elif scan_path.is_file():
+                files_to_scan.append(scan_path)
+                
+        unique_files = sorted(list(set(files_to_scan)))
+        modules = self._scan_files(unique_files)
+        
+        if not modules:
+            bus.warning(L.warning.no_files_or_plugins_found)
+            return True # No files to check implies success? Or warning.
+
+        failed_files = 0
+        
+        for module in modules:
+            issues = self.doc_manager.check_module(module)
+            missing = issues["missing"]
+            extra = issues["extra"]
+            
+            file_rel_path = module.file_path # string
+            
+            if not missing and not extra:
+                # Optional: verbose mode could show success
+                # bus.success(L.check.file.pass, path=file_rel_path)
+                continue
+            
+            failed_files += 1
+            bus.error(L.check.file.fail, path=file_rel_path, count=len(missing)+len(extra))
+            
+            # Sort for deterministic output
+            for key in sorted(list(missing)):
+                bus.error(L.check.issue.missing, key=key)
+            for key in sorted(list(extra)):
+                bus.error(L.check.issue.extra, key=key)
+                
+        if failed_files > 0:
+            bus.error(L.check.run.fail, count=failed_files)
+            return False
+        
+        bus.success(L.check.run.success)
+        return True

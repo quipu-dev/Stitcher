@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock
+from stitcher.needle import L
 
 # This module doesn't exist yet, driving its creation
 from stitcher.app import StitcherApp
@@ -74,7 +75,7 @@ def test_app_scan_and_generate_single_file(tmp_path, mock_bus):
     expected_relative_path = expected_pyi_path.relative_to(tmp_path)
 
     mock_bus.success.assert_called_once_with(
-        "generate.file.success", path=expected_relative_path
+        L.generate.file.success, path=expected_relative_path
     )
     mock_bus.error.assert_not_called()
 
@@ -92,12 +93,12 @@ def test_app_run_from_config_with_source_files(tmp_path, mock_bus):
     helpers_pyi = project_root / "src" / "app" / "utils" / "helpers.pyi"
 
     mock_bus.success.assert_any_call(
-        "generate.file.success", path=main_pyi.relative_to(project_root)
+        L.generate.file.success, path=main_pyi.relative_to(project_root)
     )
     mock_bus.success.assert_any_call(
-        "generate.file.success", path=helpers_pyi.relative_to(project_root)
+        L.generate.file.success, path=helpers_pyi.relative_to(project_root)
     )
-    mock_bus.success.assert_any_call("generate.run.complete", count=2)
+    mock_bus.success.assert_any_call(L.generate.run.complete, count=2)
     assert mock_bus.success.call_count == 3
     mock_bus.error.assert_not_called()
 
@@ -114,7 +115,7 @@ def test_app_generates_stubs_for_plugins_and_sources(
     static_pyi = project_with_plugin / "src" / "main.pyi"
     assert static_pyi.exists()
     mock_bus.success.assert_any_call(
-        "generate.file.success", path=static_pyi.relative_to(project_with_plugin)
+        L.generate.file.success, path=static_pyi.relative_to(project_with_plugin)
     )
 
     # Check for dynamic plugin stubs
@@ -122,14 +123,14 @@ def test_app_generates_stubs_for_plugins_and_sources(
     assert dynamic_pyi.exists()
     assert "def dynamic_util() -> bool:" in dynamic_pyi.read_text()
     mock_bus.success.assert_any_call(
-        "generate.file.success", path=dynamic_pyi.relative_to(project_with_plugin)
+        L.generate.file.success, path=dynamic_pyi.relative_to(project_with_plugin)
     )
 
     # Check that intermediate __init__.pyi was created
     dynamic_init_pyi = project_with_plugin / "dynamic" / "__init__.pyi"
     assert dynamic_init_pyi.exists()
     mock_bus.success.assert_any_call(
-        "generate.file.success", path=dynamic_init_pyi.relative_to(project_with_plugin)
+        L.generate.file.success, path=dynamic_init_pyi.relative_to(project_with_plugin)
     )
 
-    mock_bus.success.assert_any_call("generate.run.complete", count=3)
+    mock_bus.success.assert_any_call(L.generate.run.complete, count=3)
