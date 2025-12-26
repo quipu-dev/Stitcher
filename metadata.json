@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 `check` 命令因缺失模块文档字符串而误报的问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766729150.939948, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat: 实现 `check` 命令的函数签名校验功能", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766729198.0336394, "duration_ms": 0}}
