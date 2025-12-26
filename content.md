@@ -1,293 +1,127 @@
 简要回答：
-这是一个非常合理的架构演进。将 CLI 的帮助文档 (`--help`) 纳入 `needle` 的管理范围，是实现工具国际化 (i18n) 的第一步，也是验证 Needle "分布式资源管理" 能力的最佳实践。
+完全同意。使用系统标准的 `LANG` 环境变量（如 `zh_CN.UTF-8`）是符合 Unix 哲学且对用户最友好的做法。
 
-我将生成一个计划：
-1.  在 `stitcher-cli` 包中创建独立的资源目录 `assets/needle/en/cli`，并创建包含所有命令说明的 JSON 文件。
-2.  修改 `stitcher-cli` 的 `__init__.py`，使其在加载时自动将该目录注册到全局 `needle` 实例中。
-3.  重构 `main.py`，使用语义指针 (`L.cli.command...`) 替换所有硬编码的 `help="..."` 字符串。
+我将更新计划，在 `stitcher-needle` 的运行时中增加对 `LANG` 的解析逻辑，自动提取前缀（如将 `zh_CN.UTF-8` 转换为 `zh`），并同时提供 `stitcher-cli` 的中文语言包。
 
-## [WIP] refactor(cli): 将 CLI 帮助文档迁移至 Needle 管理以支持国际化
+## [WIP] refactor(needle): 基于系统标准 LANG 变量实现通用语言自动检测
 
 ### 用户需求
-用户希望在 CLI 中使用 `needle` 系统，具体目标是：
-1.  在 `stitcher-cli` 下建立 `assets/needle/en/...` 结构。
-2.  将当前硬编码在 `main.py` 中的命令描述（如 `hydrate` 命令的帮助文本）提取到资源文件中。
-3.  通过此机制为未来的汉化（Chinese Localization）提供基础支持。
+1.  **通用性**: 不再仅依赖自定义的 `STITCHER_LANG`，而是优先适配系统标准的 `LANG` 环境变量。
+2.  **解析**: 能够正确处理 `zh_CN.UTF-8` 这样的复合字符串，将其映射到 `zh` 资源目录。
+3.  **汉化实施**: 提供 CLI 帮助文档的中文资源文件。
 
 ### 评论
-这个改动将 `stitcher-cli` 从一个“硬编码字符串”的消费者转变为 `stitcher-needle` 生态的“一等公民”。它验证了 Needle 的多根（Multi-root）加载机制：即 `stitcher-common` 和 `stitcher-cli` 可以各自维护自己的资源包，而运行时会自动将它们合并。
+使用 `LANG` 是 CLI 工具走向成熟的标志。通过解析系统语言设置，Stitcher 可以实现“零配置”的开箱即用汉化。同时保留 `STITCHER_LANG` 作为显式覆盖选项，兼顾了灵活性。
 
 ### 目标
-1.  创建 `packages/stitcher-cli/src/stitcher/cli/assets/needle/en/commands.json`。
-2.  更新 `packages/stitcher-cli/src/stitcher/cli/__init__.py` 以注册资源路径。
-3.  更新 `packages/stitcher-cli/pyproject.toml` 以确保构建时包含资源文件。
-4.  重构 `packages/stitcher-cli/src/stitcher/cli/main.py` 使用 `needle.get(L...)`。
+1.  修改 `stitcher-needle` 的 `Needle.get` 逻辑：
+    *   解析 `STITCHER_LANG` (最高优先级)。
+    *   解析 `LANG`（处理 `zh_CN.UTF-8` -> `zh`）。
+    *   默认回退到 `en`。
+2.  创建 `packages/stitcher-cli/src/stitcher/cli/assets/needle/zh/commands.json`。
 
 ### 基本原理
-CLI 工具的帮助信息是在模块加载时（Import time）定义的。虽然 `needle` 支持动态切换语言，但对于 CLI 这种短生命周期的进程，在模块层级直接调用 `needle.get()` 是一种标准且高效的做法。这确保了当 Python 解释器启动时，帮助信息会根据当前的环境变量（`STITCHER_LANG`）被渲染为正确的语言。
+在 Unix 系统中，`LANG` 的格式通常为 `language_territory.codeset`。我们通过简单的字符串分割（以 `_` 或 `.` 为界）即可提取出核心语言代码。将此逻辑封装在 `Needle` 运行时内，可以确保所有基于 Needle 的组件（CLI, App, Web）都能共享这一智能检测机制。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/cli #concept/i18n #scope/ux #ai/instruct #task/domain/cli #task/object/help-text #task/action/localize #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/needle #comp/cli #concept/i18n #ai/instruct #task/domain/i18n #task/object/language-detection #task/action/standardization #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 CLI 专属的 Needle 资源文件
+#### Acts 1: 更新 Needle 语言检测逻辑
 
-我们将提取所有 `typer` 命令的 `help` 文本到 JSON 文件中。这里使用 FQN (Full Qualified Name) 风格的键名，例如 `cli.command.hydrate.help`。
+我们将修改 `Needle` 类的 `get` 方法，使其能够智能解析系统环境变量。
+
+~~~~~act
+patch_file
+packages/stitcher-needle/src/stitcher/needle/runtime.py
+~~~~~
+~~~~~python.old
+    def get(
+        self, pointer: Union[SemanticPointer, str], lang: Optional[str] = None
+    ) -> str:
+        """
+        Resolves a semantic pointer to a string value with graceful fallback.
+
+        Lookup Order:
+        1. Target Language
+        2. Default Language (en)
+        3. Identity (the key itself)
+        """
+        key = str(pointer)
+        target_lang = lang or os.getenv("STITCHER_LANG", self.default_lang)
+
+        # 1. Try target language
+~~~~~
+~~~~~python.new
+    def _resolve_lang(self, explicit_lang: Optional[str] = None) -> str:
+        """
+        Determines the current language based on hierarchy:
+        1. Explicitly passed 'lang' argument.
+        2. STITCHER_LANG environment variable.
+        3. System LANG environment variable (e.g., zh_CN.UTF-8 -> zh).
+        4. Default (en).
+        """
+        if explicit_lang:
+            return explicit_lang
+
+        # Explicit override
+        stitcher_lang = os.getenv("STITCHER_LANG")
+        if stitcher_lang:
+            return stitcher_lang
+
+        # System standard
+        system_lang = os.getenv("LANG")
+        if system_lang:
+            # Handle formats like zh_CN.UTF-8, en_US, etc.
+            # Split by '_' or '.' and take the first part.
+            return system_lang.split("_")[0].split(".")[0].lower()
+
+        return self.default_lang
+
+    def get(
+        self, pointer: Union[SemanticPointer, str], lang: Optional[str] = None
+    ) -> str:
+        """
+        Resolves a semantic pointer to a string value with graceful fallback.
+
+        Lookup Order:
+        1. Target Language (resolved via _resolve_lang)
+        2. Default Language (en)
+        3. Identity (the key itself)
+        """
+        key = str(pointer)
+        target_lang = self._resolve_lang(lang)
+
+        # 1. Try target language
+~~~~~
+
+#### Acts 2: 提供 CLI 中文资源文件 (Chinese Assets)
+
+现在我们创建中文语言包，实现 CLI 帮助界面的汉化。
 
 ~~~~~act
 write_file
-packages/stitcher-cli/src/stitcher/cli/assets/needle/en/commands.json
+packages/stitcher-cli/src/stitcher/cli/assets/needle/zh/commands.json
 ~~~~~
 ~~~~~json
 {
-    "cli.app.description": "Stitcher-Python: Bridging the gap between dynamic code and static analysis.",
-    "cli.command.generate.help": "Generate .pyi stubs based on pyproject.toml config.",
-    "cli.command.init.help": "Initialize Stitcher in the current project.",
-    "cli.command.check.help": "Verify consistency between code and docs.",
-    "cli.command.strip.help": "Remove docstrings from source files.",
-    "cli.command.eject.help": "Inject docstrings from .stitcher.yaml files back into code.",
-    "cli.command.hydrate.help": "Extract new docstrings from source code and merge them into .stitcher.yaml.",
-    "cli.option.strip.help": "Remove docstrings from source code after hydration.",
-    "cli.option.force.help": "Code-first: Overwrite YAML content if it differs from source code.",
-    "cli.option.reconcile.help": "YAML-first: Ignore source docstrings if they conflict with existing YAML."
+    "cli.app.description": "Stitcher-Python: 缝合动态代码与静态分析之间的鸿沟。",
+    "cli.command.generate.help": "根据 pyproject.toml 配置生成 .pyi 存根文件。",
+    "cli.command.init.help": "在当前项目中初始化 Stitcher。",
+    "cli.command.check.help": "验证代码结构与文档的一致性。",
+    "cli.command.strip.help": "从源代码中移除文档字符串。",
+    "cli.command.eject.help": "将 .stitcher.yaml 中的文档重新注入源代码。",
+    "cli.command.hydrate.help": "从源代码提取新文档并合并至 .stitcher.yaml。",
+    "cli.option.strip.help": "在补水后立即从源码中移除文档字符串。",
+    "cli.option.force.help": "代码优先：如果内容不一致，覆盖 YAML 内容。",
+    "cli.option.reconcile.help": "YAML 优先：忽略与现有 YAML 冲突的源码文档。"
 }
 ~~~~~
 
-#### Acts 2: 注册资源目录
-
-我们需要让 `stitcher-cli` 包在被导入时，自动将其内部的 `assets` 目录告知全局 `needle` 实例。这与 `stitcher-common` 的做法类似。
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/__init__.py
-~~~~~
-~~~~~python.old
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-~~~~~
-~~~~~python.new
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
-from pathlib import Path
-from stitcher.needle import needle
-
-# --- Auto-register CLI assets ---
-try:
-    _assets_path = Path(__file__).parent / "assets"
-    if _assets_path.is_dir():
-        needle.add_root(_assets_path)
-except NameError:
-    pass
-# --------------------------------
-~~~~~
-
-#### Acts 3: 确保资源被打包
-
-修改 `pyproject.toml`，确保构建 Wheel 包时，新的 `assets` 目录会被包含进去。
-
-~~~~~act
-patch_file
-packages/stitcher-cli/pyproject.toml
-~~~~~
-~~~~~toml.old
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
-
-[tool.uv.sources]
-~~~~~
-~~~~~toml.new
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
-include = ["/src/stitcher/cli/assets"]
-
-[tool.uv.sources]
-~~~~~
-
-#### Acts 4: 重构 Main.py 使用语义指针
-
-最后，我们将 `main.py` 中的硬编码字符串替换为 `needle.get(L...)` 调用。注意，我们在文件头部导入了 `needle`，此时 `__init__.py` 已经执行，资源已经注册，所以 `needle.get` 能正确解析出字符串。
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python.old
-from stitcher.app import StitcherApp
-from stitcher.common import bus
-from stitcher.needle import L
-from .rendering import CliRenderer
-
-app = typer.Typer(
-    name="stitcher",
-    help="Stitcher-Python: Bridging the gap between dynamic code and static analysis.",
-    no_args_is_help=True,
-)
-
-# --- Dependency Injection at the very start ---
-~~~~~
-~~~~~python.new
-from stitcher.app import StitcherApp
-from stitcher.common import bus
-from stitcher.needle import L, needle
-from .rendering import CliRenderer
-
-app = typer.Typer(
-    name="stitcher",
-    help=needle.get(L.cli.app.description),
-    no_args_is_help=True,
-)
-
-# --- Dependency Injection at the very start ---
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python.old
-@app.command()
-def generate():
-    """Generate .pyi stubs based on pyproject.toml config."""
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-~~~~~
-~~~~~python.new
-@app.command(help=needle.get(L.cli.command.generate.help))
-def generate():
-    """Generate .pyi stubs based on pyproject.toml config."""
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python.old
-@app.command()
-def init():
-    """Initialize Stitcher in the current project."""
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-~~~~~
-~~~~~python.new
-@app.command(help=needle.get(L.cli.command.init.help))
-def init():
-    """Initialize Stitcher in the current project."""
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python.old
-@app.command()
-def check():
-    """Verify consistency between code and docs."""
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-~~~~~
-~~~~~python.new
-@app.command(help=needle.get(L.cli.command.check.help))
-def check():
-    """Verify consistency between code and docs."""
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python.old
-@app.command()
-def strip():
-    """Remove docstrings from source files."""
-    if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
-        bus.warning(L.strip.run.aborted)
-~~~~~
-~~~~~python.new
-@app.command(help=needle.get(L.cli.command.strip.help))
-def strip():
-    """Remove docstrings from source files."""
-    if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
-        bus.warning(L.strip.run.aborted)
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python.old
-@app.command()
-def eject():
-    """Inject docstrings from .stitcher.yaml files back into code."""
-    if not typer.confirm(bus.render_to_string(L.eject.run.confirm)):
-        bus.warning(L.eject.run.aborted)
-~~~~~
-~~~~~python.new
-@app.command(help=needle.get(L.cli.command.eject.help))
-def eject():
-    """Inject docstrings from .stitcher.yaml files back into code."""
-    if not typer.confirm(bus.render_to_string(L.eject.run.confirm)):
-        bus.warning(L.eject.run.aborted)
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python.old
-@app.command()
-def hydrate(
-    strip: bool = typer.Option(
-        False, "--strip", help="Remove docstrings from source code after hydration."
-    ),
-    force: bool = typer.Option(
-        False,
-        "--force",
-        help="Code-first: Overwrite YAML content if it differs from source code.",
-    ),
-    reconcile: bool = typer.Option(
-        False,
-        "--reconcile",
-        help="YAML-first: Ignore source docstrings if they conflict with existing YAML.",
-    ),
-):
-    """
-    Extract new docstrings from source code and merge them into .stitcher.yaml.
-    """
-    if force and reconcile:
-~~~~~
-~~~~~python.new
-@app.command(help=needle.get(L.cli.command.hydrate.help))
-def hydrate(
-    strip: bool = typer.Option(
-        False, "--strip", help=needle.get(L.cli.option.strip.help)
-    ),
-    force: bool = typer.Option(
-        False,
-        "--force",
-        help=needle.get(L.cli.option.force.help),
-    ),
-    reconcile: bool = typer.Option(
-        False,
-        "--reconcile",
-        help=needle.get(L.cli.option.reconcile.help),
-    ),
-):
-    """
-    Extract new docstrings from source code and merge them into .stitcher.yaml.
-    """
-    if force and reconcile:
-~~~~~
-
 ### 下一步建议
-现在 CLI 已经具备了多语言支持的基础。
-1.  **验证**: 运行 `stitcher --help` 确保帮助信息依然正确显示（应显示英文）。
-2.  **汉化**: 你现在可以创建一个 `packages/stitcher-cli/src/stitcher/cli/assets/needle/zh/commands.json`，在其中放入中文翻译。之后，只需设置环境变量 `STITCHER_LANG=zh`，运行 `stitcher --help` 即可看到中文界面。
-3.  **扩展**: 可以继续将 `typer.Option` 和 `typer.Argument` 中的其他帮助文本也迁移到 Needle。
+1.  **测试验证**: 在终端执行 `LANG=zh_CN.UTF-8 stitcher --help`。你应该能看到完整的中文命令说明。
+2.  **错误信息汉化**: 目前 `stitcher-common` 中还有一些错误消息（如 `check.file.fail`）只有英文。建议在 `stitcher-common` 下也创建 `zh` 资源目录进行补全。
+3.  **多区域支持**: 现在的逻辑会将 `zh_CN` 和 `zh_TW` 都映射到 `zh`。如果未来需要区分简繁体，只需将 `_resolve_lang` 改为返回 `zh_CN`，并在资源目录中对应创建文件夹即可。
