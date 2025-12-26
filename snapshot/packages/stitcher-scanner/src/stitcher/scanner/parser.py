@@ -1,6 +1,8 @@
 from typing import List, Optional, Union
 
+import re
 import libcst as cst
+from typing import Set
 from stitcher.spec import (
     Argument,
     ArgumentKind,
@@ -17,11 +19,25 @@ class IRBuildingVisitor(cst.CSTVisitor):
         self.functions: List[FunctionDef] = []
         self.classes: List[ClassDef] = []
         self.attributes: List[Attribute] = []
+        self.imports: List[str] = []
 
         # Scope management: A stack of currently active ClassDefs being built.
         # If stack is empty, we are at module level.
         self._class_stack: List[ClassDef] = []
         self._dummy_module = cst.Module([])  # Helper for code generation
+
+    def visit_Import(self, node: cst.Import) -> Optional[bool]:
+        # Collect 'import x' statements
+        # strip() removes indentation if inside a block (e.g., if TYPE_CHECKING)
+        code = self._dummy_module.code_for_node(node).strip()
+        self.imports.append(code)
+        return False
+
+    def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:
+        # Collect 'from x import y' statements
+        code = self._dummy_module.code_for_node(node).strip()
+        self.imports.append(code)
+        return False
 
     def _add_attribute(self, attr: Attribute):
         if self._class_stack:
@@ -226,6 +242,92 @@ class IRBuildingVisitor(cst.CSTVisitor):
         return result
 
 
+def _collect_annotations(module: ModuleDef) -> Set[str]:
+    """Recursively collects all type annotation strings from the module IR."""
+    annotations = set()
+
+    def add_if_exists(ann: Optional[str]):
+        if ann:
+            annotations.add(ann)
+
+    # 1. Module attributes
+    for attr in module.attributes:
+        add_if_exists(attr.annotation)
+
+    # 2. Functions (args + return)
+    def collect_from_func(func: FunctionDef):
+        add_if_exists(func.return_annotation)
+        for arg in func.args:
+            add_if_exists(arg.annotation)
+
+    for func in module.functions:
+        collect_from_func(func)
+
+    # 3. Classes (attributes + methods)
+    for cls in module.classes:
+        for attr in cls.attributes:
+            add_if_exists(attr.annotation)
+        for method in cls.methods:
+            collect_from_func(method)
+
+    return annotations
+
+
+def _enrich_typing_imports(module: ModuleDef):
+    """
+    Scans used annotations and injects missing 'typing' imports.
+    """
+    # Common symbols from 'typing' that are often used without quotes
+    # We deliberately exclude generic 'List'/'Dict' if the user imports
+    # standard collections, but for safety in .pyi (which often supports older Pythons),
+    # adding them from typing is usually safe if missing.
+    TYPING_SYMBOLS = {
+        "List",
+        "Dict",
+        "Tuple",
+        "Set",
+        "Optional",
+        "Union",
+        "Any",
+        "Callable",
+        "Sequence",
+        "Iterable",
+        "Type",
+        "Final",
+        "ClassVar",
+        "Mapping",
+    }
+
+    annotations = _collect_annotations(module)
+    if not annotations:
+        return
+
+    # A simple combined string of all current imports for quick check
+    existing_imports_text = "\n".join(module.imports)
+
+    missing_symbols = set()
+
+    for ann in annotations:
+        # Check for each symbol
+        for symbol in TYPING_SYMBOLS:
+            # We use regex word boundary to avoid partial matches (e.g. matching 'List' in 'MyList')
+            if re.search(rf"\b{symbol}\b", ann):
+                # Check if it's already imported
+                # This is a heuristic: if "List" appears in imports text, assume it's covered.
+                # It handles "from typing import List" and "import typing" (if user wrote typing.List)
+                # But wait, if user wrote "typing.List", then 'List' matches \bList\b.
+                # If existing imports has "import typing", we shouldn't add "from typing import List"?
+                # Actually, if they wrote "typing.List", the annotation string is "typing.List".
+                # If we just add "from typing import List", it doesn't hurt.
+                # But if they wrote "List" and have NO import, we MUST add it.
+                
+                if not re.search(rf"\b{symbol}\b", existing_imports_text):
+                     missing_symbols.add(symbol)
+
+    for symbol in sorted(missing_symbols):
+        module.imports.append(f"from typing import {symbol}")
+
+
 def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
     """
     Parses Python source code into Stitcher IR.
@@ -239,7 +341,7 @@ def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
     visitor = IRBuildingVisitor()
     cst_module.visit(visitor)
 
-    return ModuleDef(
+    module_def = ModuleDef(
         file_path=file_path,
         docstring=cst_module.get_docstring()
         if isinstance(cst_module.get_docstring(), str)
@@ -247,4 +349,9 @@ def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
         functions=visitor.functions,
         classes=visitor.classes,
         attributes=visitor.attributes,
+        imports=visitor.imports,
     )
+    
+    _enrich_typing_imports(module_def)
+    
+    return module_def

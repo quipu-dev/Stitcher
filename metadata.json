@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat: 实现 `check` 命令的函数签名校验功能", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766729198.0336394, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 增强 Scanner 以自动收集 Import 并智能补全 Typing", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766729378.5226035, "duration_ms": 0}}
