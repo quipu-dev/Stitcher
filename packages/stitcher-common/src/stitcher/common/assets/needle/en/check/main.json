@@ -4,6 +4,7 @@
     "check.file.warn": "⚠️  {path}: Found {count} warnings.",
     "check.issue.missing": "   - [MISSING] {key} (present in code, missing in YAML)",
     "check.issue.extra": "   - [EXTRA]   {key} (present in YAML, missing in code)",
+    "check.issue.conflict": "   - [CONFLICT] {key} (content differs between code and YAML)",
     "check.run.success": "✨ All checks passed. Documentation is in sync.",
     "check.run.success_with_warnings": "⚠️  Check passed with warnings in {count} files.",
     "check.run.fail": "🚫 Check failed. Found errors in {count} files."

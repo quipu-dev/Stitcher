@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 from stitcher.spec import ModuleDef, ClassDef, FunctionDef
 from stitcher.io import DocumentAdapter, YamlAdapter
@@ -166,11 +166,14 @@ class DocumentManager:
     def check_module(self, module: ModuleDef) -> Dict[str, set]:
         """
         Compares module structure against external docs.
-        Returns a dict of issues: {'missing': set(...), 'extra': set(...)}
+        Returns a dict of issues: {'missing': set(...), 'extra': set(...), 'conflict': set(...)}
         """
         # 1. Get keys from Code
         public_keys = self._extract_keys(module, public_only=True)
         all_keys = self._extract_keys(module, public_only=False)
+
+        # We also need the actual content to check for conflicts
+        source_docs = self.flatten_module_docs(module)
 
         # 2. Get keys from YAML
         yaml_docs = self.load_docs_for_module(module)
@@ -183,10 +186,85 @@ class DocumentManager:
         # Extra: In YAML AND not in Code (at all, even private)
         extra = doc_keys - all_keys
 
+        # Conflict: In BOTH, but content differs
+        conflict = set()
+        common_keys = source_docs.keys() & yaml_docs.keys()
+        for key in common_keys:
+            # Simple string comparison.
+            # In future we might want to normalize whitespace, but exact match is safer for now.
+            if source_docs[key] != yaml_docs[key]:
+                conflict.add(key)
+
         # Allow __doc__ to be present in YAML even if not explicitly demanded by code analysis
         extra.discard("__doc__")
 
-        return {"missing": missing, "extra": extra}
+        return {"missing": missing, "extra": extra, "conflict": conflict}
+
+    def hydrate_module(
+        self, module: ModuleDef, force: bool = False, reconcile: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Merges docstrings from Code into YAML.
+        Returns a dict with 'success': bool, 'updated_keys': list, 'conflicts': list, 'reconciled_keys': list
+        """
+        source_docs = self.flatten_module_docs(module)
+        if not source_docs:
+            return {
+                "success": True,
+                "updated_keys": [],
+                "conflicts": [],
+                "reconciled_keys": [],
+            }
+
+        yaml_docs = self.load_docs_for_module(module)
+
+        updated_keys = []
+        conflicts = []
+        reconciled_keys = []
+
+        # We will build a new dict to save, starting with existing YAML docs
+        new_yaml_docs = yaml_docs.copy()
+
+        for key, source_content in source_docs.items():
+            if key not in yaml_docs:
+                # New docstring, safe to add
+                new_yaml_docs[key] = source_content
+                updated_keys.append(key)
+            elif yaml_docs[key] != source_content:
+                # Conflict exists
+                if reconcile:
+                    # YAML-first: Ignore the source content and do nothing.
+                    reconciled_keys.append(key)
+                    continue
+                elif force:
+                    # Code-first: Overwrite YAML with source content.
+                    new_yaml_docs[key] = source_content
+                    updated_keys.append(key)
+                else:
+                    # Default: Report conflict and fail.
+                    conflicts.append(key)
+            # Else: Content is identical, no action needed
+
+        if conflicts:
+            return {
+                "success": False,
+                "updated_keys": [],
+                "conflicts": conflicts,
+                "reconciled_keys": [],
+            }
+
+        if updated_keys:
+            # Determine output path (same logic as save_docs_for_module)
+            module_path = self.root_path / module.file_path
+            output_path = module_path.with_suffix(".stitcher.yaml")
+            self.adapter.save(output_path, new_yaml_docs)
+
+        return {
+            "success": True,
+            "updated_keys": updated_keys,
+            "conflicts": [],
+            "reconciled_keys": reconciled_keys,
+        }
 
     def _extract_keys(self, module: ModuleDef, public_only: bool) -> set:
         """Extracts addressable FQNs from the module IR."""

@@ -212,9 +212,10 @@ class StitcherApp:
 
             missing = doc_issues["missing"]
             extra = doc_issues["extra"]
+            conflict = doc_issues["conflict"]
             mismatched = sig_issues
 
-            error_count = len(extra) + len(mismatched)
+            error_count = len(extra) + len(mismatched) + len(conflict)
             warning_count = len(missing)
             total_issues = error_count + warning_count
 
@@ -234,6 +235,8 @@ class StitcherApp:
                 bus.warning(L.check.issue.missing, key=key)
             for key in sorted(list(extra)):
                 bus.error(L.check.issue.extra, key=key)
+            for key in sorted(list(conflict)):
+                bus.error(L.check.issue.conflict, key=key)
             for key in sorted(list(mismatched.keys())):
                 bus.error(L.check.issue.mismatch, key=key)
 
@@ -245,6 +248,101 @@ class StitcherApp:
             bus.success(L.check.run.success_with_warnings, count=total_warnings)
         else:
             bus.success(L.check.run.success)
+        return True
+
+    def run_hydrate(
+        self, strip: bool = False, force: bool = False, reconcile: bool = False
+    ) -> bool:
+        """
+        Extracts docstrings from source code and merges them into YAML files.
+        - strip: Removes docstrings from source after successful hydration.
+        - force: Code-first conflict resolution.
+        - reconcile: YAML-first conflict resolution.
+        """
+        bus.info(L.hydrate.run.start)
+        config = load_config_from_path(self.root_path)
+        modules = self._scan_files(self._get_files_from_config(config))
+
+        if not modules:
+            bus.warning(L.warning.no_files_or_plugins_found)
+            return True
+
+        updated_files_count = 0
+        conflict_files_count = 0
+
+        # Phase 1: Hydrate (Update YAMLs)
+        files_to_strip = []
+
+        for module in modules:
+            result = self.doc_manager.hydrate_module(
+                module, force=force, reconcile=reconcile
+            )
+
+            if not result["success"]:
+                conflict_files_count += 1
+                for conflict_key in result["conflicts"]:
+                    bus.error(
+                        L.hydrate.error.conflict,
+                        path=module.file_path,
+                        key=conflict_key,
+                    )
+                continue
+
+            if result["reconciled_keys"]:
+                bus.info(
+                    L.hydrate.info.reconciled,
+                    path=module.file_path,
+                    count=len(result["reconciled_keys"]),
+                )
+
+            if result["updated_keys"]:
+                updated_files_count += 1
+                bus.success(
+                    L.hydrate.file.success,
+                    path=module.file_path,
+                    count=len(result["updated_keys"]),
+                )
+
+            # If successful, this file is a candidate for stripping
+            files_to_strip.append(module)
+
+        if conflict_files_count > 0:
+            bus.error(L.hydrate.run.conflict, count=conflict_files_count)
+            return False
+
+        if updated_files_count == 0:
+            bus.info(L.hydrate.run.no_changes)
+        else:
+            bus.success(L.hydrate.run.complete, count=updated_files_count)
+
+        # Phase 2: Strip (Modify Code)
+        if strip and files_to_strip:
+            # We reuse the logic from run_strip, but only for the specific files
+            # that were successfully processed/hydrated.
+            # However, run_strip scans from config. We can just invoke the transform here directly.
+            # Or simpler: Call run_strip() but limit it?
+            # run_strip currently re-scans everything.
+            # Let's implement a targeted strip logic here or refactor run_strip.
+            # For MVP, let's just do the strip logic inline here for the list of modules.
+
+            stripped_count = 0
+            for module in files_to_strip:
+                source_path = self.root_path / module.file_path
+                try:
+                    original_content = source_path.read_text(encoding="utf-8")
+                    stripped_content = strip_docstrings(original_content)
+
+                    if original_content != stripped_content:
+                        source_path.write_text(stripped_content, encoding="utf-8")
+                        stripped_count += 1
+                        relative_path = source_path.relative_to(self.root_path)
+                        bus.success(L.strip.file.success, path=relative_path)
+                except Exception as e:
+                    bus.error(L.error.generic, error=e)
+
+            if stripped_count > 0:
+                bus.success(L.strip.run.complete, count=stripped_count)
+
         return True
 
     def run_strip(self) -> List[Path]:

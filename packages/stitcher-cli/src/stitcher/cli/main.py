@@ -69,14 +69,34 @@ def eject():
     app_instance.run_eject()
 
 
-# Helper needed for typer.confirm, as it prints directly
-# We need to render message to a string first
-def render_to_string_patch(self, msg_id, **kwargs):
-    template = L.needle.get(msg_id)
-    return template.format(**kwargs)
+@app.command()
+def hydrate(
+    strip: bool = typer.Option(
+        False, "--strip", help="Remove docstrings from source code after hydration."
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Code-first: Overwrite YAML content if it differs from source code.",
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help="YAML-first: Ignore source docstrings if they conflict with existing YAML.",
+    ),
+):
+    """
+    Extract new docstrings from source code and merge them into .stitcher.yaml.
+    """
+    if force and reconcile:
+        bus.error("Cannot use --force and --reconcile simultaneously.")
+        raise typer.Exit(code=1)
 
-
-bus.render_to_string = render_to_string_patch.__get__(bus)
+    project_root = Path.cwd()
+    app_instance = StitcherApp(root_path=project_root)
+    success = app_instance.run_hydrate(strip=strip, force=force, reconcile=reconcile)
+    if not success:
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
