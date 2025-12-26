@@ -16,7 +16,7 @@ def test_inject_preserves_multiline_indentation():
 
     # 2. The docstring as it would be loaded from the YAML file
     # Note the lack of leading indentation on the second line.
-    doc_content = "This is the first line.\\nThis is the second line."
+    doc_content = "This is the first line.\nThis is the second line."
     docs_to_inject = {"my_func": doc_content}
 
     # 3. The expected, correctly formatted output

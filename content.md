@@ -1,78 +1,57 @@
-分析得非常准确，测试失败的 `diff` 清晰地暴露了问题所在：
-
--   **预期 (`-`)**: `...irst line.\n    This is the second line."""` (第二行前有4个空格的缩进)
--   **实际 (`+`)**: `...irst line.\nThis is the second line."""` (第二行前没有缩进)
-
-这证实了我们的假设：bug 存在于**注入阶段**。具体来说，`stitcher.scanner.transformer.InjectorTransformer` 在处理包含换行符 (`\n`) 的字符串时，未能为换行后的新行添加必要的父级代码块缩进。它只是将原始字符串（例如 `"Line 1\nLine 2"`）直接插入，导致生成的代码格式不正确。
-
-问题的根源在 `InjectorTransformer` 的 `_inject_into_body` 方法中。它在调用 `_create_docstring_node` 之前，没有对多行字符串的内容进行预处理以匹配其在代码中的缩进级别。
-
-我将生成一个计划来修复这个 bug。
-
-## [WIP] fix: 修复注入多行文档字符串时丢失缩进的问题
+## [WIP] fix: 修正测试用例中的转义字符错误
 
 ### 用户需求
-修复 `inject_docstrings` 函数在处理多行文档字符串时，未能正确缩进第二行及后续行的问题。
+1.  **核心需求**：修正 `packages/stitcher-scanner/tests/test_transformer_multiline.py` 中导致测试失败的字符串定义错误。
+2.  **上下文需求**：用户指出了 `parser.py` 中的 DRY 问题可能导致 `patch_file` 定位失败，要求在使用 `patch_file` 时提供更大的上下文范围。
+3.  **设计指导**：用户提到了“上下文感知注入”作为最终修复方案，但当前的优先事项是让现有的复现测试通过（即先修复测试本身的 Bug，再验证注入逻辑）。
 
-### 评论
-这是一个影响代码生成质量和可读性的关键 bug。测试用例已经成功地隔离并复现了问题。修复方案将直接在 `InjectorTransformer` 中实现，确保在创建文档字符串 AST 节点之前，对多行内容进行正确的预缩进处理，使其符合 Python 的语法格式要求。
+### 错误分析
+正如之前的分析，测试用例中的 `doc_content` 定义错误地使用了 `\\n`（双反斜杠），这使得 Python 将其解释为字面量 `\n` 字符，而不是换行符。导致 `transformer.py` 中的 `split('\n')` 无法按预期分割行，进而没有触发缩进修复逻辑。
 
 ### 目标
-1.  修改 `packages/stitcher-scanner/src/stitcher/scanner/transformer.py` 文件中的 `InjectorTransformer._inject_into_body` 方法。
-2.  在方法内部，检测传入的 `doc_content` 是否为多行。
-3.  如果是多行，则在创建 AST 节点前，为除第一行外的所有行添加正确的缩进。
+1.  修改 `packages/stitcher-scanner/tests/test_transformer_multiline.py`。
+2.  将 `doc_content` 的定义从 `"This is the first line.\\nThis is the second line."` 更改为 `"This is the first line.\nThis is the second line."`。
 
 ### 基本原理
-我们将修改 `_inject_into_body` 方法。在调用 `self._create_docstring_node` 之前，我们会对 `doc_content` 字符串进行处理。首先，我们假设一个标准的缩进层级（4个空格），因为这是函数/类主体内容的标准。然后，我们将 `doc_content` 按换行符分割成多行。最后，我们将这些行重新组合，但在第二行及之后的所有行前面都加上缩进字符串。这个经过“预格式化”的新字符串将被传递给 `_create_docstring_node`，LibCST 在生成代码时就会保留这些内置的缩进，从而产生格式正确的输出。
+修复测试数据，使其真实反映多行字符串的情况，从而正确验证 `InjectorTransformer` 的缩进逻辑。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/scanner #concept/parser #scope/core #ai/brainstorm #task/domain/testing #task/object/docstring-indent #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/tests #scope/dx #ai/instruct #task/domain/testing #task/object/test-case #task/action/correction #task/state/continue
 
 ---
 ### Script
 
-#### Acts 1: 修复 `InjectorTransformer` 的缩进逻辑
+#### Acts 1: 修正测试用例中的多行字符串定义
 
-我们将修改 `_inject_into_body` 方法，为多行文档字符串添加正确的缩进处理。
+我们将使用较大的上下文（`old` 块包含函数的上下文）来确保 `patch_file` 的稳定性，响应用户关于 `parser.py` 重复代码的警告（尽管此处操作的是测试文件，保持良好的习惯很重要）。
 
 ~~~~~act
 patch_file
-packages/stitcher-scanner/src/stitcher/scanner/transformer.py
+packages/stitcher-scanner/tests/test_transformer_multiline.py
 ~~~~~
 ~~~~~python.old
-    def _inject_into_body(
-        self,
-        body: Union[cst.BaseSuite, cst.SimpleStatementSuite],
-        doc_content: str,
-    ) -> Union[cst.BaseSuite, cst.SimpleStatementSuite]:
-        new_doc_node = self._create_docstring_node(doc_content)
+    # 2. The docstring as it would be loaded from the YAML file
+    # Note the lack of leading indentation on the second line.
+    doc_content = "This is the first line.\\nThis is the second line."
+    docs_to_inject = {"my_func": doc_content}
 
-        if isinstance(body, cst.SimpleStatementSuite):
-            # Convert "def f(): stmt" to:
+    # 3. The expected, correctly formatted output
 ~~~~~
 ~~~~~python.new
-    def _inject_into_body(
-        self,
-        body: Union[cst.BaseSuite, cst.SimpleStatementSuite],
-        doc_content: str,
-    ) -> Union[cst.BaseSuite, cst.SimpleStatementSuite]:
-        # HACK: Assume a standard 4-space indent for docstring bodies.
-        # A more robust solution might involve introspecting the CST node's
-        # indentation metadata, but that's significantly more complex.
-        # This heuristic covers the vast majority of standard Python code.
-        indent_str = " " * 4
-        lines = doc_content.split("\n")
-        if len(lines) > 1:
-            # Re-indent all lines after the first one
-            indented_lines = [lines[0]] + [
-                f"{indent_str}{line}" for line in lines[1:]
-            ]
-            doc_content = "\n".join(indented_lines)
+    # 2. The docstring as it would be loaded from the YAML file
+    # Note the lack of leading indentation on the second line.
+    doc_content = "This is the first line.\nThis is the second line."
+    docs_to_inject = {"my_func": doc_content}
 
-        new_doc_node = self._create_docstring_node(doc_content)
-
-        if isinstance(body, cst.SimpleStatementSuite):
-            # Convert "def f(): stmt" to:
+    # 3. The expected, correctly formatted output
 ~~~~~
 ### 下一步建议
-此计划已准备就绪。执行后，之前失败的测试用例 `test_inject_preserves_multiline_indentation` 应该会通过。请执行此计划，然后重新运行测试以验证修复是否成功。
+测试数据修正后，请再次运行测试。
+`packages/stitcher-scanner/src/stitcher/scanner/transformer.py` 中目前使用的是我之前添加的“4空格 Hack”逻辑：
+
+```python
+        # HACK: Assume a standard 4-space indent for docstring bodies.
+        indent_str = " " * 4
+```
+
+如果测试通过，说明这个 Hack 至少能解决标准情况下的问题。如果用户希望推进到“上下文感知注入（Context-Aware Injection）”，我们可以在下一步利用 LibCST 的 `body.indent` 属性来动态获取缩进，但这需要更细致的 LibCST 节点操作。现在的首要任务是确认测试本身逻辑的正确性。
