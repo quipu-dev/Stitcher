@@ -39,8 +39,8 @@ class Needle:
         if lang in self._loaded_langs:
             return
 
-        # NEW SST path: <project_root>/stitcher/needle/<lang>/
-        needle_dir = self.root_path / "stitcher" / "needle" / lang
+        # Final SST path: <project_root>/.stitcher/needle/<lang>/
+        needle_dir = self.root_path / ".stitcher" / "needle" / lang
         
         # Load and cache
         self._registry[lang] = self._loader.load_directory(needle_dir)

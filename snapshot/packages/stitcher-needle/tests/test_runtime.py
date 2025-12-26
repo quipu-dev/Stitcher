@@ -5,7 +5,7 @@ from stitcher.needle import Needle, L
 def test_needle_loading_and_fallback(tmp_path: Path):
     # 1. Setup the FINAL SST structure inside the mock project root
     project_root = tmp_path
-    needle_dir = project_root / "stitcher" / "needle"
+    needle_dir = project_root / ".stitcher" / "needle"
     
     # English (Default)
     en_dir = needle_dir / "en"
