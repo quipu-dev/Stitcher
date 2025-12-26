@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 定义文档 I/O 接口并实现 YAML 适配器", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766721754.635672, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实现文档提取与管理服务 DocumentManager", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766721837.0347292, "duration_ms": 0}}
