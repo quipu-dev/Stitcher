@@ -8,12 +8,14 @@ from stitcher.spec import ModuleDef
 from stitcher.common import bus
 from stitcher.needle import L
 from stitcher.config import load_config_from_path
+from stitcher.app.services import DocumentManager
 
 
 class StitcherApp:
     def __init__(self, root_path: Path):
         self.root_path = root_path
         self.generator = StubGenerator()
+        self.doc_manager = DocumentManager(root_path)
 
     def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
         """Parses a list of source files into ModuleDef IRs."""
@@ -120,3 +122,43 @@ class StitcherApp:
             bus.success(L.generate.run.complete, count=len(generated_files))
 
         return generated_files
+
+    def run_init(self) -> List[Path]:
+        """
+        Scans source files and extracts docstrings into external .stitcher.yaml files.
+        """
+        config = load_config_from_path(self.root_path)
+        
+        # 1. Discover and scan source files
+        files_to_scan = []
+        for scan_path_str in config.scan_paths:
+            scan_path = self.root_path / scan_path_str
+            if scan_path.is_dir():
+                files_to_scan.extend(scan_path.rglob("*.py"))
+            elif scan_path.is_file():
+                files_to_scan.append(scan_path)
+                
+        unique_files = sorted(list(set(files_to_scan)))
+        modules = self._scan_files(unique_files)
+        
+        if not modules:
+            bus.warning(L.warning.no_files_or_plugins_found)
+            return []
+            
+        # 2. Extract and save docs
+        created_files: List[Path] = []
+        for module in modules:
+            # save_docs_for_module returns an empty path if no docs found/saved
+            output_path = self.doc_manager.save_docs_for_module(module)
+            if output_path and output_path.name:
+                relative_path = output_path.relative_to(self.root_path)
+                bus.success(L.init.file.created, path=relative_path)
+                created_files.append(output_path)
+                
+        # 3. Report results
+        if created_files:
+            bus.success(L.init.run.complete, count=len(created_files))
+        else:
+            bus.info(L.init.no_docs_found)
+            
+        return created_files

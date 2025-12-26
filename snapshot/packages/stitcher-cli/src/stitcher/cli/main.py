@@ -30,7 +30,9 @@ def generate():
 @app.command()
 def init():
     """Initialize Stitcher in the current project."""
-    bus.info(L.cli.command.not_implemented, command="init")
+    project_root = Path.cwd()
+    app_instance = StitcherApp(root_path=project_root)
+    app_instance.run_init()
 
 
 @app.command()

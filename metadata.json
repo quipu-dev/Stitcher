@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现文档提取与管理服务 DocumentManager", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766721837.0347292, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实现 `stitcher init` 命令", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766721975.3360438, "duration_ms": 0}}
