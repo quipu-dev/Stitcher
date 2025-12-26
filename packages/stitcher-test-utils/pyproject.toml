@@ -9,6 +9,8 @@ description = "Internal testing utilities for the Stitcher project."
 requires-python = ">=3.10"
 dependencies = [
     "stitcher-needle",
+    "PyYAML",
+    "tomli-w",
 ]
 
 [tool.hatch.build.targets.wheel]
