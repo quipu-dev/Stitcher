@@ -8,7 +8,7 @@ from stitcher.spec import ModuleDef
 from stitcher.common import bus
 from stitcher.needle import L
 from stitcher.config import load_config_from_path
-from stitcher.app.services import DocumentManager
+from stitcher.app.services import DocumentManager, SignatureManager
 
 
 class StitcherApp:
@@ -16,6 +16,7 @@ class StitcherApp:
         self.root_path = root_path
         self.generator = StubGenerator()
         self.doc_manager = DocumentManager(root_path)
+        self.sig_manager = SignatureManager(root_path)
 
     def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
         """Parses a list of source files into ModuleDef IRs."""
@@ -89,6 +90,10 @@ class StitcherApp:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             output_path.write_text(pyi_content, encoding="utf-8")
+            
+            # Step 3: Update signatures (Snapshot current state)
+            # When we generate stubs, we assume the code is the new source of truth
+            self.sig_manager.save_signatures(module)
 
             relative_path = output_path.relative_to(self.root_path)
             bus.success(L.generate.file.success, path=relative_path)
@@ -152,6 +157,9 @@ class StitcherApp:
         # 2. Extract and save docs
         created_files: List[Path] = []
         for module in modules:
+            # Initialize signatures (Snapshot baseline)
+            self.sig_manager.save_signatures(module)
+            
             # save_docs_for_module returns an empty path if no docs found/saved
             output_path = self.doc_manager.save_docs_for_module(module)
             if output_path and output_path.name:
@@ -192,20 +200,25 @@ class StitcherApp:
         failed_files = 0
 
         for module in modules:
-            issues = self.doc_manager.check_module(module)
-            missing = issues["missing"]
-            extra = issues["extra"]
+            doc_issues = self.doc_manager.check_module(module)
+            sig_issues = self.sig_manager.check_signatures(module)
+            
+            missing = doc_issues["missing"]
+            extra = doc_issues["extra"]
+            mismatched = sig_issues  # Dict[fqn, reason]
 
             file_rel_path = module.file_path  # string
+            
+            total_issues = len(missing) + len(extra) + len(mismatched)
 
-            if not missing and not extra:
+            if total_issues == 0:
                 # Optional: verbose mode could show success
                 # bus.success(L.check.file.pass, path=file_rel_path)
                 continue
 
             failed_files += 1
             bus.error(
-                L.check.file.fail, path=file_rel_path, count=len(missing) + len(extra)
+                L.check.file.fail, path=file_rel_path, count=total_issues
             )
 
             # Sort for deterministic output
@@ -213,6 +226,8 @@ class StitcherApp:
                 bus.error(L.check.issue.missing, key=key)
             for key in sorted(list(extra)):
                 bus.error(L.check.issue.extra, key=key)
+            for key in sorted(list(mismatched.keys())):
+                bus.error(L.check.issue.mismatch, key=key)
 
         if failed_files > 0:
             bus.error(L.check.run.fail, count=failed_files)

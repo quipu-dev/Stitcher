@@ -169,16 +169,6 @@ class DocumentManager:
         Returns a dict of issues: {'missing': set(...), 'extra': set(...)}
         """
         # 1. Get keys from Code (Source of Truth for Existence)
-        # We use flatten_module_docs to get all addressable keys in the code.
-        # Note: flatten_module_docs currently extracts keys ONLY if docstring exists?
-        # Let's check implementation.
-        # Wait, flatten_module_docs extracts keys for functions/classes regardless of docstring?
-        # Looking at _extract_from_function:
-        #   if func.docstring: docs[full_name] = func.docstring
-        # This is a problem for 'check'. We want to know if the symbol EXISTS,
-        # not just if it has a docstring in code.
-        # We need a method that extracts ALL keys.
-
         code_keys = self._extract_all_keys(module)
 
         # 2. Get keys from YAML
@@ -189,6 +179,10 @@ class DocumentManager:
         missing = code_keys - doc_keys
         extra = doc_keys - code_keys
 
+        # Allow __doc__ to be present in YAML even if not explicitly demanded by code analysis
+        # This supports the case where a user documents a module in YAML that has no docstring in code.
+        extra.discard("__doc__")
+
         return {"missing": missing, "extra": extra}
 
     def _extract_all_keys(self, module: ModuleDef) -> set:
@@ -196,13 +190,9 @@ class DocumentManager:
         keys = set()
 
         # Module itself
-        # We always expect a module to optionally have a docstring.
-        # Should we force __doc__ key? Maybe not strict for now.
-        # keys.add("__doc__")
-
-        # But if the user put __doc__ in YAML, and we don't put it in keys, it shows as Extra.
-        # So we should consider __doc__ as a valid key for any module.
-        keys.add("__doc__")
+        # Only expect __doc__ if the source code actually has a docstring.
+        if module.docstring:
+            keys.add("__doc__")
 
         for func in module.functions:
             keys.add(func.name)
