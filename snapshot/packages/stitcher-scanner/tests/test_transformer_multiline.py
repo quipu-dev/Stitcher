@@ -34,3 +34,30 @@ def test_inject_preserves_multiline_indentation():
     # We compare .strip() to ignore potential leading/trailing newlines
     # of the whole code block, focusing on the internal structure.
     assert result_code.strip() == expected_code
+
+
+def test_inject_preserves_indentation_nested_class():
+    """
+    Verifies that indentation is correctly calculated for nested structures
+    (e.g., a method inside a class).
+    """
+    source_code = dedent("""
+    class MyClass:
+        def my_method(self):
+            pass
+    """).strip()
+
+    doc_content = "Line 1.\nLine 2."
+    docs = {"MyClass.my_method": doc_content}
+
+    # Expected: Line 2 should have 8 spaces indentation (4 for class + 4 for method)
+    expected_code = dedent("""
+    class MyClass:
+        def my_method(self):
+            \"\"\"Line 1.
+            Line 2.\"\"\"
+            pass
+    """).strip()
+
+    result = inject_docstrings(source_code, docs)
+    assert result.strip() == expected_code

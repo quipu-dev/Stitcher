@@ -92,6 +92,21 @@ class InjectorTransformer(cst.CSTTransformer):
     def __init__(self, docs: Dict[str, str]):
         self.docs = docs
         self.scope_stack: List[str] = []
+        # Stack to track indentation context. Start with empty (Module level).
+        self.indent_stack: List[str] = [""]
+
+    def visit_IndentedBlock(self, node: cst.IndentedBlock) -> Optional[bool]:
+        # Track indentation when entering a block (e.g. class body, function body, if block)
+        # Default to 4 spaces if node.indent is None (LibCST default)
+        indent = node.indent if node.indent is not None else "    "
+        self.indent_stack.append(indent)
+        return True
+
+    def leave_IndentedBlock(
+        self, original_node: cst.IndentedBlock, updated_node: cst.IndentedBlock
+    ) -> cst.IndentedBlock:
+        self.indent_stack.pop()
+        return updated_node
 
     def _get_current_fqn(self, name: str) -> str:
         if not self.scope_stack:
@@ -117,16 +132,21 @@ class InjectorTransformer(cst.CSTTransformer):
         body: Union[cst.BaseSuite, cst.SimpleStatementSuite],
         doc_content: str,
     ) -> Union[cst.BaseSuite, cst.SimpleStatementSuite]:
-        # HACK: Assume a standard 4-space indent for docstring bodies.
-        # A more robust solution might involve introspecting the CST node's
-        # indentation metadata, but that's significantly more complex.
-        # This heuristic covers the vast majority of standard Python code.
-        indent_str = " " * 4
+        # Calculate context-aware indentation
+        base_indent = "".join(self.indent_stack)
+        
+        # Determine the indentation for the body itself
+        extra_indent = "    "  # Default fallback
+        if isinstance(body, cst.IndentedBlock):
+            extra_indent = body.indent if body.indent is not None else "    "
+        
+        full_indent = base_indent + extra_indent
+
         lines = doc_content.split("\n")
         if len(lines) > 1:
-            # Re-indent all lines after the first one
+            # Re-indent all lines after the first one using the calculated full_indent
             indented_lines = [lines[0]] + [
-                f"{indent_str}{line}" for line in lines[1:]
+                f"{full_indent}{line}" for line in lines[1:]
             ]
             doc_content = "\n".join(indented_lines)
 
