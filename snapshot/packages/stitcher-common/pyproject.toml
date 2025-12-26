@@ -7,7 +7,9 @@ name = "stitcher-common"
 version = "0.1.0"
 description = "Common utilities and protocols for Stitcher."
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "stitcher-needle",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/stitcher"]

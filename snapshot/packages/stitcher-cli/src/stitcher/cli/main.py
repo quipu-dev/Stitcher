@@ -69,15 +69,5 @@ def eject():
     app_instance.run_eject()
 
 
-# Helper needed for typer.confirm, as it prints directly
-# We need to render message to a string first
-def render_to_string_patch(self, msg_id, **kwargs):
-    template = L.needle.get(msg_id)
-    return template.format(**kwargs)
-
-
-bus.render_to_string = render_to_string_patch.__get__(bus)
-
-
 if __name__ == "__main__":
     app()

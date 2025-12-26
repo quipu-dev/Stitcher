@@ -12,11 +12,20 @@ class Needle:
     """
 
     def __init__(self, root_path: Optional[Path] = None, default_lang: str = "en"):
-        self.root_path = root_path or self._find_project_root()
+        self._explicit_root = root_path
+        self._discovered_root: Optional[Path] = None
         self.default_lang = default_lang
         self._registry: Dict[str, Dict[str, str]] = {}  # lang -> {fqn: value}
         self._loader = Loader()
         self._loaded_langs: set = set()
+
+    @property
+    def root_path(self) -> Path:
+        if self._explicit_root:
+            return self._explicit_root
+        if not self._discovered_root:
+            self._discovered_root = self._find_project_root()
+        return self._discovered_root
 
     def _find_project_root(self, start_dir: Optional[Path] = None) -> Path:
         """
