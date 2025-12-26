@@ -119,3 +119,36 @@ def test_hydrate_with_strip_removes_source_doc(tmp_path, monkeypatch):
     # Verify source was stripped
     final_code = (project_root / source_path).read_text()
     assert '"""' not in final_code
+
+
+def test_hydrate_reconcile_ignores_source_conflict(tmp_path, monkeypatch):
+    """Scenario 5: Reconcile (YAML-first) Mode"""
+    # Arrange (same as conflict test)
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/main.py", 'def func():\n    """Code doc."""\n    pass')
+        .with_docs("src/main.stitcher.yaml", {"func": "YAML doc"})
+        .build()
+    )
+
+    app = StitcherApp(root_path=project_root)
+    spy_bus = SpyBus()
+
+    # Act
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        success = app.run_hydrate(reconcile=True)
+
+    # Assert
+    assert success is True
+    spy_bus.assert_id_called(L.hydrate.info.reconciled, level="info")
+    
+    # Verify no errors were raised
+    error_msgs = [m for m in spy_bus.get_messages() if m["level"] == "error"]
+    assert not error_msgs
+
+    # Verify YAML was NOT changed
+    doc_path = project_root / "src/main.stitcher.yaml"
+    with doc_path.open("r") as f:
+        data = yaml.safe_load(f)
+        assert data["func"] == "YAML doc"

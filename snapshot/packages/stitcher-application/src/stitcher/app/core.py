@@ -250,57 +250,64 @@ class StitcherApp:
             bus.success(L.check.run.success)
         return True
 
-    def run_hydrate(self, strip: bool = False, force: bool = False) -> bool:
+    def run_hydrate(
+        self, strip: bool = False, force: bool = False, reconcile: bool = False
+    ) -> bool:
         """
         Extracts docstrings from source code and merges them into YAML files.
-        If 'strip' is True, removes docstrings from source files after successful hydration.
+        - strip: Removes docstrings from source after successful hydration.
+        - force: Code-first conflict resolution.
+        - reconcile: YAML-first conflict resolution.
         """
         bus.info(L.hydrate.run.start)
         config = load_config_from_path(self.root_path)
         modules = self._scan_files(self._get_files_from_config(config))
-        
+
         if not modules:
             bus.warning(L.warning.no_files_or_plugins_found)
             return True
 
         updated_files_count = 0
         conflict_files_count = 0
-        
+
         # Phase 1: Hydrate (Update YAMLs)
-        # We process all files. If any file has conflicts, we fail the whole operation
-        # (or at least report it). But 'strip' should definitely check per-file success.
-        
         files_to_strip = []
 
         for module in modules:
-            result = self.doc_manager.hydrate_module(module, force=force)
-            
+            result = self.doc_manager.hydrate_module(
+                module, force=force, reconcile=reconcile
+            )
+
             if not result["success"]:
                 conflict_files_count += 1
                 for conflict_key in result["conflicts"]:
                     bus.error(
-                        L.hydrate.error.conflict, 
-                        path=module.file_path, 
-                        key=conflict_key
+                        L.hydrate.error.conflict, path=module.file_path, key=conflict_key
                     )
                 continue
-            
-            # If successful (or no changes needed), we consider this file "clean"/synced.
+
+            if result["reconciled_keys"]:
+                bus.info(
+                    L.hydrate.info.reconciled,
+                    path=module.file_path,
+                    count=len(result["reconciled_keys"]),
+                )
+
             if result["updated_keys"]:
                 updated_files_count += 1
                 bus.success(
-                    L.hydrate.file.success, 
-                    path=module.file_path, 
-                    count=len(result["updated_keys"])
+                    L.hydrate.file.success,
+                    path=module.file_path,
+                    count=len(result["updated_keys"]),
                 )
-            
+
             # If successful, this file is a candidate for stripping
             files_to_strip.append(module)
 
         if conflict_files_count > 0:
             bus.error(L.hydrate.run.conflict, count=conflict_files_count)
             return False
-            
+
         if updated_files_count == 0:
             bus.info(L.hydrate.run.no_changes)
         else:

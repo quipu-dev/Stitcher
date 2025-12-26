@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "简要回答", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766755151.5761116, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: Add --reconcile flag to hydrate for YAML-first merging", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766755396.8115895, "duration_ms": 0}}

@@ -75,15 +75,26 @@ def hydrate(
         False, "--strip", help="Remove docstrings from source code after hydration."
     ),
     force: bool = typer.Option(
-        False, "--force", help="Overwrite YAML content if it differs from source code."
+        False,
+        "--force",
+        help="Code-first: Overwrite YAML content if it differs from source code.",
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help="YAML-first: Ignore source docstrings if they conflict with existing YAML.",
     ),
 ):
     """
     Extract new docstrings from source code and merge them into .stitcher.yaml.
     """
+    if force and reconcile:
+        bus.error("Cannot use --force and --reconcile simultaneously.")
+        raise typer.Exit(code=1)
+
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
-    success = app_instance.run_hydrate(strip=strip, force=force)
+    success = app_instance.run_hydrate(strip=strip, force=force, reconcile=reconcile)
     if not success:
         raise typer.Exit(code=1)
 

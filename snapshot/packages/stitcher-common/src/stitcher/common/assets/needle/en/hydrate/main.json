@@ -4,5 +4,6 @@
     "hydrate.run.complete": "✨ Hydration complete. {count} files updated.",
     "hydrate.run.no_changes": "🤔 No new docstrings found in source code to hydrate.",
     "hydrate.error.conflict": "❌ Conflict in {path}: Docstring for '{key}' exists in both source code and YAML but differs. Use --force to overwrite YAML.",
-    "hydrate.run.conflict": "🚫 Hydration aborted due to conflicts in {count} files."
+    "hydrate.run.conflict": "🚫 Hydration aborted due to conflicts in {count} files.",
+    "hydrate.info.reconciled": "ℹ️  Ignored {count} conflicts in {path} due to --reconcile mode."
 }

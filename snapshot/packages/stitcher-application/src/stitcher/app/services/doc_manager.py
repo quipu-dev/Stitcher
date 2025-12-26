@@ -201,48 +201,70 @@ class DocumentManager:
         return {"missing": missing, "extra": extra, "conflict": conflict}
 
     def hydrate_module(
-        self, module: ModuleDef, force: bool = False
+        self, module: ModuleDef, force: bool = False, reconcile: bool = False
     ) -> Dict[str, Any]:
         """
         Merges docstrings from Code into YAML.
-        Returns a dict with 'success': bool, 'updated_keys': list, 'conflicts': list
+        Returns a dict with 'success': bool, 'updated_keys': list, 'conflicts': list, 'reconciled_keys': list
         """
         source_docs = self.flatten_module_docs(module)
         if not source_docs:
-            return {"success": True, "updated_keys": [], "conflicts": []}
+            return {
+                "success": True,
+                "updated_keys": [],
+                "conflicts": [],
+                "reconciled_keys": [],
+            }
 
         yaml_docs = self.load_docs_for_module(module)
-        
+
         updated_keys = []
         conflicts = []
-        
+        reconciled_keys = []
+
         # We will build a new dict to save, starting with existing YAML docs
         new_yaml_docs = yaml_docs.copy()
-        
+
         for key, source_content in source_docs.items():
             if key not in yaml_docs:
                 # New docstring, safe to add
                 new_yaml_docs[key] = source_content
                 updated_keys.append(key)
             elif yaml_docs[key] != source_content:
-                # Conflict
-                if force:
+                # Conflict exists
+                if reconcile:
+                    # YAML-first: Ignore the source content and do nothing.
+                    reconciled_keys.append(key)
+                    continue
+                elif force:
+                    # Code-first: Overwrite YAML with source content.
                     new_yaml_docs[key] = source_content
                     updated_keys.append(key)
                 else:
+                    # Default: Report conflict and fail.
                     conflicts.append(key)
             # Else: Content is identical, no action needed
-            
+
         if conflicts:
-            return {"success": False, "updated_keys": [], "conflicts": conflicts}
-            
+            return {
+                "success": False,
+                "updated_keys": [],
+                "conflicts": conflicts,
+                "reconciled_keys": [],
+            }
+
         if updated_keys:
             # Determine output path (same logic as save_docs_for_module)
             module_path = self.root_path / module.file_path
             output_path = module_path.with_suffix(".stitcher.yaml")
             self.adapter.save(output_path, new_yaml_docs)
-            
-        return {"success": True, "updated_keys": updated_keys, "conflicts": []}
+
+        return {
+            "success": True,
+            "updated_keys": updated_keys,
+            "conflicts": [],
+            "reconciled_keys": reconciled_keys,
+        }
 
     def _extract_keys(self, module: ModuleDef, public_only: bool) -> set:
         """Extracts addressable FQNs from the module IR."""
