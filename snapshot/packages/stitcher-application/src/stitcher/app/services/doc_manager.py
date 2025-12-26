@@ -171,7 +171,7 @@ class DocumentManager:
         # 1. Get keys from Code
         public_keys = self._extract_keys(module, public_only=True)
         all_keys = self._extract_keys(module, public_only=False)
-        
+
         # We also need the actual content to check for conflicts
         source_docs = self.flatten_module_docs(module)
 
@@ -190,7 +190,7 @@ class DocumentManager:
         conflict = set()
         common_keys = source_docs.keys() & yaml_docs.keys()
         for key in common_keys:
-            # Simple string comparison. 
+            # Simple string comparison.
             # In future we might want to normalize whitespace, but exact match is safer for now.
             if source_docs[key] != yaml_docs[key]:
                 conflict.add(key)

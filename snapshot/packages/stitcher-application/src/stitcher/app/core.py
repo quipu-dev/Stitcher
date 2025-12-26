@@ -282,7 +282,9 @@ class StitcherApp:
                 conflict_files_count += 1
                 for conflict_key in result["conflicts"]:
                     bus.error(
-                        L.hydrate.error.conflict, path=module.file_path, key=conflict_key
+                        L.hydrate.error.conflict,
+                        path=module.file_path,
+                        key=conflict_key,
                     )
                 continue
 
@@ -318,18 +320,18 @@ class StitcherApp:
             # We reuse the logic from run_strip, but only for the specific files
             # that were successfully processed/hydrated.
             # However, run_strip scans from config. We can just invoke the transform here directly.
-            # Or simpler: Call run_strip() but limit it? 
-            # run_strip currently re-scans everything. 
+            # Or simpler: Call run_strip() but limit it?
+            # run_strip currently re-scans everything.
             # Let's implement a targeted strip logic here or refactor run_strip.
             # For MVP, let's just do the strip logic inline here for the list of modules.
-            
+
             stripped_count = 0
             for module in files_to_strip:
                 source_path = self.root_path / module.file_path
                 try:
                     original_content = source_path.read_text(encoding="utf-8")
                     stripped_content = strip_docstrings(original_content)
-                    
+
                     if original_content != stripped_content:
                         source_path.write_text(stripped_content, encoding="utf-8")
                         stripped_count += 1
@@ -337,7 +339,7 @@ class StitcherApp:
                         bus.success(L.strip.file.success, path=relative_path)
                 except Exception as e:
                     bus.error(L.error.generic, error=e)
-            
+
             if stripped_count > 0:
                 bus.success(L.strip.run.complete, count=stripped_count)
 

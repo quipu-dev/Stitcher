@@ -142,7 +142,7 @@ def test_hydrate_reconcile_ignores_source_conflict(tmp_path, monkeypatch):
     # Assert
     assert success is True
     spy_bus.assert_id_called(L.hydrate.info.reconciled, level="info")
-    
+
     # Verify no errors were raised
     error_msgs = [m for m in spy_bus.get_messages() if m["level"] == "error"]
     assert not error_msgs
