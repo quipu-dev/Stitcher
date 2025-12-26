@@ -2,7 +2,13 @@ from pathlib import Path
 from typing import Dict, List
 from collections import defaultdict
 
-from stitcher.scanner import parse_source_code, parse_plugin_entry, InspectionError
+from stitcher.scanner import (
+    parse_source_code,
+    parse_plugin_entry,
+    InspectionError,
+    strip_docstrings,
+    inject_docstrings,
+)
 from stitcher.io import StubGenerator
 from stitcher.spec import ModuleDef
 from stitcher.common import bus
@@ -235,3 +241,73 @@ class StitcherApp:
 
         bus.success(L.check.run.success)
         return True
+
+    def run_strip(self) -> List[Path]:
+        """Strips docstrings from all source files."""
+        config = load_config_from_path(self.root_path)
+        files_to_scan = self._get_files_from_config(config)
+        modified_files: List[Path] = []
+
+        for file_path in files_to_scan:
+            try:
+                original_content = file_path.read_text(encoding="utf-8")
+                stripped_content = strip_docstrings(original_content)
+
+                if original_content != stripped_content:
+                    file_path.write_text(stripped_content, encoding="utf-8")
+                    modified_files.append(file_path)
+                    relative_path = file_path.relative_to(self.root_path)
+                    bus.success(L.strip.file.success, path=relative_path)
+
+            except Exception as e:
+                bus.error(L.error.generic, error=e)
+
+        if modified_files:
+            bus.success(L.strip.run.complete, count=len(modified_files))
+        
+        return modified_files
+
+    def run_eject(self) -> List[Path]:
+        """Injects docstrings from YAML files back into source code."""
+        config = load_config_from_path(self.root_path)
+        modules = self._scan_files(self._get_files_from_config(config))
+        modified_files: List[Path] = []
+        total_docs_found = 0
+
+        for module in modules:
+            docs = self.doc_manager.load_docs_for_module(module)
+            if not docs:
+                continue
+            
+            total_docs_found += len(docs)
+            source_path = self.root_path / module.file_path
+            
+            try:
+                original_content = source_path.read_text(encoding="utf-8")
+                injected_content = inject_docstrings(original_content, docs)
+
+                if original_content != injected_content:
+                    source_path.write_text(injected_content, encoding="utf-8")
+                    modified_files.append(source_path)
+                    relative_path = source_path.relative_to(self.root_path)
+                    bus.success(L.eject.file.success, path=relative_path)
+            except Exception as e:
+                bus.error(L.error.generic, error=e)
+
+        if modified_files:
+            bus.success(L.eject.run.complete, count=len(modified_files))
+        elif total_docs_found == 0:
+            bus.info(L.eject.no_docs_found)
+            
+        return modified_files
+
+    def _get_files_from_config(self, config) -> List[Path]:
+        """Helper to discover all source files based on config."""
+        files_to_scan = []
+        for scan_path_str in config.scan_paths:
+            scan_path = self.root_path / scan_path_str
+            if scan_path.is_dir():
+                files_to_scan.extend(scan_path.rglob("*.py"))
+            elif scan_path.is_file():
+                files_to_scan.append(scan_path)
+        return sorted(list(set(files_to_scan)))
