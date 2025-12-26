@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现 stitcher hydrate 命令与冲突检测逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766754928.0796158, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M doc_manager.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766755036.161885, "duration_ms": 0}}
