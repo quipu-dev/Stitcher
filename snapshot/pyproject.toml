@@ -26,6 +26,10 @@ dev = [
 members = ["packages/*", "packages/stitcher-test-utils"]
 
 [tool.uv.sources]
+pyneedle = { workspace = true }
+pyneedle-nexus = { workspace = true }
+pyneedle-pointer = { workspace = true }
+pyneedle-spec = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-scanner = { workspace = true }
