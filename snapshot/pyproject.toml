@@ -33,10 +33,21 @@ stitcher-needle = { workspace = true }
 stitcher-test-utils = { workspace = true }
 
 [tool.pytest.ini_options]
-addopts = "-ra --cov=stitcher --cov-report=term-missing"
+addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
 testpaths = ["tests", "packages"]
 norecursedirs = ["tests/fixtures"]
-pythonpath = ["packages/stitcher-spec/src", "packages/stitcher-common/src", "packages/stitcher-scanner/src", "packages/stitcher-io/src", "packages/stitcher-config/src", "packages/stitcher-application/src", "packages/stitcher-cli/src", "packages/stitcher-needle/src"]
+pythonpath = [
+    "packages/stitcher-spec/src", 
+    "packages/stitcher-common/src", 
+    "packages/stitcher-scanner/src", 
+    "packages/stitcher-io/src", 
+    "packages/stitcher-config/src", 
+    "packages/stitcher-application/src", 
+    "packages/stitcher-cli/src", 
+    "packages/stitcher-needle/src",
+    "packages/pyneedle-spec/src",
+    "packages/pyneedle-pointer/src"
+]
 
 [tool.stitcher]
 scan_paths = ["packages"]

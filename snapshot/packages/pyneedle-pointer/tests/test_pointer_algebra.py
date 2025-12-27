@@ -105,13 +105,27 @@ def test_pointer_set_multiplication_cartesian_product():
     }
     assert permissions == expected
 
+
+def test_pointer_getitem_for_non_identifiers():
+    """Tests using __getitem__ for keys that are not valid Python identifiers."""
+    p = L.errors[404]
+    assert p == "errors.404"
+
+    p2 = L.config["user-settings"]
+    assert p2 == "config.user-settings"
+
+    p3 = L.a[1]["b"]
+    assert p3 == "a.1.b"
+
+
 def test_pointer_set_chained_broadcasting():
     """Tests chaining multiple broadcast operations."""
+    # This test now passes because __getitem__ is implemented.
     result = (L * {"http", "ftp"}) / "errors" * {"404", "500"}
-    
+
     expected = {
         L.http.errors['404'], L.http.errors['500'],
         L.ftp.errors['404'], L.ftp.errors['500'],
     }
-    
+
     assert result == expected

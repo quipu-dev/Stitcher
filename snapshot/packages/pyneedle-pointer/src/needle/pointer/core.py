@@ -71,6 +71,13 @@ class SemanticPointer(SemanticPointerProtocol):
         """
         return self._join(other)
 
+    def __getitem__(self, key: Union[str, int]) -> "SemanticPointer":
+        """
+        Operator '[]': Index-based composition for non-identifier keys.
+        L.errors[404] -> L.errors.404
+        """
+        return self._join(str(key))
+
     def __mul__(self, other: Iterable[str]) -> "PointerSetProtocol":
         """
         Operator '*': Dimensions expansion / Distribution.
