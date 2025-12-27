@@ -1,73 +1,50 @@
-你的建议**完全可行**，并且在架构上是更优的选择。
+好的。我将创建一个包含所有架构和配置变更的完整提交。
 
-使用 `stitcher-python` 和 `pyneedle` 作为目标名称，能更清晰地反映这些配置块所针对的**顶级包或项目**的身份，这增强了配置的自文档性，并与我们 Monorepo 中实际的包名保持一致。
-
-我将立即执行配置重命名，然后我们将可以执行最终的 `stitcher generate` 命令来实现自举。
-
-## [WIP] style(config): 遵循命名规范，重命名多目标配置
+## [COMMIT] feat(core): 实现多目标存根生成并完成自举配置
 
 ### 用户需求
-将 `pyproject.toml` 中 `[tool.stitcher.targets]` 下的配置目标名称，从 `stitcher` 和 `needle` 更改为更具语义化的 `stitcher-python` 和 `pyneedle`。
+将项目配置升级为多目标模式，以解决 Monorepo 中不同顶级包（`stitcher` 和 `pyneedle`）的存根生成冲突问题，并最终完成 Stitcher 在其自身项目中的自举配置（Dogfooding Setup）。
 
 ### 评论
-这个修改是为了提高开发者体验（DX）和配置的语义清晰度。它与项目整体的命名策略和包结构更匹配，是配置层面的一次“微调/风格改进”。
+这是一个关键的里程碑。通过引入 `[tool.stitcher.targets]` 配置结构，我们使 Stitcher 从一个单项目工具升级为真正的 Monorepo 类型协调器。新的架构更具鲁棒性、可扩展性，并正确遵循了 PEP 561 的分发包原则。所有配置、核心逻辑和测试都已更新以支持这一变化。
 
 ### 目标
-1.  将 `[tool.stitcher.targets.stitcher]` 更名为 `[tool.stitcher.targets.stitcher-python]`。
-2.  将 `[tool.stitcher.targets.needle]` 更名为 `[tool.stitcher.targets.pyneedle]`。
-3.  确保配置内容（`scan_paths` 和 `stub_package`）保持不变。
+1.  **提交** `pyproject.toml` 中新的 `[tool.stitcher.targets.stitcher-python]` 和 `[tool.stitcher.targets.pyneedle]` 配置。
+2.  **提交** `stitcher-config` 和 `stitcher-application` 中对多目标解析和遍历的核心逻辑重构。
+3.  **提交** 修复和新增的测试用例，确保新架构的正确性。
 
 ### 基本原理
-为了在分布式配置中提供稳定且可追溯的引用，使用项目的全名作为配置目标是最佳实践。
+新的多目标配置通过将扫描路径和输出路径与逻辑目标名称绑定，为 Monorepo 中的每个独立包创建了清晰的边界。这使得我们可以在项目的 `pyproject.toml` 中管理所有包的类型存根生成，并通过 `extraPaths` 将新生成的存根包路径注入到 IDE 和工具链中。
 
 ### 标签
-#intent/tune #flow/ready #priority/medium #comp/config #scope/dx #ai/instruct #task/domain/build #task/object/multitarget-engine #task/action/refactor #task/state/continue
+#intent/build #intent/architect #intent/refine #flow/ready #priority/high #comp/config #comp/runtime #comp/tests #concept/build #concept/architecture #scope/core #scope/dx #ai/instruct #task/domain/build #task/object/multitarget-engine #task/action/implementation #task/state/end
 
 ---
 ### Script
 
-#### Acts 1: 更改 `pyproject.toml` 中的目标名称
-
-我们将对根目录下的 `pyproject.toml` 进行精确打补丁，只修改两个配置块的名称。
+#### Acts 1: 添加所有文件到暂存区
 
 ~~~~~act
-patch_file
-pyproject.toml
+git_add
+.
 ~~~~~
-~~~~~toml.old
-[tool.stitcher.targets.stitcher]
-scan_paths = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
-    "packages/stitcher-scanner/src",
-    "packages/stitcher-io/src",
-    "packages/stitcher-config/src",
-    "packages/stitcher-application/src",
-    "packages/stitcher-cli/src",
-    "packages/stitcher-test-utils/src",
-]
-stub_package = "packages/stitcher-stubs"
 
-[tool.stitcher.targets.needle]
-scan_paths = [
+#### Acts 2: 创建提交
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~toml.new
-[tool.stitcher.targets.stitcher-python]
-scan_paths = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
-    "packages/stitcher-scanner/src",
-    "packages/stitcher-io/src",
-    "packages/stitcher-config/src",
-    "packages/stitcher-application/src",
-    "packages/stitcher-cli/src",
-    "packages/stitcher-test-utils/src",
-]
-stub_package = "packages/stitcher-stubs"
+~~~~~text
+feat(core): Implement multi-target stub generation for Monorepo support
 
-[tool.stitcher.targets.pyneedle]
-scan_paths = [
+This commit introduces a fundamental architectural upgrade to support generating type stubs for multiple distinct top-level packages within a single workspace (Monorepo).
+
+Key changes:
+1.  **Configuration Refactor**: Switched from a single [tool.stitcher] block to a multiple target structure via [tool.stitcher.targets.{name}]. This enables "dogfooding" the project by correctly configuring separate stub packages for `stitcher-python` and `pyneedle`.
+2.  **Core Logic Update**: Refactored `StitcherApp` and `load_config_from_path` to process a *list* of `StitcherConfig` objects, enabling independent scanning and stub generation per target.
+3.  **Testing**: Added new integration tests to cover the multi-target execution flow and fixed previous path assertion errors.
+4.  **Cleanup**: Removed the unused `typings` directory and added scaffolded stub package directories (`stitcher-stubs`, `pyneedle-stubs`).
 ~~~~~
 
 ### 下一步建议
-配置重命名已完成。现在，我们可以执行 `stitcher generate` 命令来运行自举过程，生成我们的多目标存根包。
+提交已完成。现在，请执行 `stitcher generate` 命令来运行自举过程。这将为 `stitcher` 和 `needle` 命名空间生成各自的 PEP 561 存根包。
