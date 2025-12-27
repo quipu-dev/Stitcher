@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 重构测试工具以匹配 Nexus 语义和依赖注入", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766807080.8424613, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: D needle.stitcher.yaml, M nexus.py, A nexus.stitcher.yaml", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766807355.2120628, "duration_ms": 0}}

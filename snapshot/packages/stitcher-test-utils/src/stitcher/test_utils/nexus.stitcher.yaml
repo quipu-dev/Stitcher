@@ -1,0 +1,11 @@
+"MockNexus": |-
+  A test utility to mock the global `nexus` runtime.
+"MockNexus.get": |-
+  Standard Nexus interface implementation
+"MockNexus.patch": |-
+  Legacy patch method.
+  Prefer constructor injection (Dependency Injection) where possible.
+  This patches the 'stitcher_nexus' used by the global bus if needed.
+
+  Args:
+      monkeypatch: The pytest monkeypatch fixture.
