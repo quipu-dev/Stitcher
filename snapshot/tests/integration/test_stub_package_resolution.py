@@ -51,10 +51,12 @@ reveal_type(MyModel)
     # 6. Assert
     assert result.returncode == 0, f"Mypy failed with errors:\n{result.stderr}"
 
-    # Mypy's output for a revealed class type is "Type[<class_name>]"
-    expected_type_str = 'Revealed type is "Type[my_project.models.MyModel]"'
-    assert expected_type_str in result.stdout, (
+    # Mypy reveals the constructor for a class name. We just need to check if
+    # the fully qualified name is present in the output, which proves resolution.
+    expected_substring = "my_project.models.MyModel"
+    assert expected_substring in result.stdout, (
         f"Mypy did not reveal the correct type.\n"
+        f"Expected to find '{expected_substring}' in stdout.\n"
         f"STDOUT:\n{result.stdout}\n"
         f"STDERR:\n{result.stderr}"
     )
