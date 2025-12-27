@@ -29,7 +29,7 @@ def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypa
         .with_source(
             "src/my_app/main.py",
             """
-            def run():
+            def run() -> None:
                 \"\"\"Main entry point.\"\"\"
                 pass
             """,

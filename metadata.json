@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(application): Use binary mode for writing TOML files", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766811451.9131956, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Acts 1: 更新测试数据", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766811517.951929, "duration_ms": 0}}
