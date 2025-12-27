@@ -1,14 +1,3 @@
-<pre>
-LL
-LL
-LL
-LL
-LL
-LL
-LL
-LLLLLLLL
-</pre>
-
 # PyNeedle: The Semantic Pointer Runtime
 
 ![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
@@ -182,7 +171,7 @@ Since this project is not yet available on PyPI, you need to install it from a l
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/stitcher-python.git
+    git clone https://github.com/doucx/stitcher-python.git
     cd stitcher-python
     ```
 

@@ -34,12 +34,12 @@ Stitcher's workflow is designed to be intuitive and integrate seamlessly with ve
 
 ```mermaid
 graph LR
-    A[Source Code (.py) with Docs] -- stitcher init --> B{Docs (.stitcher.yaml)};
-    B -- Edit & Refine --> C{Updated Docs};
-    A -- stitcher strip (optional) --> D[Source Code without Docs];
-    C -- stitcher generate --> E[Type Stubs (.pyi)];
-    D -- Type Checkers --> F[Static Analysis];
-    E -- Type Checkers --> F;
+    A["Source Code (.py) with Docs"] -- stitcher init --> B{"Docs (.stitcher.yaml)"};
+    B -- "Edit & Refine" --> C{"Updated Docs"};
+    A -- "stitcher strip (optional)" --> D["Source Code without Docs"];
+    C -- "stitcher generate" --> E["Type Stubs (.pyi)"];
+    D -- "Type Checkers" --> F["Static Analysis"];
+    E -- "Type Checkers" --> F;
 ```
 
 1.  **Initialize (`stitcher init`)**
@@ -73,7 +73,7 @@ Since this project is not yet available on PyPI, you need to install it from a l
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/stitcher-python.git
+    git clone https://github.com/doucx/stitcher-python.git
     cd stitcher-python
     ```
 

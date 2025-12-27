@@ -1,14 +1,3 @@
-<pre>
-LL
-LL
-LL
-LL
-LL
-LL
-LL
-LLLLLLLL
-</pre>
-
 # PyNeedle: 语义指针运行时
 
 ![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
@@ -182,7 +171,7 @@ PyNeedle 是一个由多个专注的包组成的 monorepo：
 
 1.  **克隆仓库：**
     ```bash
-    git clone https://github.com/your-username/stitcher-python.git
+    git clone https://github.com/doucx/stitcher-python.git
     cd stitcher-python
     ```
 

@@ -4,9 +4,9 @@
 
 ### 📝 变更文件摘要:
 ```
-README.md             | 160 +++++++++++++++++++++++++++++++++++++++
- README.zh.md          | 160 +++++++++++++++++++++++++++++++++++++++
- README_PyNeedle.md    | 204 ++++++++++++++++++++++++++++++++++++++++++++++++++
- README_PyNeedle.zh.md | 204 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 728 insertions(+)
+README.md             | 14 +++++++-------
+ README.zh.md          | 14 +++++++-------
+ README_PyNeedle.md    | 13 +------------
+ README_PyNeedle.zh.md | 13 +------------
+ 4 files changed, 16 insertions(+), 38 deletions(-)
 ```

@@ -34,12 +34,12 @@ Stitcher 的工作流设计直观，并能与版本控制无缝集成。
 
 ```mermaid
 graph LR
-    A[带文档的源码 (.py)] -- stitcher init --> B{文档 (.stitcher.yaml)};
-    B -- 编辑和优化 --> C{更新后的文档};
-    A -- stitcher strip (可选) --> D[无文档的源码];
-    C -- stitcher generate --> E[类型存根 (.pyi)];
-    D -- 类型检查工具 --> F[静态分析];
-    E -- 类型检查工具 --> F;
+    A["带文档的源码 (.py)"] -- stitcher init --> B{"文档 (.stitcher.yaml)"};
+    B -- "编辑和优化" --> C{"更新后的文档"};
+    A -- "stitcher strip (可选)" --> D["无文档的源码"];
+    C -- "stitcher generate" --> E["类型存根 (.pyi)"];
+    D -- "类型检查工具" --> F["静态分析"];
+    E -- "类型检查工具" --> F;
 ```
 
 1.  **初始化 (`stitcher init`)**
@@ -73,7 +73,7 @@ graph LR
 
 1.  **克隆仓库：**
     ```bash
-    git clone https://github.com/your-username/stitcher-python.git
+    git clone https://github.com/doucx/stitcher-python.git
     cd stitcher-python
     ```
 
