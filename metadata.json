@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(core): 实现 PEP 561 自动化存根包生成机制", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766811034.7389603, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 修复因 API 签名变更导致的集成测试失败", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766811096.5020032, "duration_ms": 0}}
