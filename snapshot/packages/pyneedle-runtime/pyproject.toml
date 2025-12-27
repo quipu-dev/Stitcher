@@ -3,15 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pyneedle"
+name = "pyneedle-runtime"
 version = "0.1.0"
-description = "Batteries-included distribution of the PyNeedle runtime."
+description = "Core runtime for the PyNeedle ecosystem."
 requires-python = ">=3.10"
 dependencies = [
     "pyneedle-spec",
     "pyneedle-pointer",
     "pyneedle-nexus",
-    "pyneedle-runtime",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -21,4 +20,3 @@ packages = ["src/needle"]
 pyneedle-spec = { workspace = true }
 pyneedle-pointer = { workspace = true }
 pyneedle-nexus = { workspace = true }
-pyneedle-runtime = { workspace = true }

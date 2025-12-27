@@ -26,6 +26,7 @@ members = ["packages/*", "packages/stitcher-test-utils"]
 
 [tool.uv.sources]
 pyneedle = { workspace = true }
+pyneedle-runtime = { workspace = true }
 pyneedle-nexus = { workspace = true }
 pyneedle-pointer = { workspace = true }
 pyneedle-spec = { workspace = true }
@@ -53,6 +54,7 @@ pythonpath = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-nexus/src",
+    "packages/pyneedle-runtime/src",
     "packages/pyneedle/src",
     "packages/stitcher-test-utils/src"
 ]
@@ -94,6 +96,7 @@ extraPaths = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-nexus/src",
+    "packages/pyneedle-runtime/src",
     "packages/pyneedle/src",
     # Add the new stub packages' source directories
     "packages/stitcher-stubs/src",
@@ -113,6 +116,7 @@ extraPaths = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-nexus/src",
+    "packages/pyneedle-runtime/src",
     "packages/pyneedle/src",
     # Add the new stub packages' source directories
     "packages/stitcher-stubs/src",
