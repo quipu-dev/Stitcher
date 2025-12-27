@@ -1,58 +1,3 @@
-简要回答：
-当然。为核心的“语义代数”组件添加单元测试是确保其稳定性和正确性的关键一步。我将创建一个计划来为 `pyneedle-pointer` 包添加全面的 `pytest` 测试。
-
-## [WIP] test: 为 pyneedle-pointer 添加全面的单元测试
-
-### 用户需求
-为 `pyneedle-pointer` 包中的 `SemanticPointer` 和 `PointerSet` 类创建一套完整的单元测试。测试需要覆盖所有定义的“语义代数”操作，包括路径构建、运算符重载和集合广播，以确保其行为符合预期。
-
-### 评论
-这是一个至关重要的步骤。`pyneedle-pointer` 是整个 `Needle` 生态的数学基础，其行为必须是 100% 确定和可靠的。通过详尽的单元测试，我们可以锁定其核心契约，为上层 `Nexus` 和 `Stitcher` 等消费者提供坚实的信任基础。
-
-### 目标
-1.  在 `packages/pyneedle-pointer` 中建立 `tests` 目录结构。
-2.  创建一个测试文件 `test_pointer_algebra.py`。
-3.  **针对 `SemanticPointer`**:
-    *   验证基本的路径构建 (`.`) 和字符串转换。
-    *   验证相等性 (`==`) 和哈希能力 (`hash()`)。
-    *   验证动态路径组合 (`+`, `/`)。
-    *   验证集合分发 (`*`) 能正确生成 `PointerSet`。
-4.  **针对 `PointerSet`**:
-    *   验证其行为与原生 `set` 一致（`len`, `in`, `|`）。
-    *   验证广播操作 (`/`, `+`) 能正确应用到所有成员。
-    *   验证笛卡尔积操作 (`*`) 的正确性。
-
-### 基本原理
-我们将使用 `pytest` 框架，因为它简洁且功能强大。测试将集中在一个文件中，因为 `SemanticPointer` 和 `PointerSet` 的功能紧密耦合（一个生成另一个，另一个包含第一个），将它们的交互测试放在一起可以更好地验证整个代数系统的闭环特性。
-
-### 标签
-#intent/tooling #flow/ready #priority/high
-#comp/tests #scope/core
-#task/domain/runtime #task/object/pyneedle-pointer #task/action/testing
-#task/state/continue #task/status/active
-
----
-
-### Script
-
-#### Acts 1: 创建测试目录
-在 `pyneedle-pointer` 包内创建 `tests` 目录。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~bash
-mkdir -p packages/pyneedle-pointer/tests
-~~~~~
-
-#### Acts 2: 编写单元测试文件
-创建 `test_pointer_algebra.py` 并填充所有测试用例。
-
-~~~~~act
-write_file
-packages/pyneedle-pointer/tests/test_pointer_algebra.py
-~~~~~
-~~~~~python
 import pytest
 from needle.pointer import L, SemanticPointer, PointerSet
 
@@ -170,9 +115,3 @@ def test_pointer_set_chained_broadcasting():
     }
     
     assert result == expected
-~~~~~
-
-### 下一步建议
-我们已经为 `pyneedle-pointer` 包构建了坚实的测试基础，确保了其代数行为的正确性。
-
-现在，我们可以满怀信心地进入 **Phase 3: 内核构建 (pyneedle-nexus)**。在这个阶段，我们将创建一个运行时引擎，它会消费这些经过验证的 `Pointer` 对象，并将它们与实际的数据进行“缝合”。
