@@ -41,8 +41,11 @@ def test_namespace_coexistence(tmp_path: Path, isolated_env: VenvHarness):
                 return True
             """,
         )
-        # This __init__.py makes `my_project` a package.
-        .with_source("src/my_project/__init__.py", "")
+        # Use pkgutil-style namespace package for maximum compatibility
+        .with_source(
+            "src/my_project/__init__.py",
+            "__path__ = __import__('pkgutil').extend_path(__path__, __name__)",
+        )
         # PEP 561: This marker is required for mypy to read inline types from this package
         .with_source("src/my_project/py.typed", "")
         # We need a pyproject.toml to make it an installable package

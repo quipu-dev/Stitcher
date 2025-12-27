@@ -192,8 +192,17 @@ class StitcherApp:
                     ".pyi"
                 )
 
-            # Critical step: ensure parent directory exists
+            # Critical step: ensure parent directory and all __init__.pyi files exist
             output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Traverse upwards from the file's parent to the stub's src root
+            # and create __init__.pyi files along the way.
+            if config.stub_package:
+                src_root = self.root_path / config.stub_package / "src"
+                current = output_path.parent
+                while current != src_root and src_root in current.parents:
+                    (current / "__init__.pyi").touch(exist_ok=True)
+                    current = current.parent
 
             output_path.write_text(pyi_content, encoding="utf-8")
 

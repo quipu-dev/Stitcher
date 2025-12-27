@@ -1,55 +1,66 @@
-好的，进展非常大！`pip install` 终于成功了，我们的测试现在进入了最后的验证阶段——`mypy` 类型检查。
+好的，我将合并最新的分析和修复方案，生成一个单一的、最终的执行计划。
 
-现在的失败是：
-1.  `mypy` 返回了非零退出码 (1)。
-2.  `reveal_type(plugin_function)` 的结果是 `Any`。
-3.  `Found 1 error in 1 file`。
+这个计划将解决以下问题：
+1.  **Stitcher Bug (App)**: 缺少自动生成 `__init__.pyi` 的逻辑，这是命名空间解析失败的根本原因。
+2.  **Test Bug (Test Setup)**: 运行时包 `my-project-plugin` 必须显式配置为 `pkgutil-style` 命名空间包，以确保 `mypy` 和 `setuptools` 都能正确识别其类型分片。
 
-这意味着虽然**存根包**（`my-project-stubs`）和**运行时包**（`my-project-plugin`）都成功安装了，但 `mypy` 未能正确解析 `plugin_function` 的类型。
+## [WIP] fix(app, test): 修复命名空间共存和 `__init__.pyi` 生成
 
-这通常是因为 `mypy` 默认认为如果存在存根包（`-stubs`），那么该命名空间的所有类型信息都**只**来源于存根包，而忽略了源码包。这正是 PEP 561 中关于 Partial Stubs 的棘手之处。
+### 错误分析
+测试 `test_namespace_coexistence` 失败的原因为：
+1. **代码生成缺陷**：`StitcherApp._generate_stubs` 在生成 `my_project-stubs` 包时，没有为其父目录（即 `my_project`）创建必要的 `__init__.pyi` 文件。这破坏了 `mypy` 对该命名空间的类型索引。
+2. **测试环境配置不足**：模拟的运行时包 `my-project-plugin` 的 `my_project/__init__.py` 缺少 `pkgutil` 扩展路径代码，导致 `setuptools` 无法正确将多个包的内容合并到 `my_project` 命名空间下。
 
-对于命名空间包（Namespace Packages），要实现存根与源码的共存（Partial Stubs），我们需要确保存根包不仅标记为 `py.typed`，而且其结构要允许 `mypy` 穿透到其他包中。
+### 用户需求
+修复 `stitcher` 的核心生成逻辑以创建完整的包结构，并修正测试代码以使用最健壮的 `pkgutil-style` 命名空间声明，从而使 `mypy` 能够同时解析来自存根包和运行时包的类型。
 
-然而，更可能的原因是：我们的存根包（`my-project-stubs`）是为 `my_project` 命名空间提供类型信息的。`mypy` 看到这个存根包后，可能默认认为它拥有 `my_project` 下的所有真理，因此对于在该存根包中不存在的 `my_project.plugin`，它就直接报错或返回 `Any`。
+### 评论
+这次修复是确保 `stitcher` 在复杂的 Monorepo 环境中能够工作的决定性一步。通过强制生成路径上的所有 `__init__.pyi` 文件，我们为类型检查器提供了完整的包结构骨架，解决了由于 `stitcher` 不处理空模块导致的解析盲点。同时，使用 `pkgutil` 命名空间是确保不同发行版能够贡献到同一命名空间的黄金标准。
 
-**关键修正**：
-根据 PEP 561，如果一个包是 "Stub-only package"（即 `-stubs` 包），它确实会被视为该模块的权威类型来源。但是，对于命名空间包，情况有所不同。
+### 目标
+1.  **修复 App 逻辑**: 修改 `StitcherApp._generate_stubs`，使其能够递归地检查并创建所有必要的 `__init__.pyi` 文件。
+2.  **修复测试配置**: 修改 `test_stub_package_namespace.py`，确保运行时包 `my_project/__init__.py` 包含 `pkgutil` 命名空间声明。
 
-让我们先看看 `mypy` 的具体错误信息是什么。AssertionError 中只截取了部分。但 `Revealed type is "Any"` 是关键线索。
+### 基本原理
+**App 逻辑**: 通过遍历从最终 `pyi` 文件路径到 `src` 根目录的所有父目录，并在每个父目录中调用 `(path / "__init__.pyi").touch()`，我们确保了存根包的结构是完整的 Python 包。
+**测试逻辑**: 显式使用 `__path__ = __import__('pkgutil').extend_path(__path__, __name__)` 声明命名空间包，保证了 `mypy` 在解析 `my_project` 时能够访问到由 `my-project-stubs` 和 `my-project-plugin` 共同贡献的类型信息。
 
-如果 `mypy` 找不到模块，通常会报 `Module 'my_project' has no attribute 'plugin'` 或 `Import "my_project.plugin" could not be resolved`。
-既然它能 import 并且 reveal 为 `Any`，说明它**找到了**模块，但是没找到**类型信息**。
-
-**为什么没找到类型信息？**
-因为 `my-project-plugin` 包（运行时包）本身**没有**标记为 `py.typed`！
-在我的测试设置中，我为运行时包创建了 `__init__.py` 和源码，但我**忘记了添加 `src/my_project/py.typed` 文件**。
-
-根据 PEP 561，如果一个包要分发类型信息（即使是内联的源码类型），它**必须**包含一个 `py.typed` 标记文件。如果没有这个文件，`mypy` 会忽略该包中的类型信息，将其视为无类型的第三方库，从而对其中的符号返回 `Any`（或者报错，取决于配置）。
-
-### [WIP] fix(test): 为运行时包添加 py.typed 标记
-
-#### 错误分析
-测试失败的原因是模拟的运行时包 `my-project-plugin` 缺少 PEP 561 要求的 `py.typed` 标记文件。因此，尽管 `mypy` 能够导入 `my_project.plugin` 模块，但它会忽略其中的类型信息（即忽略源码本身作为类型的来源），导致 `plugin_function` 的类型被解析为 `Any`。这与命名空间冲突无关，纯粹是合规性问题。
-
-#### 用户需求
-修复 `test_namespace_coexistence` 测试，使其通过 `mypy` 检查。
-
-#### 目标
-1.  修改 `tests/integration/test_stub_package_namespace.py`。
-2.  在 `proj_with_runtime` 的构建过程中，添加 `src/my_project/py.typed` 文件。
-
-#### 基本原理
-PEP 561 规定：“Package maintainers who wish to support type checking of their code MUST add a marker file named py.typed to their package supporting type checking.” 添加此文件将指示 `mypy` 读取并使用该包源码中的类型注解。
-
-#### 标签
-#intent/fix #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/namespace-test #task/action/bug-fix #task/state/continue
+### 标签
+#intent/fix #flow/ready #priority/high #comp/app #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/namespace-test #task/action/implementation #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 添加 py.typed 文件到运行时包
+#### Acts 1: 在 `_generate_stubs` 中添加 `__init__.pyi` 创建逻辑
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+            # Critical step: ensure parent directory exists
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            output_path.write_text(pyi_content, encoding="utf-8")
+~~~~~
+~~~~~python.new
+            # Critical step: ensure parent directory and all __init__.pyi files exist
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Traverse upwards from the file's parent to the stub's src root
+            # and create __init__.pyi files along the way.
+            if config.stub_package:
+                src_root = self.root_path / config.stub_package / "src"
+                current = output_path.parent
+                while current != src_root and src_root in current.parents:
+                    (current / "__init__.pyi").touch(exist_ok=True)
+                    current = current.parent
+
+            output_path.write_text(pyi_content, encoding="utf-8")
+~~~~~
+
+#### Acts 2: 修复测试中的运行时包的命名空间声明
 
 ~~~~~act
 patch_file
@@ -58,25 +69,15 @@ tests/integration/test_stub_package_namespace.py
 ~~~~~python.old
         # This __init__.py makes `my_project` a package.
         .with_source("src/my_project/__init__.py", "")
-        # We need a pyproject.toml to make it an installable package
-~~~~~
-~~~~~python.new
-        # This __init__.py makes `my_project` a package.
-        .with_source("src/my_project/__init__.py", "")
         # PEP 561: This marker is required for mypy to read inline types from this package
         .with_source("src/my_project/py.typed", "")
-        # We need a pyproject.toml to make it an installable package
 ~~~~~
-
-### 下一步建议
-
-加上 `py.typed` 后，`mypy` 应该就能正确读取 `my_project.plugin` 中的类型了。
-
-请再次运行 `pytest`。
-
--   **如果测试通过**：那么我们终于大功告成！我们证明了：
-    1.  `stitcher` 生成的存根包能被正确识别。
-    2.  它能与同命名空间下的其他遵循 PEP 561 的包共存。
-    3.  `mypy` 能同时从两者获取类型。
-
--   **如果测试失败**：我们将查看新的错误信息。如果还是 `Any`，可能涉及到更复杂的命名空间遮蔽问题，但添加 `py.typed` 是绝对必要的先决条件。
+~~~~~python.new
+        # Use pkgutil-style namespace package for maximum compatibility
+        .with_source(
+            "src/my_project/__init__.py",
+            "__path__ = __import__('pkgutil').extend_path(__path__, __name__)",
+        )
+        # PEP 561: This marker is required for mypy to read inline types from this package
+        .with_source("src/my_project/py.typed", "")
+~~~~~
