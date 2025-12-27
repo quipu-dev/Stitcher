@@ -54,7 +54,6 @@ class SemanticPointer(SemanticPointerProtocol):
     def __mul__(self, other: Any) -> "PointerSetProtocol":
         # Lazy import to avoid circular dependency at module level
         from .set import PointerSet
-        from typing import Iterable
 
         items_to_process: Iterable[Any]
 

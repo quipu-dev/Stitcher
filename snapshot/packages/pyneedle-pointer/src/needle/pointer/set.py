@@ -1,4 +1,4 @@
-from typing import Set, Iterable, Union, Any, TYPE_CHECKING
+from typing import Set, Union, Any, TYPE_CHECKING
 from needle.spec import PointerSetProtocol, SemanticPointerProtocol
 
 if TYPE_CHECKING:
