@@ -76,24 +76,40 @@ class VenvHarness:
             text=True,
         )
 
-    def run_pyright_check(self, script_path: Path) -> subprocess.CompletedProcess:
+    def run_pyright_check(
+        self, project_path: Path, verbose: bool = False
+    ) -> subprocess.CompletedProcess:
         """
-        Runs pyright on a given script within the virtual environment.
+        Runs pyright on a given project/file within the virtual environment.
 
         Args:
-            script_path: The path to the Python script to type-check.
+            project_path: The path to the Python project/file to type-check.
+            verbose: If True, run pyright with --verbose flag.
 
         Returns:
             The result of the subprocess call.
         """
         self.install("pyright")
-        # Pyright is a JS application, so it provides an entry point script.
-        # We find it in the venv's bin directory.
         bin_dir = "Scripts" if sys.platform == "win32" else "bin"
         pyright_exe = self.venv_dir / bin_dir / "pyright"
-        return subprocess.run(
-            [str(pyright_exe), str(script_path)], capture_output=True, text=True
+
+        command = [str(pyright_exe)]
+        if verbose:
+            command.append("--verbose")
+        command.append(str(project_path))
+
+        return subprocess.run(command, capture_output=True, text=True)
+
+    def get_site_packages_path(self) -> Path:
+        """Returns the absolute path to the site-packages directory."""
+        result = self.run_python_command(
+            "import site; print(site.getsitepackages()[0])"
         )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Could not determine site-packages path: {result.stderr}"
+            )
+        return Path(result.stdout.strip())
 
     # --- Diagnostic Methods ---
 

@@ -8,9 +8,9 @@ def test_pyright_resolves_types_from_stubs(
     tmp_path: Path, isolated_env: VenvHarness
 ):
     """
-    Verifies that Pyright can resolve types from a generated stub package,
-    simulating the IDE experience in a realistic environment where both the
-    runtime and stub packages are installed, and Pyright is properly configured.
+    Verifies that Pyright can resolve types from a generated stub package by
+    providing an explicit pyrightconfig.json that points to the venv's
+    site-packages. This is the definitive test for IDE compatibility.
     """
     # --- ARRANGE ---
 
@@ -58,7 +58,7 @@ packages = ["src/ide_proxy"]
     isolated_env.install(str(runtime_project_root))
     isolated_env.install(str(stub_pkg_path))
 
-    # 5. Create a client script and a Pyright config in a dedicated "client_project" dir.
+    # 5. Create a client project directory.
     client_project_dir = tmp_path / "client_project"
     client_project_dir.mkdir()
     client_script = client_project_dir / "main.py"
@@ -68,28 +68,24 @@ packages = ["src/ide_proxy"]
         "reveal_type(instance.get_id())\n"
     )
 
-    # 6. *** THE CRITICAL FIX ***
-    #    Create a pyrightconfig.json to give Pyright the necessary context.
+    # 6. *** THE DEFINITIVE FIX ***
+    #    Create a pyrightconfig.json that explicitly tells pyright where to
+    #    find the installed packages.
     pyright_config_path = client_project_dir / "pyrightconfig.json"
-    pyright_config = {"venvPath": str(isolated_env.venv_dir)}
+    site_packages = isolated_env.get_site_packages_path()
+    pyright_config = {"extraPaths": [str(site_packages)]}
     pyright_config_path.write_text(json.dumps(pyright_config))
 
-    # 7. Run Pyright check. We run it on the whole directory now.
-    result = isolated_env.run_pyright_check(client_project_dir)
+    # 7. Run Pyright check with verbosity for better diagnostics.
+    result = isolated_env.run_pyright_check(client_project_dir, verbose=True)
 
     # --- ASSERT ---
-    
-    # 8. Run diagnostics for rich error messages if needed.
-    pip_list_output = isolated_env.pip_list()
-    import_result = isolated_env.run_python_command("import ide_proxy.models")
+
     diagnostic_info = f"""
-    --- DIAGNOSTICS ---
-    [PIP LIST]
-{pip_list_output}
-    [PYTHON IMPORT TEST]
-    Exit Code: {import_result.returncode}, Stderr: {import_result.stderr.strip()}
+    --- PYRIGHT CONFIG ---
+{json.dumps(pyright_config, indent=2)}
     ---
-    [PYRIGHT OUTPUT]
+    [PYRIGHT VERBOSE OUTPUT]
     STDOUT:
 {result.stdout}
     STDERR:
