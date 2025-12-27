@@ -37,7 +37,7 @@ def test_namespace_coexistence(tmp_path: Path, isolated_env: VenvHarness):
         factory_runtime.with_source(
             "src/my_project/plugin.py",
             """
-            def plugin_function():
+            def plugin_function() -> bool:
                 return True
             """,
         )
