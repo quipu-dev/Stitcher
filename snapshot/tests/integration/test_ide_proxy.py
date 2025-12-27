@@ -39,12 +39,18 @@ class ProxyModel:
         "pyproject.toml",
         """
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ide-proxy-proj"
 version = "0.1.0"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 """,
     ).build()
 
