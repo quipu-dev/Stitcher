@@ -1,85 +1,59 @@
-遵循静态分析工具的指引，我们将对 `pyneedle` 的包结构进行调整，以完全符合 Python 隐式命名空间包（Implicit Namespace Packages, PEP 420）的规范，从而解决工具无法正确解析路径的问题。同时，我们将修复协议定义与实现不一致导致的类型错误。
+这是一个针对 `pyrefly` 配置错误的修复计划。
 
-## [WIP] fix: 适配命名空间包规范并修复类型协议
+根据错误日志分析：
+1.  工具输出了 `[missing-import]` 错误，这是 Pyright 典型的错误代码，表明 `pyrefly` 极有可能是 Pyright 的封装或变体。
+2.  警告信息 `WARN ...: Extra keys found in config: extra_paths` 表明 `pyrefly` 读取了 `[tool.pyrefly]` 配置块，但不识别 `extra_paths` 这个键名。
+3.  Pyright 的标准 TOML 配置键名为驼峰式 `extraPaths`（如 `[tool.pyright]` 块所示），而用户在 `[tool.pyrefly]` 中使用了蛇形命名 `extra_paths`。
+
+因此，解决方案是将 `pyproject.toml` 中 `[tool.pyrefly]` 下的 `extra_paths` 更正为 `extraPaths`，以对齐 Pyright 的配置规范，从而使静态分析工具能够正确解析 Monorepo 中的子包路径。
+
+## [WIP] fix(build): 修正 pyproject.toml 中 pyrefly 的配置键名
 
 ### 错误分析
-1.  **`missing-import` (needle.nexus)**:
-    *   **原因**: `packages/pyneedle/src/needle/__init__.py` 的存在使得静态分析工具认为 `needle` 是一个定义在 `packages/pyneedle/src` 中的普通包，从而忽略了其他路径（如 `packages/pyneedle-nexus/src`）下的同名命名空间。这破坏了 Monorepo 的命名空间合并机制。
-    *   **解决方案**: 将 `pyneedle` 顶层包的初始化逻辑移动到 `needle.runtime` 模块中，并删除 `needle/__init__.py`，使其成为纯粹的隐式命名空间包。
+用户执行 `pyrefly check` 时遇到了大量的 `[missing-import]` 错误，导致无法解析 `needle.*` 命名空间下的模块。同时，工具输出了警告 `Extra keys found in config: extra_paths`。
 
-2.  **`unsupported-operation` (SemanticPointer / PointerSet)**:
-    *   **原因 1**: `PointerSetProtocol` 遗漏了 `__add__` (广播加法) 和 `__mul__` (笛卡尔积) 的定义，导致静态分析认为这些操作非法。
-    *   **原因 2**: 在测试中，`SemanticPointer` 与 `int` 进行了除法操作 (`/`)。虽然运行时支持（通过 `str()` 转换），但协议严格定义为接受 `str | SemanticPointerProtocol`。
-    *   **解决方案**: 补全协议定义；在测试中显式进行类型转换。
+这表明 `pyrefly`（推测基于 Pyright）无法识别配置中的 `extra_paths` 键，导致它没有将 `src` 目录加入搜索路径。由于 Pyright 使用驼峰命名法（CamelCase）作为配置标准（例如 `extraPaths`），当前配置中的蛇形命名（snake_case）是无效的。
 
 ### 用户需求
-1.  重构 `pyneedle` 包结构，确保静态分析工具能正确解析命名空间。
-2.  修复所有类型检查错误。
-3.  确保 API 变更后的测试能通过。
+修正配置错误，使 `pyrefly` 能够正确识别项目的 `extraPaths`，从而消除 `[missing-import]` 错误并顺利通过静态检查。
 
 ### 评论
-虽然将 `from needle import nexus` 变更为 `from needle.runtime import nexus` 稍微增加了输入的字符数，但它换来的是**绝对的标准符合性**和**工具链的无缝支持**。对于一个基础架构库来说，这种清晰性和稳健性是值得的。
+这是一个简单的配置键名拼写错误修正，但对于多包（Monorepo）结构的 Python 项目至关重要，因为显式指定 `extraPaths` 是让静态分析工具理解 Namespace Packages 布局的关键。
 
 ### 目标
-1.  **重构 pyneedle**: 将 `packages/pyneedle/src/needle/__init__.py` 移动到 `packages/pyneedle/src/needle/runtime.py`。
-2.  **完善协议**: 在 `pyneedle-spec` 中为 `PointerSetProtocol` 添加缺失的运算符。
-3.  **修复测试**:
-    *   更新 `pyneedle-pointer` 测试中的类型转换。
-    *   更新 `pyneedle` 测试中的导入路径（指向 `needle.runtime`）。
+1.  在 `pyproject.toml` 中，将 `[tool.pyrefly]` 部分的 `extra_paths` 重命名为 `extraPaths`。
+
+### 基本原理
+通过将配置键名对齐到 Pyright 的标准 schema (`extraPaths`)，我们确保 `pyrefly` 能够正确加载这些路径。一旦路径被加载，工具就能正确解析 `packages/*/src` 下的模块，从而解决 `needle.nexus` 等模块无法找到的问题。
 
 ### 标签
-#intent/refactor #intent/fix #flow/ready #priority/high
-#comp/runtime #comp/interfaces #comp/tests #scope/core
-#task/domain/runtime #task/object/pyneedle #task/action/refactor
-#task/state/continue #task/status/active
+#intent/fix #flow/ready #priority/high #comp/build #concept/config #scope/dx
+#task/domain/testing #task/object/config #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 pyneedle 顶层包
-将 `__init__.py` 逻辑移动到 `runtime.py` 并删除原文件。
+#### Acts 1: 修正 pyproject.toml 配置
 
-~~~~~act
-run_command
-~~~~~
-~~~~~bash
-mv packages/pyneedle/src/needle/__init__.py packages/pyneedle/src/needle/runtime.py
-~~~~~
-
-#### Acts 2: 完善 PointerSetProtocol
-在协议中添加缺失的运算符。
+我们将把 `[tool.pyrefly]` 下的 `extra_paths` 替换为 `extraPaths`。
 
 ~~~~~act
 patch_file
-packages/pyneedle-spec/src/needle/spec/protocols.py
+pyproject.toml
 ~~~~~
-~~~~~python.old
-    def __or__(self, other: "PointerSetProtocol") -> "PointerSetProtocol":
-        """
-        Operator '|': Unions two PointerSets.
-        """
-        ...
+~~~~~old
+[tool.pyrefly]
+extra_paths = [
+    "packages/stitcher-spec/src",
+    "packages/stitcher-common/src",
 ~~~~~
-~~~~~python.new
-    def __or__(self, other: "PointerSetProtocol") -> "PointerSetProtocol":
-        """
-        Operator '|': Unions two PointerSets.
-        """
-        ...
-
-    def __add__(self, other: Union[str, SemanticPointerProtocol]) -> "PointerSetProtocol":
-        """
-        Operator '+': Broadcasts the add operation to all members.
-        """
-        ...
-
-    def __mul__(self, other: Iterable[str]) -> "PointerSetProtocol":
-        """
-        Operator '*': Broadcasts a cartesian product operation.
-        """
-        ...
+~~~~~new
+[tool.pyrefly]
+extraPaths = [
+    "packages/stitcher-spec/src",
+    "packages/stitcher-common/src",
 ~~~~~
 
 ### 下一步建议
-现在代码库已经符合静态分析标准。在验证 `pyrefly check` 通过后，我们将开始消费者的迁移工作。我们将首先迁移 `stitcher-common`，因为它是其他 Stitcher 组件的基础依赖。
+配置修正后，建议再次运行 `pyrefly check` 以验证 `[missing-import]` 错误是否已消除。如果问题依然存在，可能需要进一步检查是否需要同步更新 `pyrightconfig.json` 或检查 `pyrefly` 是否有其他特定的配置要求。
