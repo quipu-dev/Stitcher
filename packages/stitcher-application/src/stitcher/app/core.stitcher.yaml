@@ -1,30 +1,50 @@
-"StitcherApp": |-
-  The main application class that orchestrates all Stitcher operations.
-"StitcherApp._derive_logical_path": |-
-  Heuristic to derive the logical import path from a physical file path.
-  Assumes a standard 'src/' layout.
-  e.g., 'packages/pkg-a/src/foo/bar.py' -> 'foo/bar.py'
-"StitcherApp._generate_stubs": |-
-  Generates .pyi files from a list of ModuleDefs.
-"StitcherApp._get_files_from_config": |-
-  Helper to discover all source files based on a single StitcherConfig object.
-"StitcherApp._process_plugins": |-
-  Parses plugins and builds a virtual ModuleDef tree.
-"StitcherApp._scan_files": |-
-  Parses a list of source files into ModuleDef IRs.
-"StitcherApp.run_check": |-
-  Checks consistency between source code and documentation files.
-  Returns True if passed, False if critical issues found.
-"StitcherApp.run_eject": |-
-  Injects docstrings from YAML files back into source code.
-"StitcherApp.run_from_config": |-
-  Loads config, discovers files and plugins, and generates all stubs.
-"StitcherApp.run_hydrate": |-
-  Extracts docstrings from source code and merges them into YAML files.
-  - strip: Removes docstrings from source after successful hydration.
-  - force: Code-first conflict resolution.
-  - reconcile: YAML-first conflict resolution.
-"StitcherApp.run_init": |-
-  Scans source files and extracts docstrings into external .stitcher.yaml files.
-"StitcherApp.run_strip": |-
-  Strips docstrings from all source files.
+FileCheckResult: |-
+  Data container representing the outcome of a consistency check for a single file.
+FileCheckResult.error_count: |-
+  Total number of critical issues (errors) discovered in the file.
+FileCheckResult.errors: |-
+  A collection of errors keyed by their category (e.g., 'conflict', 'mismatch').
+FileCheckResult.is_clean: |-
+  Returns True if the file has no issues and no reconciliation was performed.
+FileCheckResult.path: |-
+  The relative path to the source file that was inspected.
+FileCheckResult.reconciled: |-
+  The count of signature mismatches that were automatically updated during the check.
+FileCheckResult.warning_count: |-
+  Total number of non-blocking issues (warnings) discovered in the file.
+FileCheckResult.warnings: |-
+  A collection of warnings keyed by their category (e.g., 'missing', 'untracked').
+StitcherApp: |-
+  The central orchestrator for all Stitcher operations.
+
+  This class coordinates the scanner, document manager, signature manager, and
+  stub generator to execute high-level commands like check, generate, and hydrate.
+StitcherApp.run_check: |-
+  Verify the structural and content consistency between source code and external YAML documentation.
+
+  Args:
+    update_signatures: If True, automatically update the signature baseline for functions that have changed.
+StitcherApp.run_eject: |-
+  Inject documentation from .stitcher.yaml files back into the source code as docstrings.
+
+  This operation modifies source files in-place and is intended for "ejecting" from
+  the Stitcher workflow back to standard Python development.
+StitcherApp.run_from_config: |-
+  Execute the main stub generation workflow based on the configuration found in pyproject.toml.
+
+  This includes scanning source files, processing plugins, and generating .pyi files.
+StitcherApp.run_hydrate: |-
+  Extract new or modified docstrings from source code and update the .stitcher.yaml files.
+
+  Args:
+    strip: If True, remove the extracted docstrings from the source code immediately.
+    force: If True, overwrite existing YAML content with source content in case of conflict.
+    reconcile: If True, prefer existing YAML content and ignore source content in case of conflict.
+StitcherApp.run_init: |-
+  Initialize Stitcher for a project by creating the first batch of .stitcher.yaml files.
+
+  This command scans the codebase and extracts existing docstrings to seed the documentation store.
+StitcherApp.run_strip: |-
+  Remove all docstrings from the source code files defined in the configuration.
+
+  This is a destructive operation used to enforce a "pure code" style where docs live strictly in YAML.
