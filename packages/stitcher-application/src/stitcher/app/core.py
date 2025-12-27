@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 from collections import defaultdict
 
 from stitcher.scanner import (
@@ -36,6 +36,24 @@ class StitcherApp:
             except Exception as e:
                 bus.error(L.error.generic, error=e)
         return modules
+
+    def _derive_logical_path(self, file_path: str) -> Path:
+        """
+        Heuristic to derive the logical import path from a physical file path.
+        Assumes a standard 'src/' layout.
+        e.g., 'packages/pkg-a/src/foo/bar.py' -> 'foo/bar.py'
+        """
+        path_obj = Path(file_path)
+        parts = path_obj.parts
+        
+        # Find the LAST occurrence of 'src' to handle potential nested structures correctly
+        try:
+            # rindex equivalent for list
+            src_index = len(parts) - 1 - parts[::-1].index("src")
+            return Path(*parts[src_index + 1:])
+        except ValueError:
+            # 'src' not found, fallback to original path
+            return path_obj
 
     def _process_plugins(self, plugins: Dict[str, str]) -> List[ModuleDef]:
         # A dictionary to hold our virtual modules, keyed by their intended file path
@@ -78,7 +96,7 @@ class StitcherApp:
 
         return list(virtual_modules.values())
 
-    def _generate_stubs(self, modules: List[ModuleDef]) -> List[Path]:
+    def _generate_stubs(self, modules: List[ModuleDef], stub_path: Optional[str] = None) -> List[Path]:
         generated_files: List[Path] = []
         for module in modules:
             # Step 1: Hydrate IR with external docs (The "Stitching" process)
@@ -86,8 +104,15 @@ class StitcherApp:
 
             # Step 2: Generate code
             pyi_content = self.generator.generate(module)
-            # Output path is relative to the project root
-            output_path = self.root_path / Path(module.file_path).with_suffix(".pyi")
+            
+            # Determine Output Path
+            if stub_path:
+                # Centralized mode: map physical path to logical path inside stub_path
+                logical_path = self._derive_logical_path(module.file_path)
+                output_path = self.root_path / stub_path / logical_path.with_suffix(".pyi")
+            else:
+                # Colocated mode: generate next to source file
+                output_path = self.root_path / Path(module.file_path).with_suffix(".pyi")
 
             # Critical step: ensure parent directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -127,7 +152,7 @@ class StitcherApp:
             bus.warning(L.warning.no_files_or_plugins_found)
             return []
 
-        generated_files = self._generate_stubs(all_modules)
+        generated_files = self._generate_stubs(all_modules, stub_path=config.stub_path)
 
         if generated_files:
             bus.success(L.generate.run.complete, count=len(generated_files))
