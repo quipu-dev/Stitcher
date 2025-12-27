@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M __init__.py, M loaders.py, M nexus.py ... and 12 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766802581.1853817, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 将 pyneedle 的核心逻辑移回 __init__.py", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766802582.5188196, "duration_ms": 0}}
