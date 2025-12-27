@@ -1,5 +1,8 @@
 "check": |-
   Verify consistency between code and docs.
+
+  Args:
+    update_signatures: Accept and update signature changes in the stored fingerprints.
 "eject": |-
   Inject docstrings from .stitcher.yaml files back into code.
 "generate": |-
