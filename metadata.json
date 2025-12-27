@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M core.py, A core.stitcher.yaml, M doc_manager.py ... and 63 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766756907.3655643, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] architect: 创建 pyneedle-spec 并定义核心协议", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766799918.383318, "duration_ms": 0}}
