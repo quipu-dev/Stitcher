@@ -101,3 +101,33 @@ class ModuleDef:
         return bool(
             self.docstring or has_public_attributes or self.functions or self.classes
         )
+
+    def get_undocumented_public_keys(self) -> List[str]:
+        keys = []
+
+        # Functions
+        for func in self.functions:
+            if not func.name.startswith("_") and not func.docstring:
+                keys.append(func.name)
+
+        # Classes and their contents
+        for cls in self.classes:
+            if not cls.name.startswith("_"):
+                # Class itself
+                if not cls.docstring:
+                    keys.append(cls.name)
+                # Public attributes in the class
+                for attr in cls.attributes:
+                    if not attr.name.startswith("_") and not attr.docstring:
+                        keys.append(f"{cls.name}.{attr.name}")
+                # Public methods
+                for method in cls.methods:
+                    if not method.name.startswith("_") and not method.docstring:
+                        keys.append(f"{cls.name}.{method.name}")
+
+        # Module-level public attributes
+        for attr in self.attributes:
+            if not attr.name.startswith("_") and not attr.docstring:
+                keys.append(attr.name)
+
+        return sorted(keys)

@@ -3,6 +3,8 @@
     "check.file.fail": "❌ {path}: Found {count} errors.",
     "check.file.warn": "⚠️  {path}: Found {count} warnings.",
     "check.file.untracked": "⚠️  {path}: Untracked (no .stitcher.yaml file found; run `init` or `hydrate`)",
+    "check.file.untracked_with_details": "⚠️  {path}: Untracked and needs documentation for {count} items:",
+    "check.issue.untracked_missing_key": "   - [TODO]      {key} (please add a docstring in the code)",
     "check.issue.missing": "   - [MISSING]   {key} (entity exists, but no docstring in code or YAML)",
     "check.issue.pending": "   - [PENDING]   {key} (new docstring in code, not yet hydrated to YAML)",
     "check.issue.redundant": "   - [REDUNDANT] {key} (docstring exists in both code and YAML; run 'strip')",

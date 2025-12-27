@@ -319,12 +319,25 @@ class StitcherApp:
                 )
 
                 if not doc_path.exists():
-                    # If doc file doesn't exist, only warn if the module
-                    # actually contains something worth documenting.
-                    if module.is_documentable():
+                    undocumented_keys = module.get_undocumented_public_keys()
+                    if undocumented_keys:
+                        # Case 1: Untracked and has public APIs needing docs.
+                        # This is a high-priority warning.
+                        bus.warning(
+                            L.check.file.untracked_with_details,
+                            path=module.file_path,
+                            count=len(undocumented_keys),
+                        )
+                        for key in undocumented_keys:
+                            bus.warning(L.check.issue.untracked_missing_key, key=key)
+                        total_warnings += 1
+                    elif module.is_documentable():
+                        # Case 2: Untracked but all public APIs have docs.
+                        # This is a lower-priority "please hydrate" warning.
                         bus.warning(L.check.file.untracked, path=module.file_path)
                         total_warnings += 1
-                    # Silently skip empty, untracked files (e.g., empty __init__.py)
+                    # Case 3: Untracked and not documentable (empty/boilerplate).
+                    # Silently skip.
                     continue
 
                 # Key-level check (existing logic)
