@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 
 from needle.spec import ResourceLoaderProtocol
 from .protocols import FileHandlerProtocol

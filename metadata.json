@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(spec): 导出 WritableResourceLoaderProtocol", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766841881.2724938, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M test_nexus.py, M fs_loader.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766842040.0973945, "duration_ms": 0}}
