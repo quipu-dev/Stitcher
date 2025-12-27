@@ -1,46 +1,111 @@
-我理解你的要求。统一用户界面 (UI) 的文案风格对于提升用户体验 (UX) 至关重要。一个清晰、一致且具备引导性的术语体系可以显著降低用户的认知负荷，并让他们对工具的行为建立起精确的心智模型。
+我将执行一个计划，首先修复两个失败的集成测试以恢复构建状态，然后统一所有本地化文件中的文案风格，确保“缺失”与“待办”等术语的一致性，从而形成闭环的工作流。
 
-你指出的 “缺失” 与 “代办” 的语义模糊问题非常关键。这正是我要解决的核心：确保每个状态信息都有一个唯一的、可操作的含义，从而引导用户完成从初始化 (`init`)、文档提取 (`hydrate`) 到代码检查 (`check`) 的完整工作流。
+## [WIP] fix: 修复集成测试并统一本地化文案风格
 
-以下是我的计划，旨在全面审查和统一所有 `needle` 本地化文件的风格。
+### 错误分析
+1.  **`test_public_missing_triggers_warning_only` 失败**:
+    *   **原因**: 测试旨在验证“公开 API 缺少文档”引发警告。但由于测试设置未创建 `.stitcher.yaml` 文件，系统将其视为 **Untracked File** 场景，触发了 `untracked_missing_key` 警告，而非测试断言预期的 `missing` 警告（该警告仅用于 Tracked 文件）。
+    *   **分析**: 这是一个测试设置错误，未能正确模拟“已追踪但缺失文档”的场景。
 
-## [WIP] refactor(cli): 统一并优化 CLI 的用户反馈文案
+2.  **`test_generate_with_stub_package_creates_correct_structure` 失败**:
+    *   **原因**: 代码已更新为生成符合 PEP 561 标准的 `*-stubs` 目录（例如 `src/my_app-stubs`），但此测试仍断言旧的目录结构（`src/my_app`）。
+    *   **分析**: 这是一个过时的测试断言。
 
 ### 用户需求
-审查所有 `needle` JSON 本地化文件，统一其文案风格和术语，特别是 `stitcher check` 命令的输出，使其对用户更清晰、更具指导性，从而形成一个无缝闭环的工作流。
+1.  **修复测试**: 确保 CI/CD 流程畅通。
+2.  **统一文案**: 审查并统一 `needle` JSON 文件，特别是消除“缺失”与“待办”的区别，建立清晰的工作流闭环。
 
 ### 评论
-这是一个非常有价值的改进。通过建立一套一致的词汇表（例如，明确区分“文档缺失”和“等待同步”），我们可以将 `stitcher check` 的输出从一个简单的“问题报告”转变为一个智能的“下一步行动建议”，这极大地提升了开发者体验 (DX)。
+修复测试是基础，文案统一是提升。将两者合并处理是高效的，因为它们都涉及到对系统行为（通过测试验证）和用户界面（通过文案呈现）的理解。统一术语后，用户将不再被“缺失”和“待办”的细微差别困扰，而是明确知道何时该“写文档”，何时该“同步文档”。
 
 ### 目标
-1.  **分析工作流**：梳理用户使用 `stitcher` 的核心工作流，确保文案能够引导用户从一个状态正确地迁移到下一个状态。
-2.  **统一术语**：为 `check` 命令报告的五种核心问题（`missing`, `pending`, `redundant`, `extra`, `conflict`）以及签名不匹配问题（`mismatch`）定义一套清晰、一致的中英文术语和状态标签。
-3.  **增强可操作性**：在提示信息中直接嵌入解决问题的建议（例如，“请运行 `stitcher hydrate`”）。
-4.  **实施修改**：使用 `write_file` 更新所有相关的中英文 JSON 文件以应用新的文案风格。
+1.  修正 `test_check_policy.py`，为其添加 `.stitcher.yaml` 以正确触发 Tracked 逻辑。
+2.  修正 `test_stub_package.py`，更新断言以匹配 PEP 561 的 `*-stubs` 目录结构。
+3.  更新中英文 JSON 文件，实施统一的术语体系（[MISSING], [PENDING], [DANGLING] 等）。
 
 ### 基本原理
-我们将以 `stitcher check` 的输出为中心进行重构，因为它承载了最复杂的状态信息。
-
-1.  **重新定义状态标签**：
-    *   `untracked_missing_key` 和 `missing` 都指向同一个用户动作：**在代码中编写文档**。我们将统一它们的标签为 `[文档缺失]` / `[MISSING]`。
-    *   `pending` 意味着文档已在代码中，需要同步到 YAML。这是一个明确的**等待同步**状态，提示用户运行 `hydrate`。
-    *   `extra` 指的是 YAML 中的文档定义在代码中已不存在，这是一个**定义缺失**或“悬空”的状态。
-    *   其余状态（`redundant`, `conflict`, `mismatch`）的现有定义是清晰的，但其呈现方式将被优化。
-
-2.  **格式对齐**：为了提升可扫描性，所有状态标签（如 `[状态]`) 将被格式化为统一的视觉风格。
-
-3.  **全局应用**：此原则将被应用到所有相关的 JSON 文件中，以确保整个应用的“声音和语调”保持一致。
+1.  **测试修复**: 通过修正测试数据和断言，使其与当前代码逻辑（已验证为正确）保持一致。
+2.  **文案优化**:
+    *   **Untracked Missing Key** (`TODO`) -> **MISSING** (`文档缺失`): 无论文件是否被追踪，代码缺文档就是缺文档，动作都是“去写”。
+    *   **Extra** (`EXTRA`) -> **DANGLING** (`定义悬空`): `EXTRA` 容易让人以为是“多余的好东西”，`DANGLING` 更准确地表达了“孤儿文档”的含义。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/cli #task/object/localization #task/action/refactor #task/state/begin
+#intent/fix #intent/tune #flow/ready #priority/high #comp/tests #comp/cli #scope/ux #ai/instruct #task/domain/testing #task/object/integration-tests #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 优化 `check` 命令的英文反馈文案
+#### Acts 1: 修复 `test_check_policy.py`
+为测试用例添加 `.stitcher.yaml` 文件，使其进入 Tracked 逻辑分支，从而正确触发 `check.issue.missing`。
 
-我们将统一 `check` 命令的英文输出，使其更具指导性。`DANGLING` 比 `EXTRA` 更能准确描述问题。
+~~~~~act
+patch_file
+tests/integration/test_check_policy.py
+~~~~~
+~~~~~python.old
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/lib.py", "def public_api(): pass")
+        # No docs created
+        .build()
+    )
+~~~~~
+~~~~~python.new
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/lib.py", "def public_api(): pass")
+        # Create an empty doc file to ensure the file is tracked
+        .with_docs("src/lib.stitcher.yaml", {"__doc__": "Module doc"})
+        .build()
+    )
+~~~~~
+
+#### Acts 2: 修复 `test_stub_package.py`
+更新断言以匹配 PEP 561 标准的目录结构 (`my_app-stubs`)。
+
+~~~~~act
+patch_file
+tests/integration/test_stub_package.py
+~~~~~
+~~~~~python.old
+    pyi_file = src_path / "my_app" / "main.pyi"
+    assert pyi_file.is_file()
+    assert "def run() -> None:" in pyi_file.read_text()
+
+    py_typed_marker = src_path / "my_app" / "py.typed"
+    assert py_typed_marker.is_file()
+
+    # --- Assert pyproject.toml Content ---
+    with stub_pyproject.open("rb") as f:
+        stub_config = tomllib.load(f)
+    assert stub_config["project"]["name"] == "my-test-project-stubs"
+
+    # Assert new Hatchling configuration is present and correct
+    hatch_config = stub_config["tool"]["hatch"]["build"]["targets"]["wheel"]
+    assert hatch_config["packages"] == ["src/my_app"]
+~~~~~
+~~~~~python.new
+    # PEP 561: Source directory should be named <package>-stubs
+    pyi_file = src_path / "my_app-stubs" / "main.pyi"
+    assert pyi_file.is_file()
+    assert "def run() -> None:" in pyi_file.read_text()
+
+    py_typed_marker = src_path / "my_app-stubs" / "py.typed"
+    assert py_typed_marker.is_file()
+
+    # --- Assert pyproject.toml Content ---
+    with stub_pyproject.open("rb") as f:
+        stub_config = tomllib.load(f)
+    assert stub_config["project"]["name"] == "my-test-project-stubs"
+
+    # Assert new Hatchling configuration is present and correct
+    hatch_config = stub_config["tool"]["hatch"]["build"]["targets"]["wheel"]
+    assert hatch_config["packages"] == ["src/my_app-stubs"]
+~~~~~
+
+#### Acts 3: 统一英文 Check 文案
+使用统一的状态标签，并将 `EXTRA` 重命名为更准确的 `DANGLING`。
 
 ~~~~~act
 write_file
@@ -65,9 +130,8 @@ packages/stitcher-common/src/stitcher/common/assets/needle/en/check/main.json
 }
 ~~~~~
 
-#### Acts 2: 优化 `check` 命令的中文反馈文案
-
-相应地，我们将更新中文文案，使其与英文版的逻辑和术语保持一致，并解决用户提出的“缺失”与“代办”的模糊性问题。
+#### Acts 4: 统一中文 Check 文案
+将“待办”和“缺失”统一为 `[文档缺失]`，并将 `EXTRA` 译为 `[定义悬空]`。
 
 ~~~~~act
 write_file
@@ -92,9 +156,7 @@ packages/stitcher-common/src/stitcher/common/assets/needle/zh/check/main.json
 }
 ~~~~~
 
-#### Acts 3: 优化签名检查的英文反馈文案
-
-使签名检查的输出与核心检查保持风格一致。
+#### Acts 5: 更新英文签名检查文案
 
 ~~~~~act
 write_file
@@ -106,9 +168,7 @@ packages/stitcher-common/src/stitcher/common/assets/needle/en/check/signatures.j
 }
 ~~~~~
 
-#### Acts 4: 优化签名检查的中文反馈文案
-
-对应更新中文版的签名检查输出。
+#### Acts 6: 更新中文签名检查文案
 
 ~~~~~act
 write_file
@@ -120,9 +180,7 @@ packages/stitcher-common/src/stitcher/common/assets/needle/zh/check/signatures.j
 }
 ~~~~~
 
-#### Acts 5: 优化 `hydrate` 命令的英文冲突提示
-
-使 `hydrate` 的冲突提示信息更清晰，并同时告知用户 `--force` 和 `--reconcile` 两种解决策略。
+#### Acts 7: 更新英文 Hydrate 文案
 
 ~~~~~act
 write_file
@@ -140,9 +198,7 @@ packages/stitcher-common/src/stitcher/common/assets/needle/en/hydrate/main.json
 }
 ~~~~~
 
-#### Acts 6: 优化 `hydrate` 命令的中文冲突提示
-
-同步更新 `hydrate` 的中文冲突提示。
+#### Acts 8: 更新中文 Hydrate 文案
 
 ~~~~~act
 write_file
@@ -159,3 +215,6 @@ packages/stitcher-common/src/stitcher/common/assets/needle/zh/hydrate/main.json
     "hydrate.info.reconciled": "ℹ️  因处于 --reconcile 模式，已忽略 {path} 中的 {count} 个冲突。"
 }
 ~~~~~
+
+### 下一步建议
+运行所有测试，确保修复生效且新的文案未破坏任何依赖文本匹配的测试（如果有的话）。随后可以进行更广泛的 Exploratory Testing，检查 CLI 输出的实际视觉效果。

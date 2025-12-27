@@ -54,11 +54,12 @@ def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypa
     src_path = stub_pkg_path / "src"
     assert src_path.is_dir()
 
-    pyi_file = src_path / "my_app" / "main.pyi"
+    # PEP 561: Source directory should be named <package>-stubs
+    pyi_file = src_path / "my_app-stubs" / "main.pyi"
     assert pyi_file.is_file()
     assert "def run() -> None:" in pyi_file.read_text()
 
-    py_typed_marker = src_path / "my_app" / "py.typed"
+    py_typed_marker = src_path / "my_app-stubs" / "py.typed"
     assert py_typed_marker.is_file()
 
     # --- Assert pyproject.toml Content ---
@@ -68,7 +69,7 @@ def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypa
 
     # Assert new Hatchling configuration is present and correct
     hatch_config = stub_config["tool"]["hatch"]["build"]["targets"]["wheel"]
-    assert hatch_config["packages"] == ["src/my_app"]
+    assert hatch_config["packages"] == ["src/my_app-stubs"]
 
     # --- Assert Bus Messages ---
     spy_bus.assert_id_called(L.generate.stub_pkg.scaffold)
