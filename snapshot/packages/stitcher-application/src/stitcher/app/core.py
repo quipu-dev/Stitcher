@@ -155,12 +155,10 @@ class StitcherApp:
                 # Stub Package mode
                 logical_path = self._derive_logical_path(module.file_path)
 
-                # PEP 561 adjustment: output to `<namespace>-stubs` dir
-                stub_logical_path = logical_path
-                if logical_path.parts:
-                    namespace = logical_path.parts[0]
-                    rest_of_path = logical_path.parts[1:]
-                    stub_logical_path = Path(f"{namespace}-stubs", *rest_of_path)
+                # Use the centralized logic from StubPackageManager
+                stub_logical_path = self.stub_pkg_manager._get_pep561_logical_path(
+                    logical_path
+                )
 
                 output_path = (
                     self.root_path

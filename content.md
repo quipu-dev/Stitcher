@@ -1,221 +1,159 @@
-您完全正确，我的诊断和修复都只解决了一半的问题。我为这个疏忽道歉。您的分析——`incorrect_src_dir` 依然存在——是精确的，它直接指出了我遗漏的逻辑漏洞。
+Excellent question. You've correctly identified that my previous fix, while effective, introduced technical debt by duplicating logic. The path transformation logic is **not yet centralized**.
 
-我将严格遵循您的指示，首先提供深入的分析，然后生成一个计划，该计划将先增强测试的调试输出，然后再应用真正的修复。
+I will now generate a plan to perform this crucial refactoring. This is a perfect example of the "Refactor" step in the "Red-Green-Refactor" cycle. The goal is to improve the internal code quality without changing the external behavior, meaning all tests should continue to pass after this change.
 
-## [WIP] 修复 `_generate_stubs` 中的路径构建逻辑
-
-### 错误分析
-
-我的上一个修复是**不完整**的。问题出在两个独立但相关的代码部分，而我只修复了其中一个：
-
-1.  **`StubPackageManager.scaffold` (已修复)**: 这个服务负责**初始化**存根包的骨架。我的上一个补丁正确地修改了它，使其能够创建正确的 `src/my_project-stubs` 目录和指向该目录的 `pyproject.toml`。
-
-2.  **`StitcherApp._generate_stubs` (未修复 - 根本原因)**: 这个方法负责将内存中的 IR（中间表示）**写入**为 `.pyi` 文件。**它的路径构建逻辑是独立于 `scaffold` 的**。它直接使用了从源文件路径（例如 `src/my_project/main.py`）派生出的逻辑路径（`my_project/main.py`），并将其拼接到存根包的 `src` 目录下。
-
-**因此，发生了以下事件序列：**
-1.  `scaffold` 正确创建了空的 `.../stubs/src/my_project-stubs` 目录。
-2.  `_generate_stubs` 在准备写入 `main.pyi` 时，计算出的路径是 `.../stubs/src/my_project/main.pyi`。
-3.  在写入文件之前，`_generate_stubs` 中的 `output_path.parent.mkdir(parents=True, exist_ok=True)` 自动创建了**不正确**的 `.../stubs/src/my_project` 目录。
-4.  最终导致了两个目录并存：一个正确的空目录和一个包含 `.pyi` 文件的错误目录。这正是测试失败的原因。
+## [WIP] refactor(app): Centralize PEP 561 path transformation logic
 
 ### 用户需求
-1.  分析并定位 `incorrect_src_dir` 仍然被创建的根本原因。
-2.  修改测试用例，使其在失败时能清晰地打印出实际生成的文件目录结构，以辅助调试。
-3.  修复 `StitcherApp` 中 `.pyi` 文件的写入逻辑，确保它们被放置在符合 PEP 561 规范的 `-stubs` 后缀目录中。
+在确认 `test_pep561_structure_compliance` 测试通过后，需要对代码进行重构，将分散在 `StubPackageManager` 和 `StitcherApp` 中用于计算 PEP 561 兼容目录名的逻辑集中到一处，以遵循 DRY (Don't Repeat Yourself) 原则。
 
 ### 评论
-这次失败暴露出一个设计上的耦合问题：两个独立的组件（`scaffold` 和 `generate`）都包含了关于存根包内部结构的路径构建逻辑。真正的修复不仅要解决眼前的 bug，长远来看，应当考虑将这种路径转换逻辑集中到一处，以避免未来的不一致。
+这是一个非常重要的代码健康度改进。将这个核心的路径转换逻辑集中管理，不仅能消除冗余代码，还能确保未来对 PEP 561 相关规则的任何修改都只需要在一个地方进行，极大地提高了代码的可维护性和健壮性，降低了引入不一致性 bug 的风险。
 
 ### 目标
-1.  **增强测试**: 修改 `test_stub_package_pep561.py`，添加一个辅助函数来递归列出目录内容，并在断言失败时显示该内容。
-2.  **修复核心逻辑**: 修改 `StitcherApp._generate_stubs` 方法，使其在 `stub_package` 模式下，能正确地将输出路径映射到 `-stubs` 后缀的子目录中。
+1.  在 `StubPackageManager` 类中创建一个新的、可复用的 **静态方法**，该方法封装将逻辑路径（如 `my_project/main.py`）转换为 PEP 561 兼容路径（`my_project-stubs/main.py`）的逻辑。
+2.  重构 `StubPackageManager.scaffold` 方法，使其调用这个新的静态方法来确定要创建的目录名和要写入 `pyproject.toml` 的路径。
+3.  重构 `StitcherApp._generate_stubs` 方法，使其也调用 `StubPackageManager` 的这个新静态方法来计算 `.pyi` 文件的正确输出路径。
 
 ### 基本原理
-我们将修改 `_generate_stubs` 的路径计算逻辑。当处于 `stub_package` 模式时，我们会检查 `logical_path`，将其第一个路径组件（即 `my_project`）替换为 `my_project-stubs`，然后再构建最终的输出路径。这将确保 `.pyi` 文件被写入到由 `scaffold` 创建的、符合规范的目录中，从而解决两个目录并存的问题。
+我们将 `StubPackageManager` 确立为管理存根包结构约定的“唯一事实来源”。通过在其上创建一个静态方法 `_get_pep561_logical_path`，我们为整个应用程序提供了一个单一、权威的函数来执行此路径转换。`StitcherApp` 作为该服务的消费者，将通过其实例化的 `doc_manager` 调用这个方法，从而确保无论是在创建骨架（scaffold）还是在生成文件（generate）时，所遵循的路径逻辑都是完全一致的。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/app #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/pep561-test #task/action/bug-fix #task/state/continue
+#intent/refine #flow/ready #priority/medium #comp/app #scope/core #ai/instruct #task/domain/testing #task/object/refactoring #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 增强测试用例以提供调试输出
+#### Acts 1: 在 StubPackageManager 中集中化逻辑并重构 `scaffold`
 
-我们首先修改测试文件，加入一个辅助函数，并在断言中利用它来显示目录结构。
+我们将首先修改 `stub_package_manager.py`，添加新的静态方法并更新 `scaffold` 方法以使用它。
 
 ~~~~~act
 patch_file
-tests/integration/test_stub_package_pep561.py
+packages/stitcher-application/src/stitcher/app/services/stub_package_manager.py
 ~~~~~
 ~~~~~python.old
-import sys
 from pathlib import Path
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
-from stitcher.app import StitcherApp
-from stitcher.test_utils import WorkspaceFactory
+import tomli_w
 
 
-def test_pep561_structure_compliance(tmp_path: Path):
-    """
-    Verifies that generated stub packages comply with PEP 561 naming conventions
-    for both package name and the source directory inside the package.
+class StubPackageManager:
+    def scaffold(
+        self, package_path: Path, source_project_name: str, package_namespace: str
+    ) -> bool:
+        config_path = package_path / "pyproject.toml"
+        if config_path.exists():
+            return False
 
-    THIS TEST IS EXPECTED TO FAIL until the generation logic is fixed.
-    """
-    # 1. Arrange
-    project_name = "my-project"
-    namespace = "my_project"
-    stub_dir_name = "stubs"
+        # Ensure root directory exists
+        package_path.mkdir(parents=True, exist_ok=True)
+        # PEP 561: The distribution name should end in '-stubs', and the package
+        # directory within should also end in '-stubs'.
+        stub_src_dirname = f"{package_namespace}-stubs"
+        (package_path / "src" / stub_src_dirname).mkdir(parents=True, exist_ok=True)
 
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_project_name(project_name)
-        .with_config({"scan_paths": [f"src/{namespace}"], "stub_package": stub_dir_name})
-        .with_source(f"src/{namespace}/main.py", "def func(): ...")
-        .build()
-    )
+        # Create pyproject.toml
+        pyproject_content = {
+            "build-system": {
+                "requires": ["hatchling"],
+                "build-backend": "hatchling.build",
+            },
+            "project": {
+                "name": f"{source_project_name}-stubs",
+                "version": "0.1.0",  # Placeholder version
+                "description": f"PEP 561 type stubs for {source_project_name}",
+            },
+            "tool": {
+                "hatch": {
+                    "build": {
+                        "targets": {
+                            "wheel": {
+                                # Essential for packaging .pyi files correctly under the namespace
+                                "packages": [f"src/{stub_src_dirname}"]
+                            }
+                        }
+                    }
+                }
+            },
+        }
+        with config_path.open("wb") as f:
+            tomli_w.dump(pyproject_content, f)
 
-    app = StitcherApp(root_path=project_root)
-
-    # 2. Act
-    app.run_from_config()
-
-    # 3. Assert
-    stub_pkg_path = project_root / stub_dir_name
-    stub_toml_path = stub_pkg_path / "pyproject.toml"
-
-    # 3.1. Assert pyproject.toml name is correct
-    assert stub_toml_path.is_file()
-    with stub_toml_path.open("rb") as f:
-        config = tomllib.load(f)
-    assert config["project"]["name"] == f"{project_name}-stubs"
-
-    # 3.2. Assert src directory is named correctly (<namespace>-stubs)
-    expected_src_dir = stub_pkg_path / "src" / f"{namespace}-stubs"
-    incorrect_src_dir = stub_pkg_path / "src" / namespace
-
-    assert expected_src_dir.is_dir()
-    assert not incorrect_src_dir.exists(), "Incorrectly named src dir found."
-
-    # 3.3. Assert Hatch config points to the correct directory
-    hatch_packages = config["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
-    assert hatch_packages == [f"src/{namespace}-stubs"]
+        return True
 ~~~~~
 ~~~~~python.new
-import sys
 from pathlib import Path
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
-from stitcher.app import StitcherApp
-from stitcher.test_utils import WorkspaceFactory
+import tomli_w
 
 
-def _get_dir_structure(root_path: Path) -> str:
-    """Helper to get a string representation of the directory structure."""
-    lines = []
-    for path in sorted(root_path.rglob("*")):
-        relative_path = path.relative_to(root_path)
-        indent = "  " * (len(relative_path.parts) - 1)
-        lines.append(f"{indent}- {path.name}{'/' if path.is_dir() else ''}")
-    return "\n".join(lines)
+class StubPackageManager:
+    @staticmethod
+    def _get_pep561_logical_path(logical_path: Path) -> Path:
+        """Converts a standard logical path to a PEP 561-compliant one for stubs."""
+        if not logical_path.parts:
+            return logical_path
 
+        namespace = logical_path.parts[0]
+        rest_of_path = logical_path.parts[1:]
+        # e.g. my_app/main.py -> my_app-stubs/main.py
+        return Path(f"{namespace}-stubs", *rest_of_path)
 
-def test_pep561_structure_compliance(tmp_path: Path):
-    """
-    Verifies that generated stub packages comply with PEP 561 naming conventions
-    for both package name and the source directory inside the package.
-    """
-    # 1. Arrange
-    project_name = "my-project"
-    namespace = "my_project"
-    stub_dir_name = "stubs"
+    def scaffold(
+        self, package_path: Path, source_project_name: str, package_namespace: str
+    ) -> bool:
+        config_path = package_path / "pyproject.toml"
+        if config_path.exists():
+            return False
 
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_project_name(project_name)
-        .with_config({"scan_paths": [f"src/{namespace}"], "stub_package": stub_dir_name})
-        .with_source(f"src/{namespace}/main.py", "def func(): ...")
-        .build()
-    )
+        # Ensure root directory exists
+        package_path.mkdir(parents=True, exist_ok=True)
 
-    app = StitcherApp(root_path=project_root)
+        # Use the centralized logic to determine the stub source directory name
+        stub_src_dirname = self._get_pep561_logical_path(
+            Path(package_namespace)
+        ).as_posix()
+        (package_path / "src" / stub_src_dirname).mkdir(parents=True, exist_ok=True)
 
-    # 2. Act
-    app.run_from_config()
+        # Create pyproject.toml
+        pyproject_content = {
+            "build-system": {
+                "requires": ["hatchling"],
+                "build-backend": "hatchling.build",
+            },
+            "project": {
+                "name": f"{source_project_name}-stubs",
+                "version": "0.1.0",  # Placeholder version
+                "description": f"PEP 561 type stubs for {source_project_name}",
+            },
+            "tool": {
+                "hatch": {
+                    "build": {
+                        "targets": {
+                            "wheel": {
+                                # Essential for packaging .pyi files correctly under the namespace
+                                "packages": [f"src/{stub_src_dirname}"]
+                            }
+                        }
+                    }
+                }
+            },
+        }
+        with config_path.open("wb") as f:
+            tomli_w.dump(pyproject_content, f)
 
-    # 3. Assert
-    stub_pkg_path = project_root / stub_dir_name
-    stub_toml_path = stub_pkg_path / "pyproject.toml"
-
-    # For debugging:
-    dir_structure = _get_dir_structure(stub_pkg_path)
-    debug_message = f"Generated directory structure:\n{dir_structure}"
-
-    # 3.1. Assert pyproject.toml name is correct
-    assert stub_toml_path.is_file(), f"pyproject.toml not found.\n{debug_message}"
-    with stub_toml_path.open("rb") as f:
-        config = tomllib.load(f)
-    assert config["project"]["name"] == f"{project_name}-stubs"
-
-    # 3.2. Assert src directory is named correctly (<namespace>-stubs)
-    expected_src_dir = stub_pkg_path / "src" / f"{namespace}-stubs"
-    incorrect_src_dir = stub_pkg_path / "src" / namespace
-
-    assert expected_src_dir.is_dir(), f"Expected src dir not found.\n{debug_message}"
-    assert (
-        not incorrect_src_dir.exists()
-    ), f"Incorrectly named src dir found.\n{debug_message}"
-
-    # 3.3. Assert Hatch config points to the correct directory
-    hatch_packages = config["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
-    assert hatch_packages == [f"src/{namespace}-stubs"]
+        return True
 ~~~~~
 
-#### Acts 2: 修复 `_generate_stubs` 中的路径构建逻辑
+#### Acts 2: 重构 `StitcherApp` 以使用集中化逻辑
 
-现在，我们应用真正的修复，确保 `.pyi` 文件被写入到正确的 `-stubs` 后缀目录中。
+现在，我们更新 `StitcherApp`，移除重复的逻辑，并调用新的静态方法。
 
 ~~~~~act
 patch_file
 packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
 ~~~~~python.old
-            # Determine Output Path
-            if config.stub_package:
-                # Stub Package mode
-                logical_path = self._derive_logical_path(module.file_path)
-                output_path = (
-                    self.root_path
-                    / config.stub_package
-                    / "src"
-                    / logical_path.with_suffix(".pyi")
-                )
-
-                # Create py.typed marker file in top-level package dir
-                if logical_path.parts:
-                    top_level_pkg_dir = (
-                        self.root_path
-                        / config.stub_package
-                        / "src"
-                        / logical_path.parts[0]
-                    )
-                    if top_level_pkg_dir not in created_py_typed:
-                        top_level_pkg_dir.mkdir(parents=True, exist_ok=True)
-                        (top_level_pkg_dir / "py.typed").touch(exist_ok=True)
-                        created_py_typed.add(top_level_pkg_dir)
-~~~~~
-~~~~~python.new
-            # Determine Output Path
             if config.stub_package:
                 # Stub Package mode
                 logical_path = self._derive_logical_path(module.file_path)
@@ -242,15 +180,38 @@ packages/stitcher-application/src/stitcher/app/core.py
                         / "src"
                         / stub_logical_path.parts[0]
                     )
-                    if top_level_pkg_dir not in created_py_typed:
-                        top_level_pkg_dir.mkdir(parents=True, exist_ok=True)
-                        (top_level_pkg_dir / "py.typed").touch(exist_ok=True)
-                        created_py_typed.add(top_level_pkg_dir)
+~~~~~
+~~~~~python.new
+            if config.stub_package:
+                # Stub Package mode
+                logical_path = self._derive_logical_path(module.file_path)
+
+                # Use the centralized logic from StubPackageManager
+                stub_logical_path = self.stub_pkg_manager._get_pep561_logical_path(
+                    logical_path
+                )
+
+                output_path = (
+                    self.root_path
+                    / config.stub_package
+                    / "src"
+                    / stub_logical_path.with_suffix(".pyi")
+                )
+
+                # Create py.typed marker file in top-level package dir
+                if stub_logical_path.parts:
+                    top_level_pkg_dir = (
+                        self.root_path
+                        / config.stub_package
+                        / "src"
+                        / stub_logical_path.parts[0]
+                    )
 ~~~~~
 
 ### 下一步建议
 
-这次的修复是全面且精确的。它解决了问题的根源。请您再次运行测试套件。
+我们已经成功地将路径转换逻辑集中到了 `StubPackageManager` 中。由于这只是一个内部重构，它不应该改变任何外部行为。
 
--   如果测试失败，增强后的调试输出将为我们提供非常清晰的线索。
--   如果测试通过，我们将正式进入“绿色”阶段，并可以放心地继续前进，编写下一个关键的集成测试：**安装与类型解析测试**。
+请您再次运行 `pytest`。所有测试，特别是 `test_pep561_structure_compliance`，应该依然会**通过**。
+
+在您确认测试通过后，我们将正式开始编写下一个全新的测试：**安装与类型解析测试**。

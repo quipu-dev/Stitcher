@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] 修复 `_generate_stubs` 中的路径构建逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766819547.976584, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(app): Centralize PEP 561 path transformation logic", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766819688.4093459, "duration_ms": 0}}
