@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 通过依赖注入解决 circular import 问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766806774.43236, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复测试套件以正确使用依赖注入", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766806865.0953736, "duration_ms": 0}}
