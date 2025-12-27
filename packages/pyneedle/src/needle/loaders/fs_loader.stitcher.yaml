@@ -1,0 +1,12 @@
+"FileSystemLoader": |-
+  A resource loader that scans the file system for resource files.
+
+  It searches for project roots and then looks for standard resource
+  directories (`needle/` and `.stitcher/needle/`).
+"FileSystemLoader._load_directory": |-
+  Recursively scans a directory and loads all supported files.
+"FileSystemLoader.add_root": |-
+  Prepends a new search root, giving it highest priority.
+"FileSystemLoader.load": |-
+  Scans all roots for a given language and merges the found resources.
+  Later roots in the list override earlier ones.

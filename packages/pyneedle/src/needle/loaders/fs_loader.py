@@ -8,13 +8,6 @@ from .json_handler import JsonHandler
 
 
 class FileSystemLoader(ResourceLoaderProtocol):
-    """
-    A resource loader that scans the file system for resource files.
-
-    It searches for project roots and then looks for standard resource
-    directories (`needle/` and `.stitcher/needle/`).
-    """
-
     def __init__(
         self,
         roots: Optional[List[Path]] = None,
@@ -35,15 +28,10 @@ class FileSystemLoader(ResourceLoaderProtocol):
         return start_dir or Path.cwd()
 
     def add_root(self, path: Path):
-        """Prepends a new search root, giving it highest priority."""
         if path not in self.roots:
             self.roots.insert(0, path)
 
     def load(self, lang: str) -> Dict[str, Any]:
-        """
-        Scans all roots for a given language and merges the found resources.
-        Later roots in the list override earlier ones.
-        """
         merged_registry: Dict[str, str] = {}
 
         for root in self.roots:
@@ -60,7 +48,6 @@ class FileSystemLoader(ResourceLoaderProtocol):
         return merged_registry
 
     def _load_directory(self, root_path: Path) -> Dict[str, str]:
-        """Recursively scans a directory and loads all supported files."""
         registry: Dict[str, str] = {}
         for dirpath, _, filenames in os.walk(root_path):
             for filename in filenames:

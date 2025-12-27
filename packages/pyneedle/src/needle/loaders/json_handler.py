@@ -5,8 +5,6 @@ from .protocols import FileHandlerProtocol
 
 
 class JsonHandler(FileHandlerProtocol):
-    """Standard handler for .json files."""
-
     def match(self, path: Path) -> bool:
         return path.suffix.lower() == ".json"
 

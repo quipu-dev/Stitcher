@@ -1,0 +1,14 @@
+"clean_env": |-
+  Ensure a clean environment for all tests to prevent flakiness.
+"nexus_instance": |-
+  Provides a Nexus instance with two loaders for priority tests.
+"test_get_language_specificity_and_fallback": |-
+  Tests language selection and fallback to default language.
+"test_get_loader_priority_overlay": |-
+  Tests that the first loader in the list overrides subsequent loaders.
+"test_get_simple_retrieval_and_identity_fallback": |-
+  Tests basic value retrieval and the ultimate fallback mechanism.
+"test_language_resolution_priority": |-
+  Tests the hierarchy of language resolution.
+"test_reload_clears_cache_and_refetches_data": |-
+  Tests that reload() forces a new data fetch after underlying data changes.

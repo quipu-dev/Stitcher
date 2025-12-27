@@ -5,7 +5,6 @@ from needle.nexus import OverlayNexus, MemoryLoader
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):
-    """Ensure a clean environment for all tests to prevent flakiness."""
     monkeypatch.delenv("STITCHER_LANG", raising=False)
     monkeypatch.delenv("NEEDLE_LANG", raising=False)
     monkeypatch.delenv("LANG", raising=False)
@@ -13,7 +12,6 @@ def clean_env(monkeypatch):
 
 @pytest.fixture
 def nexus_instance() -> OverlayNexus:
-    """Provides a Nexus instance with two loaders for priority tests."""
     loader1_data = {
         "en": {"app.title": "My App (High Priority)", "app.welcome": "Welcome!"},
         "zh": {"app.title": "我的应用 (高优先级)"},
@@ -30,7 +28,6 @@ def nexus_instance() -> OverlayNexus:
 
 
 def test_get_simple_retrieval_and_identity_fallback(nexus_instance: OverlayNexus):
-    """Tests basic value retrieval and the ultimate fallback mechanism."""
     # From loader 1
     assert nexus_instance.get(L.app.welcome) == "Welcome!"
     # From loader 2
@@ -40,13 +37,11 @@ def test_get_simple_retrieval_and_identity_fallback(nexus_instance: OverlayNexus
 
 
 def test_get_loader_priority_overlay(nexus_instance: OverlayNexus):
-    """Tests that the first loader in the list overrides subsequent loaders."""
     # 'app.title' exists in both, should get the value from loader1
     assert nexus_instance.get("app.title") == "My App (High Priority)"
 
 
 def test_get_language_specificity_and_fallback(nexus_instance: OverlayNexus):
-    """Tests language selection and fallback to default language."""
     # 1. Specific language (zh) is preferred when key exists
     assert nexus_instance.get("app.title", lang="zh") == "我的应用 (高优先级)"
 
@@ -73,7 +68,6 @@ def test_get_language_specificity_and_fallback(nexus_instance: OverlayNexus):
 
 
 def test_reload_clears_cache_and_refetches_data():
-    """Tests that reload() forces a new data fetch after underlying data changes."""
     # Test data is isolated to this test function
     initial_data = {"en": {"key": "initial_value"}}
 
@@ -98,7 +92,6 @@ def test_reload_clears_cache_and_refetches_data():
 
 
 def test_language_resolution_priority(monkeypatch):
-    """Tests the hierarchy of language resolution."""
     nexus = OverlayNexus(
         loaders=[
             MemoryLoader(

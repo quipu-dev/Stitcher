@@ -1,0 +1,18 @@
+"test_pointer_core_behavior": |-
+  Tests basic path building, str, repr, and equality.
+"test_pointer_dynamic_composition_operators": |-
+  Tests '+' and '/' operators for dynamic path building.
+"test_pointer_getitem_for_non_identifiers": |-
+  Tests using __getitem__ for keys that are not valid Python identifiers.
+"test_pointer_hashable": |-
+  Tests that pointers can be used as dict keys.
+"test_pointer_multiplication_distributes_to_set": |-
+  Tests that '*' operator creates a PointerSet.
+"test_pointer_set_behaves_like_a_set": |-
+  Tests basic set-like behaviors.
+"test_pointer_set_broadcasting_operators": |-
+  Tests that '/', '+' operators apply to all members.
+"test_pointer_set_chained_broadcasting": |-
+  Tests chaining multiple broadcast operations.
+"test_pointer_set_multiplication_cartesian_product": |-
+  Tests that '*' creates a cartesian product of semantics.

@@ -1,0 +1,6 @@
+"FileHandlerProtocol": |-
+  Protocol for file handlers that can parse specific formats like JSON, YAML, etc.
+"FileHandlerProtocol.load": |-
+  Parses the file and returns its content as a dictionary.
+"FileHandlerProtocol.match": |-
+  Returns True if this handler can process the given file path.

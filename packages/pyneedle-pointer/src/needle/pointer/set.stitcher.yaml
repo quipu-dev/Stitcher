@@ -1,0 +1,15 @@
+"PointerSet": |-
+  A collection of Semantic Pointers that supports algebraic broadcasting.
+
+  Inherits from built-in set, so standard set operations (union, difference) work as expected.
+"PointerSet.__add__": |-
+  Operator '+': Broadcasts the add operation to all members.
+  Same as __truediv__ but for '+' operator preference.
+"PointerSet.__mul__": |-
+  Operator '*': Cartesian Product composition.
+
+  {L.a, L.b} * {"1", "2"} -> {L.a.1, L.a.2, L.b.1, L.b.2}
+"PointerSet.__truediv__": |-
+  Operator '/': Broadcasts the join operation to all members.
+
+  {L.a, L.b} / "end" -> {L.a.end, L.b.end}

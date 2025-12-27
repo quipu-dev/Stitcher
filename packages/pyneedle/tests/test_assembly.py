@@ -9,11 +9,6 @@ from needle.loaders.fs_loader import FileSystemLoader
 
 @pytest.fixture
 def multi_root_workspace(tmp_path: Path) -> dict:
-    """
-    Creates a workspace with two roots to test override logic.
-    - pkg_root: Simulates a library's built-in assets.
-    - project_root: Simulates a user's project with overrides.
-    """
     factory = WorkspaceFactory(tmp_path)
 
     # 1. Define package assets (low priority)
@@ -49,10 +44,6 @@ def multi_root_workspace(tmp_path: Path) -> dict:
 
 
 def test_nexus_with_fs_loader_handles_overrides(multi_root_workspace):
-    """
-    Validates that Nexus, when combined with FileSystemLoader,
-    correctly handles multi-root priority and overrides.
-    """
     # Arrange
     pkg_root = multi_root_workspace["pkg_root"]
     project_root = multi_root_workspace["project_root"]

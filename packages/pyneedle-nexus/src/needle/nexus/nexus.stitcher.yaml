@@ -1,0 +1,21 @@
+"OverlayNexus": |-
+  Standard implementation of the Nexus protocol using a logical overlay strategy.
+
+  It manages an ordered list of resource loaders and uses `collections.ChainMap`
+  to create prioritized, logical views of resources without performing
+  a physical merge.
+"OverlayNexus.__init__": |-
+  Initializes the Nexus with a list of loaders.
+
+  Args:
+      loaders: A list of resource loaders. The order determines priority;
+               loaders at the beginning of the list override those at the end.
+      default_lang: The fallback language to use if the target language is not found.
+"OverlayNexus._get_or_create_view": |-
+  Lazily loads and caches the ChainMap view for a given language.
+"OverlayNexus._resolve_lang": |-
+  Determines the current language based on a standard hierarchy.
+"OverlayNexus.get": |-
+  Resolves a semantic pointer to a string value with graceful fallback.
+"OverlayNexus.reload": |-
+  Clears internal caches to force a reload on the next `get` call.

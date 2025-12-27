@@ -5,7 +5,6 @@ from needle.pointer import L, SemanticPointer, PointerSet
 
 
 def test_pointer_core_behavior():
-    """Tests basic path building, str, repr, and equality."""
     # Root
     assert str(L) == ""
     assert repr(L) == "<L: (root)>"
@@ -23,14 +22,12 @@ def test_pointer_core_behavior():
 
 
 def test_pointer_hashable():
-    """Tests that pointers can be used as dict keys."""
     d = {L.user.name: "Alice", L.user.id: 123}
     assert d[L.user.name] == "Alice"
     assert d[SemanticPointer("user.id")] == 123
 
 
 def test_pointer_dynamic_composition_operators():
-    """Tests '+' and '/' operators for dynamic path building."""
     base = L.payment
     method = "credit_card"
     status_code = 200
@@ -49,7 +46,6 @@ def test_pointer_dynamic_composition_operators():
 
 
 def test_pointer_multiplication_distributes_to_set():
-    """Tests that '*' operator creates a PointerSet."""
     base = L.api.v1
     endpoints = {"users", "products"}
 
@@ -65,7 +61,6 @@ def test_pointer_multiplication_distributes_to_set():
 
 
 def test_pointer_set_behaves_like_a_set():
-    """Tests basic set-like behaviors."""
     s1 = PointerSet([L.a, L.b])
     s2 = PointerSet([L.b, L.c])
 
@@ -79,7 +74,6 @@ def test_pointer_set_behaves_like_a_set():
 
 
 def test_pointer_set_broadcasting_operators():
-    """Tests that '/', '+' operators apply to all members."""
     base_set = L * {"user", "admin"}  # {L.user, L.admin}
     suffix = "profile"
 
@@ -94,7 +88,6 @@ def test_pointer_set_broadcasting_operators():
 
 
 def test_pointer_set_multiplication_cartesian_product():
-    """Tests that '*' creates a cartesian product of semantics."""
     roles = L * {"admin", "guest"}
     actions = {"read", "write"}
 
@@ -105,7 +98,6 @@ def test_pointer_set_multiplication_cartesian_product():
 
 
 def test_pointer_getitem_for_non_identifiers():
-    """Tests using __getitem__ for keys that are not valid Python identifiers."""
     p = L.errors[404]
     assert p == "errors.404"
 
@@ -117,7 +109,6 @@ def test_pointer_getitem_for_non_identifiers():
 
 
 def test_pointer_set_chained_broadcasting():
-    """Tests chaining multiple broadcast operations."""
     # This test now passes because __getitem__ is implemented.
     result = (L * {"http", "ftp"}) / "errors" * {"404", "500"}
 
