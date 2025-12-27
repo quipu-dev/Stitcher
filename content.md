@@ -1,128 +1,112 @@
-好的，这两个测试失败是由于我之前的修改改变了 `load_config_from_path` 的返回值和 `_generate_stubs` 的方法签名，而测试用例没有相应更新。我来修复它们。
+好的，我们来为新的 `stub_package` 模式添加集成测试。这将确保整个流程——从配置读取到包脚手架再到最终的 `.pyi` 文件生成——都按预期工作。
 
-这是修复计划：
-1.  **修复 `test_loader.py`**: 更新测试用例以正确解包 `load_config_from_path` 返回的元组 `(config, project_name)`。
-2.  **修复 `test_end_to_end.py`**: 更新对内部方法 `_generate_stubs` 的调用，为其传递一个空的 `StitcherConfig` 对象以满足新的方法签名。
-
-## [WIP] fix(tests): 修复因 API 签名变更导致的集成测试失败
-
-### 错误分析
-在上一轮重构中，`stitcher.config.load_config_from_path` 函数的返回值从 `StitcherConfig` 对象变更为 `Tuple[StitcherConfig, Optional[str]]`，同时 `stitcher.app.core.StitcherApp._generate_stubs` 方法的签名也增加了必需的 `config` 参数。这两个变更导致了依赖它们的测试用例失败：
-
-1.  `packages/stitcher-config/tests/test_loader.py`: 测试代码尝试在返回的元组上直接访问 `.scan_paths` 属性，导致 `AttributeError`。
-2.  `tests/integration/test_end_to_end.py`: 测试代码直接调用了内部方法 `_generate_stubs`，但未提供新的 `config` 参数，导致 `TypeError`。
+## [WIP] test(integration): 为 stub_package 生成模式添加集成测试
 
 ### 用户需求
-修复所有损坏的测试，确保测试套件能够完全通过，以验证系统的健康状况。
+为 `stub_package` 功能添加一个端到端的集成测试。该测试需要验证当 `stub_package` 在 `pyproject.toml` 中被配置时，Stitcher 是否能够正确地创建存根包的目录结构、生成元数据文件 (`pyproject.toml`)、将 `.pyi` 文件输出到 `src` 目录，并创建 `py.typed` 标记文件。
 
 ### 评论
-测试是保证代码质量和重构安全性的基石。及时修复因 API 变更导致的测试失败是开发流程中的必要环节，它确保了我们对系统行为的回归验证是可靠的。
+这是一个至关重要的验证步骤。通过全面的集成测试，我们可以确保这项核心功能在未来的代码变更中保持稳定和正确。使用 `WorkspaceFactory` 可以使测试用例完全自包含，清晰地展示输入（项目配置和源代码）与输出（生成的存根包结构）之间的因果关系，极大地提高了测试的可读性和可维护性。
 
 ### 目标
-1.  修改 `packages/stitcher-config/tests/test_loader.py`，正确处理 `load_config_from_path` 的元组返回值。
-2.  修改 `tests/integration/test_end_to_end.py`，为 `_generate_stubs` 方法的调用传递一个有效的 `StitcherConfig` 实例。
+1.  创建一个新的测试文件 `tests/integration/test_stub_package.py`。
+2.  实现一个测试用例，该用例：
+    *   使用 `WorkspaceFactory` 构建一个配置了 `stub_package` 的虚拟项目。
+    *   执行 `StitcherApp.run_from_config()`。
+    *   断言存根包的目录结构、`pyproject.toml` 内容、`.pyi` 文件位置和 `py.typed` 标记文件均已正确生成。
+    *   断言 `SpyBus` 捕获到了正确的用户反馈消息。
 
 ### 基本原理
-通过对测试代码进行最小化、精确的修改，使其与更新后的函数和方法签名保持一致，从而恢复测试的正常功能。
+我们将利用 `stitcher-test-utils` 中的 `WorkspaceFactory` 来声明式地构建一个包含 `pyproject.toml`（其中定义了 `project.name` 和 `tool.stitcher.stub_package`）和源文件的测试环境。然后，通过 `StitcherApp` 运行生成流程，并对文件系统和 `SpyBus` 的状态进行断言，从而验证整个端到端流程的正确性。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/tests #comp/config #comp/application #scope/dx #ai/instruct #task/domain/testing #task/object/broken-tests #task/action/bug-fix #task/state/end
+#intent/tooling #flow/ready #priority/high #comp/tests #comp/application #scope/dx #ai/instruct #task/domain/testing #task/object/stub-package #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `stitcher-config` 测试
+#### Acts 1: 创建集成测试文件
 
-我们将更新 `test_loader.py` 以正确解包 `load_config_from_path` 的返回值。
-
-~~~~~act
-patch_file
-packages/stitcher-config/tests/test_loader.py
-~~~~~
-~~~~~python.old
-from stitcher.config import load_config_from_path
-
-
-@pytest.fixture
-~~~~~
-~~~~~python.new
-from stitcher.config import load_config_from_path, StitcherConfig
-
-
-@pytest.fixture
-~~~~~
-~~~~~act
-patch_file
-packages/stitcher-config/tests/test_loader.py
-~~~~~
-~~~~~python.old
-def test_load_config_discovers_plugins(workspace: Path):
-    # Act
-    config = load_config_from_path(workspace)
-
-    # Assert
-    assert config.scan_paths == ["src/app"]
-~~~~~
-~~~~~python.new
-def test_load_config_discovers_plugins(workspace: Path):
-    # Act
-    config, project_name = load_config_from_path(workspace)
-
-    # Assert
-    assert config.scan_paths == ["src/app"]
-~~~~~
-
-#### Acts 2: 修复集成测试
-
-现在，我们将修复 `test_end_to_end.py` 中对 `_generate_stubs` 的调用。
+我们将创建 `test_stub_package.py` 并添加一个全面的测试用例来验证端到端的功能。
 
 ~~~~~act
-patch_file
-tests/integration/test_end_to_end.py
+write_file
+tests/integration/test_stub_package.py
 ~~~~~
-~~~~~python.old
+~~~~~python
 import sys
+from pathlib import Path
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 from stitcher.app import StitcherApp
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
-~~~~~
-~~~~~python.new
-import sys
+def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypatch):
+    """
+    End-to-end test for the PEP 561 stub package generation mode.
+    """
+    # 1. Arrange
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config(
+            {
+                "scan_paths": ["src/my_app"],
+                "stub_package": "stubs",  # <-- Enable stub package mode
+            }
+        )
+        # Define the main project's name, which is used for the stub package name
+        .with_source("pyproject.toml", '[project]\nname = "my-test-project"')
+        .with_source(
+            "src/my_app/main.py",
+            """
+            def run():
+                \"\"\"Main entry point.\"\"\"
+                pass
+            """,
+        )
+        .build()
+    )
 
-from stitcher.app import StitcherApp
-from stitcher.config import StitcherConfig
-from needle.pointer import L
-from stitcher.test_utils import SpyBus, WorkspaceFactory
+    app = StitcherApp(root_path=project_root)
+    spy_bus = SpyBus()
 
-
-def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
-~~~~~
-~~~~~act
-patch_file
-tests/integration/test_end_to_end.py
-~~~~~
-~~~~~python.old
+    # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
-        # Accessing internal methods directly for this specific test case
-        # as per original test logic
-        source_file = project_root / "greet.py"
-        module = app._scan_files([source_file])[0]
-        app._generate_stubs([module])
+        app.run_from_config()
 
-    spy_bus.assert_id_called(L.generate.file.success, level="success")
-~~~~~
-~~~~~python.new
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
-        # Accessing internal methods directly for this specific test case
-        # as per original test logic
-        source_file = project_root / "greet.py"
-        module = app._scan_files([source_file])[0]
-        app._generate_stubs([module], StitcherConfig())
+    # 3. Assert
+    # --- Assert File System Structure ---
+    stub_pkg_path = project_root / "stubs"
+    assert stub_pkg_path.is_dir()
 
-    spy_bus.assert_id_called(L.generate.file.success, level="success")
+    stub_pyproject = stub_pkg_path / "pyproject.toml"
+    assert stub_pyproject.is_file()
+
+    src_path = stub_pkg_path / "src"
+    assert src_path.is_dir()
+
+    pyi_file = src_path / "my_app" / "main.pyi"
+    assert pyi_file.is_file()
+    assert "def run() -> None:" in pyi_file.read_text()
+
+    py_typed_marker = src_path / "my_app" / "py.typed"
+    assert py_typed_marker.is_file()
+
+    # --- Assert pyproject.toml Content ---
+    with stub_pyproject.open("rb") as f:
+        stub_config = tomllib.load(f)
+    assert stub_config["project"]["name"] == "my-test-project-stubs"
+
+    # --- Assert Bus Messages ---
+    spy_bus.assert_id_called(L.generate.stub_pkg.scaffold)
+    spy_bus.assert_id_called(L.generate.stub_pkg.success)
+    spy_bus.assert_id_called(L.generate.file.success)
+    spy_bus.assert_id_called(L.generate.run.complete)
 ~~~~~
