@@ -5,6 +5,7 @@ from .protocols import (
     SemanticPointerProtocol,
     PointerSetProtocol,
     ResourceLoaderProtocol,
+    WritableResourceLoaderProtocol,
     NexusProtocol,
 )
 
@@ -12,5 +13,6 @@ __all__ = [
     "SemanticPointerProtocol",
     "PointerSetProtocol",
     "ResourceLoaderProtocol",
+    "WritableResourceLoaderProtocol",
     "NexusProtocol",
 ]

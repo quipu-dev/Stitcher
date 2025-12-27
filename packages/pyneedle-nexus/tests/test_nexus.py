@@ -41,30 +41,18 @@ def test_get_loader_priority_overlay(nexus_instance: OverlayNexus):
     assert nexus_instance.get("app.title") == "My App (High Priority)"
 
 
-def test_get_language_specificity_and_fallback(nexus_instance: OverlayNexus):
-    # 1. Specific language (zh) is preferred when key exists
-    assert nexus_instance.get("app.title", lang="zh") == "我的应用 (高优先级)"
+def test_get_domain_specificity_and_fallback(nexus_instance: OverlayNexus):
+    # 1. Specific domain (zh) is preferred when key exists
+    assert nexus_instance.get("app.title", domain="zh") == "我的应用 (高优先级)"
 
     # 2. Key missing in 'zh', falls back to default 'en'
-    # Note: loader 2 has 'app.welcome' in 'zh', so it should be found there.
-    # The previous test comment was slightly confusing.
-    # ChainMap for 'zh' combines loader1(zh) and loader2(zh).
-    # loader1(zh) has NO 'app.welcome'. loader2(zh) HAS 'app.welcome' ("欢迎！").
-    # So it should resolve to "欢迎！".
-    assert nexus_instance.get(L.app.welcome, lang="zh") == "欢迎！"
+    assert nexus_instance.get(L.app.welcome, domain="zh") == "欢迎！"
 
     # 3. Key missing in both loaders for 'zh', falls back to 'en'
-    # Let's add a key that is ONLY in EN
-    # 'app.title' is in both. 'app.welcome' is in both (one en, one zh).
-    # 'app.version' is in EN (loader2) and ZH (loader2).
-    # We need a key that is truly missing in ZH.
-    # Let's use a dynamic key for testing fallback.
-
-    # Create a temporary nexus for precise fallback testing
     loader_fallback = MemoryLoader({"en": {"only.in.en": "Fallback Value"}, "zh": {}})
     nexus_fallback = OverlayNexus([loader_fallback])
 
-    assert nexus_fallback.get("only.in.en", lang="zh") == "Fallback Value"
+    assert nexus_fallback.get("only.in.en", domain="zh") == "Fallback Value"
 
 
 def test_reload_clears_cache_and_refetches_data():
@@ -91,7 +79,7 @@ def test_reload_clears_cache_and_refetches_data():
     assert nexus.get("key") == "updated_value"
 
 
-def test_language_resolution_priority(monkeypatch):
+def test_domain_resolution_priority(monkeypatch):
     nexus = OverlayNexus(
         loaders=[
             MemoryLoader(
@@ -100,8 +88,8 @@ def test_language_resolution_priority(monkeypatch):
         ]
     )
 
-    # Priority 1: Explicit `lang` argument
-    assert nexus.get("key", lang="de") == "de"
+    # Priority 1: Explicit `domain` argument
+    assert nexus.get("key", domain="de") == "de"
 
     # Priority 2: NEEDLE_LANG env var
     monkeypatch.setenv("NEEDLE_LANG", "fr")

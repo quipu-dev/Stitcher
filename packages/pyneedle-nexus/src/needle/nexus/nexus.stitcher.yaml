@@ -3,19 +3,27 @@
 
   It manages an ordered list of resource loaders and uses `collections.ChainMap`
   to create prioritized, logical views of resources without performing
-  a physical merge.
+  a physical merge. It also implements the Loader protocol, allowing it to be
+  nested within other Nexus instances.
 "OverlayNexus.__init__": |-
   Initializes the Nexus with a list of loaders.
 
   Args:
       loaders: A list of resource loaders. The order determines priority;
                loaders at the beginning of the list override those at the end.
-      default_lang: The fallback language to use if the target language is not found.
+      default_domain: The fallback domain to use if the target domain is not found.
 "OverlayNexus._get_or_create_view": |-
-  Lazily loads and caches the ChainMap view for a given language.
-"OverlayNexus._resolve_lang": |-
-  Determines the current language based on a standard hierarchy.
+  Lazily loads and caches the ChainMap view for a given domain.
+"OverlayNexus._resolve_domain": |-
+  Determines the current active domain based on environment variables and system settings.
 "OverlayNexus.get": |-
   Resolves a semantic pointer to a string value with graceful fallback.
+"OverlayNexus.load": |-
+  Returns the overlay view for the requested domain. This enables a Nexus
+  to act as a data source for another Nexus.
+"OverlayNexus.locate": |-
+  Finds the physical path for a resource by delegating to the first writable loader.
+"OverlayNexus.put": |-
+  Writes a value to a resource by delegating to the first writable loader.
 "OverlayNexus.reload": |-
-  Clears internal caches to force a reload on the next `get` call.
+  Clears internal caches for one or all domains.
