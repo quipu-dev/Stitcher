@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 迁移旧运行时测试以验证 pyneedle 组装", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766801286.6956294, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(runtime): 将 stitcher-needle 重构为模块化的 pyneedle 生态", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766801358.540641, "duration_ms": 0}}
