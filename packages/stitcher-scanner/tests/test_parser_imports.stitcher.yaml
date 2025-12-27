@@ -1,8 +1,4 @@
-"test_auto_inject_any_for_unannotated_attribute": |-
-  If an attribute has no type, generator defaults to 'Any', so we need the import.
-"test_auto_inject_typing_imports": |-
-  Should automatically add missing typing imports used in annotations.
-"test_collect_nested_imports_in_type_checking": |-
-  Imports inside if TYPE_CHECKING should be flattened to top-level.
-"test_do_not_duplicate_existing_typing": |-
-  Should not add typing imports if they are already present.
+"test_collect_top_level_imports": |-
+  Tests that the parser correctly collects top-level import statements.
+"test_detect_typing_in_attributes_and_returns": |-
+  Tests that the parser's enrichment logic detects types in various locations.

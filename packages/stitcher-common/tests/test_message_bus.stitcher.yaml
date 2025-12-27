@@ -1,0 +1,10 @@
+"MockRenderer": |-
+  A mock renderer that captures messages instead of printing them.
+"MockRenderer.render": |-
+  Captures a message for later inspection.
+"test_bus_does_not_fail_without_renderer": |-
+  Tests that the MessageBus operates without crashing when no renderer is set.
+"test_bus_forwards_to_renderer": |-
+  Tests that the bus correctly resolves a message ID and forwards the formatted string to the renderer.
+"test_bus_identity_fallback": |-
+  Tests that the bus falls back to the message ID itself if no template is found.

@@ -1,2 +1,6 @@
 "JsonHandler": |-
   Standard handler for .json files.
+"JsonHandler.load": |-
+  Loads and parses a .json file.
+"JsonHandler.match": |-
+  Checks if the handler can process a given file path based on its .json extension.
