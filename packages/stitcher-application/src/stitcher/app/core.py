@@ -203,7 +203,8 @@ class StitcherApp:
 
             # 0. Scaffold stub package if configured
             if config.stub_package:
-                self._scaffold_stub_package(config, project_name)
+                stub_base_name = config.name if config.name != "default" else project_name
+                self._scaffold_stub_package(config, stub_base_name)
 
             # 1. Process source files
             unique_files = self._get_files_from_config(config)
