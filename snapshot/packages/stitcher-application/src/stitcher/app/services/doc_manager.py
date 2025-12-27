@@ -150,28 +150,52 @@ class DocumentManager:
 
         # 2. Get keys from YAML
         yaml_docs = self.load_docs_for_module(module)
-        doc_keys = set(yaml_docs.keys())
+        yaml_keys = set(yaml_docs.keys())
 
-        # 3. Diff
-        # Missing: Must be public AND not in YAML
-        missing = public_keys - doc_keys
-
-        # Extra: In YAML AND not in Code (at all, even private)
-        extra = doc_keys - all_keys
-
-        # Conflict: In BOTH, but content differs
-        conflict = set()
-        common_keys = source_docs.keys() & yaml_docs.keys()
-        for key in common_keys:
-            # Simple string comparison.
-            # In future we might want to normalize whitespace, but exact match is safer for now.
-            if source_docs[key] != yaml_docs[key]:
-                conflict.add(key)
-
-        # Allow __doc__ to be present in YAML even if not explicitly demanded by code analysis
+        # 3. Analyze Categories
+        extra = yaml_keys - all_keys
         extra.discard("__doc__")
 
-        return {"missing": missing, "extra": extra, "conflict": conflict}
+        missing_doc = set()
+        pending_hydration = set()
+        redundant_doc = set()
+        doc_conflict = set()
+
+        # Iterate over all known code entities
+        for key in all_keys:
+            is_public = key in public_keys
+            has_source_doc = key in source_docs
+            has_yaml_doc = key in yaml_keys
+
+            if not has_source_doc and not has_yaml_doc:
+                # Case: Entity exists, no docs anywhere.
+                # Only warn if it's public API.
+                if is_public:
+                    missing_doc.add(key)
+
+            elif has_source_doc and not has_yaml_doc:
+                # Case: Entity exists, source has doc, YAML doesn't.
+                # This implies the docs haven't been hydrated yet.
+                # We report this for both public and private if they have docs.
+                pending_hydration.add(key)
+
+            elif has_source_doc and has_yaml_doc:
+                # Case: Both have docs. Check content.
+                if source_docs[key] != yaml_docs[key]:
+                    doc_conflict.add(key)
+                else:
+                    redundant_doc.add(key)
+
+            # Case: not has_source_doc and has_yaml_doc
+            # This is the ideal state (SYNCED). No action needed.
+
+        return {
+            "extra": extra,
+            "missing": missing_doc,
+            "pending": pending_hydration,
+            "redundant": redundant_doc,
+            "conflict": doc_conflict,
+        }
 
     def hydrate_module(
         self, module: ModuleDef, force: bool = False, reconcile: bool = False
