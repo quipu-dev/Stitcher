@@ -1,3 +1,9 @@
+"StitcherApp": |-
+  The main application class that orchestrates all Stitcher operations.
+"StitcherApp._derive_logical_path": |-
+  Heuristic to derive the logical import path from a physical file path.
+  Assumes a standard 'src/' layout.
+  e.g., 'packages/pkg-a/src/foo/bar.py' -> 'foo/bar.py'
 "StitcherApp._generate_stubs": |-
   Generates .pyi files from a list of ModuleDefs.
 "StitcherApp._get_files_from_config": |-
@@ -20,7 +26,5 @@
   - reconcile: YAML-first conflict resolution.
 "StitcherApp.run_init": |-
   Scans source files and extracts docstrings into external .stitcher.yaml files.
-"StitcherApp": |-
-  The main application class that orchestrates all Stitcher operations.
 "StitcherApp.run_strip": |-
   Strips docstrings from all source files.

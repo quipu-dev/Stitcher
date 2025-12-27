@@ -43,19 +43,14 @@ class StitcherApp:
         return modules
 
     def _derive_logical_path(self, file_path: str) -> Path:
-        """
-        Heuristic to derive the logical import path from a physical file path.
-        Assumes a standard 'src/' layout.
-        e.g., 'packages/pkg-a/src/foo/bar.py' -> 'foo/bar.py'
-        """
         path_obj = Path(file_path)
         parts = path_obj.parts
-        
+
         # Find the LAST occurrence of 'src' to handle potential nested structures correctly
         try:
             # rindex equivalent for list
             src_index = len(parts) - 1 - parts[::-1].index("src")
-            return Path(*parts[src_index + 1:])
+            return Path(*parts[src_index + 1 :])
         except ValueError:
             # 'src' not found, fallback to original path
             return path_obj
