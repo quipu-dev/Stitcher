@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 更新测试以适配多目标配置架构", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766812559.4577198, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(test): 修复集成测试中的路径断言错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766812676.7335958, "duration_ms": 0}}

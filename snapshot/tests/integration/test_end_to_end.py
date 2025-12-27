@@ -117,8 +117,10 @@ stub_path = "typings/pkg_b"
 
     # 3. Assert
     # Check physical files
-    assert (project_root / "typings/pkg_a/main.pyi").exists()
-    assert (project_root / "typings/pkg_b/main.pyi").exists()
+    # Note: Stitcher preserves the package structure relative to 'src'.
+    # So 'src/pkg_a/main.py' becomes 'pkg_a/main.pyi' inside the stub output directory.
+    assert (project_root / "typings/pkg_a/pkg_a/main.pyi").exists()
+    assert (project_root / "typings/pkg_b/pkg_b/main.pyi").exists()
 
     # Check bus messages
     # We expect "Processing target: ..." messages
