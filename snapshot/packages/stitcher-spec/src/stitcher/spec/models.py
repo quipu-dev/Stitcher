@@ -90,3 +90,17 @@ class ModuleDef:
     imports: List[str] = field(default_factory=list)
     # The raw string representation of the __all__ assignment value (e.g. '["a", "b"]')
     dunder_all: Optional[str] = None
+
+    def is_documentable(self) -> bool:
+        """
+        Checks if the module contains any content that would warrant a doc file.
+        """
+        # A module is documentable if it has a docstring, any public-facing
+        # definitions, or any attributes. __all__ also implies it's a public API surface.
+        return bool(
+            self.docstring
+            or self.attributes
+            or self.functions
+            or self.classes
+            or self.dunder_all
+        )

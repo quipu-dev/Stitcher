@@ -1,124 +1,96 @@
-这是一个非常敏锐的观察，完全正确。
+你的洞察力非常深刻，一针见血地指出了当前工作流中的一个关键缺陷。
 
-当前的 `check` 逻辑确实有一个前提假设：每个被扫描的 `.py` 文件都应该有一个对应的 `.stitcher.yaml` 文件。当这个前提不成立时（比如你刚创建了一个新文件），它的输出就会产生误导。
+你说得完全正确。如果一个文件（比如空的 `__init__.py`）本身就不包含任何可文档化的内容，那么 `init` 或 `hydrate` 命令确实是无效的。在这种情况下，`check` 命令反复提示用户去执行一个无效操作，这无疑会严重挫伤用户体验，让工具显得“愚蠢”。
 
-引入“YAML 文件是否存在”这个维度，将 `check` 命令的引导性提升到了一个新的层次。我将把这个新状态命名为 **Untracked (未追踪)**，因为它准确地描述了一个代码文件存在，但其文档状态尚未被 Stitcher 系统追踪的情况。
+我们必须让 `check` 命令变得更智能。它不应该只检查文件是否存在，还应该在报告 `UNTRACKED` 之前，先快速判断这个文件**是否值得被追踪**。
 
-## [WIP] feat(check): Add UNTRACKED status for modules without YAML files
+## [WIP] refactor(check): Silence untracked warnings for empty modules
 
 ### 用户需求
-用户建议 `stitcher check` 命令应该能够区分“YAML 文件中缺少一个键”和“YAML 文件本身不存在”这两种情况。当一个源文件完全没有对应的 `.stitcher.yaml` 文件时，应给出明确的提示，而不是报出多个误导性的 `MISSING` 警告。
+用户指出，`stitcher check` 命令会为那些不包含任何文档字符串的 `__init__.py` 等文件报告 `UNTRACKED` 警告。由于 `init` 或 `hydrate` 对这类文件无效，这会导致用户陷入一个无法解决警告的循环，体验很差。`check` 命令应该智能地忽略这些“空”文件。
 
 ### 评论
-这是一个卓越的 UX 改进。通过引入 `UNTRACKED` 状态，我们为新文件的生命周期提供了清晰的第一步指引。用户看到这个状态后，会立刻明白他们需要运行 `stitcher init` 或 `stitcher hydrate` 来创建文档基线，从而无缝地将新文件纳入文档管理流程。
+这是一个至关重要的 UX 优化。通过让 `check` 命令具备内容感知能力，我们避免了“告警疲劳”，确保每一条报告给用户的信息都是有意义、可操作的。这使得工具的行为更加符合直觉，从一个机械的检查器演变成一个智能的助手。
 
 ### 目标
-1.  在 `stitcher-common` 资源中添加一个新的 `check.file.untracked` 消息。
-2.  修改 `StitcherApp.run_check` 的主循环逻辑。
-3.  在对模块进行详细的键级别检查之前，首先验证其对应的 `.stitcher.yaml` 文件是否存在。
-4.  如果 YAML 文件不存在，则报告 `UNTRACKED` 状态并跳过对该文件的后续所有检查。
-5.  更新集成测试，以覆盖这个新的“文件未追踪”场景。
+1.  在 `ModuleDef` IR 模型中增加一个辅助方法 `is_documentable()`，用于判断该模块是否包含任何值得被文档化的内容（如函数、类、属性或模块级文档字符串）。
+2.  重构 `StitcherApp.run_check` 逻辑。当发现一个 `.py` 文件没有对应的 `.stitcher.yaml` 文件时，不再立即报告 `UNTRACKED`。
+3.  取而代之的是，先解析该 `.py` 文件生成 `ModuleDef` IR。
+4.  调用新的 `is_documentable()` 方法。只有当该方法返回 `True` 时，才报告 `UNTRACKED` 警告。否则，静默跳过。
+5.  更新集成测试，确保空的 `__init__.py` 文件不再触发警告，而包含内容的新文件依然会触发。
 
 ### 基本原理
-我们将 `check` 的逻辑分为两个层级。首先是**文件级检查**，它只关心 `.py` 和 `.stitcher.yaml` 是否成对存在。只有通过了文件级检查（即 YAML 文件存在），才会进入**键级检查**（即我们之前实现的 `missing`, `pending`, `conflict` 等状态矩阵）。这种分层处理使得逻辑更清晰，输出也更准确。
+我们将检查逻辑从简单的“文件存在性检查”升级为“文件内容价值检查”。核心思想是：**一个文件只有在它包含实际内容时，它“未被追踪”的状态才值得用户关注**。通过在报告前进行一次轻量级的 AST 解析和内容评估，我们可以过滤掉所有噪音，只把真正需要用户处理的问题暴露出来。
 
 ### 标签
-#intent/build #flow/ready #priority/medium #comp/application #comp/cli #scope/ux #task/domain/documentation #task/object/check-logic #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/application #comp/cli #scope/ux #task/domain/documentation #task/object/check-logic #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 添加新的 i18n 资源
+#### Acts 1: 在 `ModuleDef` 中添加 `is_documentable` 辅助方法
 
-为 `UNTRACKED` 状态添加对应的中英文消息。
-
-~~~~~act
-patch_file
-packages/stitcher-common/src/stitcher/common/assets/needle/en/check/main.json
-~~~~~
-~~~~~json.old
-{
-    "check.file.pass": "✅ {path}: Synced.",
-    "check.file.fail": "❌ {path}: Found {count} errors.",
-    "check.file.warn": "⚠️  {path}: Found {count} warnings.",
-    "check.issue.missing": "   - [MISSING]   {key} (entity exists, but no docstring in code or YAML)",
-    "check.issue.pending": "   - [PENDING]   {key} (new docstring in code, not yet hydrated to YAML)",
-    "check.issue.redundant": "   - [REDUNDANT] {key} (docstring exists in both code and YAML; run 'strip')",
-    "check.issue.extra": "   - [EXTRA]     {key} (docstring in YAML, but entity missing in code)",
-    "check.issue.conflict": "   - [CONFLICT]  {key} (content differs between code and YAML)",
-    "check.run.success": "✨ All checks passed. Documentation is in sync.",
-    "check.run.success_with_warnings": "⚠️  Check passed with warnings in {count} files.",
-    "check.run.fail": "🚫 Check failed. Found errors in {count} files."
-}
-~~~~~
-~~~~~json.new
-{
-    "check.file.pass": "✅ {path}: Synced.",
-    "check.file.fail": "❌ {path}: Found {count} errors.",
-    "check.file.warn": "⚠️  {path}: Found {count} warnings.",
-    "check.file.untracked": "⚠️  {path}: Untracked (no .stitcher.yaml file found; run `init` or `hydrate`)",
-    "check.issue.missing": "   - [MISSING]   {key} (entity exists, but no docstring in code or YAML)",
-    "check.issue.pending": "   - [PENDING]   {key} (new docstring in code, not yet hydrated to YAML)",
-    "check.issue.redundant": "   - [REDUNDANT] {key} (docstring exists in both code and YAML; run 'strip')",
-    "check.issue.extra": "   - [EXTRA]     {key} (docstring in YAML, but entity missing in code)",
-    "check.issue.conflict": "   - [CONFLICT]  {key} (content differs between code and YAML)",
-    "check.run.success": "✨ All checks passed. Documentation is in sync.",
-    "check.run.success_with_warnings": "⚠️  Check passed with warnings in {count} files.",
-    "check.run.fail": "🚫 Check failed. Found errors in {count} files."
-}
-~~~~~
+我们在 `stitcher-spec` 包的 `models.py` 中添加这个逻辑，使其成为 IR 自身的一部分，保持代码清晰。
 
 ~~~~~act
 patch_file
-packages/stitcher-common/src/stitcher/common/assets/needle/zh/check/main.json
+packages/stitcher-spec/src/stitcher/spec/models.py
 ~~~~~
-~~~~~json.old
-{
-    "check.file.pass": "✅ {path}: 已同步。",
-    "check.file.fail": "❌ {path}: 发现 {count} 个错误。",
-    "check.file.warn": "⚠️  {path}: 发现 {count} 个警告。",
-    "check.issue.missing": "   - [缺失]   {key} (实体存在，但在代码和 YAML 中均无文档)",
-    "check.issue.pending": "   - [待同步] {key} (代码中有新文档，尚未同步至 YAML，请运行 hydrate)",
-    "check.issue.redundant": "   - [冗余]   {key} (代码与 YAML 文档重复，建议运行 strip)",
-    "check.issue.extra": "   - [多余]   {key} (YAML 中存在，但代码实体已删除)",
-    "check.issue.conflict": "   - [冲突]   {key} (代码与 YAML 内容不一致，请解决冲突)",
-    "check.run.success": "✨ 所有检查通过。文档已同步。",
-    "check.run.success_with_warnings": "⚠️  检查通过，在 {count} 个文件中发现警告。",
-    "check.run.fail": "🚫 检查失败。在 {count} 个文件中发现错误。"
-}
+~~~~~python.old
+@dataclass
+class ModuleDef:
+    file_path: str  # Relative path from project root
+    docstring: Optional[str] = None
+    attributes: List[Attribute] = field(default_factory=list)
+    functions: List[FunctionDef] = field(default_factory=list)
+    classes: List[ClassDef] = field(default_factory=list)
+    # Imports are tricky. For .pyi generation, we often need to preserve them
+    # or recreate them based on used types.
+    # For MVP, we might treat imports as raw lines or simple structures.
+    imports: List[str] = field(default_factory=list)
+    # The raw string representation of the __all__ assignment value (e.g. '["a", "b"]')
+    dunder_all: Optional[str] = None
 ~~~~~
-~~~~~json.new
-{
-    "check.file.pass": "✅ {path}: 已同步。",
-    "check.file.fail": "❌ {path}: 发现 {count} 个错误。",
-    "check.file.warn": "⚠️  {path}: 发现 {count} 个警告。",
-    "check.file.untracked": "⚠️  {path}: 未追踪 (未找到 .stitcher.yaml 文件，请运行 `init` 或 `hydrate`)",
-    "check.issue.missing": "   - [缺失]   {key} (实体存在，但在代码和 YAML 中均无文档)",
-    "check.issue.pending": "   - [待同步] {key} (代码中有新文档，尚未同步至 YAML，请运行 hydrate)",
-    "check.issue.redundant": "   - [冗余]   {key} (代码与 YAML 文档重复，建议运行 strip)",
-    "check.issue.extra": "   - [多余]   {key} (YAML 中存在，但代码实体已删除)",
-    "check.issue.conflict": "   - [冲突]   {key} (代码与 YAML 内容不一致，请解决冲突)",
-    "check.run.success": "✨ 所有检查通过。文档已同步。",
-    "check.run.success_with_warnings": "⚠️  检查通过，在 {count} 个文件中发现警告。",
-    "check.run.fail": "🚫 检查失败。在 {count} 个文件中发现错误。"
-}
+~~~~~python.new
+@dataclass
+class ModuleDef:
+    file_path: str  # Relative path from project root
+    docstring: Optional[str] = None
+    attributes: List[Attribute] = field(default_factory=list)
+    functions: List[FunctionDef] = field(default_factory=list)
+    classes: List[ClassDef] = field(default_factory=list)
+    # Imports are tricky. For .pyi generation, we often need to preserve them
+    # or recreate them based on used types.
+    # For MVP, we might treat imports as raw lines or simple structures.
+    imports: List[str] = field(default_factory=list)
+    # The raw string representation of the __all__ assignment value (e.g. '["a", "b"]')
+    dunder_all: Optional[str] = None
+
+    def is_documentable(self) -> bool:
+        """
+        Checks if the module contains any content that would warrant a doc file.
+        """
+        # A module is documentable if it has a docstring, any public-facing
+        # definitions, or any attributes. __all__ also implies it's a public API surface.
+        return bool(
+            self.docstring
+            or self.attributes
+            or self.functions
+            or self.classes
+            or self.dunder_all
+        )
 ~~~~~
 
-#### Acts 2: 更新 `StitcherApp.run_check` 的核心逻辑
+#### Acts 2: 更新 `StitcherApp.run_check` 以使用新逻辑
 
-在 `run_check` 循环的开始处添加文件存在性检查。
+现在我们在 `run_check` 中应用这个智能过滤。
 
 ~~~~~act
 patch_file
 packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
 ~~~~~python.old
-            for module in modules:
-                doc_issues = self.doc_manager.check_module(module)
-                sig_issues = self.sig_manager.check_signatures(module)
-~~~~~
-~~~~~python.new
             for module in modules:
                 # File-level check: Does the corresponding doc file exist?
                 doc_path = (
@@ -131,18 +103,42 @@ packages/stitcher-application/src/stitcher/app/core.py
 
                 # Key-level check (existing logic)
                 doc_issues = self.doc_manager.check_module(module)
-                sig_issues = self.sig_manager.check_signatures(module)
+~~~~~
+~~~~~python.new
+            for module in modules:
+                # File-level check: Does the corresponding doc file exist?
+                doc_path = (
+                    self.root_path / module.file_path
+                ).with_suffix(".stitcher.yaml")
+
+                if not doc_path.exists():
+                    # If doc file doesn't exist, only warn if the module
+                    # actually contains something worth documenting.
+                    if module.is_documentable():
+                        bus.warning(L.check.file.untracked, path=module.file_path)
+                        total_warnings += 1
+                    # Silently skip empty, untracked files (e.g., empty __init__.py)
+                    continue
+
+                # Key-level check (existing logic)
+                doc_issues = self.doc_manager.check_module(module)
 ~~~~~
 
-#### Acts 3: 更新集成测试
+#### Acts 3: 增强集成测试以覆盖新旧两种场景
 
-为新的 `UNTRACKED` 状态添加一个专门的测试用例。
+我们将修改 `test_check_untracked.py`，使其同时验证“应报告”和“应静默”两种情况。
 
 ~~~~~act
-write_file
+move_file
 tests/integration/test_check_untracked.py
+tests/integration/test_check_file_tracking.py
 ~~~~~
-~~~~~python
+
+~~~~~act
+patch_file
+tests/integration/test_check_file_tracking.py
+~~~~~
+~~~~~python.old
 from stitcher.app import StitcherApp
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
@@ -185,4 +181,65 @@ def test_check_reports_untracked_file(tmp_path, monkeypatch):
     }
     for msg in messages:
         assert msg["id"] not in key_level_issues, f"Unexpected key-level issue found: {msg}"
+~~~~~
+~~~~~python.new
+from stitcher.app import StitcherApp
+from needle.pointer import L
+from stitcher.test_utils import SpyBus, WorkspaceFactory
+
+
+def test_check_reports_untracked_for_non_empty_file(tmp_path, monkeypatch):
+    """
+    Verifies that 'check' correctly reports UNTRACKED for a new file
+    that actually contains content.
+    """
+    # 1. Arrange: A source file with content, but no doc file
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/main.py", "def new_func(): pass")
+        .build()
+    )
+
+    app = StitcherApp(root_path=project_root)
+    spy_bus = SpyBus()
+
+    # 2. Act
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        success = app.run_check()
+
+    # 3. Assert
+    assert success is True
+    spy_bus.assert_id_called(L.check.file.untracked, level="warning")
+    spy_bus.assert_id_called(L.check.run.success_with_warnings, level="success")
+
+
+def test_check_is_silent_for_empty_untracked_file(tmp_path, monkeypatch):
+    """
+    Verifies that 'check' does NOT report UNTRACKED for an untracked file
+    that contains no documentable content (e.g., an empty __init__.py).
+    """
+    # 1. Arrange: An empty source file with no doc file
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/__init__.py", "# This file is intentionally empty")
+        .build()
+    )
+
+    app = StitcherApp(root_path=project_root)
+    spy_bus = SpyBus()
+
+    # 2. Act
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        success = app.run_check()
+
+    # 3. Assert
+    assert success is True
+    # Crucially, assert that the overall success message (without warnings) was called
+    spy_bus.assert_id_called(L.check.run.success, level="success")
+
+    # And verify NO untracked message was sent
+    messages = spy_bus.get_messages()
+    assert not any(msg["id"] == str(L.check.file.untracked) for msg in messages)
 ~~~~~
