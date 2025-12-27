@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Acts 1: 修复命名空间共存测试的打包配置", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766820096.4060657, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(test): 简化 Runtime 包结构以修复构建错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766820235.7743819, "duration_ms": 0}}

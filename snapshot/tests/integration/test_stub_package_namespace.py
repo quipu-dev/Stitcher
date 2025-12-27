@@ -30,19 +30,21 @@ def test_namespace_coexistence(tmp_path: Path, isolated_env: VenvHarness):
     stub_pkg_path = project_root_stubs / "stubs"
 
     # --- Part 2: Arrange a separate, installable RUNTIME package ---
+    # We use a flat layout (no src/ dir) here to simplify the build config and avoid
+    # potential src-layout configuration issues in the test fixture.
     factory_runtime = WorkspaceFactory(tmp_path / "proj_with_runtime")
     project_root_runtime = (
         factory_runtime.with_project_name("my-project-plugin")
         # This project provides the my_project.plugin namespace
         .with_source(
-            "src/my_project/plugin.py",
+            "my_project/plugin.py",
             """
             def plugin_function():
                 return True
             """,
         )
         # This __init__.py makes `my_project` a package.
-        .with_source("src/my_project/__init__.py", "")
+        .with_source("my_project/__init__.py", "")
         # We need a pyproject.toml to make it an installable package
         .with_source(
             "pyproject.toml",
@@ -56,8 +58,7 @@ name = "my-project-plugin"
 version = "0.1.0"
 
 [tool.hatch.build.targets.wheel]
-# Hatch expects the source root directory, not the package directory itself.
-packages = ["src"]
+packages = ["my_project"]
             """,
         )
         .build()
