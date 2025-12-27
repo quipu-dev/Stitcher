@@ -4,6 +4,6 @@
 
 ### 📝 变更文件摘要:
 ```
-pyproject.toml | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+pyproject.toml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 ```

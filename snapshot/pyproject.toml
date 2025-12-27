@@ -70,7 +70,7 @@ scan_paths = [
     "packages/stitcher-cli/src",
     "packages/stitcher-test-utils/src",
 ]
-stub_package = "packages/stitcher-python-stubs"
+stub_package = "packages/stitcher-stubs"
 
 [tool.stitcher.targets.needle]
 scan_paths = [
@@ -79,7 +79,7 @@ scan_paths = [
     "packages/pyneedle-nexus/src",
     "packages/pyneedle/src",
 ]
-stub_package = "packages/pyneedle-stubs"
+stub_package = "packages/needle-stubs"
 
 [tool.pyright]
 include = ["packages", "tests"]
