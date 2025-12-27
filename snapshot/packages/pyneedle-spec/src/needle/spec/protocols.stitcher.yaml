@@ -5,7 +5,7 @@
 
   Args:
       pointer: The semantic key to look up.
-      lang: Optional explicit language override.
+      domain: Optional explicit domain override.
 
   Returns:
       The resolved string value, or the key itself if not found (Identity Fallback).
@@ -13,7 +13,7 @@
   Clears internal caches and forces a reload of resources.
 
   Args:
-      lang: If provided, only reload that specific language.
+      domain: If provided, only reload that specific domain.
             If None, reload all.
 "PointerSetProtocol": |-
   Defines the contract for a set of Semantic Pointers (Ls).
@@ -33,14 +33,13 @@
 "ResourceLoaderProtocol": |-
   Defines the contract for loading raw resource data.
 "ResourceLoaderProtocol.load": |-
-  Loads resources for a specific language.
+  Loads resources for a specific domain.
 
   Args:
-      lang: The target language code (e.g., 'en', 'zh').
+      domain: The target domain (e.g., 'en', 'zh', 'dark_theme').
 
   Returns:
       A dictionary mapping Fully Qualified Names (FQNs) to values.
-      e.g., {"auth.login.success": "Welcome!"}
 "SemanticPointerProtocol": |-
   Defines the contract for a Semantic Pointer (L).
 
@@ -67,3 +66,9 @@
   Example: L.auth / "login" -> L.auth.login
 "T_Pointer": |-
   A TypeVar used for covariant type hinting in the SemanticPointerProtocol.
+"WritableResourceLoaderProtocol": |-
+  Extends ResourceLoader with writing and location capabilities.
+"WritableResourceLoaderProtocol.locate": |-
+  Returns the physical path where a resource would be stored.
+"WritableResourceLoaderProtocol.put": |-
+  Persists a value for a specific pointer and domain.

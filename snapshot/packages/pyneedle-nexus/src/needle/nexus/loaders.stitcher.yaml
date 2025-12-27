@@ -6,8 +6,8 @@
   Initializes the loader with data.
 
   Args:
-      data: A dictionary where keys are language codes and values are
-            dictionaries of FQN -> value.
+      data: A dictionary where keys are domain identifiers (e.g., lang codes)
+            and values are dictionaries of FQN -> value.
             e.g., {"en": {"app.title": "My App"}}
 "MemoryLoader.load": |-
-  Loads resources for a specific language from memory.
+  Loads resources for a specific domain from memory.
