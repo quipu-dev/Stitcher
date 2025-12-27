@@ -1,11 +1,12 @@
+"MockAdapter": |-
+  A mock DocumentAdapter for testing purposes.
+"MockAdapter.load": |-
+  Mock load implementation.
+"MockAdapter.save": |-
+  Mock save implementation that captures saved data.
 "sample_module_ir": |-
-  def func():
-      '''Func doc'''
-
-  class MyClass:
-      '''Class doc'''
-      attr: int
-      '''Attr doc'''
-
-      def method(self):
-          '''Method doc'''
+  Provides a sample ModuleDef IR for testing doc extraction.
+"test_flatten_module_docs": |-
+  Tests that the DocumentManager correctly flattens a ModuleDef IR into a dictionary.
+"test_save_docs_for_module": |-
+  Tests that the DocumentManager saves docs using its adapter and returns the correct path.

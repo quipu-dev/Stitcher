@@ -65,3 +65,5 @@
 "SemanticPointerProtocol.__truediv__": |-
   Operator '/': Joins the pointer with a string or another pointer (path-like syntax).
   Example: L.auth / "login" -> L.auth.login
+"T_Pointer": |-
+  A TypeVar used for covariant type hinting in the SemanticPointerProtocol.

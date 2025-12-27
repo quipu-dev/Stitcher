@@ -1,2 +1,16 @@
+"MessageBus": |-
+  Coordinates message resolution and rendering.
+"MessageBus.__init__": |-
+  Initializes the bus with a nexus instance for message lookup.
+"MessageBus.error": |-
+  Sends an error-level message.
+"MessageBus.info": |-
+  Sends an info-level message.
 "MessageBus.render_to_string": |-
   Resolves a message to a string without sending it to the renderer.
+"MessageBus.set_renderer": |-
+  Sets the renderer responsible for displaying messages.
+"MessageBus.success": |-
+  Sends a success-level message.
+"MessageBus.warning": |-
+  Sends a warning-level message.

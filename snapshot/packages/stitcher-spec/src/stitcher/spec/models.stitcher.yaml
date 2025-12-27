@@ -12,5 +12,87 @@
   Computes a stable hash of the function signature (excluding docstring).
   Includes: name, args (name, kind, annotation, default), return annotation,
   async status, and static/class flags.
+"Argument": |-
+  Represents a function or method argument.
+"Argument.annotation": |-
+  The type annotation of the argument.
+"Argument.default": |-
+  The string representation of the argument's default value.
+"Argument.kind": |-
+  The kind of argument (e.g., positional, keyword-only).
+"Argument.name": |-
+  The name of the argument.
+"ArgumentKind": |-
+  Corresponds to inspect._ParameterKind.
+"ArgumentKind.KEYWORD_ONLY": |-
+  A keyword-only argument.
+"ArgumentKind.POSITIONAL_ONLY": |-
+  A positional-only argument.
+"ArgumentKind.POSITIONAL_OR_KEYWORD": |-
+  A standard positional or keyword argument.
+"ArgumentKind.VAR_KEYWORD": |-
+  A variable keyword argument (**kwargs).
+"ArgumentKind.VAR_POSITIONAL": |-
+  A variable positional argument (*args).
+"Attribute": |-
+  Represents a module-level or class-level variable.
+"Attribute.annotation": |-
+  The type annotation of the attribute.
+"Attribute.docstring": |-
+  The docstring associated with the attribute (e.g., via a comment).
+"Attribute.name": |-
+  The name of the attribute.
+"Attribute.value": |-
+  The string representation of the attribute's value.
+"ClassDef": |-
+  Represents a class definition.
+"ClassDef.attributes": |-
+  A list of attributes defined in the class.
+"ClassDef.bases": |-
+  A list of base classes.
+"ClassDef.decorators": |-
+  A list of decorators applied to the class.
+"ClassDef.docstring": |-
+  The docstring of the class.
+"ClassDef.methods": |-
+  A list of methods defined in the class.
+"ClassDef.name": |-
+  The name of the class.
+"FunctionDef": |-
+  Represents a function or method definition.
+"FunctionDef.args": |-
+  A list of arguments for the function.
+"FunctionDef.compute_fingerprint": |-
+  Computes a stable hash of the function signature (excluding docstring).
+  Includes: name, args (name, kind, annotation, default), return annotation,
+  async status, and static/class flags.
+"FunctionDef.decorators": |-
+  A list of decorators applied to the function.
+"FunctionDef.docstring": |-
+  The docstring of the function.
+"FunctionDef.is_async": |-
+  Flag indicating if the function is async.
+"FunctionDef.is_class": |-
+  Flag indicating if the function is a classmethod.
+"FunctionDef.is_static": |-
+  Flag indicating if the function is a staticmethod.
+"FunctionDef.name": |-
+  The name of the function.
+"FunctionDef.return_annotation": |-
+  The return type annotation of the function.
 "ModuleDef": |-
   Represents a parsed Python module (a single .py file).
+"ModuleDef.attributes": |-
+  A list of attributes defined at the module level.
+"ModuleDef.classes": |-
+  A list of classes defined in the module.
+"ModuleDef.docstring": |-
+  The docstring of the module.
+"ModuleDef.dunder_all": |-
+  The string representation of the __all__ variable.
+"ModuleDef.file_path": |-
+  The relative path to the module file.
+"ModuleDef.functions": |-
+  A list of functions defined at the module level.
+"ModuleDef.imports": |-
+  A list of import statements found in the module.

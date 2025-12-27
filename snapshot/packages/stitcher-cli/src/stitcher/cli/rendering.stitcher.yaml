@@ -1,2 +1,4 @@
 "CliRenderer": |-
   Renders messages to the command line using Typer for colored output.
+"CliRenderer.render": |-
+  Renders a message to the console with level-appropriate coloring.

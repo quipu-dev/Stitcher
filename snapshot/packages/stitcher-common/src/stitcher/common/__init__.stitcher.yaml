@@ -1,0 +1,6 @@
+"bus": |-
+  The global singleton MessageBus instance.
+"stitcher_loader": |-
+  The global singleton FileSystemLoader instance for Stitcher assets.
+"stitcher_nexus": |-
+  The global singleton OverlayNexus instance for Stitcher.

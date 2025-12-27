@@ -20,5 +20,7 @@
   - reconcile: YAML-first conflict resolution.
 "StitcherApp.run_init": |-
   Scans source files and extracts docstrings into external .stitcher.yaml files.
+"StitcherApp": |-
+  The main application class that orchestrates all Stitcher operations.
 "StitcherApp.run_strip": |-
   Strips docstrings from all source files.

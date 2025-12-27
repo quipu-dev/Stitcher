@@ -4,8 +4,17 @@
   Inject docstrings from .stitcher.yaml files back into code.
 "generate": |-
   Generate .pyi stubs based on pyproject.toml config.
+"app": |-
+  The main Typer application instance for the CLI.
+"cli_renderer": |-
+  The CLI-specific renderer instance used by the message bus.
 "hydrate": |-
   Extract new docstrings from source code and merge them into .stitcher.yaml.
+
+  Args:
+    strip: If True, remove docstrings from source after successful hydration.
+    force: If True, overwrite YAML with source docstrings on conflict.
+    reconcile: If True, keep YAML docstrings on conflict.
 "init": |-
   Initialize Stitcher in the current project.
 "strip": |-
