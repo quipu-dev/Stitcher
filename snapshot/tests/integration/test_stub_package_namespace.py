@@ -41,6 +41,8 @@ def test_namespace_coexistence(tmp_path: Path, isolated_env: VenvHarness):
                 return True
             """,
         )
+        # This __init__.py makes `my_project` a package.
+        .with_source("src/my_project/__init__.py", "")
         # We need a pyproject.toml to make it an installable package
         .with_source(
             "pyproject.toml",
@@ -54,7 +56,8 @@ name = "my-project-plugin"
 version = "0.1.0"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/my_project"]
+# Hatch expects the source root directory, not the package directory itself.
+packages = ["src"]
             """,
         )
         .build()
