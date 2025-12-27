@@ -1,50 +1,73 @@
-## [WIP] fix(test): 修复集成测试中的路径断言错误
+你的建议**完全可行**，并且在架构上是更优的选择。
 
-### 错误分析
+使用 `stitcher-python` 和 `pyneedle` 作为目标名称，能更清晰地反映这些配置块所针对的**顶级包或项目**的身份，这增强了配置的自文档性，并与我们 Monorepo 中实际的包名保持一致。
 
-测试 `test_app_run_multi_target` 失败，原因是断言的存根文件路径与实际生成路径不符。
+我将立即执行配置重命名，然后我们将可以执行最终的 `stitcher generate` 命令来实现自举。
 
-1.  **逻辑推导**:
-    *   **源文件**: `src/pkg_a/main.py`
-    *   **逻辑路径推导**: `StitcherApp._derive_logical_path` 会剥离 `src` 目录，得到逻辑路径 `pkg_a/main.py`。这是为了确保生成的存根包保留正确的 Python 包结构。
-    *   **输出路径计算**: `stub_path` 模式下，输出路径为 `root / config.stub_path / logical_path`。
-    *   **配置**: 测试中设置 `stub_path = "typings/pkg_a"`。
-    *   **实际结果**: `root / "typings/pkg_a" / "pkg_a/main.pyi"`。
-    *   **错误断言**: 测试代码断言存在 `root / "typings/pkg_a/main.pyi"` (少了一层 `pkg_a`)。
+## [WIP] style(config): 遵循命名规范，重命名多目标配置
 
-2.  **结论**: `Stitcher` 的行为是正确且符合设计的（保留包结构），测试用例编写时忽略了包名目录的保留。
+### 用户需求
+将 `pyproject.toml` 中 `[tool.stitcher.targets]` 下的配置目标名称，从 `stitcher` 和 `needle` 更改为更具语义化的 `stitcher-python` 和 `pyneedle`。
 
-### 解决方案
+### 评论
+这个修改是为了提高开发者体验（DX）和配置的语义清晰度。它与项目整体的命名策略和包结构更匹配，是配置层面的一次“微调/风格改进”。
 
-修正 `tests/integration/test_end_to_end.py` 中的断言路径，使其包含包名目录。
+### 目标
+1.  将 `[tool.stitcher.targets.stitcher]` 更名为 `[tool.stitcher.targets.stitcher-python]`。
+2.  将 `[tool.stitcher.targets.needle]` 更名为 `[tool.stitcher.targets.pyneedle]`。
+3.  确保配置内容（`scan_paths` 和 `stub_package`）保持不变。
+
+### 基本原理
+为了在分布式配置中提供稳定且可追溯的引用，使用项目的全名作为配置目标是最佳实践。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/test-suite #task/action/correction #task/state/continue
+#intent/tune #flow/ready #priority/medium #comp/config #scope/dx #ai/instruct #task/domain/build #task/object/multitarget-engine #task/action/refactor #task/state/continue
 
 ---
 ### Script
 
-#### Acts 1: 修正 `test_end_to_end.py` 断言
+#### Acts 1: 更改 `pyproject.toml` 中的目标名称
+
+我们将对根目录下的 `pyproject.toml` 进行精确打补丁，只修改两个配置块的名称。
 
 ~~~~~act
 patch_file
-tests/integration/test_end_to_end.py
+pyproject.toml
 ~~~~~
-~~~~~python.old
-    # 3. Assert
-    # Check physical files
-    assert (project_root / "typings/pkg_a/main.pyi").exists()
-    assert (project_root / "typings/pkg_b/main.pyi").exists()
+~~~~~toml.old
+[tool.stitcher.targets.stitcher]
+scan_paths = [
+    "packages/stitcher-spec/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-scanner/src",
+    "packages/stitcher-io/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-application/src",
+    "packages/stitcher-cli/src",
+    "packages/stitcher-test-utils/src",
+]
+stub_package = "packages/stitcher-stubs"
 
-    # Check bus messages
+[tool.stitcher.targets.needle]
+scan_paths = [
 ~~~~~
-~~~~~python.new
-    # 3. Assert
-    # Check physical files
-    # Note: Stitcher preserves the package structure relative to 'src'.
-    # So 'src/pkg_a/main.py' becomes 'pkg_a/main.pyi' inside the stub output directory.
-    assert (project_root / "typings/pkg_a/pkg_a/main.pyi").exists()
-    assert (project_root / "typings/pkg_b/pkg_b/main.pyi").exists()
+~~~~~toml.new
+[tool.stitcher.targets.stitcher-python]
+scan_paths = [
+    "packages/stitcher-spec/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-scanner/src",
+    "packages/stitcher-io/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-application/src",
+    "packages/stitcher-cli/src",
+    "packages/stitcher-test-utils/src",
+]
+stub_package = "packages/stitcher-stubs"
 
-    # Check bus messages
+[tool.stitcher.targets.pyneedle]
+scan_paths = [
 ~~~~~
+
+### 下一步建议
+配置重命名已完成。现在，我们可以执行 `stitcher generate` 命令来运行自举过程，生成我们的多目标存根包。

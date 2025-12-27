@@ -57,7 +57,7 @@ pythonpath = [
     "packages/stitcher-test-utils/src"
 ]
 
-[tool.stitcher.targets.stitcher]
+[tool.stitcher.targets.stitcher-python]
 scan_paths = [
     "packages/stitcher-spec/src",
     "packages/stitcher-common/src",
@@ -70,7 +70,7 @@ scan_paths = [
 ]
 stub_package = "packages/stitcher-stubs"
 
-[tool.stitcher.targets.needle]
+[tool.stitcher.targets.pyneedle]
 scan_paths = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
