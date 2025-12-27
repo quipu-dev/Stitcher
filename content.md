@@ -1,177 +1,276 @@
 简要回答：
-非常好的直觉。你的质疑是对的。在 `test_nexus.py` 中使用 `MockPointer` 是一种过度隔离（over-isolation）。
+你说得完全正确！`nexus.get()` 远比 `needle.get()` 更具描述性，也解决了 `needle` 和 `L` 在语义上的重叠问题。“针 (`L`)” 刺入 “中枢 (`nexus`)” 来获取信息，这个比喻非常清晰。
 
-`pyneedle-spec` 定义了协议，而 `pyneedle-pointer` 是官方参考实现。既然 `pyneedle-nexus` 依赖于 `pyneedle-spec`，而测试环境可以轻易地访问 `pyneedle-pointer`，那么**直接使用真实的 `SemanticPointer` (L)** 来测试 `Nexus` 不仅更简单，而且更贴近真实使用场景，更能验证“集成”后的行为。
+我们采纳你的命名建议。全局实例将命名为 `nexus`。
 
-至于测试失败的问题，是因为我们修改了代码中的优先级（`NEEDLE_LANG` > `STITCHER_LANG`），但测试代码中的断言仍然是旧逻辑（认为 `STITCHER_LANG` 会覆盖 `NEEDLE_LANG`，因为当时我们还没有 `clean_env` 且 `NEEDLE_LANG` 被前面的测试设置为了 `fr`）。
+现在，我们开始执行重构的最后一步：**Phase 4: 电池组装**。
 
-我们将进行以下修正：
-1.  **移除 `MockPointer`**: 直接从 `needle.pointer` 导入真实的 `L` 对象。
-2.  **修正语言优先级测试**: 更新断言以反映新的、正确的优先级逻辑（`NEEDLE_LANG` > `STITCHER_LANG`）。
-
-## [WIP] refactor: 在 Nexus 测试中使用真实 SemanticPointer 并修正优先级断言
+## [WIP] feat: 创建 pyneedle 包并组装全局 nexus 实例
 
 ### 用户需求
-1.  **移除 Mock**: 在 `packages/pyneedle-nexus/tests/test_nexus.py` 中，删除 `MockPointer` 和 `L_TEST`，改用从 `needle.pointer` 导入的真实 `L` 对象。
-2.  **修正测试逻辑**: 更新 `test_language_resolution_priority`，以匹配代码中修改后的环境变量优先级（`NEEDLE_LANG` > `STITCHER_LANG`）。
+创建顶层的 `pyneedle` 包作为“电池组”，它将 `spec`, `pointer`, 和 `nexus` 组件组装成一个开箱即用的产品。这个包必须：
+1.  实现一个 `FileSystemLoader`，能够扫描磁盘上的 `needle/` 和 `.stitcher/needle/` 目录。
+2.  实例化所有组件，并导出一个名为 `nexus` 的全局单例运行时。
+3.  同时导出 `L` 单例，作为用户的主要 API 入口。
 
 ### 评论
-使用真实组件进行测试（Integration Testing style for components）通常比纯 Mock 更能发现问题，尤其是在组件间耦合度极低的微内核架构中。这不仅简化了测试代码，还增加了测试的置信度。
+这是整个重构工作的收官之作。通过这个顶层包，我们将复杂的内部架构（协议、指针代数、层叠引擎）封装成一个极其简单和强大的 API：`from needle import L, nexus`。`FileSystemLoader` 是连接抽象内核与物理世界的关键桥梁，它使 `Nexus` 真正具备了从项目中加载资源的能力。
 
 ### 目标
-1.  修改 `packages/pyneedle-nexus/tests/test_nexus.py`：
-    *   删除 `MockPointer` 类定义。
-    *   导入 `needle.pointer.L`。
-    *   将所有 `L_TEST` 替换为 `L`。
-    *   修正 `test_language_resolution_priority` 中的断言逻辑。
+1.  创建 `packages/pyneedle` 的包结构和 `pyproject.toml`，并依赖所有其他 `pyneedle-*` 包。
+2.  实现 `FileSystemLoader`，它能够递归扫描目录，并使用可插拔的 `FileHandler` 来解析不同格式的文件（首先实现 `JsonHandler`）。
+3.  在 `pyneedle` 的 `__init__.py` 中，实例化 `FileSystemLoader` 和 `OverlayNexus`，并将最终的实例导出为 `nexus`。
+4.  更新根 `pyproject.toml`，将新包的路径加入 `pythonpath`。
+
+### 基本原理
+*   **组装根 (Composition Root)**: `pyneedle` 包是整个生态的“组装根”。它负责创建所有依赖的实例，并将它们连接起来。这种模式将配置和实例化逻辑集中在一个地方，使得其他所有包都可以保持纯粹和解耦。
+*   **自动发现**: `FileSystemLoader` 将内置向上查找项目根目录（寻找 `pyproject.toml` 或 `.git`）的逻辑，这使得 `nexus` 实例在导入时就能自动定位到正确的项目，无需用户手动配置。
 
 ### 标签
-#intent/refine #intent/fix #flow/ready #priority/high
-#comp/tests #scope/core
-#task/domain/runtime #task/object/pyneedle-nexus #task/action/refactor
-#task/state/continue #task/status/active
+#intent/build #flow/ready #priority/high
+#comp/runtime #concept/state #scope/api
+#task/domain/runtime #task/object/pyneedle #task/action/assemble
+#task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 重构测试以使用真实 L 对象并修正断言
-我们将一次性完成替换 Mock 和修正断言的工作。
+#### Acts 1: 初始化包结构和配置
+创建目录和 `pyproject.toml`，依赖于所有其他核心 `pyneedle` 包。
+
+~~~~~act
+run_command
+~~~~~
+~~~~~bash
+mkdir -p packages/pyneedle/src/needle/loaders
+~~~~~
 
 ~~~~~act
 write_file
-packages/pyneedle-nexus/tests/test_nexus.py
+packages/pyneedle/pyproject.toml
+~~~~~
+~~~~~toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyneedle"
+version = "0.1.0"
+description = "Batteries-included distribution of the PyNeedle runtime."
+requires-python = ">=3.10"
+dependencies = [
+    "pyneedle-spec",
+    "pyneedle-pointer",
+    "pyneedle-nexus",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/needle"]
+
+[tool.uv.sources]
+pyneedle-spec = { workspace = true }
+pyneedle-pointer = { workspace = true }
+pyneedle-nexus = { workspace = true }
+~~~~~
+
+#### Acts 2: 实现文件处理器和文件系统加载器
+这将是 `Nexus` 连接到物理文件的桥梁。
+
+~~~~~act
+write_file
+packages/pyneedle/src/needle/loaders/protocols.py
 ~~~~~
 ~~~~~python
-import pytest
-from needle.pointer import L
-from needle.nexus import OverlayNexus, MemoryLoader
+from typing import Any, Dict, Protocol
+from pathlib import Path
 
 
-@pytest.fixture(autouse=True)
-def clean_env(monkeypatch):
-    """Ensure a clean environment for all tests to prevent flakiness."""
-    monkeypatch.delenv("STITCHER_LANG", raising=False)
-    monkeypatch.delenv("NEEDLE_LANG", raising=False)
-    monkeypatch.delenv("LANG", raising=False)
+class FileHandlerProtocol(Protocol):
+    """
+    Protocol for file handlers that can parse specific formats like JSON, YAML, etc.
+    """
+    def match(self, path: Path) -> bool:
+        """Returns True if this handler can process the given file path."""
+        ...
+
+    def load(self, path: Path) -> Dict[str, Any]:
+        """Parses the file and returns its content as a dictionary."""
+        ...
+~~~~~
+
+~~~~~act
+write_file
+packages/pyneedle/src/needle/loaders/json_handler.py
+~~~~~
+~~~~~python
+import json
+from pathlib import Path
+from typing import Any, Dict
+from .protocols import FileHandlerProtocol
 
 
-@pytest.fixture
-def nexus_instance() -> OverlayNexus:
-    """Provides a Nexus instance with two loaders for priority tests."""
-    loader1_data = {
-        "en": {"app.title": "My App (High Priority)", "app.welcome": "Welcome!"},
-        "zh": {"app.title": "我的应用 (高优先级)"},
-    }
-    loader2_data = {
-        "en": {"app.title": "My App (Low Priority)", "app.version": "1.0"},
-        "zh": {"app.welcome": "欢迎！", "app.version": "1.0"},
-    }
-    
-    # loader1 has higher priority
-    return OverlayNexus(loaders=[MemoryLoader(loader1_data), MemoryLoader(loader2_data)])
+class JsonHandler(FileHandlerProtocol):
+    """Standard handler for .json files."""
+    def match(self, path: Path) -> bool:
+        return path.suffix.lower() == ".json"
+
+    def load(self, path: Path) -> Dict[str, Any]:
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except (json.JSONDecodeError, OSError):
+            return {}
+~~~~~
+
+~~~~~act
+write_file
+packages/pyneedle/src/needle/loaders/fs_loader.py
+~~~~~
+~~~~~python
+import os
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+
+from needle.spec import ResourceLoaderProtocol
+from .protocols import FileHandlerProtocol
+from .json_handler import JsonHandler
 
 
-def test_get_simple_retrieval_and_identity_fallback(nexus_instance: OverlayNexus):
-    """Tests basic value retrieval and the ultimate fallback mechanism."""
-    # From loader 1
-    assert nexus_instance.get(L.app.welcome) == "Welcome!"
-    # From loader 2
-    assert nexus_instance.get(L.app.version) == "1.0"
-    # Identity fallback
-    assert nexus_instance.get("non.existent.key") == "non.existent.key"
+class FileSystemLoader(ResourceLoaderProtocol):
+    """
+    A resource loader that scans the file system for resource files.
 
+    It searches for project roots and then looks for standard resource
+    directories (`needle/` and `.stitcher/needle/`).
+    """
+    def __init__(self, roots: Optional[List[Path]] = None, handlers: Optional[List[FileHandlerProtocol]] = None):
+        self.handlers = handlers or [JsonHandler()]
+        self.roots = roots or [self._find_project_root()]
 
-def test_get_loader_priority_overlay(nexus_instance: OverlayNexus):
-    """Tests that the first loader in the list overrides subsequent loaders."""
-    # 'app.title' exists in both, should get the value from loader1
-    assert nexus_instance.get("app.title") == "My App (High Priority)"
+    def _find_project_root(self, start_dir: Optional[Path] = None) -> Path:
+        current_dir = (start_dir or Path.cwd()).resolve()
+        # Stop at filesystem root
+        while current_dir.parent != current_dir:
+            if (current_dir / "pyproject.toml").is_file() or (current_dir / ".git").is_dir():
+                return current_dir
+            current_dir = current_dir.parent
+        return start_dir or Path.cwd()
 
+    def add_root(self, path: Path):
+        """Prepends a new search root, giving it highest priority."""
+        if path not in self.roots:
+            self.roots.insert(0, path)
 
-def test_get_language_specificity_and_fallback(nexus_instance: OverlayNexus):
-    """Tests language selection and fallback to default language."""
-    # 1. Specific language (zh) is preferred when key exists
-    assert nexus_instance.get("app.title", lang="zh") == "我的应用 (高优先级)"
+    def load(self, lang: str) -> Dict[str, Any]:
+        """
+        Scans all roots for a given language and merges the found resources.
+        Later roots in the list override earlier ones.
+        """
+        merged_registry: Dict[str, str] = {}
+        
+        for root in self.roots:
+            # Path Option 1: .stitcher/needle/<lang> (for project-specific overrides)
+            hidden_path = root / ".stitcher" / "needle" / lang
+            if hidden_path.is_dir():
+                merged_registry.update(self._load_directory(hidden_path))
 
-    # 2. Key missing in 'zh', falls back to default 'en'
-    # Note: loader 2 has 'app.welcome' in 'zh', so it should be found there.
-    # The previous test comment was slightly confusing.
-    # ChainMap for 'zh' combines loader1(zh) and loader2(zh).
-    # loader1(zh) has NO 'app.welcome'. loader2(zh) HAS 'app.welcome' ("欢迎！").
-    # So it should resolve to "欢迎！".
-    assert nexus_instance.get(L.app.welcome, lang="zh") == "欢迎！" 
-    
-    # 3. Key missing in both loaders for 'zh', falls back to 'en'
-    # Let's add a key that is ONLY in EN
-    # 'app.title' is in both. 'app.welcome' is in both (one en, one zh).
-    # 'app.version' is in EN (loader2) and ZH (loader2).
-    # We need a key that is truly missing in ZH.
-    # Let's use a dynamic key for testing fallback.
-    
-    # Create a temporary nexus for precise fallback testing
-    loader_fallback = MemoryLoader({
-        "en": {"only.in.en": "Fallback Value"},
-        "zh": {}
-    })
-    nexus_fallback = OverlayNexus([loader_fallback])
-    
-    assert nexus_fallback.get("only.in.en", lang="zh") == "Fallback Value"
+            # Path Option 2: needle/<lang> (for packaged assets)
+            asset_path = root / "needle" / lang
+            if asset_path.is_dir():
+                merged_registry.update(self._load_directory(asset_path))
 
+        return merged_registry
 
-def test_reload_clears_cache_and_refetches_data():
-    """Tests that reload() forces a new data fetch after underlying data changes."""
-    # Test data is isolated to this test function
-    initial_data = {"en": {"key": "initial_value"}}
-    
-    # Create the loader and nexus
-    loader = MemoryLoader(initial_data)
-    nexus = OverlayNexus(loaders=[loader])
+    def _load_directory(self, root_path: Path) -> Dict[str, str]:
+        """Recursively scans a directory and loads all supported files."""
+        registry: Dict[str, str] = {}
+        for dirpath, _, filenames in os.walk(root_path):
+            for filename in filenames:
+                file_path = Path(dirpath) / filename
+                for handler in self.handlers:
+                    if handler.match(file_path):
+                        content = handler.load(file_path)
+                        # Ensure all values are strings for FQN registry
+                        for key, value in content.items():
+                            registry[str(key)] = str(value)
+                        break # Stop after first matching handler
+        return registry
+~~~~~
 
-    # 1. First get, value is 'initial_value' and this is cached
-    assert nexus.get("key") == "initial_value"
+#### Acts 3: 组装并导出全局 `nexus` 实例
+这是最终用户将直接交互的 API。
 
-    # 2. Simulate an external change to the underlying data source
-    initial_data["en"]["key"] = "updated_value" 
-    
-    # The cache is still holding the old view
-    assert nexus.get("key") == "initial_value"
+~~~~~act
+write_file
+packages/pyneedle/src/needle/__init__.py
+~~~~~
+~~~~~python
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-    # 3. Reload the cache
-    nexus.reload()
+from needle.pointer import L, SemanticPointer, PointerSet
+from needle.nexus import OverlayNexus
+from .loaders.fs_loader import FileSystemLoader
 
-    # 4. Get again, should now return the NEW value
-    assert nexus.get("key") == "updated_value"
+# --- Global Singleton Instance ---
+# This is the "batteries-included" setup.
+# It automatically discovers the project root and sets up a file system loader.
+_default_loader = FileSystemLoader()
+nexus = OverlayNexus(loaders=[_default_loader])
+# ---------------------------------
 
+# Make the loader accessible for advanced use cases (e.g., adding asset paths)
+# Example: from needle import _default_loader
+#          _default_loader.add_root(my_assets_path)
+#          nexus.reload()
 
-def test_language_resolution_priority(monkeypatch):
-    """Tests the hierarchy of language resolution."""
-    nexus = OverlayNexus(loaders=[MemoryLoader({"de": {"key": "de"}, "fr": {"key": "fr"}, "en": {"key": "en"}})])
+__all__ = ["L", "nexus", "SemanticPointer", "PointerSet", "_default_loader"]
+~~~~~
 
-    # Priority 1: Explicit `lang` argument
-    assert nexus.get("key", lang="de") == "de"
+#### Acts 4: 更新根 `pyproject.toml`
+将新包的路径加入 `pytest` 的 `pythonpath`。
 
-    # Priority 2: NEEDLE_LANG env var
-    monkeypatch.setenv("NEEDLE_LANG", "fr")
-    # Even if STITCHER_LANG is set, NEEDLE_LANG should win
-    monkeypatch.setenv("STITCHER_LANG", "de") 
-    assert nexus.get("key") == "fr"
-
-    # Priority 3: STITCHER_LANG env var (legacy compatibility)
-    monkeypatch.delenv("NEEDLE_LANG")
-    # Now STITCHER_LANG ("de") should take effect
-    assert nexus.get("key") == "de"
-    
-    # Priority 4: System LANG env var
-    monkeypatch.delenv("STITCHER_LANG")
-    monkeypatch.setenv("LANG", "fr_FR.UTF-8")
-    assert nexus.get("key") == "fr"
-
-    # Priority 5: Default language
-    monkeypatch.delenv("LANG")
-    assert nexus.get("key") == "en"
+~~~~~act
+patch_file
+pyproject.toml
+~~~~~
+~~~~~toml.old
+pythonpath = [
+    "packages/stitcher-spec/src", 
+    "packages/stitcher-common/src", 
+    "packages/stitcher-scanner/src", 
+    "packages/stitcher-io/src", 
+    "packages/stitcher-config/src", 
+    "packages/stitcher-application/src", 
+    "packages/stitcher-cli/src", 
+    "packages/stitcher-needle/src",
+    "packages/pyneedle-spec/src",
+    "packages/pyneedle-pointer/src",
+    "packages/pyneedle-nexus/src"
+]
+~~~~~
+~~~~~toml.new
+pythonpath = [
+    "packages/stitcher-spec/src", 
+    "packages/stitcher-common/src", 
+    "packages/stitcher-scanner/src", 
+    "packages/stitcher-io/src", 
+    "packages/stitcher-config/src", 
+    "packages/stitcher-application/src", 
+    "packages/stitcher-cli/src", 
+    "packages/stitcher-needle/src",
+    "packages/pyneedle-spec/src",
+    "packages/pyneedle-pointer/src",
+    "packages/pyneedle-nexus/src",
+    "packages/pyneedle/src"
+]
 ~~~~~
 
 ### 下一步建议
-通过使用真实的 `SemanticPointer` 和正确的测试逻辑，我们现在应该拥有一个完全通过的测试套件。
+我们已经成功地将 `Needle` 重构为一个高度模块化、协议优先、可测试的生态系统，并提供了一个简单易用的顶层 API。
 
-一旦验证通过，我们将进入 **Phase 4: 电池组装 (pyneedle)**，这是将所有成果转化为最终用户产品的最后一步。
+下一步的关键任务是：
+1.  **迁移消费者**: 逐一更新 `stitcher-cli`, `stitcher-application` 等包，将它们对 `stitcher-needle` 的依赖切换到新的 `pyneedle` 包。
+2.  **删除旧包**: 在所有消费者迁移完毕后，安全地删除 `packages/stitcher-needle`。
