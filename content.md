@@ -1,145 +1,43 @@
-为了彻底解决这个问题并获得更好的调试信息，我们将采取两步走的策略：
-1.  **增强工具**: 修改 `VenvHarness`，使其在安装失败时明确打印 `stdout` 和 `stderr`，防止关键错误信息被吞没。
-2.  **隔离并修复测试**: 修改测试用例，将两个包的安装步骤分开（以便精确定位哪个包构建失败），并将 `proj_with_runtime` 恢复为标准的 `src` 布局（这通常是 `hatchling` 支持得最好的布局），同时确保 `__init__.py` 存在。
+让我们尝试一个更激进的简化：**完全放弃 Hatchling，改用 Setuptools**。
+为什么？
+1.  这是测试环境，我们只关心“能否安装一个包”。
+2.  `setuptools` 在大多数环境中是预装的或者是默认回退，配置起来极其简单且容错率高。
+3.  我们不需要 `hatchling` 的高级特性。
+4.  这能立即消除“为什么调用了 setuptools”的疑虑——我们就显式地使用它。
 
-## [WIP] fix(test): 增强 Harness 调试能力并修复命名空间测试布局
+这将使测试更加健壮，不再依赖于构建后端的具体行为。
 
-### 用户需求
-1.  修复 `test_namespace_coexistence` 测试中的 `pip install` 错误。
-2.  增强 `VenvHarness` 的错误报告能力，以便在未来发生类似构建错误时能快速诊断。
+### [WIP] fix(test): 切换至 Setuptools 以修复测试包构建
 
-### 评论
-盲目猜测构建错误的原因效率极低。通过增强 `VenvHarness`，我们能确切看到 `pip`（以及底层的 `hatchling`）在抱怨什么。同时，将测试中的包布局恢复为 Python 社区推荐的 `src` 布局，并显式配置 `hatchling`，是解决构建问题的最正统路径。分步安装则能让我们确定到底是存根包还是运行时包出了问题。
+#### 错误分析
+测试失败是因为 `proj_with_runtime` 包在安装时意外地触发了 `setuptools` 后端，并且由于配置不兼容（`setuptools` 期望 `project.version` 但似乎没读到，或者 `pyproject.toml` 解析失败）导致报错。为了彻底消除构建系统的不确定性，我们将显式地将该测试包切换为使用 `setuptools` 构建，这是一种更通用、更简单的构建方式，足以满足“创建一个可安装包”的测试需求。
 
-### 目标
-1.  修改 `packages/stitcher-test-utils/src/stitcher/test_utils/harness.py`，在 `install` 方法中捕获 `CalledProcessError` 并打印输出。
-2.  修改 `tests/integration/test_stub_package_namespace.py`：
-    *   将 `proj_with_runtime` 的布局改回 `src/my_project/...`。
-    *   在 `pyproject.toml` 中使用 `packages = ["src/my_project"]`。
-    *   将 `isolated_env.install` 调用拆分为两步。
+#### 用户需求
+修复 `test_namespace_coexistence` 测试中 `proj_with_runtime` 包的安装错误。
 
-### 基本原理
-*   **调试增强**: `print` 语句在 `pytest` 失败时会被捕获并显示在 "Captured stdout call" 部分，这比异常消息中的截断文本更完整。
-*   **标准布局**: `src` 布局避免了许多隐式的导入问题，`hatchling` 对其有良好的支持。明确指定 `packages = ["src/my_project"]` 告诉构建后端将 `src/my_project` 目录作为包的根目录打包到 wheel 中。
+#### 目标
+1.  修改 `tests/integration/test_stub_package_namespace.py`。
+2.  将 `proj_with_runtime` 的 `pyproject.toml` 中的 `[build-system]` 改为使用 `setuptools`。
+3.  移除 `[tool.hatch...]` 配置。
+4.  保留 `src` 布局，`setuptools` 的自动发现通常能很好地处理它（只要有 `__init__.py`）。
 
-### 标签
-#intent/fix #intent/tooling #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/namespace-test #task/action/bug-fix #task/state/continue
+#### 基本原理
+在集成测试中，辅助设施（如模拟的第三方包）应尽可能简单可靠。`setuptools` 是 Python 打包的基石，对于这种简单的“源码目录打包”场景，它的行为是最可预测的。显式指定它能避免 `pip` 在后端选择上的歧义。
+
+#### 标签
+#intent/fix #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/namespace-test #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 增强 VenvHarness 错误报告
-
-~~~~~act
-patch_file
-packages/stitcher-test-utils/src/stitcher/test_utils/harness.py
-~~~~~
-~~~~~python.old
-    def install(self, *packages: str) -> subprocess.CompletedProcess:
-        """
-        Installs packages into the virtual environment using pip.
-
-        Args:
-            *packages: A list of packages to install (can be paths or names).
-
-        Returns:
-            The result of the subprocess call.
-        """
-        return subprocess.run(
-            [str(self.python_exe), "-m", "pip", "install", *packages],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-~~~~~
-~~~~~python.new
-    def install(self, *packages: str) -> subprocess.CompletedProcess:
-        """
-        Installs packages into the virtual environment using pip.
-
-        Args:
-            *packages: A list of packages to install (can be paths or names).
-
-        Returns:
-            The result of the subprocess call.
-        """
-        try:
-            return subprocess.run(
-                [str(self.python_exe), "-m", "pip", "install", *packages],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-        except subprocess.CalledProcessError as e:
-            # Print output to ensure it's captured by pytest even if exception msg is truncated
-            print(f"--- PIP INSTALL FAILED ---\nCMD: {e.args}\n")
-            print(f"STDOUT:\n{e.stdout}\n")
-            print(f"STDERR:\n{e.stderr}\n")
-            print("--------------------------")
-            raise
-~~~~~
-
-#### Acts 2: 修复测试用例的包布局和安装步骤
+#### Acts 1: 将测试包构建后端切换为 Setuptools
 
 ~~~~~act
 patch_file
 tests/integration/test_stub_package_namespace.py
 ~~~~~
 ~~~~~python.old
-    # --- Part 2: Arrange a separate, installable RUNTIME package ---
-    # We use a flat layout (no src/ dir) here to simplify the build config and avoid
-    # potential src-layout configuration issues in the test fixture.
-    factory_runtime = WorkspaceFactory(tmp_path / "proj_with_runtime")
-    project_root_runtime = (
-        factory_runtime.with_project_name("my-project-plugin")
-        # This project provides the my_project.plugin namespace
-        .with_source(
-            "my_project/plugin.py",
-            """
-            def plugin_function():
-                return True
-            """,
-        )
-        # This __init__.py makes `my_project` a package.
-        .with_source("my_project/__init__.py", "")
-        # We need a pyproject.toml to make it an installable package
-        .with_source(
-            "pyproject.toml",
-            """
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
-name = "my-project-plugin"
-version = "0.1.0"
-
-[tool.hatch.build.targets.wheel]
-packages = ["my_project"]
-            """,
-        )
-        .build()
-    )
-
-    # --- Part 3: Install BOTH packages into the isolated environment ---
-    isolated_env.install(str(stub_pkg_path), str(project_root_runtime))
-~~~~~
-~~~~~python.new
-    # --- Part 2: Arrange a separate, installable RUNTIME package ---
-    factory_runtime = WorkspaceFactory(tmp_path / "proj_with_runtime")
-    project_root_runtime = (
-        factory_runtime.with_project_name("my-project-plugin")
-        # This project provides the my_project.plugin namespace
-        .with_source(
-            "src/my_project/plugin.py",
-            """
-            def plugin_function():
-                return True
-            """,
-        )
-        # This __init__.py makes `my_project` a package.
-        .with_source("src/my_project/__init__.py", "")
         # We need a pyproject.toml to make it an installable package
         .with_source(
             "pyproject.toml",
@@ -158,17 +56,31 @@ packages = ["src/my_project"]
         )
         .build()
     )
+~~~~~
+~~~~~python.new
+        # We need a pyproject.toml to make it an installable package
+        # We use setuptools here as it is the most standard fallback and less prone
+        # to configuration quirks in test environments than hatchling for simple cases.
+        .with_source(
+            "pyproject.toml",
+            """
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-    # --- Part 3: Install packages into the isolated environment ---
-    # Install stub package first
-    isolated_env.install(str(stub_pkg_path))
-    # Install runtime package second
-    isolated_env.install(str(project_root_runtime))
+[project]
+name = "my-project-plugin"
+version = "0.1.0"
+# Setuptools automatically discovers packages in 'src' layout if __init__.py exists.
+            """,
+        )
+        .build()
+    )
 ~~~~~
 
 ### 下一步建议
 
-请再次运行 `pytest`。
+我们已经将构建后端切换为最稳健的 `setuptools`。请再次运行 `pytest`。
 
-*   **如果测试通过**：我们将获得胜利，证明存根包与运行时包可以完美共存。
-*   **如果测试仍然失败**：这次我们将在控制台输出中看到完整的 `pip` 错误日志，这将使我们能够立刻锁定是哪个包、因为什么具体的构建错误而失败。这将是最后一次调试所需的线索。
+-   **如果测试通过**：我们将终于解决这个构建噩梦，并验证了核心的命名空间共存逻辑。
+-   **如果测试失败**：我们将根据新的错误信息（如果有）继续战斗。但我对这次修复非常有信心。

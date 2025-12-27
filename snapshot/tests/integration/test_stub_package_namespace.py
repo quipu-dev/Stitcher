@@ -44,19 +44,19 @@ def test_namespace_coexistence(tmp_path: Path, isolated_env: VenvHarness):
         # This __init__.py makes `my_project` a package.
         .with_source("src/my_project/__init__.py", "")
         # We need a pyproject.toml to make it an installable package
+        # We use setuptools here as it is the most standard fallback and less prone
+        # to configuration quirks in test environments than hatchling for simple cases.
         .with_source(
             "pyproject.toml",
             """
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "my-project-plugin"
 version = "0.1.0"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/my_project"]
+# Setuptools automatically discovers packages in 'src' layout if __init__.py exists.
             """,
         )
         .build()

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(test): 增强 Harness 调试能力并修复命名空间测试布局", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766820563.1454706, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(test): 切换至 Setuptools 以修复测试包构建", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766820634.082613, "duration_ms": 0}}
