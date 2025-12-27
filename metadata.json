@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(config): 引入多目标配置以支持 Monorepo 存根包生成", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766811965.7406008, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(core): 升级 Config 与 Application 以支持多目标生成", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766812378.7055554, "duration_ms": 0}}
