@@ -1,68 +1,142 @@
-Excellent. The test failed, and the output gives us the exact information we need. This is a perfect "Red" state.
+好的，测试通过。我们已经成功验证了 `stitcher` 生成的存根包可以被正确安装和解析。
 
-Your analysis is spot on. The failure isn't because the stubs are wrong; in fact, the stubs are working so well that `mypy` was able to resolve the type. The failure is because **my test's assertion was incorrect** about what `mypy` would output.
+现在，我们进入下一个关键的 TDD 周期，解决 Monorepo 场景下一个非常棘手的问题：命名空间冲突。我们将编写一个测试来模拟这种情况，并验证我们的存根包设计是否足够健壮，能够避免它。
 
-## [WIP] 修复测试用例中的断言逻辑
-
-### 错误分析
-1.  **Mypy's Behavior**: 当对一个类名（如 `MyModel`）使用 `reveal_type` 时，`mypy` 默认揭示的是其**构造函数 (`__init__`) 的签名**，而不是类本身的类型。输出 `Revealed type is "def (id: builtins.int) -> my_project.models.MyModel"` 清楚地表明 `mypy` 成功读取了存根文件并理解了 `MyModel` 的构造方式。
-2.  **Flawed Assertion**: 我的测试断言 `assert 'Revealed type is "Type[my_project.models.MyModel]"' in result.stdout` 是错误的。我错误地预期 `mypy` 会返回 `Type[...]`（代表类对象本身的类型），但它实际上返回了构造函数的函数签名。
-3.  **Conclusion**: 这是一个测试逻辑的 bug，而不是 `stitcher` 生成代码的 bug。我们需要修复测试，使其断言与 `mypy` 的实际行为保持一致。
+## [WIP] test: 添加命名空间共存测试
 
 ### 用户需求
-修复 `test_stubs_install_and_resolve` 测试用例中的断言逻辑，使其能够正确验证 `mypy` 从存根包中解析出的类型信息，从而使测试通过。
+根据 `存根包需要创建的测试列表` 的规划，创建一个集成测试，用于验证当一个存根包 (`-stubs`) 和一个常规的源码包共同贡献给同一个命名空间时，类型检查器是否能够正确地同时识别两者，而不会发生遮蔽效应（shadowing）。
 
 ### 评论
-这次失败是一个非常有价值的学习过程。它教会我们，与外部工具（如 `mypy`）集成时，测试断言必须对该工具的输出格式有精确的了解。一个健壮的测试不应该过度依赖可能变化的输出格式。因此，我们将采用一种更灵活的断言方式——检查输出中是否包含关键的、语义正确的子字符串，而不是进行字节级的完全匹配。
+这个测试直接命中了在 Monorepo 架构中使用类型存根的核心痛点。许多简单的存根方案会因为在 `site-packages` 中创建了 `my_namespace/__init__.pyi` 而导致类型检查器认为该命名空间已经“终结”，从而无法发现同一命名空间下的其他子包（如 `my_namespace.plugin`）。通过 PEP 561 规范的 `-stubs` 目录结构正是为了解决这个问题。这个测试将验证我们的实现是否正确地利用了该规范。
 
 ### 目标
-1.  修改 `tests/integration/test_stub_package_resolution.py` 文件。
-2.  将失败的断言从检查一个硬编码的、完整的 `reveal_type` 输出字符串，改为检查输出中是否包含了**关键的类型标识符**，即 `my_project.models.MyModel`。
+1.  在 `tests/integration/` 目录下创建 `test_stub_package_namespace.py` 文件。
+2.  编写一个新的测试用例 `test_namespace_coexistence`。
+3.  在测试中，构建一个模拟的 Monorepo 环境，其中包含：
+    *   一个由 `stitcher` 生成的 `my-project-stubs` 包，它为 `my_project.core` 提供类型。
+    *   一个常规的、需要被 `pip install` 的 `my-project-plugin` 包，它提供 `my_project.plugin` 模块。
+4.  编写一个 `client.py` 脚本，同时 `import` 来自存根包和源码包的模块。
+5.  运行 `mypy` 并断言其能够成功解析两个导入，不会报告 "Module not found" 或类似的命名空间冲突错误。
 
 ### 基本原理
-我们将把断言条件放宽，不再要求 `mypy` 的输出与一个模板完全一致。相反，我们只验证最重要的信息：**完全限定类名 `my_project.models.MyModel` 是否出现在了 `mypy` 的输出中**。只要它在，就证明 `mypy` 成功地从我们的存根包中定位并解析了正确的类型。这种方法更加健壮，因为即使未来 `mypy` 调整其 `reveal_type` 的输出格式（例如，改变 `note:` 前缀），我们的测试也依然有效。
+这个测试的精髓在于模拟真实世界中包的安装和发现过程。
+1.  我们会创建两个独立的、可安装的 Python 包。一个是 `stitcher` 生成的存根包，另一个是模拟的插件包。
+2.  `isolated_env.install()` 会将这两个包都安装到同一个干净的 `site-packages` 目录中。
+3.  此时，`site-packages` 会同时包含 `my_project-stubs/` 和 `my_project/plugin/`。
+4.  当 `mypy` 运行时，它应该足够智能（因为它遵循 PEP 561），能够理解 `my_project-stubs/` 为 `my_project` 命名空间提供了类型信息，**同时**继续在其他地方查找 `my_project` 命名空间下的其他子模块，比如 `my_project/plugin/`。
+5.  如果 `mypy` 成功运行，就证明我们的存根包结构是健壮且符合规范的。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/type-resolution-test #task/action/bug-fix #task/state/continue
+#intent/tooling #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/namespace-test #task/action/implementation #task-state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复测试用例中的断言逻辑
+#### Acts 1: 创建命名空间共存测试
 
-此操作将更新测试文件，使其断言逻辑与 `mypy` 的实际行为保持一致。
+此操作将创建新的测试文件，用于模拟并验证 Monorepo 环境下的命名空间解析。
 
 ~~~~~act
-patch_file
-tests/integration/test_stub_package_resolution.py
+write_file
+tests/integration/test_stub_package_namespace.py
 ~~~~~
-~~~~~python.old
-    # Mypy's output for a revealed class type is "Type[<class_name>]"
-    expected_type_str = 'Revealed type is "Type[my_project.models.MyModel]"'
-    assert expected_type_str in result.stdout, (
-        f"Mypy did not reveal the correct type.\n"
-        f"STDOUT:\n{result.stdout}\n"
-        f"STDERR:\n{result.stderr}"
+~~~~~python
+from pathlib import Path
+
+from stitcher.app import StitcherApp
+from stitcher.test_utils import WorkspaceFactory, VenvHarness
+
+
+def test_namespace_coexistence(tmp_path: Path, isolated_env: VenvHarness):
+    """
+    Tests that a stub package does not "kill" other parts of the same namespace.
+    This simulates a monorepo where one package provides stubs and another
+    provides runtime code under the same top-level namespace.
+    """
+    # --- Part 1: Arrange and generate the STUB package ---
+    factory_stubs = WorkspaceFactory(tmp_path / "proj_with_stubs")
+    project_root_stubs = (
+        factory_stubs.with_project_name("my-project")
+        .with_config({"scan_paths": ["src/my_project"], "stub_package": "stubs"})
+        .with_source(
+            "src/my_project/core.py",
+            """
+            class CoreModel:
+                pass
+            """,
+        )
+        .build()
     )
-~~~~~
-~~~~~python.new
-    # Mypy reveals the constructor for a class name. We just need to check if
-    # the fully qualified name is present in the output, which proves resolution.
-    expected_substring = "my_project.models.MyModel"
-    assert expected_substring in result.stdout, (
-        f"Mypy did not reveal the correct type.\n"
-        f"Expected to find '{expected_substring}' in stdout.\n"
-        f"STDOUT:\n{result.stdout}\n"
-        f"STDERR:\n{result.stderr}"
+
+    app = StitcherApp(root_path=project_root_stubs)
+    app.run_from_config()
+    stub_pkg_path = project_root_stubs / "stubs"
+
+    # --- Part 2: Arrange a separate, installable RUNTIME package ---
+    factory_runtime = WorkspaceFactory(tmp_path / "proj_with_runtime")
+    project_root_runtime = (
+        factory_runtime.with_project_name("my-project-plugin")
+        # This project provides the my_project.plugin namespace
+        .with_source(
+            "src/my_project/plugin.py",
+            """
+            def plugin_function():
+                return True
+            """,
+        )
+        # We need a pyproject.toml to make it an installable package
+        .with_source(
+            "pyproject.toml",
+            """
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "my-project-plugin"
+version = "0.1.0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/my_project"]
+            """,
+        )
+        .build()
     )
+
+    # --- Part 3: Install BOTH packages into the isolated environment ---
+    isolated_env.install(str(stub_pkg_path), str(project_root_runtime))
+
+    # --- Part 4: Create a client that uses BOTH namespaces ---
+    client_script = tmp_path / "client.py"
+    client_script.write_text(
+        """
+from my_project.core import CoreModel
+from my_project.plugin import plugin_function
+
+reveal_type(CoreModel)
+reveal_type(plugin_function)
+"""
+    )
+
+    # --- Part 5: Run mypy and assert it resolves both ---
+    result = isolated_env.run_type_check(client_script)
+
+    assert result.returncode == 0, f"Mypy failed with errors:\n{result.stderr}"
+
+    # Assert that the type from the STUB package was resolved
+    assert "my_project.core.CoreModel" in result.stdout
+
+    # Assert that the type from the RUNTIME package was also resolved
+    assert "def () -> builtins.bool" in result.stdout
 ~~~~~
 
 ### 下一步建议
 
-现在，测试用例中的断言已经被修正，以反映 `mypy` 的真实行为。请您再次运行 `pytest`。
+我们已经构建了这个复杂的、高度仿真的 Monorepo 测试场景。请运行 `pytest` 来执行它。
 
--   **如果测试通过**，我们就成功完成了这个关键特性的 Red-Green 循环。下一步，我们将进入下一个挑战：**命名空间共存测试**，确保我们的存根包在 Monorepo 场景下不会“杀死”其他子包的类型解析。
--   **如果测试仍然失败**，我们将根据新的输出进行分析。
+-   **如果测试通过**，这标志着 `stitcher` 的核心存根包生成功能已经达到了一个非常成熟和健壮的水平。我们可以自信地认为它能够在复杂的项目结构中正常工作。
+-   **如果测试失败**，`mypy` 的错误信息（很可能是 `Module 'my_project' has no attribute 'plugin'`）将精确地告诉我们，我们的存根包结构在某些方面仍然存在缺陷。
 
-请运行测试并告知我结果。
+请执行测试并告诉我结果。

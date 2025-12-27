@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] 修复测试用例中的断言逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766819942.6978655, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 添加命名空间共存测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766820012.794612, "duration_ms": 0}}
