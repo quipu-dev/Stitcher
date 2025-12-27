@@ -2,7 +2,6 @@ __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
 from pathlib import Path
 from stitcher.common import stitcher_loader
-from pathlib import Path
 
 # --- Auto-register CLI assets ---
 try:
