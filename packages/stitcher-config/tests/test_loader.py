@@ -36,7 +36,7 @@ def workspace(tmp_path: Path) -> Path:
 
 def test_load_config_discovers_plugins(workspace: Path):
     # Act
-    config = load_config_from_path(workspace)
+    config, project_name = load_config_from_path(workspace)
 
     # Assert
     assert config.scan_paths == ["src/app"]

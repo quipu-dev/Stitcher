@@ -1,0 +1,7 @@
+{
+    "generate.file.success": "✅ 已生成存根: {path}",
+    "generate.run.complete": "✨ 生成完成。{count} 个文件已创建。",
+    "generate.stub_pkg.scaffold": "正在搭建存根包 '{name}'...",
+    "generate.stub_pkg.exists": "ℹ️  存根包 '{name}' 已存在，跳过创建。",
+    "generate.stub_pkg.success": "✅ 已创建存根包 '{name}'。"
+}

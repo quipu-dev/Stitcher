@@ -17,6 +17,11 @@ class WorkspaceFactory:
         tool["stitcher"] = stitcher_config
         return self
 
+    def with_project_name(self, name: str) -> "WorkspaceFactory":
+        project = self._pyproject_data.setdefault("project", {})
+        project["name"] = name
+        return self
+
     def with_entry_points(
         self, group: str, entry_points: Dict[str, str]
     ) -> "WorkspaceFactory":
@@ -54,14 +59,17 @@ class WorkspaceFactory:
             content_to_write = ""
             fmt = file_spec["format"]
             content = file_spec["content"]
+            fmt = file_spec["format"]
 
             if fmt == "toml":
-                content_to_write = tomli_w.dumps(content)
-            elif fmt == "yaml":
-                content_to_write = yaml.dump(content, indent=2)
-            else:  # raw
-                content_to_write = content
-
-            output_path.write_text(content_to_write, encoding="utf-8")
+                with output_path.open("wb") as f:
+                    tomli_w.dump(content, f)
+            else:
+                content_to_write = ""
+                if fmt == "yaml":
+                    content_to_write = yaml.dump(content, indent=2)
+                else:  # raw
+                    content_to_write = content
+                output_path.write_text(content_to_write, encoding="utf-8")
 
         return self.root_path

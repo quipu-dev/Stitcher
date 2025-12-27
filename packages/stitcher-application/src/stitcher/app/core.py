@@ -13,8 +13,12 @@ from stitcher.io import StubGenerator
 from stitcher.spec import ModuleDef
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.config import load_config_from_path
-from stitcher.app.services import DocumentManager, SignatureManager
+from stitcher.config import load_config_from_path, StitcherConfig
+from stitcher.app.services import (
+    DocumentManager,
+    SignatureManager,
+    StubPackageManager,
+)
 
 
 class StitcherApp:
@@ -23,6 +27,7 @@ class StitcherApp:
         self.generator = StubGenerator()
         self.doc_manager = DocumentManager(root_path)
         self.sig_manager = SignatureManager(root_path)
+        self.stub_pkg_manager = StubPackageManager()
 
     def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
         modules = []
@@ -45,12 +50,12 @@ class StitcherApp:
         """
         path_obj = Path(file_path)
         parts = path_obj.parts
-        
+
         # Find the LAST occurrence of 'src' to handle potential nested structures correctly
         try:
             # rindex equivalent for list
             src_index = len(parts) - 1 - parts[::-1].index("src")
-            return Path(*parts[src_index + 1:])
+            return Path(*parts[src_index + 1 :])
         except ValueError:
             # 'src' not found, fallback to original path
             return path_obj
@@ -96,23 +101,69 @@ class StitcherApp:
 
         return list(virtual_modules.values())
 
-    def _generate_stubs(self, modules: List[ModuleDef], stub_path: Optional[str] = None) -> List[Path]:
+    def _scaffold_stub_package(
+        self, config: StitcherConfig, project_name: Optional[str]
+    ):
+        if not config.stub_package or not project_name:
+            return
+
+        pkg_path = self.root_path / config.stub_package
+        stub_pkg_name = f"{project_name}-stubs"
+        bus.info(L.generate.stub_pkg.scaffold, name=stub_pkg_name)
+        created = self.stub_pkg_manager.scaffold(pkg_path, project_name)
+        if created:
+            bus.success(L.generate.stub_pkg.success, name=stub_pkg_name)
+        else:
+            bus.info(L.generate.stub_pkg.exists, name=stub_pkg_name)
+
+    def _generate_stubs(
+        self, modules: List[ModuleDef], config: StitcherConfig
+    ) -> List[Path]:
         generated_files: List[Path] = []
+        created_py_typed: set[Path] = set()
+
         for module in modules:
             # Step 1: Hydrate IR with external docs (The "Stitching" process)
             self.doc_manager.apply_docs_to_module(module)
 
             # Step 2: Generate code
             pyi_content = self.generator.generate(module)
-            
+
             # Determine Output Path
-            if stub_path:
-                # Centralized mode: map physical path to logical path inside stub_path
+            if config.stub_package:
+                # Stub Package mode
                 logical_path = self._derive_logical_path(module.file_path)
-                output_path = self.root_path / stub_path / logical_path.with_suffix(".pyi")
+                output_path = (
+                    self.root_path
+                    / config.stub_package
+                    / "src"
+                    / logical_path.with_suffix(".pyi")
+                )
+
+                # Create py.typed marker file in top-level package dir
+                if logical_path.parts:
+                    top_level_pkg_dir = (
+                        self.root_path
+                        / config.stub_package
+                        / "src"
+                        / logical_path.parts[0]
+                    )
+                    if top_level_pkg_dir not in created_py_typed:
+                        top_level_pkg_dir.mkdir(parents=True, exist_ok=True)
+                        (top_level_pkg_dir / "py.typed").touch(exist_ok=True)
+                        created_py_typed.add(top_level_pkg_dir)
+
+            elif config.stub_path:
+                # Centralized stub_path mode
+                logical_path = self._derive_logical_path(module.file_path)
+                output_path = (
+                    self.root_path / config.stub_path / logical_path.with_suffix(".pyi")
+                )
             else:
-                # Colocated mode: generate next to source file
-                output_path = self.root_path / Path(module.file_path).with_suffix(".pyi")
+                # Colocated mode
+                output_path = self.root_path / Path(module.file_path).with_suffix(
+                    ".pyi"
+                )
 
             # Critical step: ensure parent directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -129,7 +180,11 @@ class StitcherApp:
         return generated_files
 
     def run_from_config(self) -> List[Path]:
-        config = load_config_from_path(self.root_path)
+        config, project_name = load_config_from_path(self.root_path)
+
+        # 0. Scaffold stub package if configured
+        if config.stub_package:
+            self._scaffold_stub_package(config, project_name)
 
         # 1. Process source files
         files_to_scan = []
@@ -152,7 +207,7 @@ class StitcherApp:
             bus.warning(L.warning.no_files_or_plugins_found)
             return []
 
-        generated_files = self._generate_stubs(all_modules, stub_path=config.stub_path)
+        generated_files = self._generate_stubs(all_modules, config)
 
         if generated_files:
             bus.success(L.generate.run.complete, count=len(generated_files))
@@ -160,7 +215,7 @@ class StitcherApp:
         return generated_files
 
     def run_init(self) -> List[Path]:
-        config = load_config_from_path(self.root_path)
+        config, _ = load_config_from_path(self.root_path)
 
         # 1. Discover and scan source files
         files_to_scan = []
@@ -200,7 +255,7 @@ class StitcherApp:
         return created_files
 
     def run_check(self) -> bool:
-        config = load_config_from_path(self.root_path)
+        config, _ = load_config_from_path(self.root_path)
 
         files_to_scan = []
         for scan_path_str in config.scan_paths:
@@ -268,7 +323,7 @@ class StitcherApp:
         self, strip: bool = False, force: bool = False, reconcile: bool = False
     ) -> bool:
         bus.info(L.hydrate.run.start)
-        config = load_config_from_path(self.root_path)
+        config, _ = load_config_from_path(self.root_path)
         modules = self._scan_files(self._get_files_from_config(config))
 
         if not modules:
@@ -354,7 +409,7 @@ class StitcherApp:
         return True
 
     def run_strip(self) -> List[Path]:
-        config = load_config_from_path(self.root_path)
+        config, _ = load_config_from_path(self.root_path)
         files_to_scan = self._get_files_from_config(config)
         modified_files: List[Path] = []
 
@@ -378,7 +433,7 @@ class StitcherApp:
         return modified_files
 
     def run_eject(self) -> List[Path]:
-        config = load_config_from_path(self.root_path)
+        config, _ = load_config_from_path(self.root_path)
         modules = self._scan_files(self._get_files_from_config(config))
         modified_files: List[Path] = []
         total_docs_found = 0

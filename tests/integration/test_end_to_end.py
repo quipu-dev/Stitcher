@@ -1,6 +1,7 @@
 import sys
 
 from stitcher.app import StitcherApp
+from stitcher.config import StitcherConfig
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
@@ -24,7 +25,7 @@ def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
         # as per original test logic
         source_file = project_root / "greet.py"
         module = app._scan_files([source_file])[0]
-        app._generate_stubs([module])
+        app._generate_stubs([module], StitcherConfig())
 
     spy_bus.assert_id_called(L.generate.file.success, level="success")
 

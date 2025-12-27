@@ -1,7 +1,7 @@
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Any, Dict, Optional
+from typing import List, Any, Dict, Optional, Tuple
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -14,6 +14,7 @@ class StitcherConfig:
     scan_paths: List[str] = field(default_factory=list)
     plugins: Dict[str, str] = field(default_factory=dict)
     stub_path: Optional[str] = None
+    stub_package: Optional[str] = None
 
 
 def _find_pyproject_toml(search_path: Path) -> Path:
@@ -43,21 +44,27 @@ def _find_plugins(workspace_root: Path) -> Dict[str, str]:
     return plugins
 
 
-def load_config_from_path(search_path: Path) -> StitcherConfig:
+def load_config_from_path(search_path: Path) -> Tuple[StitcherConfig, Optional[str]]:
     plugins = _find_plugins(search_path)
+    project_name: Optional[str] = None
 
     try:
         config_path = _find_pyproject_toml(search_path)
         with open(config_path, "rb") as f:
             data = tomllib.load(f)
+
+        project_name = data.get("project", {}).get("name")
         stitcher_data: Dict[str, Any] = data.get("tool", {}).get("stitcher", {})
+
     except FileNotFoundError:
         # If no root config file, still return discovered plugins with default scan_paths
-        return StitcherConfig(plugins=plugins)
+        return StitcherConfig(plugins=plugins), None
 
     # Create config with data from file, falling back to defaults.
-    return StitcherConfig(
+    config = StitcherConfig(
         scan_paths=stitcher_data.get("scan_paths", []),
         plugins=plugins,
         stub_path=stitcher_data.get("stub_path"),
+        stub_package=stitcher_data.get("stub_package"),
     )
+    return config, project_name
