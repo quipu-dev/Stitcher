@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(deps): 在根配置中声明 pyneedle-* 工作区源", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766802337.674345, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix(build): 修正 pyrefly 配置并补全工作区开发依赖", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766802405.9772096, "duration_ms": 0}}

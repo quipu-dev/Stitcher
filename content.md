@@ -1,72 +1,52 @@
-好的，你再次发现了问题的关键。`uv` 的错误信息非常精确：我们在上一步中将 `pyneedle` 包添加到了根项目的 `[dev]` 依赖中，但没有在根项目的 `[tool.uv.sources]` 部分告诉 `uv` 这个包是工作区的一部分。
+太棒了！测试通过意味着我们的配置修正和依赖项补全已经完全生效，现在开发环境已经能够正确识别并加载 Monorepo 中的所有组件。
 
-虽然每个 `pyneedle-*` 包自己的 `pyproject.toml` 文件都正确地声明了 *它们自己* 的依赖关系，但当根项目将它们作为依赖项时，根项目也必须声明在哪里可以找到它们。
+我将生成一个 `[COMMIT]` 计划，将这些针对构建配置和工作区依赖的改进正式提交到 Git 历史中。
 
-我们将为根 `pyproject.toml` 补全这些缺失的声明。
-
-## [WIP] fix(deps): 在根配置中声明 pyneedle-* 工作区源
-
-### 错误分析
-`uv pip install -e .[dev]` 命令失败，并报错 `pyneedle is included as a workspace member, but is missing an entry in tool.uv.sources`。
-
-这是因为上一步操作虽然将 `pyneedle` 系列包加入了 `[project.optional-dependencies].dev` 列表，但没有同步更新根 `pyproject.toml` 中的 `[tool.uv.sources]` 部分。`uv` 在解析 `dev` 依赖项时，虽然通过 `[tool.uv.workspace].members` 知道 `pyneedle` 是一个工作区成员，但没有在 `[tool.uv.sources]` 中找到一个显式的映射规则，因此无法确认如何处理这个依赖，从而导致解析失败。
+## [COMMIT] fix(build): 修正 pyrefly 配置并补全工作区开发依赖
 
 ### 用户需求
-修正根 `pyproject.toml` 文件，使其包含所有 `pyneedle-*` 包的 `uv.sources` 声明，以便 `uv pip install -e .[dev]` 命令可以成功执行。
+将已验证的配置修复（`pyrefly` 键名修正）和依赖项补全（`pyneedle-*` 加入 `dev` 依赖及 `uv.sources`）提交到 Git 仓库。
 
 ### 评论
-这是 `uv` 工作区规范的一个核心特性。任何时候一个工作区包被另一个包（包括根项目本身）依赖时，依赖方都必须在其 `[tool.uv.sources]` 中明确声明该依赖来自工作区 (`{ workspace = true }`)。这是一个保证依赖解析正确性和确定性的关键步骤。
+这次提交解决了一个典型的 Monorepo 认知偏差问题。通过统一测试、静态分析和运行时的视图，我们不仅修复了具体的导入错误，还提升了整个项目的工程标准。这是一个逻辑上完整且重要的改进。
 
 ### 目标
-1.  在根 `pyproject.toml` 文件的 `[tool.uv.sources]` 部分，为 `pyneedle`、`pyneedle-nexus`、`pyneedle-pointer` 和 `pyneedle-spec` 添加 `{ workspace = true }` 声明。
+1.  将根目录 `pyproject.toml` 的更改提交到 Git。
 
 ### 基本原理
-通过在根 `pyproject.toml` 的 `[tool.uv.sources]` 中添加缺失的条目，我们为 `uv` 解析器提供了完整的上下文。当它在 `dev` 依赖项中看到 `pyneedle` 时，会查询 `[tool.uv.sources]`，找到对应的 `{ workspace = true }` 规则，并将其正确地解析为本地的 `packages/pyneedle` 目录，而不是去 PyPI 查找。
+遵循 `[COMMIT]` 规范，我们使用一个包含详细说明的原子提交，以便未来能够清晰地追溯为何需要同步更新 `dev` 依赖和 `uv.sources`。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/build #scope/dx #task/domain/testing #task/object/config #task/action/fix #task/state/continue
+#intent/fix #flow/done #priority/medium #comp/build #scope/dx #ai/instruct
+#task/domain/testing #task/object/config #task/action/fix #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 更新根 `pyproject.toml` 的 `uv.sources`
+#### Acts 1: 提交变更
 
-我们将把所有 `pyneedle-*` 包添加到 `[tool.uv.sources]` 列表。
+我们将使用 `git add .` 暂存所有更改，并创建一个语义化的提交记录。
 
 ~~~~~act
-patch_file
-pyproject.toml
+git_add
+.
 ~~~~~
-~~~~~old
-[tool.uv.sources]
-stitcher-spec = { workspace = true }
-stitcher-common = { workspace = true }
-stitcher-scanner = { workspace = true }
-stitcher-io = { workspace = true }
-stitcher-config = { workspace = true }
-stitcher-application = { workspace = true }
-stitcher-cli = { workspace = true }
-stitcher-needle = { workspace = true }
-stitcher-test-utils = { workspace = true }
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~new
-[tool.uv.sources]
-pyneedle = { workspace = true }
-pyneedle-nexus = { workspace = true }
-pyneedle-pointer = { workspace = true }
-pyneedle-spec = { workspace = true }
-stitcher-spec = { workspace = true }
-stitcher-common = { workspace = true }
-stitcher-scanner = { workspace = true }
-stitcher-io = { workspace = true }
-stitcher-config = { workspace = true }
-stitcher-application = { workspace = true }
-stitcher-cli = { workspace = true }
-stitcher-needle = { workspace = true }
-stitcher-test-utils = { workspace = true }
+~~~~~text
+fix(build): align pyrefly config and workspace dependencies
+
+- Corrects 'pyrefly' configuration key from 'extra_paths' to 'extraPaths' to match Pyright's naming convention, enabling proper static analysis path resolution.
+- Adds missing 'pyneedle-*' packages to '[project.optional-dependencies].dev' to ensure the runtime environment (REPL/scripts) can resolve these modules after a 'uv pip install -e .[dev]'.
+- Completes 'tool.uv.sources' for all 'pyneedle-*' workspace members to ensure consistent dependency resolution within the UV workspace.
+
+These changes resolve 'ModuleNotFoundError' encountered in standard Python runtimes and fix 'missing-import' errors in pyrefly.
 ~~~~~
 
 ### 下一步建议
-1.  应用此变更。
-2.  再次运行 `uv pip install -e .[dev]`。这次它应该可以成功解析并安装所有工作区包了。
+- **环境检查**: 建议其他开发者在拉取代码后重新执行 `uv pip install -e .[dev]` 以更新本地环境。
+- **CI 验证**: 如果项目配置了 CI，请观察静态检查步骤是否已经变绿。
+- **文档更新**: 如果有开发者指南，可以简要提及在添加新的工作区包时，需要同步更新根目录的 `dev` 依赖和 `uv.sources`。
