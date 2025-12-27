@@ -25,7 +25,7 @@ def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypa
             }
         )
         # Define the main project's name, which is used for the stub package name
-        .with_source("pyproject.toml", '[project]\nname = "my-test-project"')
+        .with_project_name("my-test-project")
         .with_source(
             "src/my_app/main.py",
             """

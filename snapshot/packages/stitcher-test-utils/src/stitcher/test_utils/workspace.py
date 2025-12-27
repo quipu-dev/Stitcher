@@ -17,6 +17,11 @@ class WorkspaceFactory:
         tool["stitcher"] = stitcher_config
         return self
 
+    def with_project_name(self, name: str) -> "WorkspaceFactory":
+        project = self._pyproject_data.setdefault("project", {})
+        project["name"] = name
+        return self
+
     def with_entry_points(
         self, group: str, entry_points: Dict[str, str]
     ) -> "WorkspaceFactory":
