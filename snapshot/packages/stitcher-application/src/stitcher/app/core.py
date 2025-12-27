@@ -39,7 +39,9 @@ class FileCheckResult:
 
     @property
     def is_clean(self) -> int:
-        return self.error_count == 0 and self.warning_count == 0 and self.reconciled == 0
+        return (
+            self.error_count == 0 and self.warning_count == 0 and self.reconciled == 0
+        )
 
 
 class StitcherApp:
@@ -394,13 +396,14 @@ class StitcherApp:
                 if res.error_count > 0:
                     global_failed_files += 1
                     total_file_issues = res.error_count + res.warning_count
-                    bus.error(
-                        L.check.file.fail, path=res.path, count=total_file_issues
-                    )
+                    bus.error(L.check.file.fail, path=res.path, count=total_file_issues)
                 elif res.warning_count > 0:
                     global_warnings_files += 1
                     # Special handling for untracked headers which are printed differently
-                    if "untracked" in res.warnings or "untracked_detailed" in res.warnings:
+                    if (
+                        "untracked" in res.warnings
+                        or "untracked_detailed" in res.warnings
+                    ):
                         # Logic handled in detail block below
                         pass
                     else:

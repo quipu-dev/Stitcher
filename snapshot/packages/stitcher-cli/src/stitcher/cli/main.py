@@ -39,7 +39,7 @@ def check(
         False,
         "--update-signatures",
         help=nexus.get(L.cli.option.update_signatures.help),
-    )
+    ),
 ):
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)

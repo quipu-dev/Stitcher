@@ -130,7 +130,9 @@ def test_check_with_update_signatures_flag_reconciles_changes(tmp_path, monkeypa
     spy_bus_reconcile.assert_id_called(L.check.run.signatures_updated, level="success")
     # Crucially, it should NOT have reported a mismatch error
     mismatch_errors = [
-        m for m in spy_bus_reconcile.get_messages() if m["id"] == str(L.check.issue.mismatch)
+        m
+        for m in spy_bus_reconcile.get_messages()
+        if m["id"] == str(L.check.issue.mismatch)
     ]
     assert not mismatch_errors, "Mismatch error was reported during reconciliation"
 
