@@ -317,12 +317,19 @@ class StitcherApp:
                 sig_issues = self.sig_manager.check_signatures(module)
 
                 missing = doc_issues["missing"]
+                pending = doc_issues["pending"]
+                redundant = doc_issues["redundant"]
                 extra = doc_issues["extra"]
                 conflict = doc_issues["conflict"]
                 mismatched = sig_issues
 
-                error_count = len(extra) + len(mismatched) + len(conflict)
-                warning_count = len(missing)
+                # Errors: Critical inconsistencies or unsynced changes
+                error_count = (
+                    len(extra) + len(mismatched) + len(conflict) + len(pending)
+                )
+                # Warnings: Suggestions for improvement
+                warning_count = len(missing) + len(redundant)
+
                 total_issues = error_count + warning_count
 
                 if total_issues == 0:
@@ -339,8 +346,15 @@ class StitcherApp:
                     )
                     total_warnings += 1
 
+                # Report Warnings First
                 for key in sorted(list(missing)):
                     bus.warning(L.check.issue.missing, key=key)
+                for key in sorted(list(redundant)):
+                    bus.warning(L.check.issue.redundant, key=key)
+
+                # Report Errors
+                for key in sorted(list(pending)):
+                    bus.error(L.check.issue.pending, key=key)
                 for key in sorted(list(extra)):
                     bus.error(L.check.issue.extra, key=key)
                 for key in sorted(list(conflict)):
