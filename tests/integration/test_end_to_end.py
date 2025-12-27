@@ -73,6 +73,67 @@ def test_app_run_from_config_with_source_files(tmp_path, monkeypatch):
     assert len(success_messages) == 3
 
 
+def test_app_run_multi_target(tmp_path, monkeypatch):
+    """
+    Verifies that StitcherApp correctly handles multiple targets defined in pyproject.toml.
+    """
+    # 1. Arrange
+    factory = WorkspaceFactory(tmp_path)
+    
+    # Manually injecting multi-target config into pyproject.toml via raw content
+    # because WorkspaceFactory.with_config currently assumes simple [tool.stitcher] structure.
+    # We'll just overwrite pyproject.toml at the end or use with_source for it.
+    
+    project_root = (
+        factory
+        .with_source("src/pkg_a/main.py", "def func_a(): ...")
+        .with_source("src/pkg_b/main.py", "def func_b(): ...")
+        .build()
+    )
+
+    # Overwrite pyproject.toml with multi-target config
+    (project_root / "pyproject.toml").write_text(
+        """
+[project]
+name = "monorepo"
+
+[tool.stitcher.targets.pkg_a]
+scan_paths = ["src/pkg_a"]
+stub_path = "typings/pkg_a"
+
+[tool.stitcher.targets.pkg_b]
+scan_paths = ["src/pkg_b"]
+stub_path = "typings/pkg_b"
+        """,
+        encoding="utf-8"
+    )
+
+    app = StitcherApp(root_path=project_root)
+    spy_bus = SpyBus()
+
+    # 2. Act
+    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        app.run_from_config()
+
+    # 3. Assert
+    # Check physical files
+    # Note: Stitcher preserves the package structure relative to 'src'.
+    # So 'src/pkg_a/main.py' becomes 'pkg_a/main.pyi' inside the stub output directory.
+    assert (project_root / "typings/pkg_a/pkg_a/main.pyi").exists()
+    assert (project_root / "typings/pkg_b/pkg_b/main.pyi").exists()
+
+    # Check bus messages
+    # We expect "Processing target: ..." messages
+    messages = spy_bus.get_messages()
+    processing_msgs = [m for m in messages if m["id"] == str(L.generate.target.processing)]
+    assert len(processing_msgs) == 2
+    
+    target_names = {m["params"]["name"] for m in processing_msgs}
+    assert target_names == {"pkg_a", "pkg_b"}
+
+    spy_bus.assert_id_called(L.generate.run.complete, level="success")
+
+
 def test_app_generates_stubs_for_plugins_and_sources(tmp_path, monkeypatch):
     # 1. Arrange: Setup a workspace with both source code and a plugin definition
     factory = WorkspaceFactory(tmp_path)

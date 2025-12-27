@@ -103,6 +103,15 @@ class StitcherApp:
             return
 
         pkg_path = self.root_path / config.stub_package
+        # If explicitly named stub package (via custom logic) we could assume user handles name,
+        # but here we follow the pattern of {project_name}-stubs.
+        # However, in multi-target mode, if config.name is 'stitcher', project name is still 'stitcher-python'.
+        # We might want to use the target name for the stub package name if available?
+        # BUT, the scaffold logic in stub_pkg_manager uses `project_name` to set `name` in pyproject.toml.
+        # For now, we assume user manually configured the stub package pyproject.toml if they need custom names,
+        # OR we rely on the scaffold creating a generic one.
+        # Given we just created the pyproject.toml manually in the previous step (Act 2 of previous plan),
+        # this scaffold step might just skip because file exists. This is fine.
         stub_pkg_name = f"{project_name}-stubs"
         bus.info(L.generate.stub_pkg.scaffold, name=stub_pkg_name)
         created = self.stub_pkg_manager.scaffold(pkg_path, project_name)
@@ -174,14 +183,7 @@ class StitcherApp:
             generated_files.append(output_path)
         return generated_files
 
-    def run_from_config(self) -> List[Path]:
-        config, project_name = load_config_from_path(self.root_path)
-
-        # 0. Scaffold stub package if configured
-        if config.stub_package:
-            self._scaffold_stub_package(config, project_name)
-
-        # 1. Process source files
+    def _get_files_from_config(self, config: StitcherConfig) -> List[Path]:
         files_to_scan = []
         for scan_path_str in config.scan_paths:
             scan_path = self.root_path / scan_path_str
@@ -189,123 +191,132 @@ class StitcherApp:
                 files_to_scan.extend(scan_path.rglob("*.py"))
             elif scan_path.is_file():
                 files_to_scan.append(scan_path)
+        return sorted(list(set(files_to_scan)))
 
-        unique_files = sorted(list(set(files_to_scan)))
-        source_modules = self._scan_files(unique_files)
+    def run_from_config(self) -> List[Path]:
+        configs, project_name = load_config_from_path(self.root_path)
+        all_generated_files: List[Path] = []
 
-        # 2. Process plugins
-        plugin_modules = self._process_plugins(config.plugins)
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
 
-        # 3. Combine and generate
-        all_modules = source_modules + plugin_modules
-        if not all_modules:
-            bus.warning(L.warning.no_files_or_plugins_found)
-            return []
+            # 0. Scaffold stub package if configured
+            if config.stub_package:
+                self._scaffold_stub_package(config, project_name)
 
-        generated_files = self._generate_stubs(all_modules, config)
+            # 1. Process source files
+            unique_files = self._get_files_from_config(config)
+            source_modules = self._scan_files(unique_files)
 
-        if generated_files:
-            bus.success(L.generate.run.complete, count=len(generated_files))
+            # 2. Process plugins
+            plugin_modules = self._process_plugins(config.plugins)
 
-        return generated_files
+            # 3. Combine and generate
+            all_modules = source_modules + plugin_modules
+            if not all_modules:
+                # Only warn if it's the only config, or maybe verbose log?
+                # For now, keep behavior simple.
+                if len(configs) == 1:
+                    bus.warning(L.warning.no_files_or_plugins_found)
+                continue
+
+            generated_files = self._generate_stubs(all_modules, config)
+            all_generated_files.extend(generated_files)
+
+        if all_generated_files:
+            bus.success(L.generate.run.complete, count=len(all_generated_files))
+
+        return all_generated_files
 
     def run_init(self) -> List[Path]:
-        config, _ = load_config_from_path(self.root_path)
+        configs, _ = load_config_from_path(self.root_path)
+        all_created_files: List[Path] = []
 
-        # 1. Discover and scan source files
-        files_to_scan = []
-        for scan_path_str in config.scan_paths:
-            scan_path = self.root_path / scan_path_str
-            if scan_path.is_dir():
-                files_to_scan.extend(scan_path.rglob("*.py"))
-            elif scan_path.is_file():
-                files_to_scan.append(scan_path)
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
 
-        unique_files = sorted(list(set(files_to_scan)))
-        modules = self._scan_files(unique_files)
+            unique_files = self._get_files_from_config(config)
+            modules = self._scan_files(unique_files)
 
-        if not modules:
-            bus.warning(L.warning.no_files_or_plugins_found)
-            return []
+            if not modules:
+                continue
 
-        # 2. Extract and save docs
-        created_files: List[Path] = []
-        for module in modules:
-            # Initialize signatures (Snapshot baseline)
-            self.sig_manager.save_signatures(module)
+            # 2. Extract and save docs
+            for module in modules:
+                # Initialize signatures (Snapshot baseline)
+                self.sig_manager.save_signatures(module)
 
-            # save_docs_for_module returns an empty path if no docs found/saved
-            output_path = self.doc_manager.save_docs_for_module(module)
-            if output_path and output_path.name:
-                relative_path = output_path.relative_to(self.root_path)
-                bus.success(L.init.file.created, path=relative_path)
-                created_files.append(output_path)
+                output_path = self.doc_manager.save_docs_for_module(module)
+                if output_path and output_path.name:
+                    relative_path = output_path.relative_to(self.root_path)
+                    bus.success(L.init.file.created, path=relative_path)
+                    all_created_files.append(output_path)
 
         # 3. Report results
-        if created_files:
-            bus.success(L.init.run.complete, count=len(created_files))
+        if all_created_files:
+            bus.success(L.init.run.complete, count=len(all_created_files))
         else:
             bus.info(L.init.no_docs_found)
 
-        return created_files
+        return all_created_files
 
     def run_check(self) -> bool:
-        config, _ = load_config_from_path(self.root_path)
-
-        files_to_scan = []
-        for scan_path_str in config.scan_paths:
-            scan_path = self.root_path / scan_path_str
-            if scan_path.is_dir():
-                files_to_scan.extend(scan_path.rglob("*.py"))
-            elif scan_path.is_file():
-                files_to_scan.append(scan_path)
-
-        unique_files = sorted(list(set(files_to_scan)))
-        modules = self._scan_files(unique_files)
-
-        if not modules:
-            bus.warning(L.warning.no_files_or_plugins_found)
-            return True
-
-        failed_files = 0
+        configs, _ = load_config_from_path(self.root_path)
+        all_success = True
         total_warnings = 0
+        total_failed_files = 0
 
-        for module in modules:
-            doc_issues = self.doc_manager.check_module(module)
-            sig_issues = self.sig_manager.check_signatures(module)
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
 
-            missing = doc_issues["missing"]
-            extra = doc_issues["extra"]
-            conflict = doc_issues["conflict"]
-            mismatched = sig_issues
+            unique_files = self._get_files_from_config(config)
+            modules = self._scan_files(unique_files)
 
-            error_count = len(extra) + len(mismatched) + len(conflict)
-            warning_count = len(missing)
-            total_issues = error_count + warning_count
-
-            if total_issues == 0:
+            if not modules:
                 continue
 
-            file_rel_path = module.file_path
+            for module in modules:
+                doc_issues = self.doc_manager.check_module(module)
+                sig_issues = self.sig_manager.check_signatures(module)
 
-            if error_count > 0:
-                failed_files += 1
-                bus.error(L.check.file.fail, path=file_rel_path, count=total_issues)
-            else:
-                bus.warning(L.check.file.warn, path=file_rel_path, count=total_issues)
-                total_warnings += 1
+                missing = doc_issues["missing"]
+                extra = doc_issues["extra"]
+                conflict = doc_issues["conflict"]
+                mismatched = sig_issues
 
-            for key in sorted(list(missing)):
-                bus.warning(L.check.issue.missing, key=key)
-            for key in sorted(list(extra)):
-                bus.error(L.check.issue.extra, key=key)
-            for key in sorted(list(conflict)):
-                bus.error(L.check.issue.conflict, key=key)
-            for key in sorted(list(mismatched.keys())):
-                bus.error(L.check.issue.mismatch, key=key)
+                error_count = len(extra) + len(mismatched) + len(conflict)
+                warning_count = len(missing)
+                total_issues = error_count + warning_count
 
-        if failed_files > 0:
-            bus.error(L.check.run.fail, count=failed_files)
+                if total_issues == 0:
+                    continue
+
+                file_rel_path = module.file_path
+
+                if error_count > 0:
+                    total_failed_files += 1
+                    all_success = False
+                    bus.error(L.check.file.fail, path=file_rel_path, count=total_issues)
+                else:
+                    bus.warning(
+                        L.check.file.warn, path=file_rel_path, count=total_issues
+                    )
+                    total_warnings += 1
+
+                for key in sorted(list(missing)):
+                    bus.warning(L.check.issue.missing, key=key)
+                for key in sorted(list(extra)):
+                    bus.error(L.check.issue.extra, key=key)
+                for key in sorted(list(conflict)):
+                    bus.error(L.check.issue.conflict, key=key)
+                for key in sorted(list(mismatched.keys())):
+                    bus.error(L.check.issue.mismatch, key=key)
+
+        if total_failed_files > 0:
+            bus.error(L.check.run.fail, count=total_failed_files)
             return False
 
         if total_warnings > 0:
@@ -318,154 +329,148 @@ class StitcherApp:
         self, strip: bool = False, force: bool = False, reconcile: bool = False
     ) -> bool:
         bus.info(L.hydrate.run.start)
-        config, _ = load_config_from_path(self.root_path)
-        modules = self._scan_files(self._get_files_from_config(config))
+        configs, _ = load_config_from_path(self.root_path)
 
-        if not modules:
-            bus.warning(L.warning.no_files_or_plugins_found)
-            return True
+        # For hydrate, we can collect all modules first to verify uniqueness,
+        # but processing target-by-target is also fine and consistent.
+        # We'll accumulate stats across all targets.
+        total_updated = 0
+        total_conflicts = 0
 
-        updated_files_count = 0
-        conflict_files_count = 0
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
 
-        # Phase 1: Hydrate (Update YAMLs)
-        files_to_strip = []
+            unique_files = self._get_files_from_config(config)
+            modules = self._scan_files(unique_files)
 
-        for module in modules:
-            result = self.doc_manager.hydrate_module(
-                module, force=force, reconcile=reconcile
-            )
-
-            if not result["success"]:
-                conflict_files_count += 1
-                for conflict_key in result["conflicts"]:
-                    bus.error(
-                        L.hydrate.error.conflict,
-                        path=module.file_path,
-                        key=conflict_key,
-                    )
+            if not modules:
                 continue
 
-            if result["reconciled_keys"]:
-                bus.info(
-                    L.hydrate.info.reconciled,
-                    path=module.file_path,
-                    count=len(result["reconciled_keys"]),
+            files_to_strip = []
+
+            for module in modules:
+                result = self.doc_manager.hydrate_module(
+                    module, force=force, reconcile=reconcile
                 )
 
-            if result["updated_keys"]:
-                updated_files_count += 1
-                bus.success(
-                    L.hydrate.file.success,
-                    path=module.file_path,
-                    count=len(result["updated_keys"]),
-                )
+                if not result["success"]:
+                    total_conflicts += 1
+                    for conflict_key in result["conflicts"]:
+                        bus.error(
+                            L.hydrate.error.conflict,
+                            path=module.file_path,
+                            key=conflict_key,
+                        )
+                    continue
 
-            # If successful, this file is a candidate for stripping
-            files_to_strip.append(module)
+                if result["reconciled_keys"]:
+                    bus.info(
+                        L.hydrate.info.reconciled,
+                        path=module.file_path,
+                        count=len(result["reconciled_keys"]),
+                    )
 
-        if conflict_files_count > 0:
-            bus.error(L.hydrate.run.conflict, count=conflict_files_count)
+                if result["updated_keys"]:
+                    total_updated += 1
+                    bus.success(
+                        L.hydrate.file.success,
+                        path=module.file_path,
+                        count=len(result["updated_keys"]),
+                    )
+
+                # If successful, this file is a candidate for stripping
+                files_to_strip.append(module)
+
+            # Phase 2: Strip (Modify Code) - Per target
+            if strip and files_to_strip:
+                stripped_count = 0
+                for module in files_to_strip:
+                    source_path = self.root_path / module.file_path
+                    try:
+                        original_content = source_path.read_text(encoding="utf-8")
+                        stripped_content = strip_docstrings(original_content)
+
+                        if original_content != stripped_content:
+                            source_path.write_text(stripped_content, encoding="utf-8")
+                            stripped_count += 1
+                            relative_path = source_path.relative_to(self.root_path)
+                            bus.success(L.strip.file.success, path=relative_path)
+                    except Exception as e:
+                        bus.error(L.error.generic, error=e)
+
+                if stripped_count > 0:
+                    bus.success(L.strip.run.complete, count=stripped_count)
+
+        if total_conflicts > 0:
+            bus.error(L.hydrate.run.conflict, count=total_conflicts)
             return False
 
-        if updated_files_count == 0:
+        if total_updated == 0:
             bus.info(L.hydrate.run.no_changes)
         else:
-            bus.success(L.hydrate.run.complete, count=updated_files_count)
-
-        # Phase 2: Strip (Modify Code)
-        if strip and files_to_strip:
-            # We reuse the logic from run_strip, but only for the specific files
-            # that were successfully processed/hydrated.
-            # However, run_strip scans from config. We can just invoke the transform here directly.
-            # Or simpler: Call run_strip() but limit it?
-            # run_strip currently re-scans everything.
-            # Let's implement a targeted strip logic here or refactor run_strip.
-            # For MVP, let's just do the strip logic inline here for the list of modules.
-
-            stripped_count = 0
-            for module in files_to_strip:
-                source_path = self.root_path / module.file_path
-                try:
-                    original_content = source_path.read_text(encoding="utf-8")
-                    stripped_content = strip_docstrings(original_content)
-
-                    if original_content != stripped_content:
-                        source_path.write_text(stripped_content, encoding="utf-8")
-                        stripped_count += 1
-                        relative_path = source_path.relative_to(self.root_path)
-                        bus.success(L.strip.file.success, path=relative_path)
-                except Exception as e:
-                    bus.error(L.error.generic, error=e)
-
-            if stripped_count > 0:
-                bus.success(L.strip.run.complete, count=stripped_count)
+            bus.success(L.hydrate.run.complete, count=total_updated)
 
         return True
 
     def run_strip(self) -> List[Path]:
-        config, _ = load_config_from_path(self.root_path)
-        files_to_scan = self._get_files_from_config(config)
-        modified_files: List[Path] = []
+        configs, _ = load_config_from_path(self.root_path)
+        all_modified_files: List[Path] = []
 
-        for file_path in files_to_scan:
-            try:
-                original_content = file_path.read_text(encoding="utf-8")
-                stripped_content = strip_docstrings(original_content)
+        for config in configs:
+            files_to_scan = self._get_files_from_config(config)
 
-                if original_content != stripped_content:
-                    file_path.write_text(stripped_content, encoding="utf-8")
-                    modified_files.append(file_path)
-                    relative_path = file_path.relative_to(self.root_path)
-                    bus.success(L.strip.file.success, path=relative_path)
+            for file_path in files_to_scan:
+                try:
+                    original_content = file_path.read_text(encoding="utf-8")
+                    stripped_content = strip_docstrings(original_content)
 
-            except Exception as e:
-                bus.error(L.error.generic, error=e)
+                    if original_content != stripped_content:
+                        file_path.write_text(stripped_content, encoding="utf-8")
+                        all_modified_files.append(file_path)
+                        relative_path = file_path.relative_to(self.root_path)
+                        bus.success(L.strip.file.success, path=relative_path)
 
-        if modified_files:
-            bus.success(L.strip.run.complete, count=len(modified_files))
+                except Exception as e:
+                    bus.error(L.error.generic, error=e)
 
-        return modified_files
+        if all_modified_files:
+            bus.success(L.strip.run.complete, count=len(all_modified_files))
+
+        return all_modified_files
 
     def run_eject(self) -> List[Path]:
-        config, _ = load_config_from_path(self.root_path)
-        modules = self._scan_files(self._get_files_from_config(config))
-        modified_files: List[Path] = []
+        configs, _ = load_config_from_path(self.root_path)
+        all_modified_files: List[Path] = []
         total_docs_found = 0
 
-        for module in modules:
-            docs = self.doc_manager.load_docs_for_module(module)
-            if not docs:
-                continue
+        for config in configs:
+            unique_files = self._get_files_from_config(config)
+            modules = self._scan_files(unique_files)
 
-            total_docs_found += len(docs)
-            source_path = self.root_path / module.file_path
+            for module in modules:
+                docs = self.doc_manager.load_docs_for_module(module)
+                if not docs:
+                    continue
 
-            try:
-                original_content = source_path.read_text(encoding="utf-8")
-                injected_content = inject_docstrings(original_content, docs)
+                total_docs_found += len(docs)
+                source_path = self.root_path / module.file_path
 
-                if original_content != injected_content:
-                    source_path.write_text(injected_content, encoding="utf-8")
-                    modified_files.append(source_path)
-                    relative_path = source_path.relative_to(self.root_path)
-                    bus.success(L.eject.file.success, path=relative_path)
-            except Exception as e:
-                bus.error(L.error.generic, error=e)
+                try:
+                    original_content = source_path.read_text(encoding="utf-8")
+                    injected_content = inject_docstrings(original_content, docs)
 
-        if modified_files:
-            bus.success(L.eject.run.complete, count=len(modified_files))
+                    if original_content != injected_content:
+                        source_path.write_text(injected_content, encoding="utf-8")
+                        all_modified_files.append(source_path)
+                        relative_path = source_path.relative_to(self.root_path)
+                        bus.success(L.eject.file.success, path=relative_path)
+                except Exception as e:
+                    bus.error(L.error.generic, error=e)
+
+        if all_modified_files:
+            bus.success(L.eject.run.complete, count=len(all_modified_files))
         elif total_docs_found == 0:
             bus.info(L.eject.no_docs_found)
 
-        return modified_files
-
-    def _get_files_from_config(self, config) -> List[Path]:
-        files_to_scan = []
-        for scan_path_str in config.scan_paths:
-            scan_path = self.root_path / scan_path_str
-            if scan_path.is_dir():
-                files_to_scan.extend(scan_path.rglob("*.py"))
-            elif scan_path.is_file():
-                files_to_scan.append(scan_path)
-        return sorted(list(set(files_to_scan)))
+        return all_modified_files

@@ -4,13 +4,15 @@
   Traverse upwards to find pyproject.toml.
 "StitcherConfig": |-
   Dataclass representing the [tool.stitcher] configuration.
+"StitcherConfig.name": |-
+  The target name (e.g., 'stitcher-python') used for multi-target configuration. Defaults to 'default'.
 "StitcherConfig.plugins": |-
   A dictionary of discovered plugins.
 "StitcherConfig.scan_paths": |-
   A list of paths to scan for source files.
-"_find_plugins": |-
-  Scans the entire workspace for stitcher plugins in pyproject.toml files.
-"_find_pyproject_toml": |-
-  Traverse upwards to find pyproject.toml.
+"StitcherConfig.stub_package": |-
+  The path (relative to root) to the dedicated PEP 561 stub package directory (e.g., 'stubs').
+"StitcherConfig.stub_path": |-
+  The path (relative to root) where .pyi files should be generated (e.g., 'typings'). Mutually exclusive with stub_package.
 "load_config_from_path": |-
-  Finds and loads stitcher config from pyproject.toml, and discovers plugins.
+  Finds and loads stitcher configuration from pyproject.toml, handling both single-target and multi-target modes. Returns a list of configurations.

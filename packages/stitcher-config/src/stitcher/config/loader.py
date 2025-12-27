@@ -11,6 +11,7 @@ else:
 
 @dataclass
 class StitcherConfig:
+    name: str = "default"
     scan_paths: List[str] = field(default_factory=list)
     plugins: Dict[str, str] = field(default_factory=dict)
     stub_path: Optional[str] = None
@@ -44,9 +45,12 @@ def _find_plugins(workspace_root: Path) -> Dict[str, str]:
     return plugins
 
 
-def load_config_from_path(search_path: Path) -> Tuple[StitcherConfig, Optional[str]]:
+def load_config_from_path(
+    search_path: Path,
+) -> Tuple[List[StitcherConfig], Optional[str]]:
     plugins = _find_plugins(search_path)
     project_name: Optional[str] = None
+    stitcher_data: Dict[str, Any] = {}
 
     try:
         config_path = _find_pyproject_toml(search_path)
@@ -54,17 +58,36 @@ def load_config_from_path(search_path: Path) -> Tuple[StitcherConfig, Optional[s
             data = tomllib.load(f)
 
         project_name = data.get("project", {}).get("name")
-        stitcher_data: Dict[str, Any] = data.get("tool", {}).get("stitcher", {})
+        stitcher_data = data.get("tool", {}).get("stitcher", {})
 
     except FileNotFoundError:
-        # If no root config file, still return discovered plugins with default scan_paths
-        return StitcherConfig(plugins=plugins), None
+        # If no root config file, return default config with discovered plugins
+        return [StitcherConfig(plugins=plugins)], None
 
-    # Create config with data from file, falling back to defaults.
-    config = StitcherConfig(
-        scan_paths=stitcher_data.get("scan_paths", []),
-        plugins=plugins,
-        stub_path=stitcher_data.get("stub_path"),
-        stub_package=stitcher_data.get("stub_package"),
-    )
-    return config, project_name
+    configs: List[StitcherConfig] = []
+    targets = stitcher_data.get("targets", {})
+
+    if targets:
+        # Multi-target mode
+        for target_name, target_data in targets.items():
+            configs.append(
+                StitcherConfig(
+                    name=target_name,
+                    scan_paths=target_data.get("scan_paths", []),
+                    plugins=plugins,
+                    stub_path=target_data.get("stub_path"),
+                    stub_package=target_data.get("stub_package"),
+                )
+            )
+    else:
+        # Single-target (Legacy/Simple) mode
+        configs.append(
+            StitcherConfig(
+                scan_paths=stitcher_data.get("scan_paths", []),
+                plugins=plugins,
+                stub_path=stitcher_data.get("stub_path"),
+                stub_package=stitcher_data.get("stub_package"),
+            )
+        )
+
+    return configs, project_name
