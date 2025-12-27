@@ -12,6 +12,10 @@ dev = [
     "pytest-mock",
     "ruff",
     "mypy",
+    "pyneedle",
+    "pyneedle-nexus",
+    "pyneedle-pointer",
+    "pyneedle-spec",
     "stitcher-cli",
     "stitcher-application",
     "stitcher-needle",
@@ -22,6 +26,10 @@ dev = [
 members = ["packages/*", "packages/stitcher-test-utils"]
 
 [tool.uv.sources]
+pyneedle = { workspace = true }
+pyneedle-nexus = { workspace = true }
+pyneedle-pointer = { workspace = true }
+pyneedle-spec = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-scanner = { workspace = true }
@@ -67,4 +75,25 @@ extraPaths = [
     "packages/stitcher-cli/src",
     "packages/stitcher-needle/src",
     "packages/stitcher-test-utils/src",
+    "packages/pyneedle-spec/src",
+    "packages/pyneedle-pointer/src",
+    "packages/pyneedle-nexus/src",
+    "packages/pyneedle/src",
+]
+
+[tool.pyrefly]
+extraPaths = [
+    "packages/stitcher-spec/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-scanner/src",
+    "packages/stitcher-io/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-application/src",
+    "packages/stitcher-cli/src",
+    "packages/stitcher-needle/src",
+    "packages/stitcher-test-utils/src",
+    "packages/pyneedle-spec/src",
+    "packages/pyneedle-pointer/src",
+    "packages/pyneedle-nexus/src",
+    "packages/pyneedle/src",
 ]

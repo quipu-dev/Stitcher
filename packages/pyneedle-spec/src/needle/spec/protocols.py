@@ -86,6 +86,30 @@ class PointerSetProtocol(Protocol):
         """
         ...
 
+    def __add__(self, other: Union[str, SemanticPointerProtocol]) -> "PointerSetProtocol":
+        """
+        Operator '+': Broadcasts the add operation to all members.
+        """
+        ...
+
+    def __mul__(self, other: Iterable[str]) -> "PointerSetProtocol":
+        """
+        Operator '*': Broadcasts a cartesian product operation.
+        """
+        ...
+        
+    def __add__(self, other: Union[str, SemanticPointerProtocol]) -> "PointerSetProtocol":
+        """
+        Operator '+': Broadcasts the add operation to all members.
+        """
+        ...
+
+    def __mul__(self, other: Iterable[str]) -> "PointerSetProtocol":
+        """
+        Operator '*': Broadcasts a cartesian product operation.
+        """
+        ...
+
 
 class ResourceLoaderProtocol(Protocol):
     """

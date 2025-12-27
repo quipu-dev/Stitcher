@@ -40,7 +40,7 @@ def test_pointer_dynamic_composition_operators():
     assert p1 == "payment.credit_card.success"
 
     # Using /
-    p2 = base / method / "error" / status_code
+    p2 = base / method / "error" / str(status_code)
     assert p2 == "payment.credit_card.error.200"
 
     # Mixing operators
