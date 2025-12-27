@@ -43,6 +43,19 @@ class SemanticPointer(SemanticPointerProtocol):
     ) -> "SemanticPointer":
         return self._join(other)
 
+    def __radd__(self, other: Any) -> "SemanticPointer":
+        """
+        Supports right-hand addition, enabling 'prefix' + L.key.
+        We instantiate a new pointer with 'other' and then join 'self' to it.
+        """
+        if not other:
+            return self
+
+        # Treat the left operand (other) as the new base path
+        new_base = SemanticPointer(str(other))
+        # Use the standard join logic to append self to the new base
+        return new_base._join(self)
+
     def __truediv__(
         self, other: Union[str, "SemanticPointerProtocol"]
     ) -> "SemanticPointer":

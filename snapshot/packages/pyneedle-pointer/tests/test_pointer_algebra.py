@@ -44,6 +44,18 @@ def test_pointer_dynamic_composition_operators():
     p3 = L / "user" + "profile"
     assert p3 == "user.profile"
 
+    # Using __radd__
+    p4 = "prefix" + L.auth.login
+    assert p4 == "prefix.auth.login"
+
+    # Using __radd__ with integer/non-string (tests str() fallback)
+    p5 = 404 + L.error.code
+    assert p5 == "404.error.code"
+
+    # Edge case: Empty prefix
+    p6 = "" + L.error
+    assert p6 == "error"
+
 
 def test_pointer_multiplication_distributes_to_set():
     base = L.api.v1

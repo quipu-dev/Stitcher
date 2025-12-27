@@ -1,57 +1,102 @@
-## [COMMIT] feat(pointer): Implement robust chained multiplication and flexible `*` operator
+## [WIP] feat(pointer): Implement `__radd__` for left-side string concatenation
 
 ### 用户需求
 
-1.  实现 `L.a * {"a", "b"} * L.c` 等复杂链式乘法调用。
-2.  增强 `*` 运算符的灵活性，使其能够接收字符串、指针、集合、字典键以及其他支持 `__str__` 的对象。
-3.  修复因使用抽象协议 `SemanticPointerProtocol` 进行 `isinstance` 运行时检查导致的 `TypeError`。
+实现 `'prefix' + L.key` 这种形式的加法运算，允许将字符串或其他对象作为前缀与 `SemanticPointer` 对象进行拼接，从而完善语义指针的代数体系。
 
 ### 评论
 
-本次提交实现了 `SemanticPointer` 和 `PointerSet` 的核心代数增强，允许开发者以高度声明式和灵活的方式构造语义集合。通过三步式回退逻辑（原子 -> 集合 -> 强制字符串原子），我们最大化了运算符的通用性，同时解决了由于 `typing.Protocol` 导致的运行时检查错误。这使得语义指针的代数体系更加成熟。
+`__radd__` 的实现极大地增强了 `SemanticPointer` 在动态路径构建中的表达力和灵活性。它满足了开发者对路径拼接的直观需求，并为 `Needle` 语义代数体系的完整性提供了关键支持。由于底层逻辑可以复用已有的 `_join` 方法，实现成本极低，但回报巨大。
 
 ### 目标
 
-1.  在 `SemanticPointer.__mul__` 中实现了灵活的类型处理和原子化回退逻辑。
-2.  修复了因在运行时对 `SemanticPointerProtocol` 进行 `isinstance` 检查而导致的 `TypeError`，将其替换为对具体类 `SemanticPointer` 的检查。
-3.  在 `PointerSet` 上实现了对非集合类型（如 `SemanticPointer`）的乘法广播，从而支持无限链式调用。
-4.  增加了新的测试用例来全面验证所有这些新行为的正确性。
+1.  在 `SemanticPointer` 类中实现 `__radd__` 方法。
+2.  确保 `__radd__` 逻辑与 `__add__` 对称，将左操作数作为前缀进行路径拼接。
+3.  增加测试用例来验证 `'prefix' + L.key` 能够正确生成新的 `SemanticPointer` 路径。
 
 ### 基本原理
 
-通过将 `isinstance(other, (str, SemanticPointerProtocol))` 替换为 `isinstance(other, (str, SemanticPointer))`，我们遵守了 Python 中对协议进行运行时检查的限制，同时保持了代码的架构纯洁性（不要求协议添加 `@runtime_checkable` 装饰器）。新的 `__mul__` 逻辑现在是所有语义代数的基础，确保了 `L.a * {B} * C` 这种结构化表达的稳定性。
+当 Python 尝试执行 `str + SemanticPointer` 失败后，它会调用 `SemanticPointer.__radd__`。在 `__radd__` 中，我们将左操作数（即前缀）视为 `SemanticPointer` 的后缀进行处理。为了实现前缀拼接，我们需要定义一个新的内部方法 `_rjoin` 来处理顺序，或者巧妙地利用现有的 `_join` 机制。
+
+由于 `_join` 被设计用于将 `other` 作为后缀添加到 `self._path` 上，实现前缀需要颠倒逻辑。最直接的方法是在 `__radd__` 中创建一个临时的 `SemanticPointer(str(other))` 作为基座，然后调用它的 `__add__` 方法，将 `self` (即 `L.key`) 作为后缀加入。
 
 ### 标签
 
-#intent/build #flow/done #priority/high
-#comp/interfaces #concept/state #scope/api #scope/dx
-#ai/instruct
-#task/domain/core-abstractions #task/object/multiplication-operator #task/action/refactor #task/state/continue
+#intent/build #flow/ready #priority/high #comp/pointer #concept/algebra #scope/dx #ai/instruct #task/domain/core-abstractions #task/object/radd-operator #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 添加所有修改文件并提交
+#### Acts 1: 在 `SemanticPointer` 中实现 `__radd__`
+
+我们将在 `core.py` 中实现 `__radd__` 方法。
 
 ~~~~~act
-git_add
+patch_file
 packages/pyneedle-pointer/src/needle/pointer/core.py
-packages/pyneedle-pointer/src/needle/pointer/set.py
+~~~~~
+~~~~~python.old
+    def __add__(
+        self, other: Union[str, "SemanticPointerProtocol"]
+    ) -> "SemanticPointer":
+        return self._join(other)
+
+    def __truediv__(
+        self, other: Union[str, "SemanticPointerProtocol"]
+    ) -> "SemanticPointer":
+        return self._join(other)
+~~~~~
+~~~~~python.new
+    def __add__(
+        self, other: Union[str, "SemanticPointerProtocol"]
+    ) -> "SemanticPointer":
+        return self._join(other)
+
+    def __radd__(self, other: Any) -> "SemanticPointer":
+        """
+        Supports right-hand addition, enabling 'prefix' + L.key.
+        We instantiate a new pointer with 'other' and then join 'self' to it.
+        """
+        if not other:
+            return self
+
+        # Treat the left operand (other) as the new base path
+        new_base = SemanticPointer(str(other))
+        # Use the standard join logic to append self to the new base
+        return new_base._join(self)
+
+    def __truediv__(
+        self, other: Union[str, "SemanticPointerProtocol"]
+    ) -> "SemanticPointer":
+        return self._join(other)
+~~~~~
+
+#### Acts 2: 增加 `__radd__` 的测试用例
+
+我们修改 `test_pointer_algebra.py`，增加对前缀拼接的验证。
+
+~~~~~act
+patch_file
 packages/pyneedle-pointer/tests/test_pointer_algebra.py
 ~~~~~
-
-~~~~~act
-git_commit
+~~~~~python.old
+    p3 = L / "user" + "profile"
+    assert p3 == "user.profile"
 ~~~~~
-~~~~~text
-feat(pointer): Implement robust chained multiplication and flexible * operator
+~~~~~python.new
+    p3 = L / "user" + "profile"
+    assert p3 == "user.profile"
 
-This commit significantly enhances the algebraic flexibility of Semantic Pointers (L) and Pointer Sets (Ls).
+    # Using __radd__
+    p4 = "prefix" + L.auth.login
+    assert p4 == "prefix.auth.login"
 
-Key Changes:
+    # Using __radd__ with integer/non-string (tests str() fallback)
+    p5 = 404 + L.error.code
+    assert p5 == "404.error.code"
 
-1. Flexible Multiplication (`*`): The `__mul__` method now robustly handles various types (str, SemanticPointer, Iterable, Any other) using a 3-step type fallback. This enables constructs like `L.status * 200` (converts 200 to '200') and `L.a * dict.keys()`.
-2. Chained Operations: The enhancement of `SemanticPointer.__mul__` directly fixes the issue where chained multiplication like `L * {A} * B` would fail, as the PointerSet now correctly applies the next operand as a single unit via `p * other`.
-3. Fix Runtime Type Check: Replaced the non-functional `isinstance(other, SemanticPointerProtocol)` with `isinstance(other, SemanticPointer)` to resolve the `TypeError` and maintain architectural purity (not requiring `@runtime_checkable` on the protocol).
+    # Edge case: Empty prefix
+    p6 = "" + L.error
+    assert p6 == "error"
 ~~~~~
