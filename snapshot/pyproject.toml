@@ -46,7 +46,8 @@ pythonpath = [
     "packages/stitcher-cli/src", 
     "packages/stitcher-needle/src",
     "packages/pyneedle-spec/src",
-    "packages/pyneedle-pointer/src"
+    "packages/pyneedle-pointer/src",
+    "packages/pyneedle-nexus/src"
 ]
 
 [tool.stitcher]
