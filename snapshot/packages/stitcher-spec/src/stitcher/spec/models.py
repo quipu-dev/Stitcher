@@ -92,9 +92,6 @@ class ModuleDef:
     dunder_all: Optional[str] = None
 
     def is_documentable(self) -> bool:
-        """
-        Checks if the module contains any content that would warrant a doc file.
-        """
         # A module is documentable if it has a docstring, public attributes,
         # functions, or classes. Boilerplate like __all__ or __path__ should be ignored.
         has_public_attributes = any(
