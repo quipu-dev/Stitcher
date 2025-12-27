@@ -149,7 +149,7 @@ class StitcherApp:
                         / logical_path.parts[0]
                     )
                     if top_level_pkg_dir not in created_py_typed:
-                        top_level_pkg_dir.mkdir(exist_ok=True)
+                        top_level_pkg_dir.mkdir(parents=True, exist_ok=True)
                         (top_level_pkg_dir / "py.typed").touch(exist_ok=True)
                         created_py_typed.add(top_level_pkg_dir)
 
