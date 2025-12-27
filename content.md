@@ -1,107 +1,75 @@
-您好，非常抱歉，我之前的计划中存在一个错误。
+您提供的测试失败信息非常清晰，再次感谢。我的上一个计划显然没有完全解决问题，并且引入了新的 API 调用错误。
 
-您遇到的 `AttributeError` 是完全正确的，我的分析也出现了偏差。我错误地将旧 `stitcher-needle` 的 `add_root` API 映射到了新的 `nexus` 对象上，而实际上，新的 `pyneedle` 架构将这个功能移到了其默认的 `FileSystemLoader` 实例上。
+您的分析完全正确。问题根源在于 `pyneedle` 的新架构：
 
-感谢您的指正，我现在将生成一个修正计划来解决这个问题。
+1.  `nexus` **实例**: `pyneedle` 在 `needle.runtime` 模块中创建了一个名为 `nexus` 的 `OverlayNexus` 实例。这个实例拥有 `.get()` 方法。
+2.  **模块 vs 实例**: 我之前的修改，例如 `from needle import nexus`，错误地导入了 `needle.nexus` 这个 *模块*，而不是 `needle.runtime` 中的 `nexus` *实例*。模块本身自然没有 `.get()` 方法，因此导致了您看到的所有 `AttributeError`。
+3.  **API 暴露**: `pyneedle` 包的顶层 `__init__.py` 文件没有正确地将 `nexus` 实例暴露出来，导致外部无法通过 `from needle import nexus` 来获取它。
 
-## [WIP] fix: 修正 pyneedle 资产根目录的 API 调用
+我将制定一个精确的修复计划来纠正这个问题。
+
+## [WIP] fix: 修正 pyneedle 的 API 导出和导入以解决 AttributeError
 
 ### 错误分析
-上一个计划在迁移代码时，错误地假设 `nexus` 对象拥有 `add_root` 方法。根据 `pyneedle` 的新架构 (`packages/pyneedle/src/needle/runtime.py`)，`nexus` 对象是一个 `OverlayNexus` 实例，它本身不管理文件系统路径。路径管理的功能由其包含的 `loader` 负责。
-
-`pyneedle` 包暴露了一个名为 `_default_loader` 的 `FileSystemLoader` 单例实例，这个实例上才有我们需要的 `add_root` 方法。因此，正确的做法是导入 `_default_loader` 并调用其 `add_root` 方法，而不是对 `nexus` 对象进行操作。
+测试失败的根本原因是，在将 `stitcher-needle` 迁移到 `pyneedle` 的过程中，对 `pyneedle` 核心运行时实例的导入和引用方式不正确。具体来说：
+1.  **错误的导入目标**：代码中使用的 `from needle import nexus` 试图从 `needle` 包的根部导入 `nexus`。然而，`pyneedle` 的 `OverlayNexus` 实例实际上是在 `needle.runtime` 子模块中创建和命名的。
+2.  **不正确的 API 暴露**：`pyneedle` 包的顶层 `__init__.py` 文件没有将其核心的 `nexus` 单例实例提升为公共 API。因此，客户端代码（如 `stitcher-common` 和 `stitcher-cli`）无法通过简洁的路径访问到它。
+3.  **连锁反应**：这个错误的导入导致所有调用 `nexus.get()` 的地方都失败了，因为它们实际上是在一个模块对象上调用方法，而不是在预期的 `OverlayNexus` 实例上。
 
 ### 用户需求
-修正因错误的 API 调用 (`nexus.add_root`) 导致的 `AttributeError`，以完成 `stitcher-needle` 到 `pyneedle` 的迁移。
+修复所有因 `AttributeError: module 'needle.nexus' has no attribute 'get'` 导致的测试失败，完成 `pyneedle` 的迁移。
 
 ### 评论
-这是一个典型的 API 迁移中可能出现的问题，修正它将使 `stitcher` 的核心组件与 `pyneedle` 的设计哲学完全对齐，确保依赖关系的正确性和稳定性。
+这是一个关键的 API 设计修复。一个好的库应该提供一个清晰、稳定且易于访问的公共 API。通过修正 `pyneedle` 的 `__init__.py`，我们不仅解决了当前的 bug，还为所有下游包建立了一个正确且可持续的集成点。
 
 ### 目标
-1.  定位所有错误调用 `nexus.add_root` 的代码。
-2.  将其修改为正确的 `_default_loader.add_root` 调用。
-3.  调整相关的 `import` 语句，以确保 `_default_loader` 可用。
+1.  修改 `packages/pyneedle/src/needle/__init__.py`，使其从 `needle.runtime` 导入并导出核心的 `nexus` 实例和 `_default_loader` 实例。
+2.  确保 `__all__` 列表也正确反映了新的公共 API。
 
 ### 基本原理
-我们将直接修复两个在启动时注册资产路径的 `__init__.py` 文件。通过将 `from needle import nexus` 的导入修改为 `from needle.runtime import _default_loader`，并相应地更新方法调用，我们可以直接解决这个 `AttributeError`，使程序恢复正常。
+我们将把 `packages/pyneedle/src/needle/__init__.py` 文件转变为 `pyneedle` 库的中央“API 网关”。通过在这个文件中从其内部模块（`.runtime` 和 `.pointer`）收集所有公共对象（如 `nexus`, `L`, `_default_loader`），并使用 `__all__` 明确声明它们，任何依赖此库的包都可以通过简单一致的 `from needle import ...` 语句来安全地访问这些功能，从而彻底解决 `AttributeError`。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/common #comp/cli #scope/core #ai/instruct #task/domain/build #task/object/stitcher-needle #task/action/removal #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/engine #scope/api #scope/dx #ai/instruct #task/domain/build #task/object/stitcher-needle #task/action/removal #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修正 `stitcher-common` 中的 API 调用
+#### Acts 1: 修正 `pyneedle` 的顶层 `__init__.py` 以正确导出公共 API
 
-我们将 `stitcher-common` 包的初始化代码从调用 `nexus.add_root` 改为调用 `_default_loader.add_root`。
-
-~~~~~act
-patch_file
-packages/stitcher-common/src/stitcher/common/__init__.py
-~~~~~
-~~~~~python.old
-# Make core singletons easily accessible
-from .messaging.bus import bus
-from needle import nexus
-from pathlib import Path
-
-# --- Auto-register built-in assets ---
-# Find the path to our packaged assets directory and register it with Needle.
-# This makes default translations and messages available out-of-the-box.
-try:
-    # __file__ gives the path to this __init__.py file
-    _assets_path = Path(__file__).parent / "assets"
-    if _assets_path.is_dir():
-        nexus.add_root(_assets_path)
-except NameError:
-~~~~~
-~~~~~python.new
-# Make core singletons easily accessible
-from .messaging.bus import bus
-from needle.runtime import _default_loader
-from pathlib import Path
-
-# --- Auto-register built-in assets ---
-# Find the path to our packaged assets directory and register it with Needle.
-# This makes default translations and messages available out-of-the-box.
-try:
-    # __file__ gives the path to this __init__.py file
-    _assets_path = Path(__file__).parent / "assets"
-    if _assets_path.is_dir():
-        _default_loader.add_root(_assets_path)
-except NameError:
-~~~~~
-
-#### Acts 2: 修正 `stitcher-cli` 中的 API 调用
-
-同样，我们也修正 `stitcher-cli` 包的初始化代码。
+我们将修改 `pyneedle` 包的入口文件，使其正确地导出 `nexus` 实例和其他核心组件。这是解决所有 `AttributeError` 的根本方法。
 
 ~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/__init__.py
+write_file
+packages/pyneedle/src/needle/__init__.py
 ~~~~~
-~~~~~python.old
-from needle import nexus
+~~~~~python
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-# --- Auto-register CLI assets ---
-try:
-    _assets_path = Path(__file__).parent / "assets"
-    if _assets_path.is_dir():
-        nexus.add_root(_assets_path)
-except NameError:
-~~~~~
-~~~~~python.new
-from needle.runtime import _default_loader
-from pathlib import Path
+from needle.pointer import L, SemanticPointer, PointerSet
+from needle.runtime import nexus, _default_loader
+from needle.spec import (
+    NexusProtocol,
+    ResourceLoaderProtocol,
+    SemanticPointerProtocol,
+    PointerSetProtocol,
+)
 
-# --- Auto-register CLI assets ---
-try:
-    _assets_path = Path(__file__).parent / "assets"
-    if _assets_path.is_dir():
-        _default_loader.add_root(_assets_path)
-except NameError:
+__all__ = [
+    "L",
+    "SemanticPointer",
+    "PointerSet",
+    "nexus",
+    "_default_loader",
+    "NexusProtocol",
+    "ResourceLoaderProtocol",
+    "SemanticPointerProtocol",
+    "PointerSetProtocol",
+]
 ~~~~~
 
 ### 下一步建议
-在应用此修复后，请重新运行测试。如果所有测试通过，那么 `stitcher-needle` 的移除和迁移工作就正式完成了。届时，您可以考虑生成一个 `[COMMIT]` 计划来将这些重构变更作为一个原子提交。
+这个修复是针对问题的根源。在应用此补丁后，之前所有因 `AttributeError` 失败的测试都应该能够通过，因为 `from needle import nexus` 现在将正确地导入 `OverlayNexus` 的单例实例。
+
+请运行测试套件进行验证。如果测试通过，我们可以继续进行最终的清理和提交。
