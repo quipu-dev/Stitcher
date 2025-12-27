@@ -350,8 +350,8 @@ class StitcherApp:
                     )
                     mismatched = {}
 
-                error_count = len(mismatched) + len(conflict) + len(pending)
-                warning_count = len(missing) + len(redundant) + len(extra)
+                error_count = len(mismatched) + len(conflict) + len(pending) + len(extra)
+                warning_count = len(missing) + len(redundant)
 
                 # If there are no remaining issues to report for this file, skip to the next.
                 if error_count == 0 and warning_count == 0:
@@ -372,11 +372,11 @@ class StitcherApp:
                     bus.warning(L.check.issue.missing, key=key)
                 for key in sorted(list(redundant)):
                     bus.warning(L.check.issue.redundant, key=key)
-                for key in sorted(list(extra)):
-                    bus.warning(L.check.issue.extra, key=key)
 
                 for key in sorted(list(pending)):
                     bus.error(L.check.issue.pending, key=key)
+                for key in sorted(list(extra)):
+                    bus.error(L.check.issue.extra, key=key)
                 for key in sorted(list(conflict)):
                     bus.error(L.check.issue.conflict, key=key)
                 for key in sorted(list(mismatched.keys())):

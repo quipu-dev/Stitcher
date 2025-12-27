@@ -53,10 +53,10 @@ def test_private_members_allowed_in_yaml(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
 
-def test_ghost_keys_trigger_extra_warning(tmp_path, monkeypatch):
+def test_ghost_keys_trigger_extra_error(tmp_path, monkeypatch):
     """
-    Policy Test: Keys in YAML that do not exist in code should trigger
-    a non-blocking EXTRA warning.
+    Policy Test: Keys in YAML that do not exist in code (even privately)
+    MUST trigger EXTRA error.
     """
     # 1. Arrange: Docs pointing to non-existent code
     factory = WorkspaceFactory(tmp_path)
@@ -82,11 +82,10 @@ def test_ghost_keys_trigger_extra_warning(tmp_path, monkeypatch):
         success = app.run_check()
 
     # 3. Assert
-    assert success is True, "Check should pass even with EXTRA warnings."
+    assert success is False
 
-    # We expect EXTRA warnings for both ghost keys
-    spy_bus.assert_id_called(L.check.issue.extra, level="warning")
-    spy_bus.assert_id_called(L.check.run.success_with_warnings, level="success")
+    # We expect EXTRA errors for both ghost keys
+    spy_bus.assert_id_called(L.check.issue.extra, level="error")
 
     # Verify specific keys
     extra_msgs = [

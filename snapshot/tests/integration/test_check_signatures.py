@@ -100,19 +100,21 @@ def test_check_with_update_signatures_flag_reconciles_changes(tmp_path, monkeypa
     """
     Verify the complete workflow of reconciling signature changes with `check --update-signatures`.
     """
-    # 1. Arrange: Setup and Init to establish a baseline
+    # 1. Arrange: Setup and Init to establish a baseline.
+    # CRITICAL: The source MUST have a docstring so 'init' creates the tracking file (.stitcher.yaml).
+    # If the file is untracked, 'check' skips signature verification!
     factory = WorkspaceFactory(tmp_path)
     project_root = (
         factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/main.py", "def func(a: int): ...")
+        .with_source("src/main.py", 'def func(a: int):\n    """Doc."""\n    ...')
         .build()
     )
     app = StitcherApp(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
 
-    # 2. Modify the code to create a signature mismatch
-    (project_root / "src/main.py").write_text("def func(a: str): ...")
+    # 2. Modify the code to create a signature mismatch (keep the docstring!)
+    (project_root / "src/main.py").write_text('def func(a: str):\n    """Doc."""\n    ...')
 
     # 3. Act I: Run check with the --update-signatures flag
     spy_bus_reconcile = SpyBus()
