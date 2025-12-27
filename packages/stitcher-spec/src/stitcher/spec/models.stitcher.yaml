@@ -1,19 +1,5 @@
 "Argument": |-
   Represents a function or method argument.
-"ArgumentKind": |-
-  Corresponds to inspect._ParameterKind.
-"Attribute": |-
-  Represents a module-level or class-level variable.
-"ClassDef": |-
-  Represents a class definition.
-"FunctionDef": |-
-  Represents a function or method definition.
-"FunctionDef.compute_fingerprint": |-
-  Computes a stable hash of the function signature (excluding docstring).
-  Includes: name, args (name, kind, annotation, default), return annotation,
-  async status, and static/class flags.
-"Argument": |-
-  Represents a function or method argument.
 "Argument.annotation": |-
   The type annotation of the argument.
 "Argument.default": |-
@@ -96,3 +82,5 @@
   A list of functions defined at the module level.
 "ModuleDef.imports": |-
   A list of import statements found in the module.
+"ModuleDef.is_documentable": |-
+  Checks if the module contains any content that would warrant a doc file.

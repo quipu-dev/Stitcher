@@ -2,6 +2,7 @@
     "check.file.pass": "✅ {path}: 已同步。",
     "check.file.fail": "❌ {path}: 发现 {count} 个错误。",
     "check.file.warn": "⚠️  {path}: 发现 {count} 个警告。",
+    "check.file.untracked": "⚠️  {path}: 未追踪 (未找到 .stitcher.yaml 文件，请运行 `init` 或 `hydrate`)",
     "check.issue.missing": "   - [缺失]   {key} (实体存在，但在代码和 YAML 中均无文档)",
     "check.issue.pending": "   - [待同步] {key} (代码中有新文档，尚未同步至 YAML，请运行 hydrate)",
     "check.issue.redundant": "   - [冗余]   {key} (代码与 YAML 文档重复，建议运行 strip)",

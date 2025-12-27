@@ -313,6 +313,21 @@ class StitcherApp:
                 continue
 
             for module in modules:
+                # File-level check: Does the corresponding doc file exist?
+                doc_path = (self.root_path / module.file_path).with_suffix(
+                    ".stitcher.yaml"
+                )
+
+                if not doc_path.exists():
+                    # If doc file doesn't exist, only warn if the module
+                    # actually contains something worth documenting.
+                    if module.is_documentable():
+                        bus.warning(L.check.file.untracked, path=module.file_path)
+                        total_warnings += 1
+                    # Silently skip empty, untracked files (e.g., empty __init__.py)
+                    continue
+
+                # Key-level check (existing logic)
                 doc_issues = self.doc_manager.check_module(module)
                 sig_issues = self.sig_manager.check_signatures(module)
 

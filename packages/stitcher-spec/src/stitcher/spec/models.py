@@ -90,3 +90,14 @@ class ModuleDef:
     imports: List[str] = field(default_factory=list)
     # The raw string representation of the __all__ assignment value (e.g. '["a", "b"]')
     dunder_all: Optional[str] = None
+
+    def is_documentable(self) -> bool:
+        # A module is documentable if it has a docstring, public attributes,
+        # functions, or classes. Boilerplate like __all__ or __path__ should be ignored.
+        has_public_attributes = any(
+            not attr.name.startswith("_") for attr in self.attributes
+        )
+
+        return bool(
+            self.docstring or has_public_attributes or self.functions or self.classes
+        )
