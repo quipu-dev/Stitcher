@@ -34,10 +34,16 @@ def init():
 
 
 @app.command(help=nexus.get(L.cli.command.check.help))
-def check():
+def check(
+    update_signatures: bool = typer.Option(
+        False,
+        "--update-signatures",
+        help=nexus.get(L.cli.option.update_signatures.help),
+    )
+):
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
-    success = app_instance.run_check()
+    success = app_instance.run_check(update_signatures=update_signatures)
     if not success:
         raise typer.Exit(code=1)
 

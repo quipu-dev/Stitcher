@@ -10,6 +10,7 @@
     "check.issue.redundant": "   - [文档冗余] {key} (代码和 YAML 中存在重复文档，请运行 `stitcher strip`)",
     "check.issue.extra": "   - [定义悬空] {key} (YAML 中存在，但代码中对应的实体已删除)",
     "check.issue.conflict": "   - [内容冲突] {key} (代码和 YAML 中的文档内容不一致)",
+    "check.run.signatures_updated": "✅ {path}: 已接受 {count} 项签名变更。",
     "check.run.success": "✨ 所有检查通过，文档保持同步。",
     "check.run.success_with_warnings": "⚠️  检查通过，但在 {count} 个文件中发现警告。",
     "check.run.fail": "🚫 检查失败，在 {count} 个文件中发现错误。"

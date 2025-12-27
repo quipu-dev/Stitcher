@@ -8,5 +8,6 @@
     "cli.command.hydrate.help": "Extract new docstrings from source code and merge them into .stitcher.yaml.",
     "cli.option.strip.help": "Remove docstrings from source code after hydration.",
     "cli.option.force.help": "Code-first: Overwrite YAML content if it differs from source code.",
-    "cli.option.reconcile.help": "YAML-first: Ignore source docstrings if they conflict with existing YAML."
+    "cli.option.reconcile.help": "YAML-first: Ignore source docstrings if they conflict with existing YAML.",
+    "cli.option.update_signatures.help": "Accept signature changes and update the stored fingerprints."
 }

@@ -10,6 +10,7 @@
     "check.issue.redundant": "   - [REDUNDANT] {key} (docstring exists in both code and YAML; please run `stitcher strip`)",
     "check.issue.extra": "   - [DANGLING]  {key} (docstring in YAML, but entity is missing in code)",
     "check.issue.conflict": "   - [CONFLICT]  {key} (content differs between code and YAML)",
+    "check.run.signatures_updated": "✅ {path}: Accepted {count} signature changes.",
     "check.run.success": "✨ All checks passed. Documentation is in sync.",
     "check.run.success_with_warnings": "⚠️  Check passed with warnings in {count} files.",
     "check.run.fail": "🚫 Check failed. Found errors in {count} files."

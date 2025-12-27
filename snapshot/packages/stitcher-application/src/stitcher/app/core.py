@@ -206,10 +206,6 @@ class StitcherApp:
 
             output_path.write_text(pyi_content, encoding="utf-8")
 
-            # Step 3: Update signatures (Snapshot current state)
-            # When we generate stubs, we assume the code is the new source of truth
-            self.sig_manager.save_signatures(module)
-
             relative_path = output_path.relative_to(self.root_path)
             bus.success(L.generate.file.success, path=relative_path)
             generated_files.append(output_path)
@@ -297,7 +293,7 @@ class StitcherApp:
 
         return all_created_files
 
-    def run_check(self) -> bool:
+    def run_check(self, update_signatures: bool = False) -> bool:
         configs, _ = load_config_from_path(self.root_path)
         total_warnings = 0
         total_failed_files = 0
@@ -313,7 +309,6 @@ class StitcherApp:
                 continue
 
             for module in modules:
-                # File-level check: Does the corresponding doc file exist?
                 doc_path = (self.root_path / module.file_path).with_suffix(
                     ".stitcher.yaml"
                 )
@@ -321,8 +316,6 @@ class StitcherApp:
                 if not doc_path.exists():
                     undocumented_keys = module.get_undocumented_public_keys()
                     if undocumented_keys:
-                        # Case 1: Untracked and has public APIs needing docs.
-                        # This is a high-priority warning.
                         bus.warning(
                             L.check.file.untracked_with_details,
                             path=module.file_path,
@@ -332,15 +325,10 @@ class StitcherApp:
                             bus.warning(L.check.issue.untracked_missing_key, key=key)
                         total_warnings += 1
                     elif module.is_documentable():
-                        # Case 2: Untracked but all public APIs have docs.
-                        # This is a lower-priority "please hydrate" warning.
                         bus.warning(L.check.file.untracked, path=module.file_path)
                         total_warnings += 1
-                    # Case 3: Untracked and not documentable (empty/boilerplate).
-                    # Silently skip.
                     continue
 
-                # Key-level check (existing logic)
                 doc_issues = self.doc_manager.check_module(module)
                 sig_issues = self.sig_manager.check_signatures(module)
 
@@ -350,41 +338,45 @@ class StitcherApp:
                 extra = doc_issues["extra"]
                 conflict = doc_issues["conflict"]
                 mismatched = sig_issues
+                reconciled_mismatches = 0
 
-                # Errors: Critical inconsistencies or unsynced changes
-                error_count = (
-                    len(extra) + len(mismatched) + len(conflict) + len(pending)
-                )
-                # Warnings: Suggestions for improvement
-                warning_count = len(missing) + len(redundant)
+                if update_signatures and mismatched:
+                    self.sig_manager.save_signatures(module)
+                    reconciled_mismatches = len(mismatched)
+                    bus.success(
+                        L.check.run.signatures_updated,
+                        path=module.file_path,
+                        count=reconciled_mismatches,
+                    )
+                    mismatched = {}
 
+                error_count = len(mismatched) + len(conflict) + len(pending)
+                warning_count = len(missing) + len(redundant) + len(extra)
                 total_issues = error_count + warning_count
 
-                if total_issues == 0:
+                if total_issues == 0 and reconciled_mismatches == 0:
                     continue
 
                 file_rel_path = module.file_path
 
                 if error_count > 0:
                     total_failed_files += 1
-                    bus.error(L.check.file.fail, path=file_rel_path, count=total_issues)
+                    bus.error(L.check.file.fail, path=file_rel_path, count=error_count)
                 else:
                     bus.warning(
-                        L.check.file.warn, path=file_rel_path, count=total_issues
+                        L.check.file.warn, path=file_rel_path, count=warning_count
                     )
                     total_warnings += 1
 
-                # Report Warnings First
                 for key in sorted(list(missing)):
                     bus.warning(L.check.issue.missing, key=key)
                 for key in sorted(list(redundant)):
                     bus.warning(L.check.issue.redundant, key=key)
+                for key in sorted(list(extra)):
+                    bus.warning(L.check.issue.extra, key=key)
 
-                # Report Errors
                 for key in sorted(list(pending)):
                     bus.error(L.check.issue.pending, key=key)
-                for key in sorted(list(extra)):
-                    bus.error(L.check.issue.extra, key=key)
                 for key in sorted(list(conflict)):
                     bus.error(L.check.issue.conflict, key=key)
                 for key in sorted(list(mismatched.keys())):

@@ -8,5 +8,6 @@
     "cli.command.hydrate.help": "从源代码提取新文档并合并至 .stitcher.yaml。",
     "cli.option.strip.help": "在补水后立即从源码中移除文档字符串。",
     "cli.option.force.help": "代码优先：如果内容不一致，覆盖 YAML 内容。",
-    "cli.option.reconcile.help": "YAML 优先：忽略与现有 YAML 冲突的源码文档。"
+    "cli.option.reconcile.help": "YAML 优先：忽略与现有 YAML 冲突的源码文档。",
+    "cli.option.update_signatures.help": "接受签名变更并更新存储的指纹。"
 }
