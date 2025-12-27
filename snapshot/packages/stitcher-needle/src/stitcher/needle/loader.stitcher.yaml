@@ -1,3 +1,0 @@
-"Loader.load_directory": |-
-  Scans a directory for supported config files and merges their top-level
-  keys into a single flat registry.

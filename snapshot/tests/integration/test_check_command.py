@@ -1,5 +1,5 @@
 from stitcher.app import StitcherApp
-from stitcher.needle import L
+from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 

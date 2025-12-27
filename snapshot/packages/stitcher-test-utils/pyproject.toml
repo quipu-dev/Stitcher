@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Internal testing utilities for the Stitcher project."
 requires-python = ">=3.10"
 dependencies = [
-    "stitcher-needle",
+    "pyneedle",
     "PyYAML",
     "tomli-w",
 ]
@@ -17,4 +17,4 @@ dependencies = [
 packages = ["src/stitcher"]
 
 [tool.uv.sources]
-stitcher-needle = { workspace = true }
+pyneedle = { workspace = true }

@@ -1,7 +1,7 @@
 import pytest
 from stitcher.common.messaging.bus import MessageBus
 from stitcher.common.messaging.protocols import Renderer
-from stitcher.needle import L
+from needle.pointer import L
 from stitcher.test_utils.needle import MockNeedle
 
 

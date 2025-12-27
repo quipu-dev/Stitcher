@@ -12,9 +12,9 @@ class MockNeedle:
 
     @contextmanager
     def patch(self, monkeypatch: Any):
-        # The target path must be where `needle` is used by the code under test.
+        # The target path must be where `nexus` is used by the code under test.
         # In our case, MessageBus imports it.
-        target_path = "stitcher.common.messaging.bus.needle.get"
+        target_path = "stitcher.common.messaging.bus.nexus.get"
         try:
             monkeypatch.setattr(target_path, self._mock_get)
             yield

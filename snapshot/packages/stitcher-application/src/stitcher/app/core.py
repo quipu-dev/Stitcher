@@ -12,7 +12,7 @@ from stitcher.scanner import (
 from stitcher.io import StubGenerator
 from stitcher.spec import ModuleDef
 from stitcher.common import bus
-from stitcher.needle import L
+from needle.pointer import L
 from stitcher.config import load_config_from_path
 from stitcher.app.services import DocumentManager, SignatureManager
 

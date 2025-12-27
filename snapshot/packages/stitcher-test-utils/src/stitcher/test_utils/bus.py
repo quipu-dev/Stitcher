@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Optional
 
 from stitcher.common.messaging.bus import MessageBus
 from stitcher.common.messaging.protocols import Renderer
-from stitcher.needle import SemanticPointer
+from needle.pointer import SemanticPointer
 
 # Store the original bus instance from stitcher.common
 

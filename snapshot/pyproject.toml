@@ -18,7 +18,6 @@ dev = [
     "pyneedle-spec",
     "stitcher-cli",
     "stitcher-application",
-    "stitcher-needle",
     "stitcher-test-utils",
 ]
 
@@ -37,7 +36,6 @@ stitcher-io = { workspace = true }
 stitcher-config = { workspace = true }
 stitcher-application = { workspace = true }
 stitcher-cli = { workspace = true }
-stitcher-needle = { workspace = true }
 stitcher-test-utils = { workspace = true }
 
 [tool.pytest.ini_options]

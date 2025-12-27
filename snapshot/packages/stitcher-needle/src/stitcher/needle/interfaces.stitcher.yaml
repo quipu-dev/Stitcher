@@ -1,6 +1,0 @@
-"FileHandler": |-
-  Protocol for file handlers that can parse specific formats.
-"FileHandler.load": |-
-  Parses the file and returns a dictionary.
-"FileHandler.match": |-
-  Returns True if this handler can process the given file.

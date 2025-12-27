@@ -3,12 +3,13 @@ import typer
 
 from stitcher.app import StitcherApp
 from stitcher.common import bus
-from stitcher.needle import L, needle
+from needle.pointer import L
+from needle import nexus
 from .rendering import CliRenderer
 
 app = typer.Typer(
     name="stitcher",
-    help=needle.get(L.cli.app.description),
+    help=nexus.get(L.cli.app.description),
     no_args_is_help=True,
 )
 
@@ -19,21 +20,21 @@ bus.set_renderer(cli_renderer)
 # ---------------------------------------------
 
 
-@app.command(help=needle.get(L.cli.command.generate.help))
+@app.command(help=nexus.get(L.cli.command.generate.help))
 def generate():
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
     app_instance.run_from_config()
 
 
-@app.command(help=needle.get(L.cli.command.init.help))
+@app.command(help=nexus.get(L.cli.command.init.help))
 def init():
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
     app_instance.run_init()
 
 
-@app.command(help=needle.get(L.cli.command.check.help))
+@app.command(help=nexus.get(L.cli.command.check.help))
 def check():
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
@@ -42,7 +43,7 @@ def check():
         raise typer.Exit(code=1)
 
 
-@app.command(help=needle.get(L.cli.command.strip.help))
+@app.command(help=nexus.get(L.cli.command.strip.help))
 def strip():
     if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
         bus.warning(L.strip.run.aborted)
@@ -53,7 +54,7 @@ def strip():
     app_instance.run_strip()
 
 
-@app.command(help=needle.get(L.cli.command.eject.help))
+@app.command(help=nexus.get(L.cli.command.eject.help))
 def eject():
     if not typer.confirm(bus.render_to_string(L.eject.run.confirm)):
         bus.warning(L.eject.run.aborted)
@@ -64,20 +65,20 @@ def eject():
     app_instance.run_eject()
 
 
-@app.command(help=needle.get(L.cli.command.hydrate.help))
+@app.command(help=nexus.get(L.cli.command.hydrate.help))
 def hydrate(
     strip: bool = typer.Option(
-        False, "--strip", help=needle.get(L.cli.option.strip.help)
+        False, "--strip", help=nexus.get(L.cli.option.strip.help)
     ),
     force: bool = typer.Option(
         False,
         "--force",
-        help=needle.get(L.cli.option.force.help),
+        help=nexus.get(L.cli.option.force.help),
     ),
     reconcile: bool = typer.Option(
         False,
         "--reconcile",
-        help=needle.get(L.cli.option.reconcile.help),
+        help=nexus.get(L.cli.option.reconcile.help),
     ),
 ):
     if force and reconcile:

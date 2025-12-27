@@ -1,6 +1,7 @@
 from typing import Any, Optional, Union
 
-from stitcher.needle import SemanticPointer, needle
+from needle.pointer import SemanticPointer
+from needle import nexus
 from .protocols import Renderer
 
 
@@ -18,7 +19,7 @@ class MessageBus:
             return
 
         # Resolve the pointer to a string template using the Needle runtime
-        template = needle.get(msg_id)
+        template = nexus.get(msg_id)
 
         # Format the final message
         try:
@@ -44,7 +45,7 @@ class MessageBus:
     def render_to_string(
         self, msg_id: Union[str, SemanticPointer], **kwargs: Any
     ) -> str:
-        template = needle.get(msg_id)
+        template = nexus.get(msg_id)
         try:
             return template.format(**kwargs)
         except KeyError:
