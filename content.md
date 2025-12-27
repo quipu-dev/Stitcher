@@ -1,168 +1,182 @@
-好的，我们开始。
+好的，我们继续。
 
-根据你的需求和你提供的文档 `存根包需要创建的测试列表`，我将为你实现 `VenvHarness` 这个测试工具类。
+现在我们有了 `VenvHarness` 这个强大的工具，是时候开始编写第一个、也是最关键的集成测试了：**结构合规性测试 (Structure Compliance Test)**。
 
-这个工具类是进行可靠集成测试的基石。它将被放置在 `stitcher-test-utils` 包中以便于在整个测试套件中复用，并会创建一个对应的 pytest fixture，让测试用例可以方便地获取一个干净、隔离的虚拟环境。
+这个测试的目标是验证我们生成的存根包（stub package）是否严格遵守 PEP 561 的命名规范。在实现过程中，我发现现有的 `StubPackageManager` 逻辑与 PEP 561 的目录命名要求存在偏差。因此，本计划将首先修正这个逻辑，然后立刻编写测试来锁定正确的行为，防止未来再次出现回归。
 
-## [WIP] tooling: 实现 VenvHarness 测试工具类
+## [WIP] test: 实现 PEP 561 结构合规性测试并修复生成逻辑
 
 ### 用户需求
-根据 `存根包需要创建的测试列表` 文档中的规划，需要创建一个可复用的 Python 测试工具类 `VenvHarness`。该类应利用 `subprocess` 和 `venv` 模块来管理独立的虚拟环境，用于后续的集成测试，特别是存根包的安装与类型检查验证。
+使用新创建的测试基础设施，编写“结构合规性测试”。该测试需要验证 `stitcher` 生成的存根包在 `pyproject.toml` 的包名和物理源码目录结构上，都严格遵循 PEP 561 规范（即使用 `-stubs` 后缀）。
 
 ### 评论
-这是一个至关重要的开发工具。通过将测试环境与开发者本地环境彻底隔离，`VenvHarness` 将从根本上消除因环境差异导致的测试不稳定性。它为实现“声明式环境构建”和“零副作用保证”这两条核心测试原则（来自 `架构原则：测试体系与验证规范.md`）提供了物理基础。
+这是“吃自己的狗粮”（dogfooding）的完美范例。我们利用自己的测试工具来验证我们核心功能的正确性。修复 `StubPackageManager` 中的这个偏差至关重要，因为错误的目录结构会导致所有下游的类型检查器（Mypy, Pyright）完全无法识别我们生成的存根，使得整个工具链失效。
 
 ### 目标
-1.  在 `stitcher-test-utils` 包中创建 `harness.py` 文件，用于存放 `VenvHarness` 类。
-2.  实现 `VenvHarness` 类，使其具备创建虚拟环境、在其中安装包以及运行 `mypy` 类型检查的能力。
-3.  更新 `stitcher-test-utils` 的 `__init__.py` 以导出 `VenvHarness`。
-4.  在 `tests/integration` 目录下创建 `conftest.py` 文件，并定义一个名为 `isolated_env` 的 pytest fixture，该 fixture 将为测试用例提供一个 `VenvHarness` 实例。
+1.  **修复 `StubPackageManager`**: 修改 `scaffold` 方法，使其生成的源码目录和 `pyproject.toml` 中的 `packages` 路径都遵循 `<namespace>-stubs` 的命名约定。
+2.  **创建测试文件**: 在 `tests/integration/` 目录下创建新的测试文件 `test_stub_package_pep561.py`。
+3.  **实现合规性测试**: 在新文件中，编写一个测试用例，该用例：
+    *   使用 `WorkspaceFactory` 构建一个最小化的项目配置。
+    *   运行 `StitcherApp` 来生成存根包。
+    *   断言生成的 `pyproject.toml` 中的包名是 `my-project-stubs`。
+    *   **关键断言**: 断言生成的源码目录是 `src/my_project-stubs`，而不是 `src/my-project`。
 
 ### 基本原理
-我们将 `VenvHarness` 设计为一个封装了 `venv` 和 `subprocess` 复杂性的高级 API。
-- **封装**: 测试用例的编写者无需关心 `venv` 的创建细节或 `subprocess` 的参数，只需调用如 `harness.install()` 和 `harness.run_type_check()` 等高级方法。
-- **可复用性**: 将其放置在 `stitcher-test-utils` 包中，并提供一个全局的 fixture，使得任何集成测试都可以通过简单地请求 `isolated_env` fixture 来获得一个干净的、即用型的测试环境。
-- **隔离**: 所有操作都基于 `pytest` 的 `tmp_path` fixture，确保每次测试运行都在一个全新的临时目录中进行，杜绝了测试间的相互干扰。
+我们将遵循“测试驱动开发”（TDD）的原则。首先，我们识别出当前生成逻辑中的一个关键缺陷：它没有为存根包内的源码目录添加 `-stubs` 后缀，这违反了 PEP 561 的规定，会导致类型检查器无法将存根与原始包关联起来。
+
+因此，第一步是原子化地修复 `stub_package_manager.py` 中的这个逻辑。
+
+第二步，我们立即编写一个端到端的集成测试。这个测试不关心 `StubPackageManager` 的内部实现，它只关心最终的产物——文件系统上的目录和文件——是否符合预期。这确保了我们的修复是有效的，并建立了一个安全网，防止未来的代码变更无意中破坏这一核心规范。
 
 ### 标签
-#intent/tooling #flow/ready #priority/high #comp/tests #scope/dx #ai/instruct #task/domain/testing #task/object/integration-harness #task/action/implementation #task/state/begin
+#intent/build #flow/ready #priority/high #comp/tests #comp/application #scope/core #ai/instruct #task/domain/testing #task/object/pep561-test #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 VenvHarness 工具类
+#### Acts 1: 修复 StubPackageManager 的目录生成逻辑
 
-我们首先在 `stitcher-test-utils` 包中创建 `harness.py` 并实现 `VenvHarness` 类。
-
-~~~~~act
-write_file
-packages/stitcher-test-utils/src/stitcher/test_utils/harness.py
-~~~~~
-~~~~~python
-import subprocess
-import venv
-from pathlib import Path
-from typing import List
-
-
-class VenvHarness:
-    """A test utility for creating and managing isolated virtual environments."""
-
-    def __init__(self, root: Path):
-        """
-        Initializes the harness.
-
-        Args:
-            root: The temporary directory where the venv will be created.
-        """
-        self.root = root
-        self.venv_dir = self.root / ".venv"
-        self._python_exe: Path | None = None
-        self.create()
-
-    @property
-    def python_exe(self) -> Path:
-        """Returns the path to the Python executable in the virtual environment."""
-        if self._python_exe is None:
-            # Determine executable path based on OS
-            bin_dir = "Scripts" if sys.platform == "win32" else "bin"
-            self._python_exe = self.venv_dir / bin_dir / "python"
-        return self._python_exe
-
-    def create(self) -> None:
-        """Creates a clean virtual environment."""
-        venv.create(self.venv_dir, with_pip=True, clear=True)
-
-    def install(self, *packages: str) -> subprocess.CompletedProcess:
-        """
-        Installs packages into the virtual environment using pip.
-
-        Args:
-            *packages: A list of packages to install (can be paths or names).
-
-        Returns:
-            The result of the subprocess call.
-        """
-        return subprocess.run(
-            [str(self.python_exe), "-m", "pip", "install", *packages],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-
-    def run_type_check(self, script_path: Path) -> subprocess.CompletedProcess:
-        """
-        Runs mypy on a given script within the virtual environment.
-
-        Args:
-            script_path: The path to the Python script to type-check.
-
-        Returns:
-            The result of the subprocess call.
-        """
-        # Ensure mypy is installed for the check
-        self.install("mypy")
-        return subprocess.run(
-            [str(self.python_exe), "-m", "mypy", str(script_path)],
-            capture_output=True,
-            text=True,
-        )
-~~~~~
-
-#### Acts 2: 导出 VenvHarness
-
-现在，我们更新 `stitcher-test-utils` 的 `__init__.py`，使其导出新创建的 `VenvHarness` 类。
+我们首先修正 `StubPackageManager`，使其为源码目录和 `tool.hatch.build.targets.wheel.packages` 配置都添加 `-stubs` 后缀。
 
 ~~~~~act
 patch_file
-packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py
+packages/stitcher-application/src/stitcher/app/services/stub_package_manager.py
 ~~~~~
 ~~~~~python.old
-from .bus import SpyBus
-from .nexus import MockNexus
-from .workspace import WorkspaceFactory
+        # Create src/namespace directory, e.g., src/needle or src/stitcher
+        (package_path / "src" / package_namespace).mkdir(parents=True, exist_ok=True)
 
-__all__ = ["SpyBus", "MockNexus", "WorkspaceFactory"]
+        # Create pyproject.toml
+        pyproject_content = {
+            "build-system": {
+                "requires": ["hatchling"],
+                "build-backend": "hatchling.build",
+            },
+            "project": {
+                "name": f"{source_project_name}-stubs",
+                "version": "0.1.0",  # Placeholder version
+                "description": f"PEP 561 type stubs for {source_project_name}",
+            },
+            "tool": {
+                "hatch": {
+                    "build": {
+                        "targets": {
+                            "wheel": {
+                                # Essential for packaging .pyi files correctly under the namespace
+                                "packages": [f"src/{package_namespace}"]
+                            }
+                        }
+                    }
+                }
+            },
+        }
 ~~~~~
 ~~~~~python.new
-from .bus import SpyBus
-from .nexus import MockNexus
-from .workspace import WorkspaceFactory
-from .harness import VenvHarness
+        stub_namespace = f"{package_namespace}-stubs"
+        # Create src/namespace-stubs directory, e.g., src/needle-stubs
+        (package_path / "src" / stub_namespace).mkdir(parents=True, exist_ok=True)
 
-__all__ = ["SpyBus", "MockNexus", "WorkspaceFactory", "VenvHarness"]
+        # Create pyproject.toml
+        pyproject_content = {
+            "build-system": {
+                "requires": ["hatchling"],
+                "build-backend": "hatchling.build",
+            },
+            "project": {
+                "name": f"{source_project_name}-stubs",
+                "version": "0.1.0",  # Placeholder version
+                "description": f"PEP 561 type stubs for {source_project_name}",
+            },
+            "tool": {
+                "hatch": {
+                    "build": {
+                        "targets": {
+                            "wheel": {
+                                # Essential for packaging .pyi files correctly under the namespace
+                                "packages": [f"src/{stub_namespace}"]
+                            }
+                        }
+                    }
+                }
+            },
+        }
 ~~~~~
 
-#### Acts 3: 在集成测试中提供 Fixture
+#### Acts 2: 编写 PEP 561 结构合规性测试
 
-最后，我们在 `tests/integration` 目录中创建一个 `conftest.py` 文件，定义一个 `isolated_env` fixture，以便所有集成测试都能方便地使用 `VenvHarness`。
+现在，我们创建测试文件来验证修复后的逻辑是否正确。
 
 ~~~~~act
 write_file
-tests/integration/conftest.py
+tests/integration/test_stub_package_pep561.py
 ~~~~~
 ~~~~~python
-import pytest
+import sys
 from pathlib import Path
-from stitcher.test_utils import VenvHarness
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
+from stitcher.app import StitcherApp
+from stitcher.test_utils import WorkspaceFactory
 
 
-@pytest.fixture
-def isolated_env(tmp_path: Path) -> VenvHarness:
+def test_pep561_structure_compliance(tmp_path: Path):
     """
-    Provides an isolated virtual environment harness for integration testing.
+    Verifies that generated stub packages comply with PEP 561 naming conventions
+    for both package name and the source directory inside the package.
     """
-    return VenvHarness(tmp_path)
+    # 1. Arrange
+    project_name = "my-project"
+    namespace = "my_project"
+    stub_dir_name = "stubs"
+
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_project_name(project_name)
+        .with_config({"scan_paths": [f"src/{namespace}"], "stub_package": stub_dir_name})
+        .with_source(f"src/{namespace}/main.py", "def func(): ...")
+        .build()
+    )
+
+    app = StitcherApp(root_path=project_root)
+
+    # 2. Act
+    app.run_from_config()
+
+    # 3. Assert
+    stub_pkg_path = project_root / stub_dir_name
+    stub_toml_path = stub_pkg_path / "pyproject.toml"
+
+    # 3.1. Assert pyproject.toml name is correct
+    assert stub_toml_path.is_file()
+    with stub_toml_path.open("rb") as f:
+        config = tomllib.load(f)
+    assert config["project"]["name"] == f"{project_name}-stubs"
+
+    # 3.2. Assert src directory is named correctly (<namespace>-stubs)
+    expected_src_dir = stub_pkg_path / "src" / f"{namespace}-stubs"
+    incorrect_src_dir = stub_pkg_path / "src" / namespace
+
+    assert expected_src_dir.is_dir()
+    assert not incorrect_src_dir.exists(), "Incorrectly named src dir found."
+
+    # 3.3. Assert Hatch config points to the correct directory
+    hatch_packages = config["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
+    assert hatch_packages == [f"src/{namespace}-stubs"]
 ~~~~~
 
 ### 下一步建议
 
-我们已经成功创建了 `VenvHarness` 工具和对应的 `isolated_env` fixture。
+我们已经验证了生成的存根包在物理结构上是合规的。
 
-下一步，我们将利用这个新工具来编写第一个集成测试：**结构合规性测试 (Structure Compliance Test)**。该测试将：
-1.  调用 `StitcherApp` 在临时目录中生成一个存根包。
-2.  使用 `isolated_env` 来验证生成的 `pyproject.toml` 中的包名是否正确（以 `-stubs` 结尾）。
-3.  验证生成的源码目录名称是否为 `src/<name>-stubs`，以符合 PEP 561 规范。
+下一步是验证它在功能上是否有效。我建议实施 **“安装与类型解析测试” (The "Can I Import It" Test)**。这个测试将是我们第一次真正使用 `isolated_env` fixture 的全部功能：
+1.  生成存根包。
+2.  在隔离的虚拟环境中 `pip install` 这个存根包。
+3.  创建一个消费该包的客户端脚本 (`client.py`)。
+4.  在虚拟环境中运行 `mypy`，并断言类型检查器能够正确解析导入的类型，而不是返回 `Any` 或 `ImportError`。
 
-如果你同意，我将为你生成实现此测试的计划。
+这将闭合整个验证循环，证明我们生成的包不仅结构正确，而且能被工具链正确消费。如果你同意，我将生成执行此测试的计划。
