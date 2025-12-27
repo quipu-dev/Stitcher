@@ -154,20 +154,26 @@ class StitcherApp:
             if config.stub_package:
                 # Stub Package mode
                 logical_path = self._derive_logical_path(module.file_path)
+
+                # Use the centralized logic from StubPackageManager
+                stub_logical_path = self.stub_pkg_manager._get_pep561_logical_path(
+                    logical_path
+                )
+
                 output_path = (
                     self.root_path
                     / config.stub_package
                     / "src"
-                    / logical_path.with_suffix(".pyi")
+                    / stub_logical_path.with_suffix(".pyi")
                 )
 
                 # Create py.typed marker file in top-level package dir
-                if logical_path.parts:
+                if stub_logical_path.parts:
                     top_level_pkg_dir = (
                         self.root_path
                         / config.stub_package
                         / "src"
-                        / logical_path.parts[0]
+                        / stub_logical_path.parts[0]
                     )
                     if top_level_pkg_dir not in created_py_typed:
                         top_level_pkg_dir.mkdir(parents=True, exist_ok=True)
@@ -186,8 +192,17 @@ class StitcherApp:
                     ".pyi"
                 )
 
-            # Critical step: ensure parent directory exists
+            # Critical step: ensure parent directory and all __init__.pyi files exist
             output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Traverse upwards from the file's parent to the stub's src root
+            # and create __init__.pyi files along the way.
+            if config.stub_package:
+                src_root = self.root_path / config.stub_package / "src"
+                current = output_path.parent
+                while current != src_root and src_root in current.parents:
+                    (current / "__init__.pyi").touch(exist_ok=True)
+                    current = current.parent
 
             output_path.write_text(pyi_content, encoding="utf-8")
 

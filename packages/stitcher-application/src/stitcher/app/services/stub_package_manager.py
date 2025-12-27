@@ -3,6 +3,17 @@ import tomli_w
 
 
 class StubPackageManager:
+    @staticmethod
+    def _get_pep561_logical_path(logical_path: Path) -> Path:
+        """Converts a standard logical path to a PEP 561-compliant one for stubs."""
+        if not logical_path.parts:
+            return logical_path
+
+        namespace = logical_path.parts[0]
+        rest_of_path = logical_path.parts[1:]
+        # e.g. my_app/main.py -> my_app-stubs/main.py
+        return Path(f"{namespace}-stubs", *rest_of_path)
+
     def scaffold(
         self, package_path: Path, source_project_name: str, package_namespace: str
     ) -> bool:
@@ -12,8 +23,12 @@ class StubPackageManager:
 
         # Ensure root directory exists
         package_path.mkdir(parents=True, exist_ok=True)
-        # Create src/namespace directory, e.g., src/needle or src/stitcher
-        (package_path / "src" / package_namespace).mkdir(parents=True, exist_ok=True)
+
+        # Use the centralized logic to determine the stub source directory name
+        stub_src_dirname = self._get_pep561_logical_path(
+            Path(package_namespace)
+        ).as_posix()
+        (package_path / "src" / stub_src_dirname).mkdir(parents=True, exist_ok=True)
 
         # Create pyproject.toml
         pyproject_content = {
@@ -32,7 +47,7 @@ class StubPackageManager:
                         "targets": {
                             "wheel": {
                                 # Essential for packaging .pyi files correctly under the namespace
-                                "packages": [f"src/{package_namespace}"]
+                                "packages": [f"src/{stub_src_dirname}"]
                             }
                         }
                     }
