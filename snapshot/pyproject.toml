@@ -78,17 +78,3 @@ extraPaths = [
 ]
 
 [tool.pyrefly]
-extraPaths = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
-    "packages/stitcher-scanner/src",
-    "packages/stitcher-io/src",
-    "packages/stitcher-config/src",
-    "packages/stitcher-application/src",
-    "packages/stitcher-cli/src",
-    "packages/stitcher-test-utils/src",
-    "packages/pyneedle-spec/src",
-    "packages/pyneedle-pointer/src",
-    "packages/pyneedle-nexus/src",
-    "packages/pyneedle/src",
-]
