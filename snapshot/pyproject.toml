@@ -43,17 +43,18 @@ addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
 testpaths = ["tests", "packages"]
 norecursedirs = ["tests/fixtures"]
 pythonpath = [
-    "packages/stitcher-spec/src", 
-    "packages/stitcher-common/src", 
-    "packages/stitcher-scanner/src", 
-    "packages/stitcher-io/src", 
-    "packages/stitcher-config/src", 
-    "packages/stitcher-application/src", 
-    "packages/stitcher-cli/src", 
+    "packages/stitcher-spec/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-scanner/src",
+    "packages/stitcher-io/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-application/src",
+    "packages/stitcher-cli/src",
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-nexus/src",
-    "packages/pyneedle/src"
+    "packages/pyneedle/src",
+    "packages/stitcher-test-utils/src"
 ]
 
 [tool.stitcher]
@@ -74,7 +75,7 @@ extraPaths = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-nexus/src",
-    "packages/pyneedle/src",
+    "packages/pyneedle/src"
 ]
 
 [tool.pyrefly]
@@ -90,5 +91,5 @@ extraPaths = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-nexus/src",
-    "packages/pyneedle/src",
+    "packages/pyneedle/src"
 ]

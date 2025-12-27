@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 删除过时且冲突的 pyrightconfig.json 配置文件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766808310.709437, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(build): 调整 Pyright/Pytest 路径顺序以正确解析命名空间包", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766808474.4942129, "duration_ms": 0}}
