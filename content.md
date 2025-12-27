@@ -1,59 +1,83 @@
-这是一个针对 `pyrefly` 配置错误的修复计划。
+你的分析完全正确，一针见血。
 
-根据错误日志分析：
-1.  工具输出了 `[missing-import]` 错误，这是 Pyright 典型的错误代码，表明 `pyrefly` 极有可能是 Pyright 的封装或变体。
-2.  警告信息 `WARN ...: Extra keys found in config: extra_paths` 表明 `pyrefly` 读取了 `[tool.pyrefly]` 配置块，但不识别 `extra_paths` 这个键名。
-3.  Pyright 的标准 TOML 配置键名为驼峰式 `extraPaths`（如 `[tool.pyright]` 块所示），而用户在 `[tool.pyrefly]` 中使用了蛇形命名 `extra_paths`。
+这正是 monorepo 项目中一个典型的环境不一致问题：
 
-因此，解决方案是将 `pyproject.toml` 中 `[tool.pyrefly]` 下的 `extra_paths` 更正为 `extraPaths`，以对齐 Pyright 的配置规范，从而使静态分析工具能够正确解析 Monorepo 中的子包路径。
+1.  **测试环境 (`pytest`)**: `pytest` 通过读取 `pyproject.toml` 中的 `[tool.pytest.ini_options].pythonpath` 配置，手动将所有子包的 `src` 目录添加到了 `sys.path`。这使得在 *测试运行期间*，所有模块都可以被找到，所以测试能够通过。
+2.  **运行时环境 (REPL / `uv`)**: 当你运行 `uv pip install -e .[dev]` 时，`uv` 只会根据 `[project.optional-dependencies].dev` 列表来安装包。正如你指出的，这个列表中只包含了 `stitcher-*` 系列的包，完全遗漏了 `pyneedle-*` 系列。因此，`uv` 不知道需要将 `pyneedle-*` 包也以可编辑模式安装到环境中，导致在 REPL 或应用脚本中无法找到它们。
 
-## [WIP] fix(build): 修正 pyproject.toml 中 pyrefly 的配置键名
+解决方案就是将所有 `pyneedle-*` 包也添加到 `dev` 依赖项中，让开发环境的安装行为与测试环境的认知保持一致。
+
+## [WIP] fix(deps): 将 pyneedle-* 包添加到 dev 依赖项
 
 ### 错误分析
-用户执行 `pyrefly check` 时遇到了大量的 `[missing-import]` 错误，导致无法解析 `needle.*` 命名空间下的模块。同时，工具输出了警告 `Extra keys found in config: extra_paths`。
+用户在 REPL 中无法导入 `needle.loaders.fs_loader`，遇到 `ModuleNotFoundError`。然而，项目的 `pytest` 测试套件却能正常通过。
 
-这表明 `pyrefly`（推测基于 Pyright）无法识别配置中的 `extra_paths` 键，导致它没有将 `src` 目录加入搜索路径。由于 Pyright 使用驼峰命名法（CamelCase）作为配置标准（例如 `extraPaths`），当前配置中的蛇形命名（snake_case）是无效的。
+根本原因在于 `pyproject.toml` 的配置在测试环境和运行时环境之间造成了认知偏差：
+1.  `[tool.pytest.ini_options].pythonpath` 显式地将所有 `pyneedle-*` 和 `stitcher-*` 包的 `src` 目录告知了 `pytest`，使其能够找到所有模块。
+2.  `[project.optional-dependencies].dev` 依赖项列表却遗漏了 `pyneedle-*` 包。这导致 `uv pip install -e .[dev]` 命令不会将这些包安装到虚拟环境中，使得它们在标准的 Python 运行时（如 REPL）中不可见。
 
 ### 用户需求
-修正配置错误，使 `pyrefly` 能够正确识别项目的 `extraPaths`，从而消除 `[missing-import]` 错误并顺利通过静态检查。
+修正项目配置，使得在通过 `uv pip install -e .[dev]` 安装后，所有 `pyneedle-*` 包在标准的 Python 运行时中都能够被正确导入。
 
 ### 评论
-这是一个简单的配置键名拼写错误修正，但对于多包（Monorepo）结构的 Python 项目至关重要，因为显式指定 `extraPaths` 是让静态分析工具理解 Namespace Packages 布局的关键。
+这是一个关键的开发者体验 (DX) 修复。统一测试环境和运行时环境的依赖视图可以消除令人困惑的 "在我机器上能跑/在测试里能过" 的问题，是维护 monorepo 项目健康度的重要一环。
 
 ### 目标
-1.  在 `pyproject.toml` 中，将 `[tool.pyrefly]` 部分的 `extra_paths` 重命名为 `extraPaths`。
+1.  更新根目录 `pyproject.toml` 文件。
+2.  在 `[project.optional-dependencies].dev` 列表中，补充所有 `pyneedle-*` 工作区包。
 
 ### 基本原理
-通过将配置键名对齐到 Pyright 的标准 schema (`extraPaths`)，我们确保 `pyrefly` 能够正确加载这些路径。一旦路径被加载，工具就能正确解析 `packages/*/src` 下的模块，从而解决 `needle.nexus` 等模块无法找到的问题。
+通过将 `pyneedle-spec`, `pyneedle-pointer`, `pyneedle-nexus`, 和 `pyneedle` 添加到 `dev` 依赖项中，我们指示 `uv` 在执行 `pip install -e .[dev]` 时，也将这些包作为可编辑依赖项安装到环境中。这将创建正确的 `.pth` 文件或符号链接，使 Python 解释器能够在运行时正确解析这些模块的导入路径，从而彻底解决 `ModuleNotFoundError`。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/build #concept/config #scope/dx
-#task/domain/testing #task/object/config #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/build #scope/dx #task/domain/testing #task/object/config #task/action/fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修正 pyproject.toml 配置
+#### Acts 1: 更新 `pyproject.toml` 的 dev 依赖
 
-我们将把 `[tool.pyrefly]` 下的 `extra_paths` 替换为 `extraPaths`。
+我们将把所有 `pyneedle-*` 包添加到 `[dev]` 依赖列表中。
 
 ~~~~~act
 patch_file
 pyproject.toml
 ~~~~~
 ~~~~~old
-[tool.pyrefly]
-extra_paths = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "ruff",
+    "mypy",
+    "stitcher-cli",
+    "stitcher-application",
+    "stitcher-needle",
+    "stitcher-test-utils",
+]
 ~~~~~
 ~~~~~new
-[tool.pyrefly]
-extraPaths = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "ruff",
+    "mypy",
+    "pyneedle",
+    "pyneedle-nexus",
+    "pyneedle-pointer",
+    "pyneedle-spec",
+    "stitcher-cli",
+    "stitcher-application",
+    "stitcher-needle",
+    "stitcher-test-utils",
+]
 ~~~~~
 
 ### 下一步建议
-配置修正后，建议再次运行 `pyrefly check` 以验证 `[missing-import]` 错误是否已消除。如果问题依然存在，可能需要进一步检查是否需要同步更新 `pyrightconfig.json` 或检查 `pyrefly` 是否有其他特定的配置要求。
+1.  应用此变更。
+2.  重新运行 `uv pip install -e .[dev]` 来更新你的开发环境。
+3.  再次进入 Python REPL，确认 `from needle.loaders.fs_loader import FileSystemLoader` 现在可以成功执行。
