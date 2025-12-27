@@ -4,6 +4,13 @@
 
 ### 📝 变更文件摘要:
 ```
-pyproject.toml | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+packages/stitcher-application/src/stitcher/app/py.typed       | 0
+ packages/stitcher-cli/src/stitcher/cli/py.typed               | 0
+ packages/stitcher-common/src/stitcher/common/py.typed         | 0
+ packages/stitcher-config/src/stitcher/config/py.typed         | 0
+ packages/stitcher-io/src/stitcher/io/py.typed                 | 0
+ packages/stitcher-scanner/src/stitcher/scanner/py.typed       | 0
+ packages/stitcher-spec/src/stitcher/spec/py.typed             | 0
+ packages/stitcher-test-utils/src/stitcher/test_utils/py.typed | 0
+ 8 files changed, 0 insertions(+), 0 deletions(-)
 ```
