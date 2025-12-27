@@ -77,7 +77,10 @@ class VenvHarness:
         )
 
     def run_pyright_check(
-        self, project_path: Path, verbose: bool = False
+        self,
+        project_path: Path,
+        verbose: bool = False,
+        cwd: Path | None = None,
     ) -> subprocess.CompletedProcess:
         """
         Runs pyright on a given project/file within the virtual environment.
@@ -85,6 +88,7 @@ class VenvHarness:
         Args:
             project_path: The path to the Python project/file to type-check.
             verbose: If True, run pyright with --verbose flag.
+            cwd: The working directory from which to run the command.
 
         Returns:
             The result of the subprocess call.
@@ -98,7 +102,7 @@ class VenvHarness:
             command.append("--verbose")
         command.append(str(project_path))
 
-        return subprocess.run(command, capture_output=True, text=True)
+        return subprocess.run(command, capture_output=True, text=True, cwd=cwd)
 
     def get_site_packages_path(self) -> Path:
         """Returns the absolute path to the site-packages directory."""

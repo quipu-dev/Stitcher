@@ -9,8 +9,8 @@ def test_pyright_resolves_types_from_stubs(
 ):
     """
     Verifies that Pyright can resolve types from a generated stub package by
-    providing an explicit pyrightconfig.json that points to the venv's
-    site-packages. This is the definitive test for IDE compatibility.
+    running it from a controlled working directory with an explicit pyright
+    config. This is the definitive test for IDE compatibility.
     """
     # --- ARRANGE ---
 
@@ -54,30 +54,31 @@ packages = ["src/ide_proxy"]
     app.run_from_config()
     stub_pkg_path = source_project_root / "stubs"
 
-    # 4. Install BOTH packages.
+    # 4. Install BOTH packages into the isolated venv.
     isolated_env.install(str(runtime_project_root))
     isolated_env.install(str(stub_pkg_path))
 
-    # 5. Create a client project directory.
+    # 5. Create a client project directory with code and pyright config.
     client_project_dir = tmp_path / "client_project"
     client_project_dir.mkdir()
-    client_script = client_project_dir / "main.py"
-    client_script.write_text(
+    (client_project_dir / "main.py").write_text(
         "from ide_proxy.models import ProxyModel\n\n"
         "instance = ProxyModel()\n"
         "reveal_type(instance.get_id())\n"
     )
 
-    # 6. *** THE DEFINITIVE FIX ***
-    #    Create a pyrightconfig.json that explicitly tells pyright where to
-    #    find the installed packages.
+    # 6. Create the pyrightconfig.json.
     pyright_config_path = client_project_dir / "pyrightconfig.json"
     site_packages = isolated_env.get_site_packages_path()
     pyright_config = {"extraPaths": [str(site_packages)]}
     pyright_config_path.write_text(json.dumps(pyright_config))
 
-    # 7. Run Pyright check with verbosity for better diagnostics.
-    result = isolated_env.run_pyright_check(client_project_dir, verbose=True)
+    # 7. *** THE DEFINITIVE FIX ***
+    #    Run Pyright check from within the client project directory.
+    #    We check "." which means "the current directory".
+    result = isolated_env.run_pyright_check(
+        Path("."), verbose=True, cwd=client_project_dir
+    )
 
     # --- ASSERT ---
 
