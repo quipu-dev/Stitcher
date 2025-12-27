@@ -113,8 +113,12 @@ def test_check_with_update_signatures_flag_reconciles_changes(tmp_path, monkeypa
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
 
-    # 2. Modify the code to create a signature mismatch (keep the docstring!)
-    (project_root / "src/main.py").write_text('def func(a: str):\n    """Doc."""\n    ...')
+    # 2. Modify the code to create a signature mismatch.
+    # CRITICAL: Do NOT include the docstring here. If we do, 'check' will report a
+    # REDUNDANT warning (because docs exist in both code and YAML), causing the
+    # final result to be 'success_with_warnings' instead of 'success'.
+    # We want a clean state where docs are only in YAML.
+    (project_root / "src/main.py").write_text("def func(a: str):\n    ...")
 
     # 3. Act I: Run check with the --update-signatures flag
     spy_bus_reconcile = SpyBus()
