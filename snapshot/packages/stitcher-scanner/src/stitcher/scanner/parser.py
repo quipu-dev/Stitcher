@@ -216,10 +216,15 @@ class IRBuildingVisitor(cst.CSTVisitor):
             # cst.ParamStar only has name if it's *args (not just *)
 
             if isinstance(param, cst.ParamStar):
-                # Handle *args (bare * has no name)
-                name = param.name.value if isinstance(param.name, cst.Name) else ""
+                # Handle *args. A bare '*' separator won't have a .name attribute.
+                name = ""
+                if hasattr(param, "name") and isinstance(param.name, cst.Name):
+                    name = param.name.value
+
                 annotation = None
-                if isinstance(param.annotation, cst.Annotation):
+                if hasattr(param, "annotation") and isinstance(
+                    param.annotation, cst.Annotation
+                ):
                     annotation = dummy_module.code_for_node(
                         param.annotation.annotation
                     ).strip()
