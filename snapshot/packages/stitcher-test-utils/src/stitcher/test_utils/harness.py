@@ -94,3 +94,46 @@ class VenvHarness:
         return subprocess.run(
             [str(pyright_exe), str(script_path)], capture_output=True, text=True
         )
+
+    # --- Diagnostic Methods ---
+
+    def pip_list(self) -> str:
+        """Runs 'pip list' and returns the output."""
+        result = subprocess.run(
+            [str(self.python_exe), "-m", "pip", "list"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout
+
+    def get_site_packages_layout(self) -> str:
+        """Returns a string representation of the site-packages directory structure."""
+        result = subprocess.run(
+            [
+                str(self.python_exe),
+                "-c",
+                "import site; print(site.getsitepackages()[0])",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        site_packages_path = Path(result.stdout.strip())
+
+        lines = [f"--- Contents of {site_packages_path} ---"]
+        for path in sorted(site_packages_path.rglob("*")):
+            try:
+                relative_path = path.relative_to(site_packages_path)
+                indent = "  " * (len(relative_path.parts) - 1)
+                lines.append(f"{indent}- {path.name}{'/' if path.is_dir() else ''}")
+            except ValueError:
+                # This can happen for paths outside the root, though unlikely with rglob
+                lines.append(f"- {path} (absolute path)")
+        return "\n".join(lines)
+
+    def run_python_command(self, command: str) -> subprocess.CompletedProcess:
+        """Runs an arbitrary python command string."""
+        return subprocess.run(
+            [str(self.python_exe), "-c", command], capture_output=True, text=True
+        )

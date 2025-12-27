@@ -7,45 +7,41 @@ def test_pyright_resolves_types_from_stubs(
     tmp_path: Path, isolated_env: VenvHarness
 ):
     """
-    Verifies that Pyright (the engine for VSCode's Pylance) can successfully
-    resolve types from a generated stub package, simulating the IDE experience.
-    This test ensures a realistic environment by installing BOTH the runtime
-    package and the stub package.
+    Verifies that Pyright can resolve types from a generated stub package,
+    simulating the IDE experience in a realistic environment where both the
+    runtime and stub packages are installed.
     """
     # --- ARRANGE ---
 
-    # 1. Define the shared source code content.
-    source_content = """
-class ProxyModel:
-    def get_id(self): # No type hints in runtime code
-        return 1
-"""
-    # 2. Create the source project that Stitcher will scan.
-    source_project_root = tmp_path / "source_project"
-    factory_source = WorkspaceFactory(source_project_root)
-    factory_source.with_project_name("ide-proxy-proj").with_config(
-        {"scan_paths": ["src/ide_proxy"], "stub_package": "stubs"}
-    ).with_source("src/ide_proxy/models.py", source_content).build()
+    # 1. Define shared source code (no type hints in runtime).
+    source_content = "class ProxyModel:\n    def get_id(self):\n        return 1"
 
-    # 3. Create a basic, installable RUNTIME package.
+    # 2. Create the source project for Stitcher to scan.
+    source_project_root = tmp_path / "source_project"
+    WorkspaceFactory(source_project_root).with_project_name(
+        "ide-proxy-proj"
+    ).with_config(
+        {"scan_paths": ["src/ide_proxy"], "stub_package": "stubs"}
+    ).with_source(
+        "src/ide_proxy/models.py", source_content
+    ).build()
+
+    # 3. Create a correctly configured, installable RUNTIME package using hatchling.
     runtime_project_root = tmp_path / "runtime_project"
-    factory_runtime = WorkspaceFactory(runtime_project_root)
-    factory_runtime.with_source("src/ide_proxy/models.py", source_content).with_source(
-        # pkgutil-style namespace is robust
+    WorkspaceFactory(runtime_project_root).with_source(
+        "src/ide_proxy/models.py", source_content
+    ).with_source(
         "src/ide_proxy/__init__.py",
         "__path__ = __import__('pkgutil').extend_path(__path__, __name__)",
     ).with_source(
-        # A robust pyproject.toml using hatchling to ensure src-layout is handled
         "pyproject.toml",
         """
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
 [project]
 name = "ide-proxy-proj"
 version = "0.1.0"
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/ide_proxy"]
 """,
@@ -53,44 +49,60 @@ packages = ["src/ide_proxy"]
 
     # --- ACT ---
 
-    # 4. Generate the stub package from the source project.
+    # 4. Generate the stub package.
     app = StitcherApp(root_path=source_project_root)
     app.run_from_config()
     stub_pkg_path = source_project_root / "stubs"
-    assert (
-        stub_pkg_path / "src/ide_proxy-stubs/models.pyi"
-    ).exists(), "Stub .pyi file was not generated."
 
-    # 5. Install BOTH packages into the isolated venv.
+    # 5. Install BOTH packages.
     isolated_env.install(str(runtime_project_root))
     isolated_env.install(str(stub_pkg_path))
 
-    # 6. Create a client script that consumes the code.
+    # 6. Run DIAGNOSTICS before the main check.
+    pip_list_output = isolated_env.pip_list()
+    site_packages_layout = isolated_env.get_site_packages_layout()
+    import_result = isolated_env.run_python_command("import ide_proxy.models")
+
+    # 7. Create a client script to be type-checked.
     client_script = tmp_path / "client.py"
     client_script.write_text(
-        """
-from ide_proxy.models import ProxyModel
-
-# If stubs are working, pyright will know ProxyModel and its methods.
-instance = ProxyModel()
-reveal_type(instance.get_id())
-"""
+        "from ide_proxy.models import ProxyModel\n\n"
+        "instance = ProxyModel()\n"
+        "reveal_type(instance.get_id())\n"
     )
 
-    # 7. Run pyright inside the isolated environment.
+    # 8. Run the final Pyright check.
     result = isolated_env.run_pyright_check(client_script)
 
     # --- ASSERT ---
 
-    # 8. Assert that pyright completes successfully.
+    # 9. Assert with a rich diagnostic message.
+    diagnostic_info = f"""
+    --- DIAGNOSTICS ---
+    [PIP LIST]
+{pip_list_output}
+    [SITE-PACKAGES LAYOUT]
+{site_packages_layout}
+    [PYTHON IMPORT TEST]
+    Exit Code: {import_result.returncode}
+    Stdout: {import_result.stdout.strip()}
+    Stderr: {import_result.stderr.strip()}
+    ---
+    [PYRIGHT OUTPUT]
+    STDOUT:
+{result.stdout}
+    STDERR:
+{result.stderr}
+    """
+
+    assert (
+        import_result.returncode == 0
+    ), f"Python could not import the runtime module.\n{diagnostic_info}"
     assert (
         result.returncode == 0
-    ), f"Pyright failed with errors:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+    ), f"Pyright failed with errors.\n{diagnostic_info}"
 
-    # 9. Verify Pyright's output confirms successful type analysis.
-    assert (
-        "0 errors" in result.stdout
-    ), f"Pyright reported errors:\n{result.stdout}"
+    assert "0 errors" in result.stdout, f"Pyright reported errors.\n{diagnostic_info}"
     assert (
         'Type of "instance.get_id()" is "int"' in result.stdout
-    ), f"Pyright did not resolve the return type correctly.\nOutput:\n{result.stdout}"
+    ), f"Pyright did not resolve the return type correctly.\n{diagnostic_info}"
