@@ -42,11 +42,7 @@ def test_check_reports_untracked_with_details(tmp_path, monkeypatch):
     # Verify the correct key was reported
     messages = spy_bus.get_messages()
     missing_key_msg = next(
-        (
-            m
-            for m in messages
-            if m["id"] == str(L.check.issue.untracked_missing_key)
-        ),
+        (m for m in messages if m["id"] == str(L.check.issue.untracked_missing_key)),
         None,
     )
     assert missing_key_msg is not None

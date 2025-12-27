@@ -103,9 +103,6 @@ class ModuleDef:
         )
 
     def get_undocumented_public_keys(self) -> List[str]:
-        """
-        Returns a list of public keys (FQNs) that do not have a docstring.
-        """
         keys = []
 
         # Functions

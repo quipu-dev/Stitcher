@@ -80,6 +80,8 @@
   The relative path to the module file.
 "ModuleDef.functions": |-
   A list of functions defined at the module level.
+"ModuleDef.get_undocumented_public_keys": |-
+  Returns a list of public keys (FQNs) that do not have a docstring.
 "ModuleDef.imports": |-
   A list of import statements found in the module.
 "ModuleDef.is_documentable": |-
