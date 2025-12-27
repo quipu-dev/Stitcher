@@ -1,33 +1,38 @@
-This is it. The verbose output is the final piece of the puzzle, and it's unequivocal.
+This is fantastic progress! We've solved the hardest part. The `pyright` process is now fully isolated, loading the correct configuration, and successfully finding the `ide_proxy.models` module. The `0 errors, 0 warnings` proves it.
 
-The `--verbose` output has given us the smoking gun:
+The final hurdle is revealed by this line:
+`Type of "instance.get_id()" is "Unknown"`
 
-`Loading pyproject.toml file at /home/doucx/Documents/Projects/stitcher-python/pyproject.toml`
+This output tells us:
+1.  `pyright` **found** the runtime package (`ide-proxy-proj`).
+2.  It parsed the `models.py` file within it.
+3.  Inside that file, it found `def get_id(self):`. Since there are no type hints, it correctly infers the return type is `Unknown`.
+4.  Crucially, it **did not** apply the types from our `ide-proxy-proj-stubs` package.
 
-**`Pyright` is loading the main project's configuration, not the `pyrightconfig.json` we created in the temporary directory.**
+Why? We've hit the final, most subtle rule of PEP 561. For a type checker to consider a package "typed" and thus look for stubs for it, the **runtime package itself must signal that it participates in the type system**. It does this by containing a marker file named `py.typed`.
 
-The reason is that the `pytest` process is running from our project root. When `subprocess.run` executes `pyright`, the subprocess inherits the parent's Current Working Directory (CWD). `Pyright`'s configuration discovery mechanism finds the `pyproject.toml` in the CWD and immediately uses its `[tool.pyright]` settings, completely ignoring the configuration file located next to the file being analyzed in the temporary path. The `extraPaths` from our main project's config are loaded, but they are irrelevant to the isolated venv, and our intended `extraPaths` are never seen.
+Our mock runtime package is missing this marker. Without it, `pyright` treats it as a legacy, untyped package and doesn't bother looking for an associated stub package.
 
-The solution is to force `pyright` to run in a clean environment by changing its working directory to the temporary `client_project_dir` where our test files and configuration reside.
+The solution is to add this empty `py.typed` marker file to our mock runtime package. This will be the "green light" for `pyright` to apply the types from our beautifully generated stubs.
 
-## [WIP] fix(tests): Isolate pyright process by setting its working directory
+## [WIP] fix(tests): Add `py.typed` marker to mock runtime package
 
 ### 用户需求
 
-修复 `tests/integration/test_ide_proxy.py`，通过隔离 `pyright` 子进程的工作目录来确保它加载正确的配置文件，从而解决导入解析失败的问题。
+修复 `tests/integration/test_ide_proxy.py` 中 `pyright` 将类型解析为 `Unknown` 的问题，通过使模拟的运行时包符合 PEP 561 规范来完成。
 
 ### 评论
 
-这次的失败和最终的修复是整个调试过程的顶点。它揭示了在复杂的测试工具链中，子进程的环境（特别是工作目录）是多么关键。通过使用 `subprocess` 的 `cwd` 参数，我们为 `pyright` 创建了一个完美的“无尘室”，确保测试是自包含且可重复的，这代表了最高标准的集成测试实践。
+这是整个调试过程的最后一步。通过在模拟的运行时包中添加 `py.typed` 标记，我们完整地实现了 PEP 561 规范所要求的所有条件。这个修复不仅能让测试通过，更重要的是，它确保了我们的测试用例能够精确地模拟一个与现代类型检查工具完全兼容的真实世界 Python 包生态。
 
 ### 目标
 
-1.  **Enhance `VenvHarness`**: Modify `run_pyright_check` to accept a `cwd` parameter to control the subprocess's working directory.
-2.  **Rewrite Test**: In the `test_pyright_resolves_types_from_stubs` test, when calling `run_pyright_check`, set the `cwd` to our temporary `client_project_dir`.
+1.  在 `test_pyright_resolves_types_from_stubs` 测试中，为 `runtime_project` 的 `WorkspaceFactory` 调用链增加一步。
+2.  使用 `.with_source("src/ide_proxy/py.typed", "")` 来创建这个必需的空标记文件。
 
 ### 基本原理
 
-通过将 `pyright` 子进程的 `cwd` (Current Working Directory) 设置为我们专门创建的 `client_project_dir`，我们强制 `pyright` 在一个受控的环境中启动。在这个环境中，它向上查找配置时，找到的第一个文件将是我们放置在那里的 `pyrightconfig.json`。它将不再看到主项目的 `pyproject.toml`。这个被正确加载的配置会告诉 `pyright` 使用我们指定的 `extraPaths`（即 venv 的 `site-packages`），从而使其能够完美地解析所有导入，最终通过测试。
+根据 PEP 561，包含 `py.typed` 文件的包向类型检查器声明：“我是一个支持类型的包”。这个信号是 `pyright` 触发其存根包查找和应用逻辑的先决条件。一旦 `pyright` 在 `ide-proxy-proj` 包中找到这个标记，它就会主动寻找并优先使用 `ide-proxy-proj-stubs` 包中的 `.pyi` 文件来获取类型信息。这将导致 `get_id` 方法的返回类型被正确地从 `Unknown` 解析为 `int`，从而使最终的断言通过。
 
 ### 标签
 #intent/fix #flow/ready #priority/critical #comp/tests #scope/dx #ai/instruct #task/domain/testing #task/object/ide-simulation #task/action/bug-fix #task/state/end
@@ -35,176 +40,27 @@ The solution is to force `pyright` to run in a clean environment by changing its
 ---
 ### Script
 
-#### Acts 1: Final Tweak to Test Harness
+#### Acts 1: Add `py.typed` Marker to the Mock Runtime Package
 
-I will modify `VenvHarness` one last time to allow setting the `cwd` for the `pyright` command.
+我将对 `test_ide_proxy.py` 文件进行最后一次、也是决定性的修改，为我们的模拟运行时包添加 `py.typed` 文件。
 
 ~~~~~act
 patch_file
-packages/stitcher-test-utils/src/stitcher/test_utils/harness.py
-~~~~~
-~~~~~python.old
-    def run_pyright_check(
-        self, project_path: Path, verbose: bool = False
-    ) -> subprocess.CompletedProcess:
-        """
-        Runs pyright on a given project/file within the virtual environment.
-
-        Args:
-            project_path: The path to the Python project/file to type-check.
-            verbose: If True, run pyright with --verbose flag.
-
-        Returns:
-            The result of the subprocess call.
-        """
-        self.install("pyright")
-        bin_dir = "Scripts" if sys.platform == "win32" else "bin"
-        pyright_exe = self.venv_dir / bin_dir / "pyright"
-
-        command = [str(pyright_exe)]
-        if verbose:
-            command.append("--verbose")
-        command.append(str(project_path))
-
-        return subprocess.run(command, capture_output=True, text=True)
-~~~~~
-~~~~~python.new
-    def run_pyright_check(
-        self,
-        project_path: Path,
-        verbose: bool = False,
-        cwd: Path | None = None,
-    ) -> subprocess.CompletedProcess:
-        """
-        Runs pyright on a given project/file within the virtual environment.
-
-        Args:
-            project_path: The path to the Python project/file to type-check.
-            verbose: If True, run pyright with --verbose flag.
-            cwd: The working directory from which to run the command.
-
-        Returns:
-            The result of the subprocess call.
-        """
-        self.install("pyright")
-        bin_dir = "Scripts" if sys.platform == "win32" else "bin"
-        pyright_exe = self.venv_dir / bin_dir / "pyright"
-
-        command = [str(pyright_exe)]
-        if verbose:
-            command.append("--verbose")
-        command.append(str(project_path))
-
-        return subprocess.run(command, capture_output=True, text=True, cwd=cwd)
-~~~~~
-
-#### Acts 2: The Final, Corrected Test
-
-This version of the test isolates the `pyright` process and will pass.
-
-~~~~~act
-write_file
 tests/integration/test_ide_proxy.py
 ~~~~~
-~~~~~python
-import json
-from pathlib import Path
-from stitcher.app import StitcherApp
-from stitcher.test_utils import WorkspaceFactory, VenvHarness
-
-
-def test_pyright_resolves_types_from_stubs(
-    tmp_path: Path, isolated_env: VenvHarness
-):
-    """
-    Verifies that Pyright can resolve types from a generated stub package by
-    running it from a controlled working directory with an explicit pyright
-    config. This is the definitive test for IDE compatibility.
-    """
-    # --- ARRANGE ---
-
-    source_content = "class ProxyModel:\n    def get_id(self):\n        return 1"
-
-    # 1. Create the source project for Stitcher to scan.
-    source_project_root = tmp_path / "source_project"
-    WorkspaceFactory(source_project_root).with_project_name(
-        "ide-proxy-proj"
-    ).with_config(
-        {"scan_paths": ["src/ide_proxy"], "stub_package": "stubs"}
-    ).with_source(
-        "src/ide_proxy/models.py", source_content
-    ).build()
-
-    # 2. Create a correctly configured, installable RUNTIME package.
-    runtime_project_root = tmp_path / "runtime_project"
-    WorkspaceFactory(runtime_project_root).with_source(
-        "src/ide_proxy/models.py", source_content
+~~~~~python.old
     ).with_source(
         "src/ide_proxy/__init__.py",
         "__path__ = __import__('pkgutil').extend_path(__path__, __name__)",
     ).with_source(
         "pyproject.toml",
-        """
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-[project]
-name = "ide-proxy-proj"
-version = "0.1.0"
-[tool.hatch.build.targets.wheel]
-packages = ["src/ide_proxy"]
-""",
-    ).build()
-
-    # --- ACT ---
-
-    # 3. Generate the stub package.
-    app = StitcherApp(root_path=source_project_root)
-    app.run_from_config()
-    stub_pkg_path = source_project_root / "stubs"
-
-    # 4. Install BOTH packages into the isolated venv.
-    isolated_env.install(str(runtime_project_root))
-    isolated_env.install(str(stub_pkg_path))
-
-    # 5. Create a client project directory with code and pyright config.
-    client_project_dir = tmp_path / "client_project"
-    client_project_dir.mkdir()
-    (client_project_dir / "main.py").write_text(
-        "from ide_proxy.models import ProxyModel\n\n"
-        "instance = ProxyModel()\n"
-        "reveal_type(instance.get_id())\n"
-    )
-
-    # 6. Create the pyrightconfig.json.
-    pyright_config_path = client_project_dir / "pyrightconfig.json"
-    site_packages = isolated_env.get_site_packages_path()
-    pyright_config = {"extraPaths": [str(site_packages)]}
-    pyright_config_path.write_text(json.dumps(pyright_config))
-
-    # 7. *** THE DEFINITIVE FIX ***
-    #    Run Pyright check from within the client project directory.
-    #    We check "." which means "the current directory".
-    result = isolated_env.run_pyright_check(
-        Path("."), verbose=True, cwd=client_project_dir
-    )
-
-    # --- ASSERT ---
-
-    diagnostic_info = f"""
-    --- PYRIGHT CONFIG ---
-{json.dumps(pyright_config, indent=2)}
-    ---
-    [PYRIGHT VERBOSE OUTPUT]
-    STDOUT:
-{result.stdout}
-    STDERR:
-{result.stderr}
-    """
-
-    assert result.returncode == 0, f"Pyright failed with errors.\n{diagnostic_info}"
-    assert "0 errors" in result.stdout, f"Pyright reported errors.\n{diagnostic_info}"
-    assert (
-        'Type of "instance.get_id()" is "int"' in result.stdout
-    ), f"Pyright did not resolve the return type correctly.\n{diagnostic_info}"
+~~~~~
+~~~~~python.new
+    ).with_source(
+        "src/ide_proxy/__init__.py",
+        "__path__ = __import__('pkgutil').extend_path(__path__, __name__)",
+    ).with_source(
+        "src/ide_proxy/py.typed", ""  # The final piece of the puzzle for PEP 561
+    ).with_source(
+        "pyproject.toml",
 ~~~~~

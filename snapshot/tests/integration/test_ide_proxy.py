@@ -34,6 +34,8 @@ def test_pyright_resolves_types_from_stubs(
         "src/ide_proxy/__init__.py",
         "__path__ = __import__('pkgutil').extend_path(__path__, __name__)",
     ).with_source(
+        "src/ide_proxy/py.typed", ""  # The final piece of the puzzle for PEP 561
+    ).with_source(
         "pyproject.toml",
         """
 [build-system]
