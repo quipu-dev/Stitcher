@@ -1,4 +1,5 @@
 import copy
+import difflib
 from pathlib import Path
 from typing import Dict, List, Optional
 from collections import defaultdict
@@ -266,6 +267,7 @@ class StitcherApp:
             for module in modules:
                 output_path = self.doc_manager.save_docs_for_module(module)
                 code_hashes = self.sig_manager.compute_code_structure_hashes(module)
+                code_texts = self.sig_manager.extract_signature_texts(module)
                 yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
 
                 combined: Dict[str, Fingerprint] = {}
@@ -274,6 +276,8 @@ class StitcherApp:
                     fp = Fingerprint()
                     if fqn in code_hashes:
                         fp["baseline_code_structure_hash"] = code_hashes[fqn]
+                    if fqn in code_texts:
+                        fp["baseline_code_signature_text"] = code_texts[fqn]
                     if fqn in yaml_hashes:
                         fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
                     combined[fqn] = fp
@@ -288,6 +292,17 @@ class StitcherApp:
         else:
             bus.info(L.init.no_docs_found)
         return all_created_files
+
+    def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:
+        return "\n".join(
+            difflib.unified_diff(
+                a.splitlines(),
+                b.splitlines(),
+                fromfile=label_a,
+                tofile=label_b,
+                lineterm="",
+            )
+        )
 
     def _analyze_file(
         self, module: ModuleDef
@@ -310,6 +325,7 @@ class StitcherApp:
         )
         current_code_map = self.sig_manager.compute_code_structure_hashes(module)
         current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module)
+        current_sig_texts = self.sig_manager.extract_signature_texts(module)
         stored_hashes_map = self.sig_manager.load_composite_hashes(module)
 
         all_fqns = set(current_code_map.keys()) | set(stored_hashes_map.keys())
@@ -325,6 +341,9 @@ class StitcherApp:
             baseline_yaml_hash = (
                 stored_fp.get("baseline_yaml_content_hash") if stored_fp else None
             )
+            baseline_sig_text = (
+                stored_fp.get("baseline_code_signature_text") if stored_fp else None
+            )
 
             if not code_hash and baseline_code_hash:  # Extra
                 continue
@@ -336,15 +355,29 @@ class StitcherApp:
 
             if code_matches and not yaml_matches:  # Doc improvement
                 result.infos["doc_improvement"].append(fqn)
-            elif not code_matches and yaml_matches:  # Signature Drift
+            elif not code_matches:
+                # Signature changed (either Drift or Co-evolution)
+                sig_diff = None
+                if baseline_sig_text and fqn in current_sig_texts:
+                    sig_diff = self._generate_diff(
+                        baseline_sig_text,
+                        current_sig_texts[fqn],
+                        "baseline",
+                        "current",
+                    )
+                elif fqn in current_sig_texts:
+                    sig_diff = f"(No baseline signature stored)\n+++ current\n{current_sig_texts[fqn]}"
+
+                conflict_type = (
+                    ConflictType.SIGNATURE_DRIFT
+                    if yaml_matches
+                    else ConflictType.CO_EVOLUTION
+                )
+
                 unresolved_conflicts.append(
                     InteractionContext(
-                        module.file_path, fqn, ConflictType.SIGNATURE_DRIFT
+                        module.file_path, fqn, conflict_type, signature_diff=sig_diff
                     )
-                )
-            elif not code_matches and not yaml_matches:  # Co-evolution
-                unresolved_conflicts.append(
-                    InteractionContext(module.file_path, fqn, ConflictType.CO_EVOLUTION)
                 )
 
         # Untracked file check
@@ -599,10 +632,23 @@ class StitcherApp:
                     module, force=force, reconcile=reconcile, dry_run=True
                 )
                 if not res["success"]:
+                    # Generate content diffs for conflicts
+                    source_docs = self.doc_manager.flatten_module_docs(module)
+                    yaml_docs = self.doc_manager.load_docs_for_module(module)
+
                     for key in res["conflicts"]:
+                        doc_diff = None
+                        if key in source_docs and key in yaml_docs:
+                            doc_diff = self._generate_diff(
+                                yaml_docs[key], source_docs[key], "yaml", "code"
+                            )
+
                         all_conflicts.append(
                             InteractionContext(
-                                module.file_path, key, ConflictType.DOC_CONTENT_CONFLICT
+                                module.file_path,
+                                key,
+                                ConflictType.DOC_CONTENT_CONFLICT,
+                                doc_diff=doc_diff,
                             )
                         )
 
@@ -672,6 +718,7 @@ class StitcherApp:
 
             # Update signatures if successful
             code_hashes = self.sig_manager.compute_code_structure_hashes(module)
+            code_texts = self.sig_manager.extract_signature_texts(module)
             yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
             all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
 
@@ -680,6 +727,8 @@ class StitcherApp:
                 fp = Fingerprint()
                 if fqn in code_hashes:
                     fp["baseline_code_structure_hash"] = code_hashes[fqn]
+                if fqn in code_texts:
+                    fp["baseline_code_signature_text"] = code_texts[fqn]
                 if fqn in yaml_hashes:
                     fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
                 combined[fqn] = fp

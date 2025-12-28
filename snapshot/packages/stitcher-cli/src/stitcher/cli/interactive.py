@@ -58,8 +58,31 @@ class TyperInteractiveRenderer:
         if reason_l:
             typer.secho("  " + self.nexus.get(reason_l), fg=typer.colors.YELLOW)
 
+        # View Diff
+        if context.signature_diff:
+            typer.echo("")
+            typer.secho("  [ SIGNATURE DIFF ]", bold=True)
+            for line in context.signature_diff.splitlines():
+                color = None
+                if line.startswith("+"):
+                    color = typer.colors.GREEN
+                elif line.startswith("-"):
+                    color = typer.colors.RED
+                typer.secho(f"  {line}", fg=color)
+
+        if context.doc_diff:
+            typer.echo("")
+            typer.secho("  [ DOCSTRING DIFF ]", bold=True)
+            for line in context.doc_diff.splitlines():
+                color = None
+                if line.startswith("+"):
+                    color = typer.colors.GREEN
+                elif line.startswith("-"):
+                    color = typer.colors.RED
+                typer.secho(f"  {line}", fg=color)
+
         # Prompt
-        typer.echo("  " + self.nexus.get(L.interactive.prompt))
+        typer.echo("\n  " + self.nexus.get(L.interactive.prompt))
 
         # Options
         for opt in options:
