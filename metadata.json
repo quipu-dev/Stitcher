@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(runtime): 实现 Needle SST v2.2 混合 ChainMap 加载模型", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766913283.13732, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(runtime): 采用组合式加载器架构以明确优先级", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766913648.7965996, "duration_ms": 0}}

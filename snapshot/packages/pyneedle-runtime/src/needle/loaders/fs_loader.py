@@ -13,46 +13,53 @@ from needle.nexus import BaseLoader
 class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
     def __init__(
         self,
-        roots: Optional[List[Path]] = None,
+        root: Path,
         handlers: Optional[List[FileHandlerProtocol]] = None,
         default_domain: str = "en",
     ):
         super().__init__(default_domain)
         self.handlers = handlers or [JsonHandler()]
-        # Roots are strictly provided by the caller. No auto-discovery here.
-        self.roots = roots or []
+        self.root = root
         
-        # Cache structure: domain -> List of (Path, flattened_dict)
-        # Order: High priority -> Low priority
-        self._layer_cache: Dict[str, List[Tuple[Path, Dict[str, str]]]] = {}
+        # Cache structure: domain -> flattened_dict
+        self._data_cache: Dict[str, Dict[str, str]] = {}
 
-    def add_root(self, path: Path):
-        """Add a new root with highest priority."""
-        if path not in self.roots:
-            self.roots.insert(0, path)
-            self._layer_cache.clear() # Invalidate cache
+    def _ensure_loaded(self, domain: str) -> Dict[str, str]:
+        if domain not in self._data_cache:
+            self._data_cache[domain] = self._scan_root(domain)
+        return self._data_cache[domain]
 
-    def _ensure_layers(self, domain: str) -> List[Tuple[Path, Dict[str, str]]]:
-        if domain not in self._layer_cache:
-            self._layer_cache[domain] = self._scan_layers(domain)
-        return self._layer_cache[domain]
-
-    def _scan_layers(self, domain: str) -> List[Tuple[Path, Dict[str, str]]]:
-        layers: List[Tuple[Path, Dict[str, str]]] = []
+    def _scan_root(self, domain: str) -> Dict[str, str]:
+        """Scans the single root and returns a merged, flattened dictionary."""
+        merged_data: Dict[str, str] = {}
         
-        # Scan roots in order (High Priority -> Low Priority)
-        for root in self.roots:
-            # 1. Project overrides: .stitcher/needle/<domain>
-            hidden_path = root / ".stitcher" / "needle" / domain
-            if hidden_path.is_dir():
-                layers.extend(self._scan_directory(hidden_path))
-            
-            # 2. Package assets: needle/<domain>
-            asset_path = root / "needle" / domain
-            if asset_path.is_dir():
-                layers.extend(self._scan_directory(asset_path))
+        # Priority: .stitcher/needle overrides needle/
+        
+        # 1. Load from standard asset path first (lower priority)
+        asset_path = self.root / "needle" / domain
+        if asset_path.is_dir():
+            merged_data.update(self._scan_directory_to_dict(asset_path))
+
+        # 2. Load from hidden path, overriding previous values (higher priority)
+        hidden_path = self.root / ".stitcher" / "needle" / domain
+        if hidden_path.is_dir():
+            merged_data.update(self._scan_directory_to_dict(hidden_path))
                 
-        return layers
+        return merged_data
+
+    def _scan_directory_to_dict(self, root_path: Path) -> Dict[str, str]:
+        """Scans a directory and merges all found files into a single dictionary."""
+        data: Dict[str, str] = {}
+        for dirpath, _, filenames in os.walk(root_path):
+            for filename in sorted(filenames):
+                file_path = Path(dirpath) / filename
+                for handler in self.handlers:
+                    if handler.match(file_path):
+                        content = handler.load(file_path)
+                        str_content = {str(k): str(v) for k, v in content.items()}
+                        data.update(str_content)
+                        break
+        return data
 
     def _scan_directory(self, root_path: Path) -> List[Tuple[Path, Dict[str, str]]]:
         """
@@ -81,104 +88,52 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         self, pointer: str, domain: str, ignore_cache: bool = False
     ) -> Optional[str]:
         if ignore_cache:
-            self._layer_cache.pop(domain, None)
-            
-        layers = self._ensure_layers(domain)
+            self._data_cache.pop(domain, None)
         
-        # Optimization: Build a ChainMap only if needed, or query layers directly?
-        # SST v2.2 suggests "fetch uses ChainMap view".
-        # Let's create a transient ChainMap for the lookup.
-        # layers is [(p1, d1), (p2, d2)...]
-        # ChainMap expects maps in priority order. Our list is already High->Low.
-        if not layers:
-            return None
-            
-        # Extract just the dicts
-        maps = [d for _, d in layers]
-        return ChainMap(*maps).get(pointer)
+        data = self._ensure_loaded(domain)
+        return data.get(pointer)
 
     def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:
-        """Returns the aggregated view of the domain."""
+        """Returns the aggregated view of the domain for this root."""
         if ignore_cache:
-            self._layer_cache.pop(domain, None)
-            
-        layers = self._ensure_layers(domain)
-        if not layers:
-            return {}
-            
-        maps = [d for _, d in layers]
-        # Convert ChainMap to a single dict for the return value
-        return dict(ChainMap(*maps))
+            self._data_cache.pop(domain, None)
+        
+        # Return a copy to prevent mutation
+        return self._ensure_loaded(domain).copy()
 
     def locate(self, pointer: Union[str, Any], domain: str) -> Path:
+        """For a single-root loader, locate is deterministic."""
         key = str(pointer)
-        layers = self._ensure_layers(domain)
-        
-        # Traverse layers to find the anchor
-        for file_path, data in layers:
-            if key in data:
-                return file_path
-        
-        # Not found? Predict the write path (Create Logic)
-        return self._predict_write_path(key, domain)
-
-    def _predict_write_path(self, key: str, domain: str) -> Path:
-        """
-        Determines where to create a NEW key.
-        Strategy: 
-        1. Use the highest priority root.
-        2. Use .stitcher/needle/<domain> base.
-        3. Simple heuristic: First segment of key as filename.
-        """
-        if not self.roots:
-            raise RuntimeError("No roots configured for FileSystemLoader")
-            
-        root = self.roots[0]
-        base_dir = root / ".stitcher" / "needle" / domain
+        base_dir = self.root / ".stitcher" / "needle" / domain
         
         parts = key.split(".")
-        filename = f"{parts[0]}.json" # Default to JSON
+        filename = f"{parts[0]}.json"  # Default to JSON
         return base_dir / filename
 
     def put(self, pointer: Union[str, Any], value: Any, domain: str) -> bool:
         key = str(pointer)
         str_value = str(value)
         
-        # 1. Locate the anchor (or predicted path)
+        # 1. Determine target path (always writes to .stitcher for user overrides)
         target_path = self.locate(key, domain)
         
-        # 2. Find the layer in memory, or create if new
-        layers = self._ensure_layers(domain)
-        target_layer_idx = -1
+        # 2. Load existing data from that specific file, or create empty dict
+        handler = self.handlers[0] # Default to JSON
+        file_data = {}
+        if target_path.exists():
+            # NOTE: We load the raw file, not from our merged cache,
+            # to avoid writing aggregated data back into a single file.
+            # The handler will flatten it for us.
+            file_data = handler.load(target_path)
+            
+        # 3. Update the file's data
+        file_data[key] = str_value
         
-        for idx, (path, _) in enumerate(layers):
-            if path == target_path:
-                target_layer_idx = idx
-                break
+        # 4. Save back to the specific file
+        success = handler.save(target_path, file_data)
         
-        # 3. Update memory
-        if target_layer_idx != -1:
-            # Update existing layer
-            layers[target_layer_idx][1][key] = str_value
-            data_to_save = layers[target_layer_idx][1]
-        else:
-            # Create new layer
-            new_data = {key: str_value}
-            # Insert at the beginning (High Priority for new user overrides)
-            # But wait, we need to respect the root order.
-            # _predict_write_path uses roots[0], so inserting at 0 is correct 
-            # IF layers are sorted by root. 
-            # (Our _scan_layers puts roots[0] stuff first).
-            layers.insert(0, (target_path, new_data))
-            data_to_save = new_data
-
-        # 4. Flush to disk (Inflate -> Save)
-        # Assume JSON handler for now or find matching handler
-        handler = self.handlers[0] # Default to first (JSON)
-        # Try to find a handler that matches the target_path extension
-        for h in self.handlers:
-            if h.match(target_path):
-                handler = h
-                break
-                
-        return handler.save(target_path, data_to_save)
+        # 5. Invalidate cache for this domain to force a reload on next access
+        if success:
+            self._data_cache.pop(domain, None)
+            
+        return success

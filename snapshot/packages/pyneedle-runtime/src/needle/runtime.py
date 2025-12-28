@@ -19,7 +19,7 @@ def _find_project_root(start_dir: Optional[Path] = None) -> Path:
 # This is the "batteries-included" setup.
 # It automatically discovers the project root and sets up a file system loader.
 _project_root = _find_project_root()
-_default_loader = FileSystemLoader(roots=[_project_root])
+_default_loader = FileSystemLoader(root=_project_root)
 nexus = OverlayNexus(loaders=[_default_loader])
 # ---------------------------------
 
