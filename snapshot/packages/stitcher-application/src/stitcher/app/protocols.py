@@ -1,4 +1,4 @@
-from typing import Protocol, List
+from typing import Protocol, List, Optional
 from dataclasses import dataclass
 
 from stitcher.spec import ResolutionAction, ConflictType
@@ -9,9 +9,8 @@ class InteractionContext:
     file_path: str
     fqn: str
     conflict_type: ConflictType
-    # Future extensions:
-    # signature_diff: str = ""
-    # doc_diff: str = ""
+    signature_diff: Optional[str] = None
+    doc_diff: Optional[str] = None
 
 
 class InteractionHandler(Protocol):
