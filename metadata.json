@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 改造 StitcherApp 支持协议级依赖注入", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766930338.7888167, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 更新 Stitcher CLI 工厂和测试以适配依赖注入", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766930416.6363657, "duration_ms": 0}}
