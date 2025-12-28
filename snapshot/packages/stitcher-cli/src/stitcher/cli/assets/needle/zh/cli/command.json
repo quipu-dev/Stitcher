@@ -1,0 +1,20 @@
+{
+  "check": {
+    "help": "验证代码结构与文档的一致性。"
+  },
+  "generate": {
+    "help": "根据 pyproject.toml 配置生成 .pyi 存根文件。"
+  },
+  "init": {
+    "help": "在当前项目中初始化 Stitcher。"
+  },
+  "inject": {
+    "help": "将 .stitcher.yaml 中的文档重新注入源代码。"
+  },
+  "pump": {
+    "help": "从源代码提取新文档并合并至 .stitcher.yaml。"
+  },
+  "strip": {
+    "help": "从源代码中移除文档字符串。"
+  }
+}

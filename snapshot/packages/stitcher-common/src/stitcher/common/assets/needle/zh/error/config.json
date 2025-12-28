@@ -1,0 +1,3 @@
+{
+  "not_found": "⚠️  在 pyproject.toml 中未找到 [tool.stitcher] 配置。无可执行操作。"
+}

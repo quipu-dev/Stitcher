@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(nexus): 采用鸭子类型替换 isinstance 进行可写加载器检查", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766914262.6748157, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] chore(repo): 将所有 Needle 资源迁移到 SST v2.2 物理存储规范", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766914465.3108628, "duration_ms": 0}}

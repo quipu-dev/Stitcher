@@ -1,0 +1,5 @@
+{
+  "exists": "ℹ️  Stub package '{name}' already exists, skipping.",
+  "scaffold": "Scaffolding stub package '{name}'...",
+  "success": "✅ Created stub package '{name}'."
+}

@@ -1,0 +1,17 @@
+{
+  "force": {
+    "help": "Code-first: Overwrite YAML content if it differs from source code."
+  },
+  "non_interactive": {
+    "help": "Force non-interactive mode, failing on unresolved conflicts."
+  },
+  "reconcile": {
+    "help": "YAML-first: Ignore source docstrings if they conflict with existing YAML."
+  },
+  "strip": {
+    "help": "Remove docstrings from source code after pumping."
+  },
+  "update_signatures": {
+    "help": "Accept signature changes and update the stored fingerprints."
+  }
+}

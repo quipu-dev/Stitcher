@@ -1,0 +1,9 @@
+{
+  "conflict": "   - [CONFLICT]  {key} (content differs between code and YAML)",
+  "extra": "Extra Doc: '{key}' is in docs but not in code.",
+  "mismatch": "   - [CHANGED]   {key} (signature has changed, docs may be outdated)",
+  "missing": "   - [MISSING]   {key} (entity exists, but no docstring in code or YAML)",
+  "pending": "   - [PENDING]   {key} (new docstring in code, please run `stitcher hydrate`)",
+  "redundant": "   - [REDUNDANT] {key} (docstring exists in both code and YAML; please run `stitcher strip`)",
+  "untracked_missing_key": "   - [MISSING]   {key} (please add a docstring in the source code)"
+}

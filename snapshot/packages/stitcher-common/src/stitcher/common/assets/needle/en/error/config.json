@@ -1,0 +1,3 @@
+{
+  "not_found": "⚠️  No [tool.stitcher] config found in pyproject.toml. Nothing to do."
+}

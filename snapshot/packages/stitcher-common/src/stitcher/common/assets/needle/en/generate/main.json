@@ -1,4 +1,0 @@
-{
-    "generate.file.success": "✅ Generated stub: {path}",
-    "generate.run.complete": "✨ Generation complete. {count} files created."
-}

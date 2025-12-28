@@ -1,6 +1,0 @@
-{
-    "strip.run.confirm": "⚠️  This will permanently remove docstrings from source files. This is irreversible unless you use version control. Are you sure you want to continue?",
-    "strip.run.aborted": "Strip operation aborted.",
-    "strip.file.success": "✅ Stripped docstrings from: {path}",
-    "strip.run.complete": "✨ Strip complete. {count} files modified."
-}

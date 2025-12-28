@@ -1,0 +1,7 @@
+{
+  "fail": "❌ {path}: Found {count} errors.",
+  "pass": "✅ {path}: Synced.",
+  "untracked": "⚠️  {path}: Untracked (no .stitcher.yaml file found; run `stitcher init` or `hydrate`)",
+  "untracked_with_details": "⚠️  {path}: Untracked and needs documentation for {count} public APIs:",
+  "warn": "⚠️  {path}: Found {count} warnings."
+}

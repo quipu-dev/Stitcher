@@ -1,0 +1,7 @@
+{
+  "aborted": "Pump aborted by user.",
+  "complete": "✨ Pump complete. {count} files updated.",
+  "conflict": "🚫 Pump aborted due to conflicts in {count} files.",
+  "no_changes": "🤔 No new docstrings found in source code to pump.",
+  "start": "💧 Starting pump process..."
+}

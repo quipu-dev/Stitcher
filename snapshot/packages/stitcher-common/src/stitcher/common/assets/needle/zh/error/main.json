@@ -1,5 +1,0 @@
-{
-    "error.config.not_found": "⚠️  在 pyproject.toml 中未找到 [tool.stitcher] 配置。无可执行操作。",
-    "error.generic": "❌ 发生意外错误: {error}",
-    "error.plugin.inspection": "❌ 检查插件时出错: {error}"
-}

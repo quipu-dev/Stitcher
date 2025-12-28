@@ -1,5 +1,0 @@
-{
-    "init.file.created": "📝 Created doc file: {path}",
-    "init.run.complete": "🎉 Initialization complete. {count} document files created.",
-    "init.no_docs_found": "🤔 No docstrings found in source files. No .stitcher.yaml files created."
-}

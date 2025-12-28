@@ -1,0 +1,5 @@
+{
+  "aborted": "Strip operation aborted.",
+  "complete": "✨ Strip complete. {count} files modified.",
+  "confirm": "⚠️  This will permanently remove docstrings from source files. This is irreversible unless you use version control. Are you sure you want to continue?"
+}

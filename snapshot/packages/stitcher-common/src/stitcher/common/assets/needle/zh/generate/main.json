@@ -1,4 +1,0 @@
-{
-    "generate.file.success": "✅ 已生成存根: {path}",
-    "generate.run.complete": "✨ 生成完成。{count} 个文件已创建。"
-}

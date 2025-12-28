@@ -1,8 +1,0 @@
-{
-    "generate.file.success": "✅ Generated stub: {path}",
-    "generate.run.complete": "✨ Generation complete. {count} files created.",
-    "generate.stub_pkg.scaffold": "Scaffolding stub package '{name}'...",
-    "generate.stub_pkg.exists": "ℹ️  Stub package '{name}' already exists, skipping.",
-    "generate.stub_pkg.success": "✅ Created stub package '{name}'.",
-    "generate.target.processing": "🔨 Processing target: {name}..."
-}

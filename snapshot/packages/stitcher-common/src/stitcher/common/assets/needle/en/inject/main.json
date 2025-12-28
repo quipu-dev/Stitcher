@@ -1,7 +1,0 @@
-{
-    "inject.run.confirm": "⚠️  This will overwrite source files with content from .stitcher.yaml files. Any docstrings currently in your code will be replaced. Are you sure you want to continue?",
-    "inject.run.aborted": "Inject operation aborted.",
-    "inject.file.success": "📝 Injected docstrings into: {path}",
-    "inject.run.complete": "🎉 Inject complete. {count} files modified.",
-    "inject.no_docs_found": "🤔 No docstrings found in any .stitcher.yaml files. Nothing to inject."
-}

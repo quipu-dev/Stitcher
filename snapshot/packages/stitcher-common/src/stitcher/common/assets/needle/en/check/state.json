@@ -1,10 +1,9 @@
 {
-  "check.state.relinked": "Re-linked signature for '{key}' in {path}",
-  "check.state.reconciled": "Reconciled changes for '{key}' in {path}",
-  "check.state.auto_reconciled": "Automatically updated {count} documentation hash(es) in {path}",
-  "check.issue.extra": "Extra Doc: '{key}' is in docs but not in code.",
-  "check.state.signature_drift": "Signature Drift: '{key}' code changed, docs may be stale.",
-  "check.state.co_evolution": "Co-evolution: '{key}' both code and docs changed; intent unclear.",
-  "check.state.doc_updated": "Doc Updated: '{key}' documentation was improved.",
-  "check.state.untracked_code": "Untracked Code: '{key}' new public API without documentation."
+  "auto_reconciled": "Automatically updated {count} documentation hash(es) in {path}",
+  "co_evolution": "Co-evolution: '{key}' both code and docs changed; intent unclear.",
+  "doc_updated": "Doc Updated: '{key}' documentation was improved.",
+  "reconciled": "Reconciled changes for '{key}' in {path}",
+  "relinked": "Re-linked signature for '{key}' in {path}",
+  "signature_drift": "Signature Drift: '{key}' code changed, docs may be stale.",
+  "untracked_code": "Untracked Code: '{key}' new public API without documentation."
 }
