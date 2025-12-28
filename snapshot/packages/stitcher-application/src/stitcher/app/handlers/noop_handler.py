@@ -4,7 +4,6 @@ from stitcher.spec import ResolutionAction, ConflictType
 
 
 class NoOpInteractionHandler(InteractionHandler):
-
     def __init__(
         self,
         force_relink: bool = False,

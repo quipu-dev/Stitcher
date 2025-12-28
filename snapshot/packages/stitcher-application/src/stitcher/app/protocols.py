@@ -1,12 +1,11 @@
 from typing import Protocol, List
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from stitcher.spec import ResolutionAction, ConflictType
 
 
 @dataclass
 class InteractionContext:
-
     file_path: str
     fqn: str
     conflict_type: ConflictType
@@ -16,8 +15,6 @@ class InteractionContext:
 
 
 class InteractionHandler(Protocol):
-
     def process_interactive_session(
         self, contexts: List[InteractionContext]
-    ) -> List[ResolutionAction]:
-        ...
+    ) -> List[ResolutionAction]: ...

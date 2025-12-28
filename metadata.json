@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(hydrate): 实现交互式冲突解决模式", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766903664.432326, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M core.py, M noop_handler.py, M protocols.py ... and 10 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766903853.988739, "duration_ms": 0}}

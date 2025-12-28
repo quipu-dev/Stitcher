@@ -143,7 +143,7 @@ class DocumentManager:
     ) -> Dict[str, Any]:
         # resolution_map: Dict[fqn, ResolutionAction]
         resolution_map = resolution_map or {}
-        
+
         source_docs = self.flatten_module_docs(module)
         if not source_docs:
             return {
@@ -165,11 +165,11 @@ class DocumentManager:
             elif yaml_docs[key] != source_content:
                 # Check for specific resolution first
                 action = resolution_map.get(key)
-                
+
                 # Determine strategy
                 should_force = force or (action == "HYDRATE_OVERWRITE")
                 should_reconcile = reconcile or (action == "HYDRATE_KEEP_EXISTING")
-                
+
                 if should_reconcile:
                     reconciled_keys.append(key)
                     continue

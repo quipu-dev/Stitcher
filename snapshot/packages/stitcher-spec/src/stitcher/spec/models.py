@@ -146,7 +146,9 @@ class ResolutionAction(str, Enum):
     RELINK = "RELINK"
     RECONCILE = "RECONCILE"
     HYDRATE_OVERWRITE = "HYDRATE_OVERWRITE"  # Equivalent to --force (Code wins)
-    HYDRATE_KEEP_EXISTING = "HYDRATE_KEEP_EXISTING"  # Equivalent to --reconcile (YAML wins)
+    HYDRATE_KEEP_EXISTING = (
+        "HYDRATE_KEEP_EXISTING"  # Equivalent to --reconcile (YAML wins)
+    )
     SKIP = "SKIP"
     ABORT = "ABORT"
 

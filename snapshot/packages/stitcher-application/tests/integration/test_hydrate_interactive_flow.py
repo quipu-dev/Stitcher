@@ -30,8 +30,8 @@ def conflicting_workspace(tmp_path):
     factory = WorkspaceFactory(tmp_path)
     return (
         factory.with_config({"scan_paths": ["src"]})
-        .with_source('src/app.py', 'def func():\n    """Code Doc"""')
-        .with_docs('src/app.stitcher.yaml', {'func': 'YAML Doc'})
+        .with_source("src/app.py", 'def func():\n    """Code Doc"""')
+        .with_docs("src/app.stitcher.yaml", {"func": "YAML Doc"})
         .build()
     )
 

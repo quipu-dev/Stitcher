@@ -12,20 +12,7 @@ from stitcher.scanner import (
     inject_docstrings,
 )
 from stitcher.io import StubGenerator
-import copy
-from pathlib import Path
-from typing import Dict, List, Optional
-from collections import defaultdict
-from dataclasses import dataclass, field
 
-from stitcher.scanner import (
-    parse_source_code,
-    parse_plugin_entry,
-    InspectionError,
-    strip_docstrings,
-    inject_docstrings,
-)
-from stitcher.io import StubGenerator
 from stitcher.spec import ModuleDef, ConflictType, ResolutionAction
 from stitcher.common import bus
 from needle.pointer import L
@@ -275,7 +262,9 @@ class StitcherApp:
             bus.info(L.init.no_docs_found)
         return all_created_files
 
-    def _analyze_file(self, module: ModuleDef) -> tuple[FileCheckResult, list[InteractionContext]]:
+    def _analyze_file(
+        self, module: ModuleDef
+    ) -> tuple[FileCheckResult, list[InteractionContext]]:
         result = FileCheckResult(path=module.file_path)
         unresolved_conflicts: list[InteractionContext] = []
 
@@ -289,7 +278,9 @@ class StitcherApp:
             result.errors["extra"].extend(doc_issues["extra"])
 
         # State machine analysis
-        is_tracked = (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
+        is_tracked = (
+            (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
+        )
         current_code_map = self.sig_manager.compute_code_structure_hashes(module)
         current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module)
         stored_hashes_map = self.sig_manager.load_composite_hashes(module)
@@ -303,25 +294,27 @@ class StitcherApp:
             baseline_code_hash = stored.get("baseline_code_structure_hash")
             baseline_yaml_hash = stored.get("baseline_yaml_content_hash")
 
-            if not code_hash and baseline_code_hash: # Extra
+            if not code_hash and baseline_code_hash:  # Extra
                 continue
-            if code_hash and not baseline_code_hash: # New
+            if code_hash and not baseline_code_hash:  # New
                 continue
-                
+
             code_matches = code_hash == baseline_code_hash
             yaml_matches = yaml_hash == baseline_yaml_hash
 
-            if code_matches and not yaml_matches: # Doc improvement
+            if code_matches and not yaml_matches:  # Doc improvement
                 result.infos["doc_improvement"].append(fqn)
-            elif not code_matches and yaml_matches: # Signature Drift
+            elif not code_matches and yaml_matches:  # Signature Drift
                 unresolved_conflicts.append(
-                    InteractionContext(module.file_path, fqn, ConflictType.SIGNATURE_DRIFT)
+                    InteractionContext(
+                        module.file_path, fqn, ConflictType.SIGNATURE_DRIFT
+                    )
                 )
-            elif not code_matches and not yaml_matches: # Co-evolution
+            elif not code_matches and not yaml_matches:  # Co-evolution
                 unresolved_conflicts.append(
                     InteractionContext(module.file_path, fqn, ConflictType.CO_EVOLUTION)
                 )
-        
+
         # Untracked file check
         if not is_tracked and module.is_documentable():
             undocumented = module.get_undocumented_public_keys()
@@ -332,33 +325,47 @@ class StitcherApp:
 
         return result, unresolved_conflicts
 
-    def _apply_resolutions(self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]):
+    def _apply_resolutions(
+        self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]
+    ):
         # This is the execution phase. We now write to files.
         for file_path, fqn_actions in resolutions.items():
-            module_def = ModuleDef(file_path=file_path) # Minimal def for path logic
+            module_def = ModuleDef(file_path=file_path)  # Minimal def for path logic
             stored_hashes = self.sig_manager.load_composite_hashes(module_def)
             new_hashes = copy.deepcopy(stored_hashes)
-            
+
             # We need the current hashes again to apply changes
-            full_module_def = parse_source_code((self.root_path / file_path).read_text("utf-8"), file_path)
-            current_code_map = self.sig_manager.compute_code_structure_hashes(full_module_def)
-            current_yaml_map = self.doc_manager.compute_yaml_content_hashes(full_module_def)
+            full_module_def = parse_source_code(
+                (self.root_path / file_path).read_text("utf-8"), file_path
+            )
+            current_code_map = self.sig_manager.compute_code_structure_hashes(
+                full_module_def
+            )
+            current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
+                full_module_def
+            )
 
             for fqn, action in fqn_actions:
                 if action == ResolutionAction.RELINK:
                     if fqn in new_hashes:
-                        new_hashes[fqn]["baseline_code_structure_hash"] = current_code_map.get(fqn)
+                        new_hashes[fqn]["baseline_code_structure_hash"] = (
+                            current_code_map.get(fqn)
+                        )
                 elif action == ResolutionAction.RECONCILE:
                     if fqn in new_hashes:
-                        new_hashes[fqn]["baseline_code_structure_hash"] = current_code_map.get(fqn)
-                        new_hashes[fqn]["baseline_yaml_content_hash"] = current_yaml_map.get(fqn)
+                        new_hashes[fqn]["baseline_code_structure_hash"] = (
+                            current_code_map.get(fqn)
+                        )
+                        new_hashes[fqn]["baseline_yaml_content_hash"] = (
+                            current_yaml_map.get(fqn)
+                        )
 
             if new_hashes != stored_hashes:
                 self.sig_manager.save_composite_hashes(module_def, new_hashes)
 
     def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
         configs, _ = load_config_from_path(self.root_path)
-        
+
         all_results: list[FileCheckResult] = []
         all_conflicts: list[InteractionContext] = []
         all_modules: list[ModuleDef] = []
@@ -374,29 +381,37 @@ class StitcherApp:
                 result, conflicts = self._analyze_file(module)
                 all_results.append(result)
                 all_conflicts.extend(conflicts)
-        
+
         # 2. Execution Phase (Auto-reconciliation for doc improvements)
         for res in all_results:
             if res.infos["doc_improvement"]:
-                module_def = next((m for m in all_modules if m.file_path == res.path), None)
-                if not module_def: continue
-                
+                module_def = next(
+                    (m for m in all_modules if m.file_path == res.path), None
+                )
+                if not module_def:
+                    continue
+
                 stored_hashes = self.sig_manager.load_composite_hashes(module_def)
                 new_hashes = copy.deepcopy(stored_hashes)
-                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module_def)
+                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
+                    module_def
+                )
 
                 for fqn in res.infos["doc_improvement"]:
                     if fqn in new_hashes:
-                        new_hashes[fqn]["baseline_yaml_content_hash"] = current_yaml_map.get(fqn)
-                
+                        new_hashes[fqn]["baseline_yaml_content_hash"] = (
+                            current_yaml_map.get(fqn)
+                        )
+
                 if new_hashes != stored_hashes:
                     self.sig_manager.save_composite_hashes(module_def, new_hashes)
 
-
         # 3. Interactive Resolution Phase
         if all_conflicts and self.interaction_handler:
-            chosen_actions = self.interaction_handler.process_interactive_session(all_conflicts)
-            
+            chosen_actions = self.interaction_handler.process_interactive_session(
+                all_conflicts
+            )
+
             resolutions_by_file = defaultdict(list)
             reconciled_results = defaultdict(lambda: defaultdict(list))
 
@@ -404,26 +419,38 @@ class StitcherApp:
                 action = chosen_actions[i]
                 if action == ResolutionAction.RELINK:
                     resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path]["force_relink"].append(context.fqn)
+                    reconciled_results[context.file_path]["force_relink"].append(
+                        context.fqn
+                    )
                 elif action == ResolutionAction.RECONCILE:
                     resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path]["reconcile"].append(context.fqn)
+                    reconciled_results[context.file_path]["reconcile"].append(
+                        context.fqn
+                    )
                 elif action == ResolutionAction.SKIP:
                     for res in all_results:
                         if res.path == context.file_path:
-                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
+                            error_key = (
+                                "signature_drift"
+                                if context.conflict_type == ConflictType.SIGNATURE_DRIFT
+                                else "co_evolution"
+                            )
                             res.errors[error_key].append(context.fqn)
                             break
                 elif action == ResolutionAction.ABORT:
                     bus.warning(L.strip.run.aborted)
                     return False
-            
+
             self._apply_resolutions(dict(resolutions_by_file))
-            
+
             for res in all_results:
                 if res.path in reconciled_results:
-                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
-                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
+                    res.reconciled["force_relink"] = reconciled_results[res.path][
+                        "force_relink"
+                    ]
+                    res.reconciled["reconcile"] = reconciled_results[res.path][
+                        "reconcile"
+                    ]
         else:
             handler = NoOpInteractionHandler(force_relink, reconcile)
             chosen_actions = handler.process_interactive_session(all_conflicts)
@@ -432,19 +459,31 @@ class StitcherApp:
             for i, context in enumerate(all_conflicts):
                 action = chosen_actions[i]
                 if action != ResolutionAction.SKIP:
-                    key = "force_relink" if action == ResolutionAction.RELINK else "reconcile"
+                    key = (
+                        "force_relink"
+                        if action == ResolutionAction.RELINK
+                        else "reconcile"
+                    )
                     resolutions_by_file[context.file_path].append((context.fqn, action))
                     reconciled_results[context.file_path][key].append(context.fqn)
                 else:
-                     for res in all_results:
+                    for res in all_results:
                         if res.path == context.file_path:
-                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
+                            error_key = (
+                                "signature_drift"
+                                if context.conflict_type == ConflictType.SIGNATURE_DRIFT
+                                else "co_evolution"
+                            )
                             res.errors[error_key].append(context.fqn)
             self._apply_resolutions(dict(resolutions_by_file))
             for res in all_results:
                 if res.path in reconciled_results:
-                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
-                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
+                    res.reconciled["force_relink"] = reconciled_results[res.path][
+                        "force_relink"
+                    ]
+                    res.reconciled["reconcile"] = reconciled_results[res.path][
+                        "reconcile"
+                    ]
 
         # 4. Reporting Phase
         global_failed_files = 0
@@ -471,21 +510,32 @@ class StitcherApp:
                 bus.warning(L.check.file.warn, path=res.path, count=res.warning_count)
 
             # Report Specific Issues (same as before)
-            for key in sorted(res.errors["extra"]): bus.error(L.check.issue.extra, key=key)
-            for key in sorted(res.errors["signature_drift"]): bus.error(L.check.state.signature_drift, key=key)
-            for key in sorted(res.errors["co_evolution"]): bus.error(L.check.state.co_evolution, key=key)
-            for key in sorted(res.errors["conflict"]): bus.error(L.check.issue.conflict, key=key)
-            for key in sorted(res.errors["pending"]): bus.error(L.check.issue.pending, key=key)
-            for key in sorted(res.warnings["missing"]): bus.warning(L.check.issue.missing, key=key)
-            for key in sorted(res.warnings["redundant"]): bus.warning(L.check.issue.redundant, key=key)
-            for key in sorted(res.warnings["untracked_key"]): bus.warning(L.check.state.untracked_code, key=key)
+            for key in sorted(res.errors["extra"]):
+                bus.error(L.check.issue.extra, key=key)
+            for key in sorted(res.errors["signature_drift"]):
+                bus.error(L.check.state.signature_drift, key=key)
+            for key in sorted(res.errors["co_evolution"]):
+                bus.error(L.check.state.co_evolution, key=key)
+            for key in sorted(res.errors["conflict"]):
+                bus.error(L.check.issue.conflict, key=key)
+            for key in sorted(res.errors["pending"]):
+                bus.error(L.check.issue.pending, key=key)
+            for key in sorted(res.warnings["missing"]):
+                bus.warning(L.check.issue.missing, key=key)
+            for key in sorted(res.warnings["redundant"]):
+                bus.warning(L.check.issue.redundant, key=key)
+            for key in sorted(res.warnings["untracked_key"]):
+                bus.warning(L.check.state.untracked_code, key=key)
             if "untracked_detailed" in res.warnings:
                 keys = res.warnings["untracked_detailed"]
-                bus.warning(L.check.file.untracked_with_details, path=res.path, count=len(keys))
-                for key in sorted(keys): bus.warning(L.check.issue.untracked_missing_key, key=key)
+                bus.warning(
+                    L.check.file.untracked_with_details, path=res.path, count=len(keys)
+                )
+                for key in sorted(keys):
+                    bus.warning(L.check.issue.untracked_missing_key, key=key)
             elif "untracked" in res.warnings:
                 bus.warning(L.check.file.untracked, path=res.path)
-        
+
         if global_failed_files > 0:
             bus.error(L.check.run.fail, count=global_failed_files)
             return False
@@ -500,10 +550,10 @@ class StitcherApp:
     ) -> bool:
         bus.info(L.hydrate.run.start)
         configs, _ = load_config_from_path(self.root_path)
-        
+
         all_modules: List[ModuleDef] = []
         all_conflicts: List[InteractionContext] = []
-        
+
         # 1. Analysis Phase (Dry Run)
         for config in configs:
             if config.name != "default":
@@ -513,7 +563,7 @@ class StitcherApp:
             if not modules:
                 continue
             all_modules.extend(modules)
-            
+
             for module in modules:
                 # Dry run to detect conflicts
                 res = self.doc_manager.hydrate_module(
@@ -529,14 +579,18 @@ class StitcherApp:
 
         # 2. Decision Phase
         resolutions_by_file: Dict[str, Dict[str, ResolutionAction]] = defaultdict(dict)
-        
+
         if all_conflicts:
             if self.interaction_handler:
-                chosen_actions = self.interaction_handler.process_interactive_session(all_conflicts)
+                chosen_actions = self.interaction_handler.process_interactive_session(
+                    all_conflicts
+                )
             else:
-                handler = NoOpInteractionHandler(hydrate_force=force, hydrate_reconcile=reconcile)
+                handler = NoOpInteractionHandler(
+                    hydrate_force=force, hydrate_reconcile=reconcile
+                )
                 chosen_actions = handler.process_interactive_session(all_conflicts)
-            
+
             for i, context in enumerate(all_conflicts):
                 action = chosen_actions[i]
                 if action == ResolutionAction.ABORT:
@@ -548,15 +602,19 @@ class StitcherApp:
         total_updated = 0
         total_conflicts_remaining = 0
         files_to_strip = []
-        
+
         for module in all_modules:
             resolution_map = resolutions_by_file.get(module.file_path, {})
-            
+
             # Execute hydration with resolutions
             result = self.doc_manager.hydrate_module(
-                module, force=force, reconcile=reconcile, resolution_map=resolution_map, dry_run=False
+                module,
+                force=force,
+                reconcile=reconcile,
+                resolution_map=resolution_map,
+                dry_run=False,
             )
-            
+
             if not result["success"]:
                 # If conflicts persist (e.g. user chose SKIP), verify failure
                 total_conflicts_remaining += len(result["conflicts"])
@@ -567,7 +625,7 @@ class StitcherApp:
                         key=conflict_key,
                     )
                 continue
-            
+
             if result["reconciled_keys"]:
                 bus.info(
                     L.hydrate.info.reconciled,
@@ -581,7 +639,7 @@ class StitcherApp:
                     path=module.file_path,
                     count=len(result["updated_keys"]),
                 )
-            
+
             # Update signatures if successful
             code_hashes = self.sig_manager.compute_code_structure_hashes(module)
             yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
@@ -617,12 +675,12 @@ class StitcherApp:
         if total_conflicts_remaining > 0:
             bus.error(L.hydrate.run.conflict, count=total_conflicts_remaining)
             return False
-            
+
         if total_updated == 0:
             bus.info(L.hydrate.run.no_changes)
         else:
             bus.success(L.hydrate.run.complete, count=total_updated)
-            
+
         return True
 
     # ... rest of methods (run_strip, run_eject) remain same ...

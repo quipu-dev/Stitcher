@@ -58,10 +58,15 @@ def check(
         raise typer.Exit(code=1)
 
     project_root = Path.cwd()
-    
+
     handler = None
     # Interactive mode is the default in a TTY, unless explicitly disabled.
-    if sys.stdin.isatty() and not non_interactive and not force_relink and not reconcile:
+    if (
+        sys.stdin.isatty()
+        and not non_interactive
+        and not force_relink
+        and not reconcile
+    ):
         handler = TyperInteractionHandler()
 
     app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
@@ -118,7 +123,7 @@ def hydrate(
         raise typer.Exit(code=1)
 
     project_root = Path.cwd()
-    
+
     handler = None
     if sys.stdin.isatty() and not non_interactive and not force and not reconcile:
         handler = TyperInteractionHandler()
