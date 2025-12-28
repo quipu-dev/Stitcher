@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 使用测试工厂方法重构测试套件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766931055.9454815, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Fingerprint 缺失方法与单元测试回归", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766931282.3329544, "duration_ms": 0}}

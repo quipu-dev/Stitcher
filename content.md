@@ -1,229 +1,181 @@
-## [WIP] refactor: 使用测试工厂方法重构测试套件
+## [WIP] fix: 修复 Fingerprint 缺失方法与单元测试回归
 
 ### 用户需求
-为了适配 `StitcherApp` 新的依赖注入构造函数，需要创建一个测试工厂方法 `create_test_app`，并批量重构所有测试用例，将直接的 `StitcherApp(...)` 实例化替换为对该工厂方法的调用。
+1.  **修复 AttributeError**: `Fingerprint` 类缺少 `__delitem__` 方法，导致 `StitcherApp` 在运行 `run_init` 或 `check` 时无法删除临时键（如 `current_code_structure_hash`），抛出错误。
+2.  **修复 TypeError**: `SignatureManager` 的构造函数签名已变更（增加了 `fingerprint_strategy`），但部分单元测试尚未更新，导致初始化失败。
+3.  **修复 AttributeError**: `SignatureManager.extract_signature_texts` 方法已被移除（逻辑迁移至策略），但测试仍在使用它。
 
 ### 评论
-这是本次重构中最具侵入性的一步。通过引入 `create_test_app`，我们不仅修复了当前的破坏性变更，还为未来在测试中统一配置 App（例如默认注入某些 Mock）提供了中心化入口。
-为了安全高效地处理大量文件，我们将编写一个一次性的 Python 脚本来执行代码替换。
+这是重构后的标准“清理”工作。架构变更导致了 API 的破坏性修改，我们需要同步更新底层数据模型和相关的单元测试。
 
 ### 目标
-1.  更新 `stitcher-test-utils`，使其依赖 `stitcher-application` 和 `stitcher-python-adapter`。
-2.  在 `stitcher-test-utils` 中实现 `create_test_app` 工厂函数。
-3.  使用脚本批量将测试代码中的 `from stitcher.app import StitcherApp` 和 `StitcherApp(...)` 替换为新的工厂调用。
+1.  在 `packages/stitcher-spec/src/stitcher/spec/fingerprint.py` 中实现 `__delitem__`。
+2.  更新 `packages/stitcher-application/tests/unit/test_signature_extraction.py`，使用 `PythonFingerprintStrategy` 并调用新的 `compute_fingerprints` API。
+3.  更新 `packages/stitcher-application/tests/unit/test_signature_manager.py`，注入策略实例。
 
 ### 基本原理
-测试代码不应关心 `StitcherApp` 的复杂构造细节（如 Parser、Adapter 的装配）。工厂模式将这些细节封装起来，使得测试代码只需关注“创建一个 App 并运行”这一高层意图。
+-   **数据模型完整性**: `Fingerprint` 作为一个类字典对象（Dict-like），必须支持 `__delitem__` 以满足 `core.py` 中的业务逻辑需求。
+-   **测试适配**: 单元测试必须反映代码的最新状态。由于 `extract_signature_texts` 的逻辑已经移动到 `PythonFingerprintStrategy` 中，原有的测试实际上变成了对“Manager + Strategy”集成工作的验证。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/architecture #task/object/test-suite #task/action/refactor-tests #task/state/end
+#intent/fix #flow/ready #priority/high #comp/runtime #comp/tests #scope/core #ai/instruct #task/domain/architecture #task/object/test-suite #task/action/fix-regressions #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 stitcher-test-utils 依赖
-首先，让测试工具包能够访问应用和适配器。
+#### Acts 1: 修复 Fingerprint 类
+添加 `__delitem__` 方法。
 
 ~~~~~act
 patch_file
-packages/stitcher-test-utils/pyproject.toml
+packages/stitcher-spec/src/stitcher/spec/fingerprint.py
 ~~~~~
-~~~~~toml.old
-dependencies = [
-    "pyneedle",
-    "PyYAML",
-    "tomli-w",
-]
+~~~~~python.old
+    def __setitem__(self, key: str, value: str) -> None:
+        self._validate_key(key)
+        self._hashes[key] = value
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
-
-[tool.uv.sources]
-pyneedle = { workspace = true }
+    def __contains__(self, key: str) -> bool:
+        return key in self._hashes
 ~~~~~
-~~~~~toml.new
-dependencies = [
-    "pyneedle",
-    "PyYAML",
-    "tomli-w",
-    "stitcher-application",
-    "stitcher-python-adapter",
-]
+~~~~~python.new
+    def __setitem__(self, key: str, value: str) -> None:
+        self._validate_key(key)
+        self._hashes[key] = value
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
+    def __delitem__(self, key: str) -> None:
+        self._validate_key(key)
+        del self._hashes[key]
 
-[tool.uv.sources]
-pyneedle = { workspace = true }
-stitcher-application = { workspace = true }
-stitcher-python-adapter = { workspace = true }
+    def __contains__(self, key: str) -> bool:
+        return key in self._hashes
 ~~~~~
 
-#### Acts 2: 实现 create_test_app 工厂
-在 `helpers.py` 中添加工厂函数。
+#### Acts 2: 修复 test_signature_extraction.py
+该测试调用的方法已被移除，且构造函数缺少参数。我们将引入 `PythonFingerprintStrategy` 来修复它。
+
+~~~~~act
+write_file
+packages/stitcher-application/tests/unit/test_signature_extraction.py
+~~~~~
+~~~~~python
+from stitcher.spec import Argument, ArgumentKind, FunctionDef, ModuleDef
+from stitcher.app.services import SignatureManager
+from stitcher.adapter.python import PythonFingerprintStrategy
+
+
+def test_extract_signature_text_simple(tmp_path):
+    # Arrange
+    func = FunctionDef(
+        name="my_func",
+        args=[
+            Argument(
+                name="a",
+                kind=ArgumentKind.POSITIONAL_OR_KEYWORD,
+                annotation="int",
+            ),
+            Argument(
+                name="b",
+                kind=ArgumentKind.POSITIONAL_OR_KEYWORD,
+                annotation="str",
+                default="'default'",
+            ),
+        ],
+        return_annotation="bool",
+    )
+    module = ModuleDef(file_path="src/main.py", functions=[func])
+
+    # Inject the Python strategy
+    manager = SignatureManager(
+        root_path=tmp_path, fingerprint_strategy=PythonFingerprintStrategy()
+    )
+
+    # Act
+    # Old: texts = manager.extract_signature_texts(module)
+    # New: Use compute_fingerprints and extract the text from the result
+    fingerprints = manager.compute_fingerprints(module)
+
+    # Assert
+    # The key for signature text is 'current_code_signature_text' defined in PythonFingerprintStrategy
+    expected = "def my_func(a: int, b: str = 'default') -> bool:"
+    assert (
+        fingerprints["my_func"]["current_code_signature_text"]
+        == expected
+    )
+
+
+def test_extract_signature_text_async(tmp_path):
+    # Arrange
+    func = FunctionDef(
+        name="run",
+        is_async=True,
+        args=[],
+        return_annotation="None",
+    )
+    module = ModuleDef(file_path="src/main.py", functions=[func])
+
+    manager = SignatureManager(
+        root_path=tmp_path, fingerprint_strategy=PythonFingerprintStrategy()
+    )
+
+    # Act
+    fingerprints = manager.compute_fingerprints(module)
+
+    # Assert
+    expected = "async def run() -> None:"
+    assert fingerprints["run"]["current_code_signature_text"] == expected
+~~~~~
+
+#### Acts 3: 修复 test_signature_manager.py
+只需修复构造函数调用。这里我们也可以使用 `PythonFingerprintStrategy`，因为它已经可用且行为正确。
 
 ~~~~~act
 patch_file
-packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py
+packages/stitcher-application/tests/unit/test_signature_manager.py
 ~~~~~
 ~~~~~python.old
 import json
 from pathlib import Path
+from stitcher.spec import ModuleDef, FunctionDef, Argument, ArgumentKind, Fingerprint
+from stitcher.app.services import SignatureManager
 
 
-def get_stored_hashes(project_root: Path, file_path: str) -> dict:
+def create_func(name="func", args=None, ret=None):
 ~~~~~
 ~~~~~python.new
 import json
 from pathlib import Path
-from typing import Optional
-
-from stitcher.app import StitcherApp
-from stitcher.app.protocols import InteractionHandler
-from stitcher.adapter.python import (
-    PythonParser,
-    PythonTransformer,
-    PythonStubGenerator,
-    PythonFingerprintStrategy,
-)
+from stitcher.spec import ModuleDef, FunctionDef, Argument, ArgumentKind, Fingerprint
+from stitcher.app.services import SignatureManager
+from stitcher.adapter.python import PythonFingerprintStrategy
 
 
-def create_test_app(
-    root_path: Path, interaction_handler: Optional[InteractionHandler] = None
-) -> StitcherApp:
-    """
-    Factory to create a StitcherApp instance with Python adapters pre-configured for testing.
-    """
-    return StitcherApp(
-        root_path=root_path,
-        parser=PythonParser(),
-        transformer=PythonTransformer(),
-        stub_generator=PythonStubGenerator(),
-        fingerprint_strategy=PythonFingerprintStrategy(),
-        interaction_handler=interaction_handler,
-    )
-
-
-def get_stored_hashes(project_root: Path, file_path: str) -> dict:
+def create_func(name="func", args=None, ret=None):
 ~~~~~
 
 ~~~~~act
 patch_file
-packages/stitcher-test-utils/src/stitcher/test_utils/helpers.stitcher.yaml
-~~~~~
-~~~~~yaml.old
-"get_stored_hashes": |-
-  Test helper to load the composite hashes for a given source file from the
-  .stitcher/signatures directory.
-~~~~~
-~~~~~yaml.new
-"create_test_app": |-
-  Factory function to create a fully assembled StitcherApp for testing purposes.
-  Automatically injects Python language adapters.
-"get_stored_hashes": |-
-  Test helper to load the composite hashes for a given source file from the
-  .stitcher/signatures directory.
-~~~~~
-
-#### Acts 3: 导出工厂函数
-更新 `__init__.py`。
-
-~~~~~act
-patch_file
-packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py
+packages/stitcher-application/tests/unit/test_signature_manager.py
 ~~~~~
 ~~~~~python.old
-from .workspace import WorkspaceFactory
-from .harness import VenvHarness
-from .helpers import get_stored_hashes
+def test_manager_save_and_load_composite_hashes(tmp_path: Path):
+    # Arrange
+    manager = SignatureManager(root_path=tmp_path)
+    module = ModuleDef(file_path="src/main.py", functions=[create_func(name="foo")])
 
-__all__ = [
-    "SpyBus",
-    "MockNexus",
-    "WorkspaceFactory",
-    "VenvHarness",
-    "get_stored_hashes",
-]
+    # Data is now composed of Fingerprint objects
 ~~~~~
 ~~~~~python.new
-from .workspace import WorkspaceFactory
-from .harness import VenvHarness
-from .helpers import get_stored_hashes, create_test_app
-
-__all__ = [
-    "SpyBus",
-    "MockNexus",
-    "WorkspaceFactory",
-    "VenvHarness",
-    "get_stored_hashes",
-    "create_test_app",
-]
-~~~~~
-
-#### Acts 4: 执行批量重构脚本
-我们将编写并运行一个脚本，该脚本会遍历所有测试文件并替换导入和调用。
-该脚本通过 `find` 命令获取文件列表，然后逐个处理。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-cat << 'EOF' > refactor_tests.py
-import os
-import sys
-
-def process_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-
-    # Skip files that don't use StitcherApp
-    if "StitcherApp" not in content:
-        return
-
-    original_content = content
-    
-    # Replace import
-    # This naive replacement assumes "from stitcher.app import StitcherApp" is on its own line
-    # or at least easily replaceable.
-    content = content.replace(
-        "from stitcher.app import StitcherApp", 
-        "from stitcher.test_utils import create_test_app"
+def test_manager_save_and_load_composite_hashes(tmp_path: Path):
+    # Arrange
+    manager = SignatureManager(
+        root_path=tmp_path, fingerprint_strategy=PythonFingerprintStrategy()
     )
-    
-    # Replace instantiation
-    content = content.replace("StitcherApp(", "create_test_app(")
-    
-    if content != original_content:
-        print(f"Refactoring {file_path}")
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(content)
+    module = ModuleDef(file_path="src/main.py", functions=[create_func(name="foo")])
 
-def main():
-    # Targets: "tests" and "packages/*/tests"
-    targets = ["tests"]
-    packages_dir = "packages"
-    if os.path.exists(packages_dir):
-        for pkg in os.listdir(packages_dir):
-            pkg_tests = os.path.join(packages_dir, pkg, "tests")
-            if os.path.exists(pkg_tests):
-                targets.append(pkg_tests)
-
-    print(f"Scanning targets: {targets}")
-
-    for target in targets:
-        for root, dirs, files in os.walk(target):
-            for file in files:
-                if file.endswith(".py"):
-                    process_file(os.path.join(root, file))
-
-if __name__ == "__main__":
-    main()
-EOF
-
-python3 refactor_tests.py
-rm refactor_tests.py
+    # Data is now composed of Fingerprint objects
 ~~~~~
 
 ### 下一步建议
-重构脚本执行完毕后，所有测试用例应该已经适配了新的工厂方法。接下来的关键步骤是运行整个测试套件，验证重构的正确性，并确保没有因为依赖注入引入新的回归问题。这之后，我们就可以安全地删除 `stitcher-scanner` 和 `stitcher-io` 中被废弃的代码（或者保留它们作为 Adapter 的底层实现，但不再被 Application 直接引用）。
+再次运行测试套件。如果修复正确，所有测试（包括集成测试）应该都能通过。一旦绿色，我们就可以进行清理工作（删除旧代码）。

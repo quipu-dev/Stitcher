@@ -1,5 +1,6 @@
 from stitcher.spec import Argument, ArgumentKind, FunctionDef, ModuleDef
 from stitcher.app.services import SignatureManager
+from stitcher.adapter.python import PythonFingerprintStrategy
 
 
 def test_extract_signature_text_simple(tmp_path):
@@ -23,14 +24,23 @@ def test_extract_signature_text_simple(tmp_path):
     )
     module = ModuleDef(file_path="src/main.py", functions=[func])
 
-    manager = SignatureManager(root_path=tmp_path)
+    # Inject the Python strategy
+    manager = SignatureManager(
+        root_path=tmp_path, fingerprint_strategy=PythonFingerprintStrategy()
+    )
 
     # Act
-    texts = manager.extract_signature_texts(module)
+    # Old: texts = manager.extract_signature_texts(module)
+    # New: Use compute_fingerprints and extract the text from the result
+    fingerprints = manager.compute_fingerprints(module)
 
     # Assert
+    # The key for signature text is 'current_code_signature_text' defined in PythonFingerprintStrategy
     expected = "def my_func(a: int, b: str = 'default') -> bool:"
-    assert texts["my_func"] == expected
+    assert (
+        fingerprints["my_func"]["current_code_signature_text"]
+        == expected
+    )
 
 
 def test_extract_signature_text_async(tmp_path):
@@ -43,11 +53,13 @@ def test_extract_signature_text_async(tmp_path):
     )
     module = ModuleDef(file_path="src/main.py", functions=[func])
 
-    manager = SignatureManager(root_path=tmp_path)
+    manager = SignatureManager(
+        root_path=tmp_path, fingerprint_strategy=PythonFingerprintStrategy()
+    )
 
     # Act
-    texts = manager.extract_signature_texts(module)
+    fingerprints = manager.compute_fingerprints(module)
 
     # Assert
     expected = "async def run() -> None:"
-    assert texts["run"] == expected
+    assert fingerprints["run"]["current_code_signature_text"] == expected

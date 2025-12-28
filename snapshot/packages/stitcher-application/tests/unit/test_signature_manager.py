@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from stitcher.spec import ModuleDef, FunctionDef, Argument, ArgumentKind, Fingerprint
 from stitcher.app.services import SignatureManager
+from stitcher.adapter.python import PythonFingerprintStrategy
 
 
 def create_func(name="func", args=None, ret=None):
@@ -46,7 +47,9 @@ def test_fingerprint_stability():
 
 def test_manager_save_and_load_composite_hashes(tmp_path: Path):
     # Arrange
-    manager = SignatureManager(root_path=tmp_path)
+    manager = SignatureManager(
+        root_path=tmp_path, fingerprint_strategy=PythonFingerprintStrategy()
+    )
     module = ModuleDef(file_path="src/main.py", functions=[create_func(name="foo")])
 
     # Data is now composed of Fingerprint objects
