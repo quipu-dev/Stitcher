@@ -22,7 +22,7 @@ app = typer.Typer(
 @app.callback()
 def main(
     verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable debug logging."
+        False, "--verbose", "-v", help=nexus.get(L.cli.option.verbose.help)
     ),
 ):
     # The CLI is the composition root. It decides *which* renderer to use.

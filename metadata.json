@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M main.json, M rendering.json, M bus.json ... and 2 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766916692.7900326, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复配置遗漏并优化硬编码字符串", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766916695.2071831, "duration_ms": 0}}

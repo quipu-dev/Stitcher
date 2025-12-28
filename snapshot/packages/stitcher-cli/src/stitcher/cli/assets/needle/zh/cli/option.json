@@ -13,5 +13,8 @@
   },
   "update_signatures": {
     "help": "接受签名变更并更新存储的指纹。"
+  },
+  "verbose": {
+    "help": "启用调试日志。"
   }
 }
