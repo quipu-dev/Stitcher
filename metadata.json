@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 泛化交互模型并集成至 hydrate 命令", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766903358.5179183, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 为 hydrate 命令添加交互式流程的集成测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766903446.1120865, "duration_ms": 0}}

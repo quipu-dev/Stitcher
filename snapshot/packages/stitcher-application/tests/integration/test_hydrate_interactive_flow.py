@@ -1,44 +1,3 @@
-好的，我们已经完成了核心逻辑的实现。现在，最关键的一步是创建集成测试，以确保新的交互式 `hydrate` 流程按预期工作，并且不会破坏现有的非交互式行为。
-
-我将创建一个新的测试文件 `tests/integration/test_hydrate_interactive_flow.py` 来专门验证这些场景。
-
-## [WIP] test: 为 hydrate 命令添加交互式流程的集成测试
-
-### 用户需求
-为 `hydrate` 命令的新交互式引导模型编写集成测试，确保：
-1.  当用户在交互式会话中选择“覆盖”（Force-hydrate）时，YAML 文件被正确更新。
-2.  当用户选择“调和”（Reconcile）时，YAML 文件保持不变。
-3.  当用户选择“跳过”（Skip）时，命令最终会失败并报告未解决的冲突。
-4.  当用户选择“中止”（Abort）时，命令会立即停止。
-
-### 评论
-创建健壮的测试是确保功能正确性和防止未来回归的关键。通过使用 `MockResolutionHandler`，我们可以精确地模拟用户输入，而无需处理真实的 `stdin`，使测试变得稳定且可重复。
-
-### 目标
-1.  创建一个新的测试文件 `tests/integration/test_hydrate_interactive_flow.py`。
-2.  实现一个 `MockResolutionHandler`，用于在测试中模拟用户的交互选择。
-3.  编写四个独立的测试用例，分别覆盖 `HYDRATE_OVERWRITE`、`HYDRATE_KEEP_EXISTING`、`SKIP` 和 `ABORT` 四种解决动作。
-4.  在每个测试用例中，断言命令的最终成功/失败状态、总线发出的语义消息以及磁盘上 YAML 文件的最终内容。
-
-### 基本原理
-我们将复用 `test_check_interactive_flow.py` 中 `MockResolutionHandler` 的设计模式。测试的核心是依赖注入：我们在创建 `StitcherApp` 实例时，将一个预设了返回动作的 Mock Handler 注入进去。这样，当 `run_hydrate` 调用 `interaction_handler` 时，它会得到我们预设的响应，从而驱动后续的执行逻辑。最后，我们通过检查文件系统和 `SpyBus` 的记录来验证结果是否符合预期。
-
-### 标签
-#intent/tooling #flow/ready #priority/high #comp/tests #concept/ui #scope/dx #task/domain/cli #task/object/interactive-mode #task/action/integration #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建集成测试文件
-
-我们将创建一个新的测试文件，并添加完整的测试用例来覆盖所有交互场景。
-
-~~~~~act
-write_file
-packages/stitcher-application/tests/integration/test_hydrate_interactive_flow.py
-~~~~~
-~~~~~python
 import pytest
 from typing import List
 from stitcher.app import StitcherApp
@@ -175,4 +134,3 @@ def test_hydrate_interactive_abort_stops_process(conflicting_workspace, monkeypa
     doc_file = conflicting_workspace / "src/app.stitcher.yaml"
     content = doc_file.read_text(encoding="utf-8")
     assert "YAML Doc" in content
-~~~~~
