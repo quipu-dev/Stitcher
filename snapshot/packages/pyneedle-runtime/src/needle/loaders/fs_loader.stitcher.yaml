@@ -3,8 +3,6 @@
 
   It searches for project roots and then looks for standard resource
   directories (`needle/` and `.stitcher/needle/`).
-"FileSystemLoader._load_directory": |-
-  Recursively scans a directory and loads all supported files.
 "FileSystemLoader._scan_directory": |-
   Scans a directory for supported files.
   Returns a list of layers.
@@ -14,8 +12,6 @@
   Scans a directory and merges all found files into a single dictionary.
 "FileSystemLoader._scan_root": |-
   Scans the single root and returns a merged, flattened dictionary.
-"FileSystemLoader.add_root": |-
-  Prepends a new search root, giving it highest priority.
 "FileSystemLoader.load": |-
   Returns the aggregated view of the domain for this root.
 "FileSystemLoader.locate": |-

@@ -19,7 +19,7 @@ def test_pump_can_extract_from_test_files(tmp_path, monkeypatch):
 def test_something():
     """This is a docstring in a test file."""
     pass
-'''
+''',
         )
         .build()
     )
@@ -33,14 +33,14 @@ def test_something():
 
     # 3. Assert
     assert result.success is True
-    
+
     # It should report success for the file
     spy_bus.assert_id_called(L.pump.file.success, level="success")
-    
+
     # Verify the yaml file was created and content is correct
     yaml_path = project_root / "tests/test_logic.stitcher.yaml"
     assert yaml_path.exists(), "The .stitcher.yaml file for the test was not created."
-    
+
     with yaml_path.open() as f:
         data = yaml.safe_load(f)
         assert data["test_something"] == "This is a docstring in a test file."

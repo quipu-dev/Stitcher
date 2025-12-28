@@ -229,7 +229,7 @@ class StitcherApp:
         for config in configs:
             if config.name != "default":
                 bus.info(L.generate.target.processing, name=config.name)
-            
+
             # Debug config info
             bus.debug(
                 L.debug.log.msg,
