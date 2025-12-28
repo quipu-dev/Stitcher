@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 from stitcher.spec import ModuleDef, FunctionDef, ClassDef, Attribute
 from stitcher.app.services import DocumentManager
-from stitcher.io import DocumentAdapter
+from stitcher.common import DocumentAdapter
 
 
 class MockAdapter(DocumentAdapter):
