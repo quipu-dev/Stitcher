@@ -7,6 +7,7 @@ from stitcher.spec import (
     FunctionDef,
     ModuleDef,
 )
+from stitcher.common import format_docstring
 
 
 class StubGenerator:
@@ -18,7 +19,7 @@ class StubGenerator:
 
         # 1. Module Docstring
         if module.docstring:
-            lines.append(self._format_docstring(module.docstring, 0))
+            lines.append(format_docstring(module.docstring, self._indent(0)))
             lines.append("")  # Empty line after docstring
 
         # 2. Imports (TODO: Pass these through from scanner later)
@@ -52,25 +53,6 @@ class StubGenerator:
 
     def _indent(self, level: int) -> str:
         return self._indent_str * level
-
-    def _format_docstring(self, doc: str, level: int) -> str:
-        indent = self._indent(level)
-        # In a robust implementation, we might handle escaping quotes inside docstring
-
-        # Strip leading/trailing whitespace from the docstring itself to handle
-        # potential formatting from YAML loader.
-        doc = doc.strip()
-        lines = doc.split("\n")
-
-        if len(lines) == 1:
-            # Single line: keep it compact and escape internal quotes
-            processed_doc = doc.replace('"""', '\\"\\"\\"')
-            return f'{indent}"""{processed_doc}"""'
-
-        # Multi-line: adopt the ruff/black style for readability
-        # Re-indent all lines to match the current level.
-        indented_body = "\n".join(f"{indent}{line}" for line in lines)
-        return f'{indent}"""\n{indented_body}\n{indent}"""'
 
     def _generate_attribute(self, attr: Attribute, level: int) -> str:
         indent = self._indent(level)
@@ -165,7 +147,7 @@ class StubGenerator:
         # Body
         if func.docstring:
             lines.append(def_line)
-            lines.append(self._format_docstring(func.docstring, level + 1))
+            lines.append(format_docstring(func.docstring, self._indent(level + 1)))
             lines.append(f"{self._indent(level + 1)}...")
         else:
             # For functions without docstrings, use a single line format.
@@ -193,7 +175,7 @@ class StubGenerator:
 
         # Docstring
         if cls.docstring:
-            lines.append(self._format_docstring(cls.docstring, level + 1))
+            lines.append(format_docstring(cls.docstring, self._indent(level + 1)))
             has_content = True
 
         # Attributes
