@@ -1,2 +1,0 @@
-"test_generate_with_dunder_all": |-
-  Tests that the generator correctly includes __all__ in the output.

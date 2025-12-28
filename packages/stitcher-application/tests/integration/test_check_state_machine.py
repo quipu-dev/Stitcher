@@ -1,4 +1,4 @@
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory, get_stored_hashes
 
@@ -23,7 +23,7 @@ def test_state_synchronized(tmp_path, monkeypatch):
         )
         .build()
     )
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
 
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
@@ -51,7 +51,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
         .with_source("src/module.py", 'def func(a: int):\n    """Old Doc."""\n    pass')
         .build()
     )
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
 
@@ -96,7 +96,7 @@ def test_state_signature_drift_error(tmp_path, monkeypatch):
         .with_source("src/module.py", 'def func(a: int):\n    """Doc."""\n    pass')
         .build()
     )
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
 
@@ -122,7 +122,7 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
         .with_source("src/module.py", 'def func(a: int):\n    """Doc."""\n    pass')
         .build()
     )
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
 
@@ -161,7 +161,7 @@ def test_state_co_evolution_error(tmp_path, monkeypatch):
         .with_source("src/module.py", 'def func(a: int):\n    """Old Doc."""\n    pass')
         .build()
     )
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
 
@@ -192,7 +192,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
         .with_source("src/module.py", 'def func(a: int):\n    """Old Doc."""\n    pass')
         .build()
     )
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
 

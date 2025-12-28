@@ -1,9 +1,0 @@
-"test_yaml_adapter_block_format_consistency": |-
-  Verify that all strings (multiline or single-line) are saved
-  using Literal Block Style (|-) for consistency.
-"test_yaml_adapter_handles_malformed": |-
-  Tests that the adapter returns an empty dict for invalid YAML files.
-"test_yaml_adapter_load_non_existent": |-
-  Tests that the adapter returns an empty dict for a non-existent file.
-"test_yaml_adapter_round_trip": |-
-  Tests that data can be saved and loaded back correctly.

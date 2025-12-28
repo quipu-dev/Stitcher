@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.test_utils import WorkspaceFactory, VenvHarness
 
 
@@ -25,7 +25,7 @@ def test_namespace_coexistence(tmp_path: Path, isolated_env: VenvHarness):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root_stubs)
+    app = create_test_app(root_path=project_root_stubs)
     app.run_from_config()
     stub_pkg_path = project_root_stubs / "stubs"
 

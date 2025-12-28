@@ -1,4 +1,4 @@
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
@@ -31,7 +31,7 @@ def test_private_members_allowed_in_yaml(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # 2. Act
@@ -74,7 +74,7 @@ def test_ghost_keys_trigger_extra_error(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # 2. Act
@@ -110,7 +110,7 @@ def test_public_missing_triggers_warning_only(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # 2. Act

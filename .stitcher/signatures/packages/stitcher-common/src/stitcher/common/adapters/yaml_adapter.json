@@ -1,0 +1,10 @@
+{
+  "YamlAdapter.load": {
+    "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, str]:",
+    "baseline_code_structure_hash": "ef21d314c98812203d6777bd75855c109b1dadf617994d7a622ffcebd3b67de6"
+  },
+  "YamlAdapter.save": {
+    "baseline_code_signature_text": "def save(self, path: Path, data: Dict[str, str]) -> None:",
+    "baseline_code_structure_hash": "e0400c9ac434751a49ef8df88352ee82d0898f1bbddbef0deaca730aa2d237a7"
+  }
+}

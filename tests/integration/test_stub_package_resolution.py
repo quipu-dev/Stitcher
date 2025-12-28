@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.test_utils import WorkspaceFactory, VenvHarness
 
 
@@ -28,7 +28,7 @@ def test_stubs_install_and_resolve(tmp_path: Path, isolated_env: VenvHarness):
     )
 
     # 2. Act: Generate the stub package
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     app.run_from_config()
     stub_pkg_path = project_root / "stubs"
     assert stub_pkg_path.exists()

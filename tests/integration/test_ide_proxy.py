@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.test_utils import WorkspaceFactory, VenvHarness
 
 
@@ -49,7 +49,7 @@ packages = ["src/ide_proxy"]
     # --- ACT ---
 
     # 3. Generate the stub package.
-    app = StitcherApp(root_path=source_project_root)
+    app = create_test_app(root_path=source_project_root)
     app.run_from_config()
     stub_pkg_path = source_project_root / "stubs"
 

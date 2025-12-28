@@ -6,6 +6,8 @@ from needle.loaders import FileSystemLoader
 from needle.runtime import _find_project_root
 from .formatting import format_docstring, parse_docstring
 from .messaging.bus import MessageBus
+from .interfaces import DocumentAdapter
+from .adapters.yaml_adapter import YamlAdapter
 
 # --- Composition Root for Stitcher's Core Services ---
 
@@ -38,4 +40,6 @@ __all__ = [
     "stitcher_loader",
     "format_docstring",
     "parse_docstring",
+    "DocumentAdapter",
+    "YamlAdapter",
 ]

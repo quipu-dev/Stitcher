@@ -1,0 +1,9 @@
+"PythonFingerprintStrategy": |-
+  Strategy for computing fingerprints for Python entities.
+  Uses a composite approach (StructureHasher + SignatureTextHasher).
+"PythonParser": |-
+  Adapter for parsing Python source code into Stitcher IR.
+"PythonStubGenerator": |-
+  Adapter for generating Python type stubs (.pyi).
+"PythonTransformer": |-
+  Adapter for transforming Python source code (strip/inject docstrings).

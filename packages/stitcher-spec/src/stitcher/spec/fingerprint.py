@@ -50,6 +50,10 @@ class Fingerprint:
         self._validate_key(key)
         self._hashes[key] = value
 
+    def __delitem__(self, key: str) -> None:
+        self._validate_key(key)
+        del self._hashes[key]
+
     def __contains__(self, key: str) -> bool:
         return key in self._hashes
 

@@ -11,6 +11,8 @@ dependencies = [
     "pyneedle",
     "PyYAML",
     "tomli-w",
+    "stitcher-application",
+    "stitcher-python-adapter",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -18,3 +20,5 @@ packages = ["src/stitcher"]
 
 [tool.uv.sources]
 pyneedle = { workspace = true }
+stitcher-application = { workspace = true }
+stitcher-python-adapter = { workspace = true }

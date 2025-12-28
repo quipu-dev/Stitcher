@@ -32,10 +32,9 @@ pyneedle-pointer = { workspace = true }
 pyneedle-spec = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
-stitcher-scanner = { workspace = true }
-stitcher-io = { workspace = true }
 stitcher-config = { workspace = true }
 stitcher-application = { workspace = true }
+stitcher-python-adapter = { workspace = true }
 stitcher-cli = { workspace = true }
 stitcher-test-utils = { workspace = true }
 

@@ -1,4 +1,0 @@
-"test_collect_top_level_imports": |-
-  Tests that the parser correctly collects top-level import statements.
-"test_detect_typing_in_attributes_and_returns": |-
-  Tests that the parser's enrichment logic detects types in various locations.

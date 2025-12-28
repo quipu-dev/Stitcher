@@ -53,8 +53,8 @@
     "baseline_yaml_content_hash": "56ba56645ae8bc442c435ee789bb3cfbddd0eaefc0e0a33b11b20ba6d391dc55"
   },
   "StitcherApp.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, interaction_handler: Optional[InteractionHandler] = None):",
-    "baseline_code_structure_hash": "02fb98d263c87406ff30ff04f5fb786e78eafb92c11a2652d35276e5e00568f9"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, transformer: LanguageTransformerProtocol, stub_generator: StubGeneratorProtocol, fingerprint_strategy: FingerprintStrategyProtocol, interaction_handler: Optional[InteractionHandler] = None):",
+    "baseline_code_structure_hash": "07428586822e2d245f3e5c24cd92b7389acf5ec07264222ffdf92184fc56f344"
   },
   "StitcherApp._analyze_file": {
     "baseline_code_signature_text": "def _analyze_file(self, module: ModuleDef) -> tuple[FileCheckResult, list[InteractionContext]]:",

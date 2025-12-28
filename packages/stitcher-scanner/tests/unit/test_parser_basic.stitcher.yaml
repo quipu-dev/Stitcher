@@ -1,4 +1,0 @@
-"test_parse_simple_class_with_method": |-
-  Tests parsing of a basic class with a method.
-"test_parse_simple_function": |-
-  Tests parsing of a basic function with arguments and a docstring.

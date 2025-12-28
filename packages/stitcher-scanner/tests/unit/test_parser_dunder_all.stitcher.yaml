@@ -1,6 +1,0 @@
-"test_parse_dunder_all_annotated": |-
-  Tests parsing of an annotated `__all__` variable.
-"test_parse_dunder_all_complex": |-
-  Tests parsing of a complex `__all__` expression.
-"test_parse_dunder_all_simple": |-
-  Tests parsing of a simple list-based `__all__` variable.

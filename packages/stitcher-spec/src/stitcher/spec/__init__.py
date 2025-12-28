@@ -15,8 +15,18 @@ from .models import (
     ResolutionPlan,
 )
 from .fingerprint import Fingerprint, InvalidFingerprintKeyError
+from .protocols import (
+    LanguageParserProtocol,
+    LanguageTransformerProtocol,
+    FingerprintStrategyProtocol,
+    StubGeneratorProtocol,
+)
 
 __all__ = [
+    "LanguageParserProtocol",
+    "LanguageTransformerProtocol",
+    "FingerprintStrategyProtocol",
+    "StubGeneratorProtocol",
     "Fingerprint",
     "InvalidFingerprintKeyError",
     "Argument",

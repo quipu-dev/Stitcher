@@ -1,7 +1,7 @@
 from pathlib import Path
 from stitcher.spec import ModuleDef, FunctionDef
 from stitcher.app.services import DocumentManager
-from stitcher.io import YamlAdapter
+from stitcher.common import YamlAdapter
 
 
 def test_apply_docs_overlay(tmp_path: Path):

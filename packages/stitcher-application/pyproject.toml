@@ -10,9 +10,8 @@ requires-python = ">=3.10"
 dependencies = [
     "stitcher-spec",
     "stitcher-common",
-    "stitcher-scanner",
-    "stitcher-io",
     "stitcher-config",
+    "stitcher-python-adapter",
     "pyneedle",
 ]
 
@@ -22,7 +21,6 @@ packages = ["src/stitcher"]
 [tool.uv.sources]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
-stitcher-scanner = { workspace = true }
-stitcher-io = { workspace = true }
 stitcher-config = { workspace = true }
+stitcher-python-adapter = { workspace = true }
 pyneedle = { workspace = true }

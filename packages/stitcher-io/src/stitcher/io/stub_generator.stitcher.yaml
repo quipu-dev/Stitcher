@@ -1,4 +1,0 @@
-"StubGenerator": |-
-  Generates .pyi stub file content from a ModuleDef IR.
-"StubGenerator.generate": |-
-  Generates the content of a .pyi file from a ModuleDef IR.

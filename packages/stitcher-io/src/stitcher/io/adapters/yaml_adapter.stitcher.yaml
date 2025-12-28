@@ -1,6 +1,0 @@
-"YamlAdapter": |-
-  Adapter for reading and writing .yaml documentation files.
-"YamlAdapter.load": |-
-  Loads and parses a YAML document file.
-"YamlAdapter.save": |-
-  Saves data to a YAML document file, ensuring consistent formatting.

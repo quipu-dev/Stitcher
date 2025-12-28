@@ -1,4 +1,3 @@
-import hashlib
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
@@ -40,63 +39,6 @@ class FunctionDef:
     is_async: bool = False
     is_static: bool = False  # @staticmethod
     is_class: bool = False  # @classmethod
-
-    def compute_fingerprint(self) -> str:
-        # Build a stable string representation of the signature
-        parts = [
-            f"name:{self.name}",
-            f"async:{self.is_async}",
-            f"static:{self.is_static}",
-            f"class:{self.is_class}",
-            f"ret:{self.return_annotation or ''}",
-        ]
-
-        for arg in self.args:
-            arg_sig = (
-                f"{arg.name}:{arg.kind}:{arg.annotation or ''}:{arg.default or ''}"
-            )
-            parts.append(arg_sig)
-
-        # We deliberately exclude decorators from the fingerprint for now,
-        # as they often change without affecting the core API contract relevant to docs.
-        # We also strictly exclude self.docstring.
-
-        sig_str = "|".join(parts)
-        return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
-
-    def get_signature_string(self) -> str:
-        parts = []
-        if self.is_async:
-            parts.append("async")
-        parts.append("def")
-        parts.append(f"{self.name}(")
-
-        arg_strs = []
-        # Simple reconstruction. Note: Does not handle / and * markers perfectly
-        # for complex cases, but sufficient for diffing context.
-        # To improve, we could reuse logic similar to StubGenerator._generate_args
-        # but keep it simple for now.
-        for arg in self.args:
-            s = arg.name
-            if arg.kind == ArgumentKind.VAR_POSITIONAL:
-                s = f"*{arg.name}"
-            elif arg.kind == ArgumentKind.VAR_KEYWORD:
-                s = f"**{arg.name}"
-
-            if arg.annotation:
-                s += f": {arg.annotation}"
-            if arg.default:
-                s += f" = {arg.default}"
-            arg_strs.append(s)
-
-        parts.append(", ".join(arg_strs))
-        parts.append(")")
-
-        if self.return_annotation:
-            parts.append(f"-> {self.return_annotation}")
-
-        parts.append(":")
-        return " ".join(parts).replace("( ", "(").replace(" )", ")").replace(" :", ":")
 
 
 @dataclass

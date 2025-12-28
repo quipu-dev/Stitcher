@@ -5,16 +5,21 @@ from typing import Dict, List, Optional
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from stitcher.scanner import (
-    parse_source_code,
+from stitcher.adapter.python import (
     parse_plugin_entry,
     InspectionError,
-    strip_docstrings,
-    inject_docstrings,
 )
-from stitcher.io import StubGenerator
 
-from stitcher.spec import ModuleDef, ConflictType, ResolutionAction, Fingerprint
+from stitcher.spec import (
+    ModuleDef,
+    ConflictType,
+    ResolutionAction,
+    Fingerprint,
+    LanguageParserProtocol,
+    LanguageTransformerProtocol,
+    StubGeneratorProtocol,
+    FingerprintStrategyProtocol,
+)
 from stitcher.common import bus
 from needle.pointer import L
 from stitcher.config import load_config_from_path, StitcherConfig
@@ -68,12 +73,18 @@ class StitcherApp:
     def __init__(
         self,
         root_path: Path,
+        parser: LanguageParserProtocol,
+        transformer: LanguageTransformerProtocol,
+        stub_generator: StubGeneratorProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
         interaction_handler: Optional[InteractionHandler] = None,
     ):
         self.root_path = root_path
-        self.generator = StubGenerator()
+        self.parser = parser
+        self.transformer = transformer
+        self.generator = stub_generator
         self.doc_manager = DocumentManager(root_path)
-        self.sig_manager = SignatureManager(root_path)
+        self.sig_manager = SignatureManager(root_path, fingerprint_strategy)
         self.stub_pkg_manager = StubPackageManager()
         self.interaction_handler = interaction_handler
 
@@ -83,7 +94,7 @@ class StitcherApp:
             try:
                 content = source_file.read_text(encoding="utf-8")
                 relative_path = source_file.relative_to(self.root_path).as_posix()
-                module_def = parse_source_code(content, file_path=relative_path)
+                module_def = self.parser.parse(content, file_path=relative_path)
                 modules.append(module_def)
             except Exception as e:
                 bus.error(L.error.generic, error=e)
@@ -266,20 +277,35 @@ class StitcherApp:
                 continue
             for module in modules:
                 output_path = self.doc_manager.save_docs_for_module(module)
-                code_hashes = self.sig_manager.compute_code_structure_hashes(module)
-                code_texts = self.sig_manager.extract_signature_texts(module)
+
+                # Use the new unified compute method
+                computed_fingerprints = self.sig_manager.compute_fingerprints(module)
                 yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
 
                 combined: Dict[str, Fingerprint] = {}
-                all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
+                all_fqns = set(computed_fingerprints.keys()) | set(yaml_hashes.keys())
+
                 for fqn in all_fqns:
-                    fp = Fingerprint()
-                    if fqn in code_hashes:
-                        fp["baseline_code_structure_hash"] = code_hashes[fqn]
-                    if fqn in code_texts:
-                        fp["baseline_code_signature_text"] = code_texts[fqn]
+                    # Get the base computed fingerprint (code structure, sig text, etc.)
+                    fp = computed_fingerprints.get(fqn, Fingerprint())
+
+                    # Convert 'current' keys to 'baseline' keys for storage
+                    # This mapping is critical: what we just computed is now the baseline
+                    if "current_code_structure_hash" in fp:
+                        fp["baseline_code_structure_hash"] = fp[
+                            "current_code_structure_hash"
+                        ]
+                        del fp["current_code_structure_hash"]
+
+                    if "current_code_signature_text" in fp:
+                        fp["baseline_code_signature_text"] = fp[
+                            "current_code_signature_text"
+                        ]
+                        del fp["current_code_signature_text"]
+
                     if fqn in yaml_hashes:
                         fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
+
                     combined[fqn] = fp
 
                 self.sig_manager.save_composite_hashes(module, combined)
@@ -323,15 +349,19 @@ class StitcherApp:
         is_tracked = (
             (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
         )
-        current_code_map = self.sig_manager.compute_code_structure_hashes(module)
+
+        computed_fingerprints = self.sig_manager.compute_fingerprints(module)
         current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module)
-        current_sig_texts = self.sig_manager.extract_signature_texts(module)
         stored_hashes_map = self.sig_manager.load_composite_hashes(module)
 
-        all_fqns = set(current_code_map.keys()) | set(stored_hashes_map.keys())
+        all_fqns = set(computed_fingerprints.keys()) | set(stored_hashes_map.keys())
 
         for fqn in sorted(list(all_fqns)):
-            code_hash = current_code_map.get(fqn)
+            computed_fp = computed_fingerprints.get(fqn, Fingerprint())
+
+            # Extract standard keys using O(1) access from Fingerprint object
+            code_hash = computed_fp.get("current_code_structure_hash")
+            current_sig_text = computed_fp.get("current_code_signature_text")
             yaml_hash = current_yaml_map.get(fqn)
 
             stored_fp = stored_hashes_map.get(fqn)
@@ -358,15 +388,15 @@ class StitcherApp:
             elif not code_matches:
                 # Signature changed (either Drift or Co-evolution)
                 sig_diff = None
-                if baseline_sig_text and fqn in current_sig_texts:
+                if baseline_sig_text and current_sig_text:
                     sig_diff = self._generate_diff(
                         baseline_sig_text,
-                        current_sig_texts[fqn],
+                        current_sig_text,
                         "baseline",
                         "current",
                     )
-                elif fqn in current_sig_texts:
-                    sig_diff = f"(No baseline signature stored)\n+++ current\n{current_sig_texts[fqn]}"
+                elif current_sig_text:
+                    sig_diff = f"(No baseline signature stored)\n+++ current\n{current_sig_text}"
 
                 conflict_type = (
                     ConflictType.SIGNATURE_DRIFT
@@ -400,10 +430,10 @@ class StitcherApp:
             new_hashes = copy.deepcopy(stored_hashes)
 
             # We need the current hashes again to apply changes
-            full_module_def = parse_source_code(
+            full_module_def = self.parser.parse(
                 (self.root_path / file_path).read_text("utf-8"), file_path
             )
-            current_code_map = self.sig_manager.compute_code_structure_hashes(
+            computed_fingerprints = self.sig_manager.compute_fingerprints(
                 full_module_def
             )
             current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
@@ -413,12 +443,15 @@ class StitcherApp:
             for fqn, action in fqn_actions:
                 if fqn in new_hashes:
                     fp = new_hashes[fqn]
+                    current_fp = computed_fingerprints.get(fqn, Fingerprint())
+                    current_code_hash = current_fp.get("current_code_structure_hash")
+
                     if action == ResolutionAction.RELINK:
-                        if fqn in current_code_map:
-                            fp["baseline_code_structure_hash"] = current_code_map[fqn]
+                        if current_code_hash:
+                            fp["baseline_code_structure_hash"] = current_code_hash
                     elif action == ResolutionAction.RECONCILE:
-                        if fqn in current_code_map:
-                            fp["baseline_code_structure_hash"] = current_code_map[fqn]
+                        if current_code_hash:
+                            fp["baseline_code_structure_hash"] = current_code_hash
                         if fqn in current_yaml_map:
                             fp["baseline_yaml_content_hash"] = current_yaml_map[fqn]
 
@@ -717,18 +750,27 @@ class StitcherApp:
                 )
 
             # Update signatures if successful
-            code_hashes = self.sig_manager.compute_code_structure_hashes(module)
-            code_texts = self.sig_manager.extract_signature_texts(module)
+            computed_fingerprints = self.sig_manager.compute_fingerprints(module)
             yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
-            all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
+            all_fqns = set(computed_fingerprints.keys()) | set(yaml_hashes.keys())
 
             combined: Dict[str, Fingerprint] = {}
             for fqn in all_fqns:
-                fp = Fingerprint()
-                if fqn in code_hashes:
-                    fp["baseline_code_structure_hash"] = code_hashes[fqn]
-                if fqn in code_texts:
-                    fp["baseline_code_signature_text"] = code_texts[fqn]
+                fp = computed_fingerprints.get(fqn, Fingerprint())
+
+                # Convert 'current' to 'baseline'
+                if "current_code_structure_hash" in fp:
+                    fp["baseline_code_structure_hash"] = fp[
+                        "current_code_structure_hash"
+                    ]
+                    del fp["current_code_structure_hash"]
+
+                if "current_code_signature_text" in fp:
+                    fp["baseline_code_signature_text"] = fp[
+                        "current_code_signature_text"
+                    ]
+                    del fp["current_code_signature_text"]
+
                 if fqn in yaml_hashes:
                     fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
                 combined[fqn] = fp
@@ -745,7 +787,7 @@ class StitcherApp:
                 source_path = self.root_path / module.file_path
                 try:
                     original = source_path.read_text(encoding="utf-8")
-                    stripped = strip_docstrings(original)
+                    stripped = self.transformer.strip(original)
                     if original != stripped:
                         redundant_files.append(source_path)
                 except Exception:
@@ -758,7 +800,7 @@ class StitcherApp:
                 source_path = self.root_path / module.file_path
                 try:
                     original_content = source_path.read_text(encoding="utf-8")
-                    stripped_content = strip_docstrings(original_content)
+                    stripped_content = self.transformer.strip(original_content)
                     if original_content != stripped_content:
                         source_path.write_text(stripped_content, encoding="utf-8")
                         stripped_count += 1
@@ -795,7 +837,7 @@ class StitcherApp:
         for file_path in files_to_process:
             try:
                 original_content = file_path.read_text(encoding="utf-8")
-                stripped_content = strip_docstrings(original_content)
+                stripped_content = self.transformer.strip(original_content)
                 if original_content != stripped_content:
                     file_path.write_text(stripped_content, encoding="utf-8")
                     all_modified_files.append(file_path)
@@ -823,7 +865,7 @@ class StitcherApp:
                 source_path = self.root_path / module.file_path
                 try:
                     original_content = source_path.read_text(encoding="utf-8")
-                    injected_content = inject_docstrings(original_content, docs)
+                    injected_content = self.transformer.inject(original_content, docs)
                     if original_content != injected_content:
                         source_path.write_text(injected_content, encoding="utf-8")
                         all_modified_files.append(source_path)
