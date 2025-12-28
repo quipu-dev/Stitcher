@@ -6,33 +6,42 @@
     "baseline_yaml_content_hash": "29ce065db51f536e938572ee2a25e87a882992ed125555dccc0bc025e35f878f"
   },
   "Fingerprint.__contains__": {
+    "baseline_code_signature_text": "def __contains__(self, key: str) -> bool:",
     "baseline_code_structure_hash": "ed325d05437653b67270450880bb84a8ccfdbe3871bb1352a7c3a1d0b2d689be"
   },
   "Fingerprint.__eq__": {
+    "baseline_code_signature_text": "def __eq__(self, other: Any) -> bool:",
     "baseline_code_structure_hash": "64791379f55526bfbcdbd5e4eb5f170164c62aa5da15a0cdc77d330d85988545"
   },
   "Fingerprint.__getitem__": {
+    "baseline_code_signature_text": "def __getitem__(self, key: str) -> str:",
     "baseline_code_structure_hash": "3d8c34aef1ba2da58f427a54fa1a159724ea44dfaa985c2061ca88309021d960"
   },
   "Fingerprint.__setitem__": {
+    "baseline_code_signature_text": "def __setitem__(self, key: str, value: str) -> None:",
     "baseline_code_structure_hash": "05dd46af0ad71013a0c5de0940c77355776011cb8e4b5afedcc291c1f39494c7"
   },
   "Fingerprint._validate_key": {
+    "baseline_code_signature_text": "def _validate_key(key: str) -> None:",
     "baseline_code_structure_hash": "1254c78fd04ab928ca923d87f70922f7de1b181c67c4281ceb4cb5c2e61ea71a"
   },
   "Fingerprint.from_dict": {
+    "baseline_code_signature_text": "def from_dict(cls, data: Dict[str, Any]) -> \"Fingerprint\":",
     "baseline_code_structure_hash": "7b55934d5fd2bd06768388135bcddb52c0a234f371d7a37aaf326474dbc59808",
     "baseline_yaml_content_hash": "e60affe8a4742ccdb9637619f4f2acd0830cdf30021b49c5691a7796bcd9722c"
   },
   "Fingerprint.get": {
+    "baseline_code_signature_text": "def get(self, key: str, default: Optional[str] = None) -> Optional[str]:",
     "baseline_code_structure_hash": "bf23c68ed4d574fcbdebba689eb070834cd39ac7c580ef9cbf5990022540acd2",
     "baseline_yaml_content_hash": "5c350e2ee5889881cca4243ee62176dfa6994c64a9050fecceb8565b248c9500"
   },
   "Fingerprint.items": {
+    "baseline_code_signature_text": "def items(self):",
     "baseline_code_structure_hash": "6b207798d4fe20e542229d8ca7ba8ffb92cf5e93466b9036835a010d63df50ee",
     "baseline_yaml_content_hash": "a7f6dd8787c7cefd397b6a08106f01bce0f114089b57abc641f5f20cc6e114c6"
   },
   "Fingerprint.to_dict": {
+    "baseline_code_signature_text": "def to_dict(self) -> Dict[str, str]:",
     "baseline_code_structure_hash": "04864d4adc26ef2280c51038a7736afaef6b76aed932886f061d495e3a450b72",
     "baseline_yaml_content_hash": "10cbac1ba8a2c9bc41dfc67bc219b899298a2484749a9ab63bcfdbb2f677f27b"
   },
@@ -40,6 +49,7 @@
     "baseline_yaml_content_hash": "f9928bc981387462f9a37c7a51b903817c7fc25380366afa1ce2d42b2622fa48"
   },
   "InvalidFingerprintKeyError.__init__": {
+    "baseline_code_signature_text": "def __init__(self, key: str):",
     "baseline_code_structure_hash": "0b79d35297e9da839f000220d4cb995e30f9d8d93a27c9fc82a10af2ac4c7c93"
   }
 }

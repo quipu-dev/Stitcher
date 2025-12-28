@@ -1,5 +1,6 @@
 {
   "get_stored_hashes": {
+    "baseline_code_signature_text": "def get_stored_hashes(project_root: Path, file_path: str) -> dict:",
     "baseline_code_structure_hash": "5e2583b2b4d33f059b3a538fe30f7d06a708ae49252aa96e0acb10f5df8936e1",
     "baseline_yaml_content_hash": "bbdc8fb14176ccc3ad0944b115767dc2c925a616641691ce493831cb5dda1045"
   }

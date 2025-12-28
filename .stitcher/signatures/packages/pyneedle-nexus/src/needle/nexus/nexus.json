@@ -3,33 +3,41 @@
     "baseline_yaml_content_hash": "47d3bdf111063bb25ba175964cafc45ec235c9f34c9fbffa0a6f044e45ef0455"
   },
   "OverlayNexus.__init__": {
+    "baseline_code_signature_text": "def __init__(self, loaders: List[ResourceLoaderProtocol], default_domain: str = \"en\"):",
     "baseline_code_structure_hash": "d7deb4acab8a222878673b9b13a571ac9747dc84dfc9c14743dad5b925f59b1a",
     "baseline_yaml_content_hash": "70165c30c3eb5fc2a1494ab9147801527782c11f19adeca09c0af8357a8210b5"
   },
   "OverlayNexus._get_or_create_view": {
+    "baseline_code_signature_text": "def _get_or_create_view(self, domain: str) -> ChainMap[str, Any]:",
     "baseline_code_structure_hash": "ff709228c5ae47d4d69943bd4860bee9f715d49385e00265d2b151cfafcdaebb",
     "baseline_yaml_content_hash": "0cdbe503d366423da10c596a7a134e24a1136ce2ce3b80de59cfffd74ed939f1"
   },
   "OverlayNexus._get_writable_loader": {
+    "baseline_code_signature_text": "def _get_writable_loader(self) -> Optional[WritableResourceLoaderProtocol]:",
     "baseline_code_structure_hash": "f388aee6dcaef3beb8db35004badd1941cc9d9fa36ef693463d8125c6ef87414"
   },
   "OverlayNexus.fetch": {
+    "baseline_code_signature_text": "def fetch(self, pointer: str, domain: str, ignore_cache: bool = False) -> Optional[str]:",
     "baseline_code_structure_hash": "8eb66675c2ff112d06f4d23e055eff3c573a72b5ad3aa7a116b4421ab61908c2",
     "baseline_yaml_content_hash": "30020bc0661a626da70608796681a21d2ba582f28ffdb425bc72ca0d4b40db17"
   },
   "OverlayNexus.load": {
+    "baseline_code_signature_text": "def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "19c036d1f9a825ec457931fafef065d3f4d1d4dffe9a26277648649c85d09ac5",
     "baseline_yaml_content_hash": "4baf1809c0a15b83d20651b05ac08a67bc23f9bda22b5b37caffae3c2fc1bcbe"
   },
   "OverlayNexus.locate": {
+    "baseline_code_signature_text": "def locate(self, pointer: Union[str, SemanticPointerProtocol], domain: Optional[str] = None) -> Optional[Path]:",
     "baseline_code_structure_hash": "9964bba1afab5baa630c7e2e8edd5d17ce0ea3a34c44ab5a40aadd0454a0d625",
     "baseline_yaml_content_hash": "f0e07dd9ce03396ce3fd16024e63ba94da2b01bd6b22417772c7bd78ad857336"
   },
   "OverlayNexus.put": {
+    "baseline_code_signature_text": "def put(self, pointer: Union[str, SemanticPointerProtocol], value: Any, domain: Optional[str] = None) -> bool:",
     "baseline_code_structure_hash": "6528cfb28e92dd61ee49ac1abdba8ffb6550143e738ce9f6c9dbf33a3b728daa",
     "baseline_yaml_content_hash": "ece01ceab3029c627683e612bc4d444bbf694eaae45614391990f8402c80eadf"
   },
   "OverlayNexus.reload": {
+    "baseline_code_signature_text": "def reload(self, domain: Optional[str] = None) -> None:",
     "baseline_code_structure_hash": "27c77fe0af3f915f964bd65c3cad3b84dce6be6d17fa4902c2dbe4354b7834ec",
     "baseline_yaml_content_hash": "2f77018cf629f25252fd09ac0749b2036975adc8dcd95e7751c3e9e587cc8216"
   }

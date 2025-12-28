@@ -3,24 +3,31 @@
     "baseline_yaml_content_hash": "7e678e84bc74dc68296efcd6926e5f14cd2c0e62ca9666928ac930b711624f88"
   },
   "StubGenerator.__init__": {
+    "baseline_code_signature_text": "def __init__(self, indent_spaces: int = 4):",
     "baseline_code_structure_hash": "bf3773335a05535d9bdecfaf1badb06bd290c625387a20b51b5162be7272c020"
   },
   "StubGenerator._generate_args": {
+    "baseline_code_signature_text": "def _generate_args(self, args: List[Argument]) -> str:",
     "baseline_code_structure_hash": "6e578736f91d7857251f57b10cea492acaa22cd340b9ca887fcbd0dca606b689"
   },
   "StubGenerator._generate_attribute": {
+    "baseline_code_signature_text": "def _generate_attribute(self, attr: Attribute, level: int) -> str:",
     "baseline_code_structure_hash": "0a83dafdf2e79505d110fe90b8c08367edf4ebedb0a5dc225944cae865601284"
   },
   "StubGenerator._generate_class": {
+    "baseline_code_signature_text": "def _generate_class(self, cls: ClassDef, level: int) -> str:",
     "baseline_code_structure_hash": "c15c398df0f1076e398c63a58910a81f006f0c7c405045a2ef98a755d333e890"
   },
   "StubGenerator._generate_function": {
+    "baseline_code_signature_text": "def _generate_function(self, func: FunctionDef, level: int) -> str:",
     "baseline_code_structure_hash": "be1e575ddd4f4d1b961ec3c48cac2c7e653960e3651b5f060922b63b3d68589c"
   },
   "StubGenerator._indent": {
+    "baseline_code_signature_text": "def _indent(self, level: int) -> str:",
     "baseline_code_structure_hash": "a11b39446cc42f76bd4015a1e6b4844a4648923a8ef15ffdd8ad0a1831ea1d16"
   },
   "StubGenerator.generate": {
+    "baseline_code_signature_text": "def generate(self, module: ModuleDef) -> str:",
     "baseline_code_structure_hash": "adacc0cc22b1339cccea480553349f87a33d15a01b47bf8dffc816c42b0cee5a",
     "baseline_yaml_content_hash": "4c509bdb29439a547af7dea5ffe040d61e9272ea5a24ca0f9eb53233224a216d"
   }

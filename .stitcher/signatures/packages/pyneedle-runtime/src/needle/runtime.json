@@ -1,5 +1,6 @@
 {
   "_find_project_root": {
+    "baseline_code_signature_text": "def _find_project_root(start_dir: Optional[Path] = None) -> Path:",
     "baseline_code_structure_hash": "774c9201a944c4e1df2825aec9ec24922659c213887a8af44bc5436800682e62"
   },
   "nexus": {

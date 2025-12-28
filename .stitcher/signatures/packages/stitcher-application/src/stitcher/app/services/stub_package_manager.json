@@ -3,10 +3,12 @@
     "baseline_yaml_content_hash": "b3b4e9d01ca72d688be3b09f2d4a057a951261d06c02bf0dc7fdf37bc820d111"
   },
   "StubPackageManager._get_pep561_logical_path": {
+    "baseline_code_signature_text": "def _get_pep561_logical_path(logical_path: Path) -> Path:",
     "baseline_code_structure_hash": "72aeb6dbee827058e60937a7bd5973ef066bf8db9e815f8f85488a35ada323d1",
     "baseline_yaml_content_hash": "cc8d741d72323adbbe1cf22c650ac44b6749cf27a9c0f8012d250dc3eed4db58"
   },
   "StubPackageManager.scaffold": {
+    "baseline_code_signature_text": "def scaffold(self, package_path: Path, source_project_name: str, package_namespace: str) -> bool:",
     "baseline_code_structure_hash": "4f3cca78e3cb73c75cb815281e5d96f0191d5bd3162b5d2719c9b9d04116c1ab",
     "baseline_yaml_content_hash": "aedbbb0da493dd5df12efb374c504a31809f48c620f7cd810da903ac1aaed91c"
   }

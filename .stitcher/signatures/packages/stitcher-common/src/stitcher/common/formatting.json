@@ -1,9 +1,11 @@
 {
   "format_docstring": {
+    "baseline_code_signature_text": "def format_docstring(content: str, indent_str: str) -> str:",
     "baseline_code_structure_hash": "0002f315d5415e31c8d0a4114ad4dce0f6a4242360dcc41aa10a82cd0f53e693",
     "baseline_yaml_content_hash": "c28b6f5589f7038af9f615e47221482f3d09b4fb86adc96742772f2c06f545aa"
   },
   "parse_docstring": {
+    "baseline_code_signature_text": "def parse_docstring(raw_docstring: str) -> str:",
     "baseline_code_structure_hash": "da1e60e151db151bdf5b638dbcc584cb098473e7fb35ca75b525880471e29f65",
     "baseline_yaml_content_hash": "6a6bb488a11088e6af0b6e15ee19845bcf17f831978a578d7168d5d17ef19df3"
   }

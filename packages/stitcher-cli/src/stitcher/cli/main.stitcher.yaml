@@ -1,27 +1,4 @@
 "app": |-
   The main Typer application instance for the CLI.
-"check": |-
-  Verify consistency between code and docs.
-
-  Args:
-    force_relink: [Non-interactive] For 'Signature Drift' errors, forces relinking.
-    reconcile: [Non-interactive] For 'Co-evolution' errors, accepts both changes.
-    non_interactive: Force non-interactive mode, failing on unresolved conflicts.
-"generate": |-
-  Generate .pyi stubs based on pyproject.toml config.
-"init": |-
-  Initialize Stitcher in the current project.
-"inject": |-
-  Inject docstrings from .stitcher.yaml files back into code.
 "main": |-
   Stitcher CLI entry point.
-"pump": |-
-  Extract new docstrings from source code and merge them into .stitcher.yaml.
-
-  Args:
-    strip: If True, remove docstrings from source after successful pumping.
-    force: If True, overwrite YAML with source docstrings on conflict.
-    reconcile: If True, keep YAML docstrings on conflict.
-    non_interactive: Force non-interactive mode, failing on unresolved conflicts.
-"strip": |-
-  Remove docstrings from source files.

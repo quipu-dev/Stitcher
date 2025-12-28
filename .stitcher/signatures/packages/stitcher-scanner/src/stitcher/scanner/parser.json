@@ -3,55 +3,69 @@
     "baseline_yaml_content_hash": "2b699b7ddeb71d9a56178aee85a510385229fb125371e1f60d255dca1ac22708"
   },
   "IRBuildingVisitor.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
     "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
   },
   "IRBuildingVisitor._add_attribute": {
+    "baseline_code_signature_text": "def _add_attribute(self, attr: Attribute):",
     "baseline_code_structure_hash": "2ace60f8a2762e8e7a9f0a16b79051b99610b5bb3f7681d5231e8a0c140989a6"
   },
   "IRBuildingVisitor._parse_parameters": {
+    "baseline_code_signature_text": "def _parse_parameters(self, params: cst.Parameters) -> List[Argument]:",
     "baseline_code_structure_hash": "2415da40a88d45a1444e8fd1f8bfaf557ad5e0ad3b2f2b29235dc418cd9ff2fb"
   },
   "IRBuildingVisitor.leave_ClassDef": {
+    "baseline_code_signature_text": "def leave_ClassDef(self, node: cst.ClassDef) -> None:",
     "baseline_code_structure_hash": "54e4ed6bacada2229019b149921ea168d9c21cafce182ff9eb480c20a3dfed34",
     "baseline_yaml_content_hash": "21628fbfb39dc6f90e0326f3f2024901915da572af212e0e9022961294f6fca0"
   },
   "IRBuildingVisitor.visit_AnnAssign": {
+    "baseline_code_signature_text": "def visit_AnnAssign(self, node: cst.AnnAssign) -> Optional[bool]:",
     "baseline_code_structure_hash": "3382ee66992ef89c00e498e05c4f3e66c6539dfadf7d3a57c57f0587cc50a270",
     "baseline_yaml_content_hash": "ceae25c74a933e907d8a9c06ca6e33b96f18d1f5a89d552b9a26fefb6e804f56"
   },
   "IRBuildingVisitor.visit_Assign": {
+    "baseline_code_signature_text": "def visit_Assign(self, node: cst.Assign) -> Optional[bool]:",
     "baseline_code_structure_hash": "a2bf7f85999855880d171c4dfb37974c0179c44041b9dd7f3869a505f979175b",
     "baseline_yaml_content_hash": "c91d915fc361c7aff7a7ddae624a762cb0f10955f331324a796b743277b318a1"
   },
   "IRBuildingVisitor.visit_ClassDef": {
+    "baseline_code_signature_text": "def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:",
     "baseline_code_structure_hash": "a8d85b41a8f83b14052de020444d04ee5c339ce4e565465d97b9a494c1e61cd8",
     "baseline_yaml_content_hash": "8fa0567ec3c8b3bfbb1144a1b5b211c41240487ffeef11364af1b215f28e8f3d"
   },
   "IRBuildingVisitor.visit_FunctionDef": {
+    "baseline_code_signature_text": "def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:",
     "baseline_code_structure_hash": "228968f6587b436c7b0f5d338ef420bd2a0181aa51a282b48c30ae9d5367b2fc",
     "baseline_yaml_content_hash": "adf64175972d19334b351355b3447ae08d402da9f87a940023433d5c06bae4b0"
   },
   "IRBuildingVisitor.visit_Import": {
+    "baseline_code_signature_text": "def visit_Import(self, node: cst.Import) -> Optional[bool]:",
     "baseline_code_structure_hash": "2d7553aab8fd612b88dc9a8261b87debab996129ec0c68f7cb3a1c36a6a6ccc2",
     "baseline_yaml_content_hash": "a7099af9e9b17e462bd4cbea32ea085a2ebc222fd1415272dfedb95d9c6a28f4"
   },
   "IRBuildingVisitor.visit_ImportFrom": {
+    "baseline_code_signature_text": "def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:",
     "baseline_code_structure_hash": "6411074316b481b3fc483e65c19181a4bc33ff0d73c600e6cab13dbac84c74eb",
     "baseline_yaml_content_hash": "0712cd4b51cc3cf797fb629fd4cc6fc487d5ba4978304da79d8346542bbec9ac"
   },
   "_collect_annotations": {
+    "baseline_code_signature_text": "def _collect_annotations(module: ModuleDef) -> Set[str]:",
     "baseline_code_structure_hash": "6a020cc106f92b3d660e77707f34b6eed4be7ea09a678fb7a77c6ddea8989b72",
     "baseline_yaml_content_hash": "43c300474f28f97a5d223077803f944ce0646fde5b5598db58979f4d8208c02e"
   },
   "_enrich_typing_imports": {
+    "baseline_code_signature_text": "def _enrich_typing_imports(module: ModuleDef):",
     "baseline_code_structure_hash": "188b1cfbb2fd8126b0eef17a30839ca23bb6973e7009e6898d7e71b518cee85c",
     "baseline_yaml_content_hash": "3be714cf2641ca47bf11584ebc1d8554ca75143941f5841e37c03c8a90a5216b"
   },
   "_has_unannotated_attributes": {
+    "baseline_code_signature_text": "def _has_unannotated_attributes(module: ModuleDef) -> bool:",
     "baseline_code_structure_hash": "7786ac0ddc22193ab9b3362b82d5ea8f16d372ad2444fb4a7310f4d540b068f4",
     "baseline_yaml_content_hash": "885a624ba5680da6ea3bda22224e164738c9f12c83ef0440dd78677ce64729c8"
   },
   "parse_source_code": {
+    "baseline_code_signature_text": "def parse_source_code(source_code: str, file_path: str = \"\") -> ModuleDef:",
     "baseline_code_structure_hash": "f547c3c7c91f8852c7ac61adbe1987f4ee364e9b0e935f3d0e4dc302fb6dbcda",
     "baseline_yaml_content_hash": "a17b99f81697bbbc0cc2e36cd2bec267acada0606b97c19ea876210921980648"
   }

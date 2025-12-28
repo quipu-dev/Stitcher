@@ -6,17 +6,21 @@
     "baseline_yaml_content_hash": "93692d06cf12324096fb552da6cdcef36aae854a944039ab6d3094420df3b6f6"
   },
   "TyperInteractiveRenderer.__init__": {
+    "baseline_code_signature_text": "def __init__(self, nexus):",
     "baseline_code_structure_hash": "922a585e1a44914b096e86cae8d63985c11f0106419c2486c80caf3b9398f800"
   },
   "TyperInteractiveRenderer.prompt": {
+    "baseline_code_signature_text": "def prompt(self, context: InteractionContext, current_idx: int, total: int, options: List[SemanticMenuOption], default_action: Any) -> Any:",
     "baseline_code_structure_hash": "2990ad5409ad5bc65cb068eee5cd9c70a7a33d29688a37c26662f574c8ffd1ab",
     "baseline_yaml_content_hash": "55b396c0f723c37753d17a4bccf314a413696642047b91965242af01cbb01e9b"
   },
   "TyperInteractiveRenderer.show_message": {
+    "baseline_code_signature_text": "def show_message(self, msg_id: SemanticPointer, color = None, **kwargs) -> None:",
     "baseline_code_structure_hash": "34dd33c7935f086d4d6b2adc0e8b04ebcfcbd982968c23b989c4c07fce728995",
     "baseline_yaml_content_hash": "f996c6e62065381b5f996d890f752a637aeab9bef3b99278c1d8eaf1f679df82"
   },
   "TyperInteractiveRenderer.show_summary": {
+    "baseline_code_signature_text": "def show_summary(self, count: int) -> None:",
     "baseline_code_structure_hash": "28152474c6397aa120c35e5adcae954f425b3530545bc779c541ac04e1c5b97d",
     "baseline_yaml_content_hash": "d1561e8d1ed78c7df789313f68973de7b57dff7b913bbb7fd1e7b904b0249d94"
   }

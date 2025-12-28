@@ -3,20 +3,25 @@
     "baseline_yaml_content_hash": "735b2776d708ad791b9eafb2a757df724dc8ea76c2ab1003ebe22741585f402a"
   },
   "BaseLoader.__init__": {
+    "baseline_code_signature_text": "def __init__(self, default_domain: str = \"en\"):",
     "baseline_code_structure_hash": "600a11e6d47ae023b33639789e79564d8f279b29deba8fade939738315edf3db"
   },
   "BaseLoader._resolve_domain": {
+    "baseline_code_signature_text": "def _resolve_domain(self, explicit_domain: Optional[str] = None) -> str:",
     "baseline_code_structure_hash": "d869444c7aab471721f70ba74604ddc207bbd6fc877d7bd9ab5342c1748d8599"
   },
   "BaseLoader.fetch": {
+    "baseline_code_signature_text": "def fetch(self, pointer: str, domain: str, ignore_cache: bool = False) -> Optional[str]:",
     "baseline_code_structure_hash": "8eb66675c2ff112d06f4d23e055eff3c573a72b5ad3aa7a116b4421ab61908c2",
     "baseline_yaml_content_hash": "4dfece6b29f9505c5dafcba6dbf5e7e937ecef99da27721d948458a87e7a88d5"
   },
   "BaseLoader.get": {
+    "baseline_code_signature_text": "def get(self, pointer: Union[str, SemanticPointerProtocol], domain: Optional[str] = None) -> str:",
     "baseline_code_structure_hash": "add6f0a11ac9aded276500af3d0ea1a38cbe9d30591a308823d8635d5e36b20a",
     "baseline_yaml_content_hash": "9d4a7346abbaea11f3b482cf219e42a5ce2f823bb1d99f6f36c8eeba8926143b"
   },
   "BaseLoader.load": {
+    "baseline_code_signature_text": "def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "19c036d1f9a825ec457931fafef065d3f4d1d4dffe9a26277648649c85d09ac5",
     "baseline_yaml_content_hash": "70bbdb33af312f3853b69cb68222ac79643e03d163cc32aa434dcbe2ab39408f"
   }

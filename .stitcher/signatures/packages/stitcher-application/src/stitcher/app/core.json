@@ -6,6 +6,7 @@
     "baseline_yaml_content_hash": "36dd82b1df433b54951e5d55c1b5013843d64cefe9b7898b045801ffb73664e2"
   },
   "FileCheckResult.error_count": {
+    "baseline_code_signature_text": "def error_count(self) -> int:",
     "baseline_code_structure_hash": "30219f239eaeb9dc13488bc276ed11ec031d7b32b6f91125384a786c30e107cc",
     "baseline_yaml_content_hash": "be630a1ccfa7e75aabcf0c98ba0a306b157115ef6ae9a778d5f76dc3b6146e0e"
   },
@@ -16,6 +17,7 @@
     "baseline_yaml_content_hash": "d3498d5c63cb93206717b1f035063806f111ff7da06a400eea42c47ddd6ef09f"
   },
   "FileCheckResult.is_clean": {
+    "baseline_code_signature_text": "def is_clean(self) -> bool:",
     "baseline_code_structure_hash": "7854643ee354818d58824c41faf0d563e347c0320c299f0fc9d26a17430e2492",
     "baseline_yaml_content_hash": "2d1c227e491066f70231b6dbcbfe6bb5798726aa032767d6043d474241de6528"
   },
@@ -26,10 +28,12 @@
     "baseline_yaml_content_hash": "754ad6a507787d665272a8fe4525c37bd61c8599d8969e54604079c1b3424d19"
   },
   "FileCheckResult.reconciled_count": {
+    "baseline_code_signature_text": "def reconciled_count(self) -> int:",
     "baseline_code_structure_hash": "b12338953fd7de35f28579324fb6415d37d81b4d4583bbd628d868dde4149325",
     "baseline_yaml_content_hash": "7b093098a9e65368339a0ef312a8afd21a9a65c0fb43d1f51dad748d9895d079"
   },
   "FileCheckResult.warning_count": {
+    "baseline_code_signature_text": "def warning_count(self) -> int:",
     "baseline_code_structure_hash": "3d88c9e03c32f49ff962be694c31e49542220a026d43f907574ac2d8f293789f",
     "baseline_yaml_content_hash": "d7f2634e2871aa3cb1129ae9711e63a42eab6cd69f513c3a9390d819dcd44e77"
   },
@@ -49,53 +53,72 @@
     "baseline_yaml_content_hash": "56ba56645ae8bc442c435ee789bb3cfbddd0eaefc0e0a33b11b20ba6d391dc55"
   },
   "StitcherApp.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, interaction_handler: Optional[InteractionHandler] = None):",
     "baseline_code_structure_hash": "02fb98d263c87406ff30ff04f5fb786e78eafb92c11a2652d35276e5e00568f9"
   },
   "StitcherApp._analyze_file": {
+    "baseline_code_signature_text": "def _analyze_file(self, module: ModuleDef) -> tuple[FileCheckResult, list[InteractionContext]]:",
     "baseline_code_structure_hash": "65be8897174265e0e6de678c3bbd6aa229548817c7a54630c50c8ac47da8495a"
   },
   "StitcherApp._apply_resolutions": {
+    "baseline_code_signature_text": "def _apply_resolutions(self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]):",
     "baseline_code_structure_hash": "5a10cfb2b48149d205274fbe089baca395860335fc1e68ed6b71989b33d6a8d5"
   },
   "StitcherApp._derive_logical_path": {
+    "baseline_code_signature_text": "def _derive_logical_path(self, file_path: str) -> Path:",
     "baseline_code_structure_hash": "4f221986426b30a0f065226d1a3000796fba88810c0fd68d209dee9892e7fd4f"
   },
+  "StitcherApp._generate_diff": {
+    "baseline_code_signature_text": "def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:",
+    "baseline_code_structure_hash": "62016244a2fa1e685039c4248ad132dc2bdf55fb5b67eabda296c12fb9f79b73"
+  },
   "StitcherApp._generate_stubs": {
+    "baseline_code_signature_text": "def _generate_stubs(self, modules: List[ModuleDef], config: StitcherConfig) -> List[Path]:",
     "baseline_code_structure_hash": "eeaa608841470a18c3769a48fba7e2966099d1e8628734dde32c1ae287b01b5a"
   },
   "StitcherApp._get_files_from_config": {
+    "baseline_code_signature_text": "def _get_files_from_config(self, config: StitcherConfig) -> List[Path]:",
     "baseline_code_structure_hash": "43ac3bab6d1a51870ca26829271f72941b2480329c012e1725e54b7fd805b77a"
   },
   "StitcherApp._process_plugins": {
+    "baseline_code_signature_text": "def _process_plugins(self, plugins: Dict[str, str]) -> List[ModuleDef]:",
     "baseline_code_structure_hash": "6c0ab56d4dd5cb066559e426a443e6542d4485073504e46e2869ef2c8bc73275"
   },
   "StitcherApp._scaffold_stub_package": {
+    "baseline_code_signature_text": "def _scaffold_stub_package(self, config: StitcherConfig, stub_base_name: Optional[str]):",
     "baseline_code_structure_hash": "05be66d7dc4212916206e8dfa6060849a28cba0069bc4854346d8d5de59a8e9e"
   },
   "StitcherApp._scan_files": {
+    "baseline_code_signature_text": "def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:",
     "baseline_code_structure_hash": "2c3c2fa02f6d713eb0d6adac2bc21c6dc9526c0c860efad5d0e9783ac655a7da"
   },
   "StitcherApp.run_check": {
+    "baseline_code_signature_text": "def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:",
     "baseline_code_structure_hash": "4cfe338208fefaf498e609a386a62469c06faddfb7d8cb43fbc915fd2d672ac8",
     "baseline_yaml_content_hash": "39108ece98b238c3d8ca1a5d9fa0f66ebf78bd720f4a21221ba7cf558b0045af"
   },
   "StitcherApp.run_from_config": {
+    "baseline_code_signature_text": "def run_from_config(self) -> List[Path]:",
     "baseline_code_structure_hash": "6e3770a9189483804818929e5a4f6a38d686ba399418ce16b2c984a7b23f2fac",
     "baseline_yaml_content_hash": "d3d8bfddf45bd9dc9e558765c4952f7d36f45d238030eb9a355badfdda220dcb"
   },
   "StitcherApp.run_init": {
+    "baseline_code_signature_text": "def run_init(self) -> List[Path]:",
     "baseline_code_structure_hash": "9988dea2f1f20b309764846bd38f982dd4c1811ba89ae9e1d1ab439a480e303f",
     "baseline_yaml_content_hash": "013f787d7bb1c9ea65c00d15ed54e57d1117496a37a7418128fcb3b6f063a07e"
   },
   "StitcherApp.run_inject": {
+    "baseline_code_signature_text": "def run_inject(self) -> List[Path]:",
     "baseline_code_structure_hash": "c3eccd0304a6e04a22b2ac1857ba9c4400031be4b1e2309ccc7a7d4160acfb02",
     "baseline_yaml_content_hash": "ed7ee4c7531bc1122810817a589133d29736a98713165670b405cf4ae944f287"
   },
   "StitcherApp.run_pump": {
+    "baseline_code_signature_text": "def run_pump(self, strip: bool = False, force: bool = False, reconcile: bool = False) -> PumpResult:",
     "baseline_code_structure_hash": "763f9eb957504d7a09170f91882675bfef77a43552c2e9341a7f0135c4738b8b",
     "baseline_yaml_content_hash": "a4087469e851d91b53efc885c5003ab5a83c7e5b68582f9bf1029bce0cbb73bf"
   },
   "StitcherApp.run_strip": {
+    "baseline_code_signature_text": "def run_strip(self, files: Optional[List[Path]] = None) -> List[Path]:",
     "baseline_code_structure_hash": "bda2820f9698db31dce2dee53b15d50409bed5407bd167b2c7e252a2a1c35392",
     "baseline_yaml_content_hash": "14c8ff8d578021db2d09829ff2f435a87bfae34896a5bb8340a117bf2baec81c"
   }

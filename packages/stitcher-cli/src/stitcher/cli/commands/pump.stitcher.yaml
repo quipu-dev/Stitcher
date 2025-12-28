@@ -1,0 +1,8 @@
+"pump_command": |-
+  Extract new docstrings from source code and merge them into .stitcher.yaml.
+
+  Args:
+    strip: If True, remove docstrings from source after successful pumping.
+    force: If True, overwrite YAML with source docstrings on conflict.
+    reconcile: If True, keep YAML docstrings on conflict.
+    non_interactive: Force non-interactive mode, failing on unresolved conflicts.

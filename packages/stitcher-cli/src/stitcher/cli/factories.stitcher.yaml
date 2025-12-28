@@ -1,0 +1,5 @@
+"make_app": |-
+  Creates a StitcherApp instance rooted at the current working directory.
+"make_interaction_handler": |-
+  Creates an interactive handler if the environment allows it (TTY)
+  and the user hasn't explicitly disabled it or chosen an auto-resolve flag.

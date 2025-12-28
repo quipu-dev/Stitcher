@@ -3,23 +3,28 @@
     "baseline_yaml_content_hash": "3f18d8ca72587b47c70e851fc6fdee991d672f3ae3cb1179ce7c888ad18db587"
   },
   "PatchedMessageBus._render": {
+    "baseline_code_signature_text": "def _render(self, level: str, msg_id: SemanticPointer, **kwargs: Any) -> None:",
     "baseline_code_structure_hash": "002a70b661de55bd8af631157cb46c71db504272970a6b2dae1cfef68a729cb1"
   },
   "SpyBus": {
     "baseline_yaml_content_hash": "9712bad7601f0f71e4909ff18f4bbfe8426d881f75d6707281859fd20ee3c7dd"
   },
   "SpyBus.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
     "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
   },
   "SpyBus.assert_id_called": {
+    "baseline_code_signature_text": "def assert_id_called(self, msg_id: SemanticPointer, level: Optional[str] = None):",
     "baseline_code_structure_hash": "3c3f2d626f8e501cdedf3a4108e22355eccebadb272441ef6cc12e7a03711257",
     "baseline_yaml_content_hash": "2e5582495db4e0507b548fd4f464fa37fa037d37337d00a5352660be3388627f"
   },
   "SpyBus.get_messages": {
+    "baseline_code_signature_text": "def get_messages(self) -> List[Dict[str, Any]]:",
     "baseline_code_structure_hash": "c6bdb78a3670fb620732891b9795afce15b342f1ecc2c004630615f75515394b",
     "baseline_yaml_content_hash": "0fefee42932fc552ab1192f60e062e2ab7311b88822ecec2b4a75f8160792959"
   },
   "SpyBus.patch": {
+    "baseline_code_signature_text": "def patch(self, monkeypatch: Any, target: str):",
     "baseline_code_structure_hash": "7e98181062b97b4d8aaa029fe5dfe941ef3606edd5b25a85302df17f5e73d833",
     "baseline_yaml_content_hash": "323bc7e08fdffaee396d8256f3728199deaeb7660dfef93a36185d49666c933b"
   },
@@ -27,13 +32,16 @@
     "baseline_yaml_content_hash": "9080916eac10c5f5a84436850d5ccf6f51a612746134c90f041cc11e89d1962b"
   },
   "SpyRenderer.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
     "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
   },
   "SpyRenderer.record": {
+    "baseline_code_signature_text": "def record(self, level: str, msg_id: SemanticPointer, params: Dict[str, Any]):",
     "baseline_code_structure_hash": "4fec4e5060de9d79a48daed1fbb73d50ebfb8827183a63897c864ffdebb4c4ec",
     "baseline_yaml_content_hash": "eee5fd60afffaa267d49a8b79cc56c41bcb592df1f583c703085d3d2b47129ff"
   },
   "SpyRenderer.render": {
+    "baseline_code_signature_text": "def render(self, message: str, level: str) -> None:",
     "baseline_code_structure_hash": "5ee01c65ceae57a45c16a7c14d696ccdbefeca3e86709a97c1f828eeae4eedec",
     "baseline_yaml_content_hash": "ac368e82bf66516dd24182300dac2becaecca2f62c2041e01596114afec6cb01"
   }

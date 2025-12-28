@@ -3,9 +3,11 @@
     "baseline_yaml_content_hash": "2fcf0d0dc8c8109c0cf141e89b828b2baea39f0147893c3b0fbbcef02a40e194"
   },
   "NoOpInteractionHandler.__init__": {
+    "baseline_code_signature_text": "def __init__(self, force_relink: bool = False, reconcile: bool = False, hydrate_force: bool = False, hydrate_reconcile: bool = False):",
     "baseline_code_structure_hash": "09ef630b340f0ef9d6c3ae16ede2ec79737227ddbcca5e255bcf864ae5b00b59"
   },
   "NoOpInteractionHandler.process_interactive_session": {
+    "baseline_code_signature_text": "def process_interactive_session(self, contexts: List[InteractionContext]) -> List[ResolutionAction]:",
     "baseline_code_structure_hash": "72ab2928cd87e4ba0ccc8358dc09f0186a38a90654abd80ff66a8358659e5a1b",
     "baseline_yaml_content_hash": "a921cbadd752de4f916efcd51dfe01e88bdc1bfec0eb7aa575c569f7e83f9c91"
   }

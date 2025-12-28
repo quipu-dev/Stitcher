@@ -1,0 +1,7 @@
+"check_command": |-
+  Verify consistency between code and docs.
+
+  Args:
+    force_relink: [Non-interactive] For 'Signature Drift' errors, forces relinking.
+    reconcile: [Non-interactive] For 'Co-evolution' errors, accepts both changes.
+    non_interactive: Force non-interactive mode, failing on unresolved conflicts.

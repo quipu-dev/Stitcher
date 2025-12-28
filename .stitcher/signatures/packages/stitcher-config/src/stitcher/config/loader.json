@@ -18,14 +18,17 @@
     "baseline_yaml_content_hash": "d8a5c531132399b230551bf32b8e37f8c51927c421df2dc304c4e564f281b016"
   },
   "_find_plugins": {
+    "baseline_code_signature_text": "def _find_plugins(workspace_root: Path) -> Dict[str, str]:",
     "baseline_code_structure_hash": "9774a83c7eee3c859a40560352554b7b1fc69f6349f1a100be7134989d3735ad",
     "baseline_yaml_content_hash": "9f6244a7f11161ebe5d102cf281dffbda4fd12b2adb3a1adb831b0376388ce99"
   },
   "_find_pyproject_toml": {
+    "baseline_code_signature_text": "def _find_pyproject_toml(search_path: Path) -> Path:",
     "baseline_code_structure_hash": "d9c36fb18b5aafed5134c1f576d59607d8f737cde72096b43c064b5b35009b56",
     "baseline_yaml_content_hash": "2d3327c0e8045b46f5375b52c6fef49a0003161732bac6b3fdb50e454a614dbe"
   },
   "load_config_from_path": {
+    "baseline_code_signature_text": "def load_config_from_path(search_path: Path) -> Tuple[List[StitcherConfig], Optional[str]]:",
     "baseline_code_structure_hash": "f72917deeb9acd64d41aec3a3c2bf32c04d664ddf818eea4cdb47fc65101c2ee",
     "baseline_yaml_content_hash": "628be6581eae98dacc9821a1ad4ccd5da7cf345eb8f6086e832781dcdd846413"
   }

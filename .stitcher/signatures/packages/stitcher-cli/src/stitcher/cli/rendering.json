@@ -3,9 +3,11 @@
     "baseline_yaml_content_hash": "54b7bdf55e905bd398adf80ea94f70461407205d7d5f254ac8970e55d653b8bf"
   },
   "CliRenderer.__init__": {
+    "baseline_code_signature_text": "def __init__(self, verbose: bool = False):",
     "baseline_code_structure_hash": "3b8f7a5f62dbccd080baeada9303403add57d045a16ce4d769ed6cbdf3d16659"
   },
   "CliRenderer.render": {
+    "baseline_code_signature_text": "def render(self, message: str, level: str):",
     "baseline_code_structure_hash": "92afbd272a6d674fca2cfa99e3548adaa018e08a00636d1c63b6e112eba21442",
     "baseline_yaml_content_hash": "86bdf797311c9418039b74cb09c0232c4678d24e8e9e0761c91c9982f2346edc"
   }

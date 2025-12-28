@@ -87,6 +87,7 @@
     "baseline_yaml_content_hash": "a86cc24a1403803dbf13f01a5404687a2e150fcda695dce993d6ed0c35fabf2d"
   },
   "FunctionDef.compute_fingerprint": {
+    "baseline_code_signature_text": "def compute_fingerprint(self) -> str:",
     "baseline_code_structure_hash": "034d15df7e4457d7a19fd683a67b2dfd4878ab62a5c343f02b3fd80059075602",
     "baseline_yaml_content_hash": "a54b1c8926ea1cc7343ce98625bfd92301ed5de6f836e25b050d13ae4dc95133"
   },
@@ -95,6 +96,11 @@
   },
   "FunctionDef.docstring": {
     "baseline_yaml_content_hash": "532766530fa64e27afa8d76bfd767d524e94cd3156060de9698d676645562eb0"
+  },
+  "FunctionDef.get_signature_string": {
+    "baseline_code_signature_text": "def get_signature_string(self) -> str:",
+    "baseline_code_structure_hash": "e2bcf05d78b96dd19c90148513fbbccf9d858db6133af6e75f722103b17afb41",
+    "baseline_yaml_content_hash": "f332fa58408d7ea242e8319deedfc4c06819b8a32a8b5df779328ea4b4ce2a6a"
   },
   "FunctionDef.is_async": {
     "baseline_yaml_content_hash": "f89efbf7d8cc3804134869a90435348d77cf6add0c2dcdcfa457cedaae55cfce"
@@ -133,6 +139,7 @@
     "baseline_yaml_content_hash": "e4c9900c6832a69fd54881207da0c083e0ff685ed37d839311a28d2024acb4c4"
   },
   "ModuleDef.get_undocumented_public_keys": {
+    "baseline_code_signature_text": "def get_undocumented_public_keys(self) -> List[str]:",
     "baseline_code_structure_hash": "fb0d44d70b0badcc8b9ad0fbc49a56169c9adb3e8b3b6fb88372eb1f3c6dcb5c",
     "baseline_yaml_content_hash": "eab22c083d7be6a96b112664c09171b1db9dbcb8a36f2e8f3f6341b6d9fe09c9"
   },
@@ -140,6 +147,7 @@
     "baseline_yaml_content_hash": "ea18f715854140f37f02682d5afc16f9f4ed62f82bfc0fde9d32d3866fd2c105"
   },
   "ModuleDef.is_documentable": {
+    "baseline_code_signature_text": "def is_documentable(self) -> bool:",
     "baseline_code_structure_hash": "1a55c9ded7bf45553f63ae27c049594f5faa1245bd0c6ce98f4a0d2d7cd30db7",
     "baseline_yaml_content_hash": "94066c283328e1833f58566531dab3f579f45e6540b5c7485d9ebb41a342fd81"
   },

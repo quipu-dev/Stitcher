@@ -3,36 +3,45 @@
     "baseline_yaml_content_hash": "72c2336022bfddbd67fe59611c469d6ea53844027063137f71aad3a2f37a4634"
   },
   "MessageBus.__init__": {
+    "baseline_code_signature_text": "def __init__(self, nexus_instance: Any):",
     "baseline_code_structure_hash": "de08aa69b6a926b7352d7226ca2b0e5fbf48c3728cc2383e73f4d1535b5a280f",
     "baseline_yaml_content_hash": "0d4d6084009729a4e09284a5b2571112ffdb310ce450402b2476d16428cb86d4"
   },
   "MessageBus._render": {
+    "baseline_code_signature_text": "def _render(self, level: str, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:",
     "baseline_code_structure_hash": "62bae7b961efe5621e5b64a83611c62aa2288d458f49ad015c3e927b42ff3ddb"
   },
   "MessageBus.debug": {
+    "baseline_code_signature_text": "def debug(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:",
     "baseline_code_structure_hash": "8bb9b2e3b119b4f2dafdad526c65c49080dc5ac58e6a3e82137814a6844d8d26"
   },
   "MessageBus.error": {
+    "baseline_code_signature_text": "def error(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:",
     "baseline_code_structure_hash": "9929be86f3572ebf6d23aab5fed5b3d32a90ea9f0fcba0ff0ccaed0e767f1366",
     "baseline_yaml_content_hash": "402fb048fe23b2b066058add62b707cc907224bdf758dfcbeb00257083fcf39e"
   },
   "MessageBus.info": {
+    "baseline_code_signature_text": "def info(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:",
     "baseline_code_structure_hash": "0cafb4086d84f382ca2c1d4b7b40848c7de212f7be9d753915acfb98a0bc9e93",
     "baseline_yaml_content_hash": "492b050ce206b8269e0c546d0fdf02295013a99ff671a3d9c8a71bcf302d92f6"
   },
   "MessageBus.render_to_string": {
+    "baseline_code_signature_text": "def render_to_string(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> str:",
     "baseline_code_structure_hash": "8b7e5575be386626c3710c9e5b121d282a91526bca5c4cf46de484ef9ac3fdc2",
     "baseline_yaml_content_hash": "9bc4fc254d5dd3423bd7cde1d704f977d03be2bb085b6ce27447b6333b384f13"
   },
   "MessageBus.set_renderer": {
+    "baseline_code_signature_text": "def set_renderer(self, renderer: Renderer):",
     "baseline_code_structure_hash": "ce3ded2742fb947176e357aadf1a2a16da320a95d72c9a6c393d91f26a2c70a4",
     "baseline_yaml_content_hash": "352efbb3b2f7be903a863ae23b78c258740621d2caa951306b9333ff7ff81730"
   },
   "MessageBus.success": {
+    "baseline_code_signature_text": "def success(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:",
     "baseline_code_structure_hash": "40f53de80795b999aa49a5b3ea50ac6bd73fcb830146d3a280fa48c4b4f426a0",
     "baseline_yaml_content_hash": "0c66ab7b6d76ac047fc491a3e53d7cf905acff334b7703e7725d24723d87188f"
   },
   "MessageBus.warning": {
+    "baseline_code_signature_text": "def warning(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:",
     "baseline_code_structure_hash": "28a8ed550ea8dd06537cc88ee0ee22e51992b747fa2db8ee8b7b0ea259688ad5",
     "baseline_yaml_content_hash": "9544f3f112ad20455d4cad24942bceac10be5fdd581c785a4e1c679ed2fbcd63"
   }

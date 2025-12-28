@@ -3,55 +3,69 @@
     "baseline_yaml_content_hash": "5ad8f647cc1d900dfd03553f9f9136ddb6cc0ecf43ee8bbc1db947814211e271"
   },
   "DocumentManager.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):",
     "baseline_code_structure_hash": "8b9ee809fb5bdfc54978f20fafa97974e3d1f98a6128116b9af1b0d22e4afe7b"
   },
   "DocumentManager._apply_to_class": {
+    "baseline_code_signature_text": "def _apply_to_class(self, cls: ClassDef, docs: Dict[str, str], prefix: str = \"\"):",
     "baseline_code_structure_hash": "f0933faf24cd3a65052e58176b3da4ff7d14805ad07c4b6cb58f420c38cf08d4"
   },
   "DocumentManager._apply_to_function": {
+    "baseline_code_signature_text": "def _apply_to_function(self, func: FunctionDef, docs: Dict[str, str], prefix: str = \"\"):",
     "baseline_code_structure_hash": "c831894bc55716e5e85ec5763ccd7dfa51c17fada9046dd473b1c906d6a4bb0f"
   },
   "DocumentManager._extract_from_class": {
+    "baseline_code_signature_text": "def _extract_from_class(self, cls: ClassDef, prefix: str = \"\") -> Dict[str, str]:",
     "baseline_code_structure_hash": "2f5f264f52b1814ceb72d0d7b1c03a8cc692386e7b2b385b39cef502f27f9c3a",
     "baseline_yaml_content_hash": "a7d2e19478cc208c6ac38b9d8894e24f732ca1d6c66b27f5251160beb592b8f3"
   },
   "DocumentManager._extract_from_function": {
+    "baseline_code_signature_text": "def _extract_from_function(self, func: FunctionDef, prefix: str = \"\") -> Dict[str, str]:",
     "baseline_code_structure_hash": "e252c2c09a885acad53fbd29cbeaa5b3b4f3676619b1453e9c3d5a7c86fe0c90",
     "baseline_yaml_content_hash": "d618bc5c7f5f8567fdf81168eed319ecd3ba82b43fba4f75d7aa64fc2ed8b8e0"
   },
   "DocumentManager._extract_keys": {
+    "baseline_code_signature_text": "def _extract_keys(self, module: ModuleDef, public_only: bool) -> set:",
     "baseline_code_structure_hash": "7a2c8ee81bdded8693b6ab2a3034c3459b54ccda65b0a41f3c84f4f2e7ab9682",
     "baseline_yaml_content_hash": "1ce6c578a26aaa0fbbfca857442133ee3295592534adce0009938acb12f371e3"
   },
   "DocumentManager.apply_docs_to_module": {
+    "baseline_code_signature_text": "def apply_docs_to_module(self, module: ModuleDef) -> None:",
     "baseline_code_structure_hash": "c6645f43c1a821f38d963df39121da79f021da316cc6ef453a74d3357a1b402d",
     "baseline_yaml_content_hash": "4414b06edfe2e7d9ac3513b900c861a844b53ce5797973896b568f567381bbdb"
   },
   "DocumentManager.check_module": {
+    "baseline_code_signature_text": "def check_module(self, module: ModuleDef) -> Dict[str, set]:",
     "baseline_code_structure_hash": "f07c3476847541b2c2779bdf0f2e509ccb12c5fda9c933070d963215d24d6f9c",
     "baseline_yaml_content_hash": "e23620966b1257a1218186cf795fa98caccde9df4fcbb53f6dcec3e7fcc066b5"
   },
   "DocumentManager.compute_yaml_content_hash": {
+    "baseline_code_signature_text": "def compute_yaml_content_hash(self, content: str) -> str:",
     "baseline_code_structure_hash": "d3b123b66789e19e8bf27b8ffe812ba1b587f09ffc978cd4fc4ac52d75a4db2d",
     "baseline_yaml_content_hash": "15ad56e892edf11ae8d0042ec172594b926061e836b2c86c01fbf934c1e4de57"
   },
   "DocumentManager.compute_yaml_content_hashes": {
+    "baseline_code_signature_text": "def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:",
     "baseline_code_structure_hash": "dfcbf92e9dc8b80168adf3b58c20280a105de891575b7ac2e92e68c31a7032bd",
     "baseline_yaml_content_hash": "5af0e615ba0abfb5c4d821de4ea0ac9e210366143d1dfe17a892512f424afd29"
   },
   "DocumentManager.flatten_module_docs": {
+    "baseline_code_signature_text": "def flatten_module_docs(self, module: ModuleDef) -> Dict[str, str]:",
     "baseline_code_structure_hash": "3e21d0079fb4b5461eff0eb362eff326fe5b545956faca61a518e9d9e1c3b302",
     "baseline_yaml_content_hash": "5b362466cad657f4b895ce4e61d05d11bf967671a34e9f21e092b3a16b9f8574"
   },
   "DocumentManager.hydrate_module": {
+    "baseline_code_signature_text": "def hydrate_module(self, module: ModuleDef, force: bool = False, reconcile: bool = False, resolution_map: Optional[Dict[str, Any]] = None, dry_run: bool = False) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "5ad031b9c1bbecacc97bac10b79873165a17d2924a88b6ed7c1f49a24f2a7cdd",
     "baseline_yaml_content_hash": "a4fb37a5f60218d39cfc657bedba077ef1f7ae6229ef6f9b2d6c4d58f4d7fc52"
   },
   "DocumentManager.load_docs_for_module": {
+    "baseline_code_signature_text": "def load_docs_for_module(self, module: ModuleDef) -> Dict[str, str]:",
     "baseline_code_structure_hash": "eb4fa00952ea163205e00d0e7060553f0bbc605c62664019a3678916c978dae5",
     "baseline_yaml_content_hash": "67e798f027779b1afac5d6fcf03d35d0e0b1bac08e920a7c2624ad2c0919d6c9"
   },
   "DocumentManager.save_docs_for_module": {
+    "baseline_code_signature_text": "def save_docs_for_module(self, module: ModuleDef) -> Path:",
     "baseline_code_structure_hash": "02e5fe452fa0690256cf2ccf7dd9bf4ee571745329485156eea4f2879692527a",
     "baseline_yaml_content_hash": "f78e4597c85a7579c94c58dac85fd9c9e3860a5cba078c318dc565fa07588273"
   }

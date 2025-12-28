@@ -15,6 +15,7 @@
     "baseline_yaml_content_hash": "dc0ed07c2d9e3b052f97003e1bf646a5cc66bc6cdd2edae8a0d943f2da531143"
   },
   "InteractionHandler.process_interactive_session": {
+    "baseline_code_signature_text": "def process_interactive_session(self, contexts: List[InteractionContext]) -> List[ResolutionAction]:",
     "baseline_code_structure_hash": "72ab2928cd87e4ba0ccc8358dc09f0186a38a90654abd80ff66a8358659e5a1b",
     "baseline_yaml_content_hash": "6134b629025d8f17130b48d3413c07e21b60ef78800dca20dd6318508cdf22c4"
   }

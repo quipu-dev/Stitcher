@@ -64,6 +64,9 @@
   A list of decorators applied to the function.
 "FunctionDef.docstring": |-
   The docstring of the function.
+"FunctionDef.get_signature_string": |-
+  Reconstructs the function signature as a string.
+  Example: async def foo(a: int, b: str = 'default') -> bool:
 "FunctionDef.is_async": |-
   Flag indicating if the function is async.
 "FunctionDef.is_class": |-

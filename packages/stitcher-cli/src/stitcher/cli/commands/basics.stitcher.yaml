@@ -1,0 +1,8 @@
+"generate_command": |-
+  Generate .pyi stubs based on pyproject.toml config.
+"init_command": |-
+  Initialize Stitcher in the current project.
+"inject_command": |-
+  Inject docstrings from .stitcher.yaml files back into code.
+"strip_command": |-
+  Remove docstrings from source files.

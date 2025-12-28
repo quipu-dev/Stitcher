@@ -3,14 +3,17 @@
     "baseline_yaml_content_hash": "b4c7aaaca949bf6b38142198c1c79b541515027229d191eb73e1735cb7da4f18"
   },
   "PointerSet.__add__": {
+    "baseline_code_signature_text": "def __add__(self, other: Union[str, \"SemanticPointerProtocol\"]) -> \"PointerSet\":",
     "baseline_code_structure_hash": "4c8aa6b8536382048b766dcc864cd62eaf0fe4b2a36d6d39e5e8c521d2067cce",
     "baseline_yaml_content_hash": "2cfd96a0f0f78fbe256ec8bc6b23ab2828f4998d50320517fc18272b48d1e89a"
   },
   "PointerSet.__mul__": {
+    "baseline_code_signature_text": "def __mul__(self, other: Any) -> \"PointerSet\":",
     "baseline_code_structure_hash": "050f540c7b0729c19ae0667d5d5e0c66d691b1101b01ee5a421d9f9a65eb66e1",
     "baseline_yaml_content_hash": "c2e9d4f750ca1be11f819d929b66fecab88a687c2ece7b97ccbfc02838fc1dae"
   },
   "PointerSet.__truediv__": {
+    "baseline_code_signature_text": "def __truediv__(self, other: Union[str, \"SemanticPointerProtocol\"]) -> \"PointerSet\":",
     "baseline_code_structure_hash": "43c8751ad6041fadc15f8894e83b9640f1e1b440a84592f6965aba7d5f9134ee",
     "baseline_yaml_content_hash": "c9f1c899f1e02476537f7ad1c453e5079532b71ceca8cb44865422cb1e911eb3"
   }

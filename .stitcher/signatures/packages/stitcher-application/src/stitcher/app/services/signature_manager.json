@@ -3,21 +3,30 @@
     "baseline_yaml_content_hash": "2b1ded155d40063ba0e25ab309dbb16b66ac1ad6cc38ffe1dd6b1a9649a317b3"
   },
   "SignatureManager.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path):",
     "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
   },
   "SignatureManager._get_sig_path": {
+    "baseline_code_signature_text": "def _get_sig_path(self, module: ModuleDef) -> Path:",
     "baseline_code_structure_hash": "d89618b33da1097394c0dab8b1de2a5b71a445d8a0e61990bbf89607c5461639",
     "baseline_yaml_content_hash": "b0ead96395f67f9fa60b9dba88f4c474d89f3a8e3296fd9a024d77a6ea4f6770"
   },
   "SignatureManager.compute_code_structure_hashes": {
+    "baseline_code_signature_text": "def compute_code_structure_hashes(self, module: ModuleDef) -> Dict[str, str]:",
     "baseline_code_structure_hash": "6ef6c77fe4dc323a3ed7c14f0ae6be1e25fe76957e4e5d3425e01eb12f73903e",
     "baseline_yaml_content_hash": "ee55f04b5640aeed33e2fcc5add5e35bcd314cbc94a34e014a345908ecedeef3"
   },
+  "SignatureManager.extract_signature_texts": {
+    "baseline_code_signature_text": "def extract_signature_texts(self, module: ModuleDef) -> Dict[str, str]:",
+    "baseline_code_structure_hash": "bfe2fea4a61c3cb15551a8e1337d8465bcb15865593c0b926c5fd98b178013ab"
+  },
   "SignatureManager.load_composite_hashes": {
+    "baseline_code_signature_text": "def load_composite_hashes(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
     "baseline_code_structure_hash": "88cd00d2adf0bca45c697e80267630aecc18c387c67701063560498e655d11f5",
     "baseline_yaml_content_hash": "4e3f2fd8ba10f2201a6214e9f3b8cca3ceedc0225867f28f8b645b86afc2f54a"
   },
   "SignatureManager.save_composite_hashes": {
+    "baseline_code_signature_text": "def save_composite_hashes(self, module: ModuleDef, hashes: Dict[str, Fingerprint]) -> None:",
     "baseline_code_structure_hash": "fca68e3422f35a2ad2f84b8066d951ef5852dbc2ae7b4f0a306783a30c2f320e",
     "baseline_yaml_content_hash": "30caad024d2d53643b9d324c6dfa4f47b456afcfcfb48d2c39f1ca64be4cb73d"
   }
