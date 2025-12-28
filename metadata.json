@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M fs_loader.json, M main.json, M fs_loader.stitcher.yaml ... and 3 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766920033.6632094, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 统一本地化资源并移除硬编码", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766920257.2878346, "duration_ms": 0}}

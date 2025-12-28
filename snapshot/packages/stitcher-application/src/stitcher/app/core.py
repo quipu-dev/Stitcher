@@ -129,15 +129,13 @@ class StitcherApp:
         for path_str in config.scan_paths:
             path_parts = Path(path_str).parts
             if path_parts and path_parts[-1] != "src":
+                # This handles cases like 'src/my_app' where 'my_app' is the namespace.
                 package_namespace = path_parts[-1]
                 break
-            elif len(path_parts) >= 2 and path_parts[-2] == "src":
-                if "pyneedle" in stub_base_name:
-                    package_namespace = "needle"
-                elif "stitcher" in stub_base_name:
-                    package_namespace = "stitcher"
-                break
+
         if not package_namespace:
+            # Fallback for when all scan_paths end in 'src'.
+            # Derives namespace from the target name (e.g., 'stitcher-cli' -> 'stitcher').
             package_namespace = stub_base_name.split("-")[0]
         stub_pkg_name = f"{stub_base_name}-stubs"
         bus.info(L.generate.stub_pkg.scaffold, name=stub_pkg_name)

@@ -3,7 +3,7 @@
   "extra": "悬空文档: '{key}' 在文档中存在但在代码中缺失。",
   "mismatch": "   - [签名变更] {key} (函数签名已更改，文档可能已过时)",
   "missing": "   - [文档缺失] {key} (代码实体存在，但代码和 YAML 中均无文档)",
-  "pending": "   - [等待同步] {key} (代码中有新文档，请运行 `stitcher hydrate`)",
+  "pending": "   - [等待同步] {key} (代码中有新文档，请运行 `stitcher pump`)",
   "redundant": "   - [文档冗余] {key} (代码和 YAML 中存在重复文档，请运行 `stitcher strip`)",
   "untracked_missing_key": "   - [文档缺失] {key} (请在代码中为其添加文档字符串)"
 }

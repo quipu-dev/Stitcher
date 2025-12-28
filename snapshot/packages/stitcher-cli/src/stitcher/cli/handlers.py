@@ -66,7 +66,7 @@ class TyperInteractionHandler(InteractionHandler):
                 )
                 menu.append(
                     (
-                        "[F]orce-hydrate",
+                        "[F]orce overwrite",
                         ResolutionAction.HYDRATE_OVERWRITE,
                         "Overwrite YAML with code docs (Code-first).",
                     )
@@ -104,6 +104,9 @@ class TyperInteractionHandler(InteractionHandler):
                     action = ResolutionAction.RELINK
                 elif any(a == ResolutionAction.HYDRATE_OVERWRITE for _, a, _ in menu):
                     action = ResolutionAction.HYDRATE_OVERWRITE
+                else:
+                    typer.secho("Invalid choice, please try again.", fg=typer.colors.RED)
+                    continue
             elif char == "r":
                 if any(a == ResolutionAction.RECONCILE for _, a, _ in menu):
                     action = ResolutionAction.RECONCILE
