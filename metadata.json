@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(testing): 修正 hydrate 交互测试并统一 abort 消息", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766903539.2971702, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Acts 3: 提交修复", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766903558.7702177, "duration_ms": 0}}
