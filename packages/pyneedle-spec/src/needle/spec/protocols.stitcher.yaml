@@ -1,14 +1,5 @@
 "NexusProtocol": |-
   Defines the contract for the runtime central hub (Nexus).
-"NexusProtocol.get": |-
-  Resolves a pointer or string key to its localized value.
-
-  Args:
-      pointer: The semantic key to look up.
-      domain: Optional explicit domain override.
-
-  Returns:
-      The resolved string value, or the key itself if not found (Identity Fallback).
 "NexusProtocol.reload": |-
   Clears internal caches and forces a reload of resources.
 

@@ -13,15 +13,9 @@
   "OverlayNexus._get_writable_loader": {
     "baseline_code_structure_hash": "f388aee6dcaef3beb8db35004badd1941cc9d9fa36ef693463d8125c6ef87414"
   },
-  "OverlayNexus._resolve_domain": {
-    "baseline_yaml_content_hash": "77d751bdeb09bc9587bebd68d51ac974cc9d70be56cfb6c7e526d048ecc04281"
-  },
   "OverlayNexus.fetch": {
     "baseline_code_structure_hash": "8eb66675c2ff112d06f4d23e055eff3c573a72b5ad3aa7a116b4421ab61908c2",
     "baseline_yaml_content_hash": "30020bc0661a626da70608796681a21d2ba582f28ffdb425bc72ca0d4b40db17"
-  },
-  "OverlayNexus.get": {
-    "baseline_yaml_content_hash": "5bb59414d4f21c74ceb5f213ad91f84b5adc304965d9512c2b930d1a8d02b2d6"
   },
   "OverlayNexus.load": {
     "baseline_code_structure_hash": "19c036d1f9a825ec457931fafef065d3f4d1d4dffe9a26277648649c85d09ac5",

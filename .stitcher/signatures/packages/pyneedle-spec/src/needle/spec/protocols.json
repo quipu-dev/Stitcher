@@ -2,9 +2,6 @@
   "NexusProtocol": {
     "baseline_yaml_content_hash": "bdfe001689e9ef268e6bfa7a419fceca7ab36b89979e84711d285ea0e99cfce3"
   },
-  "NexusProtocol.get": {
-    "baseline_yaml_content_hash": "6aede040ac7edb331d607ce237abdd9554646a16534c11c0cbf07e8ee68fe499"
-  },
   "NexusProtocol.reload": {
     "baseline_code_structure_hash": "7e64116dc8b2cedef0ad93c725032e86f827ac3bbe41b3535042b1310ff82c55",
     "baseline_yaml_content_hash": "1887671f5b899bd31793e7319baec93b7ddce92a91a37e0c1f81e5164ce3fae7"
