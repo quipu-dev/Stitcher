@@ -7,6 +7,7 @@ from stitcher.common import bus, stitcher_nexus as nexus
 from needle.pointer import L
 from .rendering import CliRenderer
 from .handlers import TyperInteractionHandler
+from .interactive import TyperInteractiveRenderer
 
 app = typer.Typer(
     name="stitcher",
@@ -77,7 +78,8 @@ def check(
         and not force_relink
         and not reconcile
     ):
-        handler = TyperInteractionHandler()
+        renderer = TyperInteractiveRenderer(nexus)
+        handler = TyperInteractionHandler(renderer)
 
     app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
     success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
@@ -138,7 +140,8 @@ def pump(
     is_interactive = sys.stdin.isatty() and not non_interactive
 
     if is_interactive and not force and not reconcile:
-        handler = TyperInteractionHandler()
+        renderer = TyperInteractiveRenderer(nexus)
+        handler = TyperInteractionHandler(renderer)
 
     app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
     # 1. Run Pump
