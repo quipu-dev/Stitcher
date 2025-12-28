@@ -50,8 +50,14 @@ def test_manager_save_and_load_composite_hashes(tmp_path: Path):
     module = ModuleDef(file_path="src/main.py", functions=[create_func(name="foo")])
 
     hashes_to_save = {
-        "foo": {"baseline_code_structure_hash": "abc", "baseline_yaml_content_hash": "def"},
-        "bar": {"baseline_code_structure_hash": "123", "baseline_yaml_content_hash": None},
+        "foo": {
+            "baseline_code_structure_hash": "abc",
+            "baseline_yaml_content_hash": "def",
+        },
+        "bar": {
+            "baseline_code_structure_hash": "123",
+            "baseline_yaml_content_hash": None,
+        },
     }
 
     # Act: Save

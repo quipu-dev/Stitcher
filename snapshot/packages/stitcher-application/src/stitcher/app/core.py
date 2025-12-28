@@ -29,9 +29,7 @@ class FileCheckResult:
     errors: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
     warnings: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
     infos: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
-    reconciled: Dict[str, List[str]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    reconciled: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
     auto_reconciled_count: int = 0
 
     @property
@@ -279,12 +277,16 @@ class StitcherApp:
         doc_path = (self.root_path / module.file_path).with_suffix(".stitcher.yaml")
         is_tracked = doc_path.exists()
 
-        current_code_structure_map = self.sig_manager.compute_code_structure_hashes(module)
+        current_code_structure_map = self.sig_manager.compute_code_structure_hashes(
+            module
+        )
         current_yaml_content_map = self.doc_manager.compute_yaml_content_hashes(module)
         stored_hashes_map = self.sig_manager.load_composite_hashes(module)
         new_hashes_map = copy.deepcopy(stored_hashes_map)
 
-        all_fqns = set(current_code_structure_map.keys()) | set(stored_hashes_map.keys())
+        all_fqns = set(current_code_structure_map.keys()) | set(
+            stored_hashes_map.keys()
+        )
 
         for fqn in sorted(list(all_fqns)):
             current_code_structure_hash = current_code_structure_map.get(fqn)
@@ -309,8 +311,12 @@ class StitcherApp:
                 continue
 
             # Case: Existing
-            code_structure_matches = current_code_structure_hash == baseline_code_structure_hash
-            yaml_content_matches = current_yaml_content_hash == baseline_yaml_content_hash
+            code_structure_matches = (
+                current_code_structure_hash == baseline_code_structure_hash
+            )
+            yaml_content_matches = (
+                current_yaml_content_hash == baseline_yaml_content_hash
+            )
 
             if code_structure_matches and yaml_content_matches:
                 pass  # Synchronized
@@ -318,14 +324,18 @@ class StitcherApp:
                 # Doc Improvement: INFO, Auto-reconcile
                 result.infos["doc_improvement"].append(fqn)
                 if fqn in new_hashes_map:
-                    new_hashes_map[fqn]["baseline_yaml_content_hash"] = current_yaml_content_hash
+                    new_hashes_map[fqn]["baseline_yaml_content_hash"] = (
+                        current_yaml_content_hash
+                    )
                 result.auto_reconciled_count += 1
             elif not code_structure_matches and yaml_content_matches:
                 # Signature Drift
                 if force_relink:
                     result.reconciled["force_relink"].append(fqn)
                     if fqn in new_hashes_map:
-                        new_hashes_map[fqn]["baseline_code_structure_hash"] = current_code_structure_hash
+                        new_hashes_map[fqn]["baseline_code_structure_hash"] = (
+                            current_code_structure_hash
+                        )
                 else:
                     result.errors["signature_drift"].append(fqn)
             elif not code_structure_matches and not yaml_content_matches:
@@ -371,7 +381,7 @@ class StitcherApp:
                         bus.info(
                             L.check.state.auto_reconciled,
                             count=res.auto_reconciled_count,
-                            path=res.path
+                            path=res.path,
                         )
                     # Even if clean, we might want to report info-level updates like doc improvements
                     for key in sorted(res.infos["doc_improvement"]):
@@ -380,18 +390,14 @@ class StitcherApp:
 
                 if res.reconciled_count > 0:
                     for key in res.reconciled.get("force_relink", []):
-                        bus.success(
-                            L.check.state.relinked, key=key, path=res.path
-                        )
+                        bus.success(L.check.state.relinked, key=key, path=res.path)
                     for key in res.reconciled.get("reconcile", []):
-                        bus.success(
-                            L.check.state.reconciled, key=key, path=res.path
-                        )
+                        bus.success(L.check.state.reconciled, key=key, path=res.path)
                 if res.auto_reconciled_count > 0:
                     bus.info(
                         L.check.state.auto_reconciled,
                         count=res.auto_reconciled_count,
-                        path=res.path
+                        path=res.path,
                     )
 
                 if res.error_count > 0:
@@ -421,7 +427,7 @@ class StitcherApp:
                     bus.warning(L.check.issue.redundant, key=key)
                 for key in sorted(res.warnings["untracked_key"]):
                     bus.warning(L.check.state.untracked_code, key=key)
-                
+
                 for key in sorted(res.infos["doc_improvement"]):
                     bus.info(L.check.state.doc_updated, key=key)
 
@@ -523,7 +529,7 @@ class StitcherApp:
         else:
             bus.success(L.hydrate.run.complete, count=total_updated)
         return True
-    
+
     # ... rest of methods (run_strip, run_eject) remain same ...
     def run_strip(self) -> List[Path]:
         configs, _ = load_config_from_path(self.root_path)

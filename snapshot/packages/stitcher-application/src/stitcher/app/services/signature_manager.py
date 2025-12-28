@@ -6,7 +6,6 @@ from stitcher.spec import ModuleDef
 
 
 class SignatureManager:
-
     def __init__(self, root_path: Path):
         self.root_path = root_path
         self.sig_root = root_path / ".stitcher" / "signatures"

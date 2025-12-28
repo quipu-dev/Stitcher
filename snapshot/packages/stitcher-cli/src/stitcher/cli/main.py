@@ -52,9 +52,7 @@ def check(
 
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
-    success = app_instance.run_check(
-        force_relink=force_relink, reconcile=reconcile
-    )
+    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
     if not success:
         raise typer.Exit(code=1)
 

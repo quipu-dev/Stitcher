@@ -124,7 +124,7 @@ class DocumentManager:
                     doc_conflict.add(key)
                 else:
                     redundant_doc.add(key)
-        
+
         return {
             "extra": extra,
             "missing": missing_doc,

@@ -66,7 +66,7 @@ def test_generate_does_not_update_signatures(tmp_path, monkeypatch):
 
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
-    
+
     (project_root / "src/main.py").write_text("def func(a: str): ...")
 
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
@@ -103,7 +103,7 @@ def test_check_with_force_relink_reconciles_changes(tmp_path, monkeypatch):
 
     assert success_reconcile is True, "Check with --force-relink failed"
     spy_bus_reconcile.assert_id_called(L.check.state.relinked, level="success")
-    
+
     spy_bus_verify = SpyBus()
     with spy_bus_verify.patch(monkeypatch, "stitcher.app.core.bus"):
         success_verify = app.run_check()
