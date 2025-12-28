@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 扩展 InteractionContext 以支持差异数据传输", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766923010.9804318, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(cli): 引入工厂模式并模块化 Check/Pump 命令", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766923476.4804792, "duration_ms": 0}}

@@ -6,8 +6,10 @@ from stitcher.app import StitcherApp
 from stitcher.common import bus, stitcher_nexus as nexus
 from needle.pointer import L
 from .rendering import CliRenderer
-from .handlers import TyperInteractionHandler
-from .interactive import TyperInteractiveRenderer
+
+# Import commands
+from .commands.check import check_command
+from .commands.pump import pump_command
 
 app = typer.Typer(
     name="stitcher",
@@ -15,9 +17,9 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-# --- Dependency Injection Placeholder ---
-# Renderer will be configured in the callback
-# ---------------------------------------------
+# Register complex commands
+app.command(name="check", help=nexus.get(L.cli.command.check.help))(check_command)
+app.command(name="pump", help=nexus.get(L.cli.command.pump.help))(pump_command)
 
 
 @app.callback()
@@ -46,47 +48,6 @@ def init():
     app_instance.run_init()
 
 
-@app.command(help=nexus.get(L.cli.command.check.help))
-def check(
-    force_relink: bool = typer.Option(
-        False,
-        "--force-relink",
-        help="[Non-interactive] For 'Signature Drift' errors, forces relinking.",
-    ),
-    reconcile: bool = typer.Option(
-        False,
-        "--reconcile",
-        help="[Non-interactive] For 'Co-evolution' errors, accepts both changes.",
-    ),
-    non_interactive: bool = typer.Option(
-        False,
-        "--non-interactive",
-        help="Force non-interactive mode, failing on unresolved conflicts.",
-    ),
-):
-    if force_relink and reconcile:
-        bus.error("Cannot use --force-relink and --reconcile simultaneously.")
-        raise typer.Exit(code=1)
-
-    project_root = Path.cwd()
-
-    handler = None
-    # Interactive mode is the default in a TTY, unless explicitly disabled.
-    if (
-        sys.stdin.isatty()
-        and not non_interactive
-        and not force_relink
-        and not reconcile
-    ):
-        renderer = TyperInteractiveRenderer(nexus)
-        handler = TyperInteractionHandler(renderer)
-
-    app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
-    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
-    if not success:
-        raise typer.Exit(code=1)
-
-
 @app.command(help=nexus.get(L.cli.command.strip.help))
 def strip():
     if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
@@ -107,58 +68,6 @@ def inject():
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
     app_instance.run_inject()
-
-
-@app.command(help=nexus.get(L.cli.command.pump.help))
-def pump(
-    strip: bool = typer.Option(
-        False, "--strip", help=nexus.get(L.cli.option.strip.help)
-    ),
-    force: bool = typer.Option(
-        False,
-        "--force",
-        help=nexus.get(L.cli.option.force.help),
-    ),
-    reconcile: bool = typer.Option(
-        False,
-        "--reconcile",
-        help=nexus.get(L.cli.option.reconcile.help),
-    ),
-    non_interactive: bool = typer.Option(
-        False,
-        "--non-interactive",
-        help="Force non-interactive mode, failing on unresolved conflicts.",
-    ),
-):
-    if force and reconcile:
-        bus.error("Cannot use --force and --reconcile simultaneously.")
-        raise typer.Exit(code=1)
-
-    project_root = Path.cwd()
-
-    handler = None
-    is_interactive = sys.stdin.isatty() and not non_interactive
-
-    if is_interactive and not force and not reconcile:
-        renderer = TyperInteractiveRenderer(nexus)
-        handler = TyperInteractionHandler(renderer)
-
-    app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
-    # 1. Run Pump
-    # Even if we want to strip, we might do it interactively later if strip=False
-    result = app_instance.run_pump(strip=strip, force=force, reconcile=reconcile)
-    if not result.success:
-        raise typer.Exit(code=1)
-
-    # 2. Interactive Strip Confirmation (New Logic)
-    if result.redundant_files and is_interactive and not strip:
-        typer.echo("")
-        typer.secho(
-            f"Found {len(result.redundant_files)} file(s) with redundant docstrings in source code.",
-            fg=typer.colors.YELLOW,
-        )
-        if typer.confirm("Do you want to strip them now?", default=True):
-            app_instance.run_strip(files=result.redundant_files)
 
 
 if __name__ == "__main__":
