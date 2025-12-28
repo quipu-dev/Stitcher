@@ -2,6 +2,15 @@
   "InteractionContext": {
     "baseline_yaml_content_hash": "6e23f3181f3e9b9448991c360da725d963a2b4840dbafeb8e71795297a000c14"
   },
+  "InteractionContext.conflict_type": {
+    "baseline_yaml_content_hash": "6e88011c2e5d9d14dde51d6b9535ef98d947444beda8c89170691bb4e4fc19db"
+  },
+  "InteractionContext.file_path": {
+    "baseline_yaml_content_hash": "3d7f5d0eb55b94960ead23d87f137c723bf9645289759478eea8c39812d88161"
+  },
+  "InteractionContext.fqn": {
+    "baseline_yaml_content_hash": "5d358ce30017f22be51051647c9a76f2ca22c4243336582327e77973e38684fc"
+  },
   "InteractionHandler": {
     "baseline_yaml_content_hash": "dc0ed07c2d9e3b052f97003e1bf646a5cc66bc6cdd2edae8a0d943f2da531143"
   },

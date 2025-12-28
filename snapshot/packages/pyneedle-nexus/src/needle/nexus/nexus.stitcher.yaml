@@ -1,10 +1,7 @@
 "OverlayNexus": |-
-  Standard implementation of the Nexus protocol using a logical overlay strategy.
-
-  It manages an ordered list of resource loaders and uses `collections.ChainMap`
-  to create prioritized, logical views of resources without performing
-  a physical merge. It also implements the Loader protocol, allowing it to be
-  nested within other Nexus instances.
+  [Composition Layer]
+  Implements vertical fallback by iterating through a stack of loaders.
+  Inherits policy logic (get) from BaseLoader.
 "OverlayNexus.__init__": |-
   Initializes the Nexus with a list of loaders.
 
@@ -16,6 +13,9 @@
   Lazily loads and caches the ChainMap view for a given domain.
 "OverlayNexus._resolve_domain": |-
   Determines the current active domain based on environment variables and system settings.
+"OverlayNexus.fetch": |-
+  [Composition Layer Implementation]
+  Vertical Fallback: Ask each loader in order. First one to return non-None wins.
 "OverlayNexus.get": |-
   Resolves a semantic pointer to a string value with graceful fallback.
 "OverlayNexus.load": |-

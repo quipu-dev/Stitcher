@@ -74,6 +74,9 @@
   "ConflictType.CO_EVOLUTION": {
     "baseline_yaml_content_hash": "23bf32f872edc3baf4fffa3e99d1f9309193a34ab870ddc6b0423b699336d50b"
   },
+  "ConflictType.DOC_CONTENT_CONFLICT": {
+    "baseline_yaml_content_hash": "144c73581022d19222022def8264dfcf1ab813e0f6f4df4272b800939d4a4dc9"
+  },
   "ConflictType.SIGNATURE_DRIFT": {
     "baseline_yaml_content_hash": "b72e4cf26a319796af6aa0aaa9c6bb8a64e12056d4ddf3039650eee2afd1d860"
   },
@@ -157,6 +160,12 @@
   },
   "ResolutionAction.ABORT": {
     "baseline_yaml_content_hash": "724f081b160160e9f3c3704b19f0ebc4b8d2db7d61a0cfbf4b290f9a25b7b1c5"
+  },
+  "ResolutionAction.HYDRATE_KEEP_EXISTING": {
+    "baseline_yaml_content_hash": "ec8d48dcca1ee6c63f738ee96072114c8ea76826e98f1e3dcef538987c5f6d31"
+  },
+  "ResolutionAction.HYDRATE_OVERWRITE": {
+    "baseline_yaml_content_hash": "869f27e90be944ff3b2adaafbcc9b9565f721229779dced31f3f265e697a21f8"
   },
   "ResolutionAction.RECONCILE": {
     "baseline_yaml_content_hash": "10020f30c8c0f299b0011c5e30c761fab35b7d048ec5484e755b4877b881565a"

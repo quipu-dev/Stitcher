@@ -1,4 +1,7 @@
 {
+  "FINGERPRINT_KEY_PATTERN": {
+    "baseline_yaml_content_hash": "6e003b6a50c3543bc79b4b07c26fa711a0365b5778ec8ddb472c30a116392e9d"
+  },
   "Fingerprint": {
     "baseline_yaml_content_hash": "29ce065db51f536e938572ee2a25e87a882992ed125555dccc0bc025e35f878f"
   },

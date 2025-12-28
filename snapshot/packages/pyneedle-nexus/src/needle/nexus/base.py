@@ -7,32 +7,15 @@ if TYPE_CHECKING:
 
 
 class BaseLoader(ResourceLoaderProtocol):
-    """
-    [Policy Layer]
-    Implements the standard policy for language and identity fallback.
-    All specific loaders should inherit from this class and implement the
-    Primitive Layer `fetch` method.
-    """
-
     def __init__(self, default_domain: str = "en"):
         self.default_domain = default_domain
 
     def fetch(
         self, pointer: str, domain: str, ignore_cache: bool = False
     ) -> Optional[str]:
-        """
-        [Primitive Layer]
-        Must be implemented by subclasses.
-        Performs an atomic lookup in the specified domain without any fallback.
-        """
         raise NotImplementedError
 
     def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:
-        """
-        [Utility]
-        Must be implemented by subclasses.
-        Returns the full view of resources for a domain.
-        """
         raise NotImplementedError
 
     def _resolve_domain(self, explicit_domain: Optional[str] = None) -> str:
@@ -61,11 +44,6 @@ class BaseLoader(ResourceLoaderProtocol):
         pointer: Union[str, SemanticPointerProtocol],
         domain: Optional[str] = None,
     ) -> str:
-        """
-        [Policy Layer Implementation]
-        Orchestrates the fallback logic:
-        1. Target Domain -> 2. Default Domain -> 3. Identity
-        """
         key = str(pointer)
         target_domain = self._resolve_domain(domain)
 

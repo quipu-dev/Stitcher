@@ -1,17 +1,16 @@
 from collections import ChainMap
 from typing import List, Dict, Optional, Union, Any
-from needle.spec import NexusProtocol, ResourceLoaderProtocol, SemanticPointerProtocol, WritableResourceLoaderProtocol
+from needle.spec import (
+    NexusProtocol,
+    ResourceLoaderProtocol,
+    SemanticPointerProtocol,
+    WritableResourceLoaderProtocol,
+)
 from .base import BaseLoader
 from pathlib import Path
 
 
 class OverlayNexus(BaseLoader, NexusProtocol):
-    """
-    [Composition Layer]
-    Implements vertical fallback by iterating through a stack of loaders.
-    Inherits policy logic (get) from BaseLoader.
-    """
-
     def __init__(
         self, loaders: List[ResourceLoaderProtocol], default_domain: str = "en"
     ):
@@ -22,15 +21,11 @@ class OverlayNexus(BaseLoader, NexusProtocol):
     def fetch(
         self, pointer: str, domain: str, ignore_cache: bool = False
     ) -> Optional[str]:
-        """
-        [Composition Layer Implementation]
-        Vertical Fallback: Ask each loader in order. First one to return non-None wins.
-        """
         # Optimization: If we have a cached view, check it first
         # But for 'fetch' semantic (atomic lookup), maybe we should iterate loaders?
         # To be strictly correct with "Composition Layer", we should delegate to loaders.
         # However, OverlayNexus typically caches views for performance using ChainMap.
-        
+
         # Let's use the view cache for performance, as it represents the composed state.
         if not ignore_cache:
             view = self._get_or_create_view(domain)
@@ -38,7 +33,7 @@ class OverlayNexus(BaseLoader, NexusProtocol):
             if val is not None:
                 return str(val)
             return None
-            
+
         # If ignore_cache, we must query loaders directly (bypassing ChainMap cache)
         for loader in self.loaders:
             val = loader.fetch(pointer, domain, ignore_cache=True)
@@ -48,7 +43,7 @@ class OverlayNexus(BaseLoader, NexusProtocol):
 
     def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:
         if ignore_cache:
-             self.reload(domain)
+            self.reload(domain)
         return self._get_or_create_view(domain)
 
     def _get_or_create_view(self, domain: str) -> ChainMap[str, Any]:

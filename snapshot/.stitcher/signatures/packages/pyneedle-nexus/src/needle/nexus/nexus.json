@@ -1,6 +1,6 @@
 {
   "OverlayNexus": {
-    "baseline_yaml_content_hash": "28a03c89192810415a072cae61443c1baaadaf0cfe863a2f30eb5cd795c94e3c"
+    "baseline_yaml_content_hash": "47d3bdf111063bb25ba175964cafc45ec235c9f34c9fbffa0a6f044e45ef0455"
   },
   "OverlayNexus.__init__": {
     "baseline_code_structure_hash": "d7deb4acab8a222878673b9b13a571ac9747dc84dfc9c14743dad5b925f59b1a",
@@ -14,15 +14,17 @@
     "baseline_code_structure_hash": "f388aee6dcaef3beb8db35004badd1941cc9d9fa36ef693463d8125c6ef87414"
   },
   "OverlayNexus._resolve_domain": {
-    "baseline_code_structure_hash": "d869444c7aab471721f70ba74604ddc207bbd6fc877d7bd9ab5342c1748d8599",
     "baseline_yaml_content_hash": "77d751bdeb09bc9587bebd68d51ac974cc9d70be56cfb6c7e526d048ecc04281"
   },
+  "OverlayNexus.fetch": {
+    "baseline_code_structure_hash": "8eb66675c2ff112d06f4d23e055eff3c573a72b5ad3aa7a116b4421ab61908c2",
+    "baseline_yaml_content_hash": "30020bc0661a626da70608796681a21d2ba582f28ffdb425bc72ca0d4b40db17"
+  },
   "OverlayNexus.get": {
-    "baseline_code_structure_hash": "add6f0a11ac9aded276500af3d0ea1a38cbe9d30591a308823d8635d5e36b20a",
     "baseline_yaml_content_hash": "5bb59414d4f21c74ceb5f213ad91f84b5adc304965d9512c2b930d1a8d02b2d6"
   },
   "OverlayNexus.load": {
-    "baseline_code_structure_hash": "965500f54e16c64e7ca90d55ff0830e3c85e3dce02a7911b18a8eeba19735cdf",
+    "baseline_code_structure_hash": "19c036d1f9a825ec457931fafef065d3f4d1d4dffe9a26277648649c85d09ac5",
     "baseline_yaml_content_hash": "4baf1809c0a15b83d20651b05ac08a67bc23f9bda22b5b37caffae3c2fc1bcbe"
   },
   "OverlayNexus.locate": {

@@ -2,12 +2,18 @@
   "FileCheckResult": {
     "baseline_yaml_content_hash": "c942c343734bbea9680a8611e65b4b70ab0ead076262442caaedf61b794ba1de"
   },
+  "FileCheckResult.auto_reconciled_count": {
+    "baseline_yaml_content_hash": "36dd82b1df433b54951e5d55c1b5013843d64cefe9b7898b045801ffb73664e2"
+  },
   "FileCheckResult.error_count": {
     "baseline_code_structure_hash": "30219f239eaeb9dc13488bc276ed11ec031d7b32b6f91125384a786c30e107cc",
     "baseline_yaml_content_hash": "be630a1ccfa7e75aabcf0c98ba0a306b157115ef6ae9a778d5f76dc3b6146e0e"
   },
   "FileCheckResult.errors": {
     "baseline_yaml_content_hash": "f24b1e68f251c83d82630549e82fec7859263d0ee137e27c67c48a3a75a3c262"
+  },
+  "FileCheckResult.infos": {
+    "baseline_yaml_content_hash": "d3498d5c63cb93206717b1f035063806f111ff7da06a400eea42c47ddd6ef09f"
   },
   "FileCheckResult.is_clean": {
     "baseline_code_structure_hash": "7854643ee354818d58824c41faf0d563e347c0320c299f0fc9d26a17430e2492",
@@ -29,6 +35,15 @@
   },
   "FileCheckResult.warnings": {
     "baseline_yaml_content_hash": "2ceea22d286f22daccf3682179b063e2a0c7fae75a7c4586020f349875dabe52"
+  },
+  "PumpResult": {
+    "baseline_yaml_content_hash": "5effea5a9812353c7c495546a50ec415d5bc7f503ad3ba9c7904bc7defa664b5"
+  },
+  "PumpResult.redundant_files": {
+    "baseline_yaml_content_hash": "2f8f4d8f73d16cc808279e59babd0b58c2c9c1026a340ce93300dba0b4017690"
+  },
+  "PumpResult.success": {
+    "baseline_yaml_content_hash": "8db84ff52425d04b98487ed586553864ff9fcbe5916879c1ea538fb2f241ecbd"
   },
   "StitcherApp": {
     "baseline_yaml_content_hash": "56ba56645ae8bc442c435ee789bb3cfbddd0eaefc0e0a33b11b20ba6d391dc55"
@@ -64,21 +79,21 @@
     "baseline_code_structure_hash": "4cfe338208fefaf498e609a386a62469c06faddfb7d8cb43fbc915fd2d672ac8",
     "baseline_yaml_content_hash": "39108ece98b238c3d8ca1a5d9fa0f66ebf78bd720f4a21221ba7cf558b0045af"
   },
-  "StitcherApp.run_eject": {
-    "baseline_code_structure_hash": "326d269e307921bbac3e523c49542f39eed0773d486c83920cc297ad5f3388af",
-    "baseline_yaml_content_hash": "8210c9eb958259986f1aca5fd679ee221f71777cc4a741a763473bf1db4ba74d"
-  },
   "StitcherApp.run_from_config": {
     "baseline_code_structure_hash": "6e3770a9189483804818929e5a4f6a38d686ba399418ce16b2c984a7b23f2fac",
     "baseline_yaml_content_hash": "d3d8bfddf45bd9dc9e558765c4952f7d36f45d238030eb9a355badfdda220dcb"
   },
-  "StitcherApp.run_hydrate": {
-    "baseline_code_structure_hash": "d9285a97ae0d8f88940fca67ab62462f1661ef7f048143762052eac47ebc230a",
-    "baseline_yaml_content_hash": "2684e753aae9cad5a5bd76bde7cf8c394b9142a431832593cd3c525a62a2a760"
-  },
   "StitcherApp.run_init": {
     "baseline_code_structure_hash": "9988dea2f1f20b309764846bd38f982dd4c1811ba89ae9e1d1ab439a480e303f",
     "baseline_yaml_content_hash": "013f787d7bb1c9ea65c00d15ed54e57d1117496a37a7418128fcb3b6f063a07e"
+  },
+  "StitcherApp.run_inject": {
+    "baseline_code_structure_hash": "c3eccd0304a6e04a22b2ac1857ba9c4400031be4b1e2309ccc7a7d4160acfb02",
+    "baseline_yaml_content_hash": "ed7ee4c7531bc1122810817a589133d29736a98713165670b405cf4ae944f287"
+  },
+  "StitcherApp.run_pump": {
+    "baseline_code_structure_hash": "763f9eb957504d7a09170f91882675bfef77a43552c2e9341a7f0135c4738b8b",
+    "baseline_yaml_content_hash": "a4087469e851d91b53efc885c5003ab5a83c7e5b68582f9bf1029bce0cbb73bf"
   },
   "StitcherApp.run_strip": {
     "baseline_code_structure_hash": "bda2820f9698db31dce2dee53b15d50409bed5407bd167b2c7e252a2a1c35392",

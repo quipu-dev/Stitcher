@@ -3,7 +3,6 @@
     "baseline_yaml_content_hash": "bdfe001689e9ef268e6bfa7a419fceca7ab36b89979e84711d285ea0e99cfce3"
   },
   "NexusProtocol.get": {
-    "baseline_code_structure_hash": "9f9fdbb4a28808a6c4493631388e133b0d4509ceb6b9fc8cfe65183d7d730428",
     "baseline_yaml_content_hash": "6aede040ac7edb331d607ce237abdd9554646a16534c11c0cbf07e8ee68fe499"
   },
   "NexusProtocol.reload": {
@@ -36,8 +35,14 @@
   "ResourceLoaderProtocol": {
     "baseline_yaml_content_hash": "6a6daa0d81128149a26e82e43172e0a2b64705c608ade58fc9f6b15fcc161d60"
   },
+  "ResourceLoaderProtocol.fetch": {
+    "baseline_code_structure_hash": "76e1cb13b818bf3951add1c2e0785e312287dd008f610ef1eae8809700d76f88"
+  },
+  "ResourceLoaderProtocol.get": {
+    "baseline_code_structure_hash": "90ca628188dbc3b77013bba67a74a048b3458bfa6320ac82414702f87f7f3dce"
+  },
   "ResourceLoaderProtocol.load": {
-    "baseline_code_structure_hash": "965500f54e16c64e7ca90d55ff0830e3c85e3dce02a7911b18a8eeba19735cdf",
+    "baseline_code_structure_hash": "19c036d1f9a825ec457931fafef065d3f4d1d4dffe9a26277648649c85d09ac5",
     "baseline_yaml_content_hash": "b5218fdbe23c53f85706c5e5baa4a748393d028ee92d794dd1d98f2d29117f49"
   },
   "SemanticPointerProtocol": {
