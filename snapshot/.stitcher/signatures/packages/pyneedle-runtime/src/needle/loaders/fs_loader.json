@@ -11,9 +11,6 @@
   "FileSystemLoader._ensure_loaded": {
     "baseline_code_structure_hash": "c92317cc5213267fc334a8488e6602a0c915813d708ee290ff20681e0115644b"
   },
-  "FileSystemLoader._load_directory": {
-    "baseline_yaml_content_hash": null
-  },
   "FileSystemLoader._scan_directory": {
     "baseline_code_structure_hash": "3b0f067acc3a6fe7100ea28422fc50b1a1ba0a66a0885ad4369ddf472e26d545",
     "baseline_yaml_content_hash": "593d3b2f4e48671c1f22b87462de4a7c73ba7a3bfbf72cf8350b46f99237e53a"
@@ -25,9 +22,6 @@
   "FileSystemLoader._scan_root": {
     "baseline_code_structure_hash": "735a582d4e704c11917ed95e407f03143b914c2ad8aa0004fb2d90c2531de350",
     "baseline_yaml_content_hash": "95d49c1a1c2226c71e28a41cdb1301337146489c28a21a93b02191350e595a4d"
-  },
-  "FileSystemLoader.add_root": {
-    "baseline_yaml_content_hash": null
   },
   "FileSystemLoader.fetch": {
     "baseline_code_structure_hash": "8eb66675c2ff112d06f4d23e055eff3c573a72b5ad3aa7a116b4421ab61908c2"

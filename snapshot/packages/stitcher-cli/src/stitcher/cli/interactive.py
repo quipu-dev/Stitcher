@@ -6,12 +6,14 @@ from stitcher.app.protocols import InteractionContext
 import typer
 import click
 
+
 @dataclass
 class SemanticMenuOption:
     key: str
     action: Union[ResolutionAction, str]  # str allowed for "UNDO"
     label_id: SemanticPointer
     desc_id: SemanticPointer
+
 
 class TyperInteractiveRenderer:
     def __init__(self, nexus):
@@ -31,16 +33,18 @@ class TyperInteractiveRenderer:
         current_idx: int,
         total: int,
         options: List[SemanticMenuOption],
-        default_action: Any
+        default_action: Any,
     ) -> Any:
         # Header
         header_fmt = self.nexus.get(L.interactive.header.title)
         typer.echo("\n" + ("-" * 20))
         typer.secho(
-            header_fmt.format(current=current_idx + 1, total=total, path=context.file_path),
+            header_fmt.format(
+                current=current_idx + 1, total=total, path=context.file_path
+            ),
             fg=typer.colors.CYAN,
         )
-        
+
         symbol_fmt = self.nexus.get(L.interactive.header.symbol)
         typer.secho("  " + symbol_fmt.format(fqn=context.fqn), bold=True)
 
@@ -52,7 +56,7 @@ class TyperInteractiveRenderer:
         }
         reason_l = reason_map.get(context.conflict_type)
         if reason_l:
-             typer.secho("  " + self.nexus.get(reason_l), fg=typer.colors.YELLOW)
+            typer.secho("  " + self.nexus.get(reason_l), fg=typer.colors.YELLOW)
 
         # Prompt
         typer.echo("  " + self.nexus.get(L.interactive.prompt))
@@ -69,12 +73,12 @@ class TyperInteractiveRenderer:
         # Input loop
         while True:
             char = click.getchar().lower()
-            
+
             if char == "\r" or char == "\n":
                 return default_action
-            
+
             for opt in options:
                 if char == opt.key.lower():
                     return opt.action
-            
+
             self.show_message(L.interactive.invalid_choice, color=typer.colors.RED)
