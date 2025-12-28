@@ -100,7 +100,7 @@ class FunctionDef:
             parts.append(f"-> {self.return_annotation}")
         
         parts.append(":")
-        return " ".join(parts).replace("( ", "(").replace(" )", ")")
+        return " ".join(parts).replace("( ", "(").replace(" )", ")").replace(" :", ":")
 
 
 @dataclass

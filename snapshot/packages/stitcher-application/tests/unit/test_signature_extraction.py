@@ -3,7 +3,7 @@ from stitcher.spec import Argument, ArgumentKind, FunctionDef, ModuleDef
 from stitcher.app.services import SignatureManager
 
 
-def test_extract_signature_text_simple():
+def test_extract_signature_text_simple(tmp_path):
     # Arrange
     func = FunctionDef(
         name="my_func",
@@ -24,7 +24,7 @@ def test_extract_signature_text_simple():
     )
     module = ModuleDef(file_path="src/main.py", functions=[func])
     
-    manager = SignatureManager(root_path=None) # type: ignore
+    manager = SignatureManager(root_path=tmp_path)
 
     # Act
     texts = manager.extract_signature_texts(module)
@@ -34,7 +34,7 @@ def test_extract_signature_text_simple():
     assert texts["my_func"] == expected
 
 
-def test_extract_signature_text_async():
+def test_extract_signature_text_async(tmp_path):
     # Arrange
     func = FunctionDef(
         name="run",
@@ -44,7 +44,7 @@ def test_extract_signature_text_async():
     )
     module = ModuleDef(file_path="src/main.py", functions=[func])
     
-    manager = SignatureManager(root_path=None) # type: ignore
+    manager = SignatureManager(root_path=tmp_path)
 
     # Act
     texts = manager.extract_signature_texts(module)
