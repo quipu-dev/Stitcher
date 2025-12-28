@@ -1,13 +1,16 @@
 {
   "bus": {
+    "baseline_yaml_content_hash": "9d8ffa4c49435c2db1936daf0af4c95dc2cac7f4e020f1ac2e82b5e4542cda3b",
     "code_structure_hash": null,
     "yaml_content_hash": "9d8ffa4c49435c2db1936daf0af4c95dc2cac7f4e020f1ac2e82b5e4542cda3b"
   },
   "stitcher_loader": {
+    "baseline_yaml_content_hash": "27ed94428310903ffb1be4b8f1cd3858bc7e8b9483e8f340b22b2cc647676d79",
     "code_structure_hash": null,
     "yaml_content_hash": "27ed94428310903ffb1be4b8f1cd3858bc7e8b9483e8f340b22b2cc647676d79"
   },
   "stitcher_nexus": {
+    "baseline_yaml_content_hash": "6849f68ea60055fc893301c783dbfd4a662822e87e2edcdb5cfee2c1008ef0fa",
     "code_structure_hash": null,
     "yaml_content_hash": "6849f68ea60055fc893301c783dbfd4a662822e87e2edcdb5cfee2c1008ef0fa"
   }

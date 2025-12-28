@@ -1,5 +1,6 @@
 {
   "PatchedMessageBus": {
+    "baseline_yaml_content_hash": "3f18d8ca72587b47c70e851fc6fdee991d672f3ae3cb1179ce7c888ad18db587",
     "code_structure_hash": null,
     "yaml_content_hash": "3f18d8ca72587b47c70e851fc6fdee991d672f3ae3cb1179ce7c888ad18db587"
   },
@@ -8,6 +9,7 @@
     "yaml_content_hash": null
   },
   "SpyBus": {
+    "baseline_yaml_content_hash": "9712bad7601f0f71e4909ff18f4bbfe8426d881f75d6707281859fd20ee3c7dd",
     "code_structure_hash": null,
     "yaml_content_hash": "9712bad7601f0f71e4909ff18f4bbfe8426d881f75d6707281859fd20ee3c7dd"
   },
@@ -28,6 +30,7 @@
     "yaml_content_hash": "323bc7e08fdffaee396d8256f3728199deaeb7660dfef93a36185d49666c933b"
   },
   "SpyRenderer": {
+    "baseline_yaml_content_hash": "9080916eac10c5f5a84436850d5ccf6f51a612746134c90f041cc11e89d1962b",
     "code_structure_hash": null,
     "yaml_content_hash": "9080916eac10c5f5a84436850d5ccf6f51a612746134c90f041cc11e89d1962b"
   },

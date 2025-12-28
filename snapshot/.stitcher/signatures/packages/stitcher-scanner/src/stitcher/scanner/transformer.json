@@ -1,9 +1,11 @@
 {
   "HasBody": {
+    "baseline_yaml_content_hash": "d23bc5f0bf82ff5e2061d7443b6bc57c30e06cde2099c98d448c94c11127344d",
     "code_structure_hash": null,
     "yaml_content_hash": "d23bc5f0bf82ff5e2061d7443b6bc57c30e06cde2099c98d448c94c11127344d"
   },
   "InjectorTransformer": {
+    "baseline_yaml_content_hash": "ffbe649e81c7b2ddb0d9c38b191c20cb4ef0625937c294e52e7d67d5e1c79ac0",
     "code_structure_hash": null,
     "yaml_content_hash": "ffbe649e81c7b2ddb0d9c38b191c20cb4ef0625937c294e52e7d67d5e1c79ac0"
   },
@@ -44,6 +46,7 @@
     "yaml_content_hash": "06013b0d4107140db0cbd9ee31b169f84c64f98ca1410775b39cbb587d7e5227"
   },
   "StripperTransformer": {
+    "baseline_yaml_content_hash": "61ae99c6d49a6ed203beb4f842e978ac1c20fe1595e781405ab0a1e2f7e42f3e",
     "code_structure_hash": null,
     "yaml_content_hash": "61ae99c6d49a6ed203beb4f842e978ac1c20fe1595e781405ab0a1e2f7e42f3e"
   },

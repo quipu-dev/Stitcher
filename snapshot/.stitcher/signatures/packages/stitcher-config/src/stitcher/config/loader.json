@@ -1,25 +1,31 @@
 {
   "StitcherConfig": {
+    "baseline_yaml_content_hash": "4667409b8c9a106a8a5bf30fcd5d8e7f4812479c2c3a69eb254ce7bbf08860f8",
     "code_structure_hash": null,
     "yaml_content_hash": "4667409b8c9a106a8a5bf30fcd5d8e7f4812479c2c3a69eb254ce7bbf08860f8"
   },
   "StitcherConfig.name": {
+    "baseline_yaml_content_hash": "93e26636fdee252bb829fe6410bbe2b975439af7879dd1020ea1d37834012266",
     "code_structure_hash": null,
     "yaml_content_hash": "93e26636fdee252bb829fe6410bbe2b975439af7879dd1020ea1d37834012266"
   },
   "StitcherConfig.plugins": {
+    "baseline_yaml_content_hash": "be693b4a31b278fc7529c078301c037953b043ec03dd8aa90600158f204738c4",
     "code_structure_hash": null,
     "yaml_content_hash": "be693b4a31b278fc7529c078301c037953b043ec03dd8aa90600158f204738c4"
   },
   "StitcherConfig.scan_paths": {
+    "baseline_yaml_content_hash": "914c962fcbd7fa18fbc2f2d4ec7eb45ebdce8e6dc00cec4a22eff218fbb33001",
     "code_structure_hash": null,
     "yaml_content_hash": "914c962fcbd7fa18fbc2f2d4ec7eb45ebdce8e6dc00cec4a22eff218fbb33001"
   },
   "StitcherConfig.stub_package": {
+    "baseline_yaml_content_hash": "0e1b2d899c65844a189a0f64ba209b0b789f6b64d1750aee52d28de1861d5fa3",
     "code_structure_hash": null,
     "yaml_content_hash": "0e1b2d899c65844a189a0f64ba209b0b789f6b64d1750aee52d28de1861d5fa3"
   },
   "StitcherConfig.stub_path": {
+    "baseline_yaml_content_hash": "d8a5c531132399b230551bf32b8e37f8c51927c421df2dc304c4e564f281b016",
     "code_structure_hash": null,
     "yaml_content_hash": "d8a5c531132399b230551bf32b8e37f8c51927c421df2dc304c4e564f281b016"
   },

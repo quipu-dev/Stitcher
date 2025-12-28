@@ -1,113 +1,141 @@
 {
   "Argument": {
+    "baseline_yaml_content_hash": "2096b760b61500d1e865462ee2ac9a55abc4bbec6caea21751abb02bc9c0d198",
     "code_structure_hash": null,
     "yaml_content_hash": "2096b760b61500d1e865462ee2ac9a55abc4bbec6caea21751abb02bc9c0d198"
   },
   "Argument.annotation": {
+    "baseline_yaml_content_hash": "1e3d70d41950e1403646abcd31611d05c379b2a6933d9cdc47b2614fe0581178",
     "code_structure_hash": null,
     "yaml_content_hash": "1e3d70d41950e1403646abcd31611d05c379b2a6933d9cdc47b2614fe0581178"
   },
   "Argument.default": {
+    "baseline_yaml_content_hash": "339ac78f39922250777361d4902bba6b59d9b1929fb457810a30e35fe2fb37a0",
     "code_structure_hash": null,
     "yaml_content_hash": "339ac78f39922250777361d4902bba6b59d9b1929fb457810a30e35fe2fb37a0"
   },
   "Argument.kind": {
+    "baseline_yaml_content_hash": "d87f170ee4c4c9ea8e398da8c4aa8d04295ea643e720270398a8d2c3e4e5cee3",
     "code_structure_hash": null,
     "yaml_content_hash": "d87f170ee4c4c9ea8e398da8c4aa8d04295ea643e720270398a8d2c3e4e5cee3"
   },
   "Argument.name": {
+    "baseline_yaml_content_hash": "e2b117ba91a6481de4f9b9e8c0bc531b36661f3fbb7fa42db1a5c540f1e352bf",
     "code_structure_hash": null,
     "yaml_content_hash": "e2b117ba91a6481de4f9b9e8c0bc531b36661f3fbb7fa42db1a5c540f1e352bf"
   },
   "ArgumentKind": {
+    "baseline_yaml_content_hash": "8e3c1bfc03b1a9550007cc6092f04a4caa2cbf8c535de2d7d89da8b721675a31",
     "code_structure_hash": null,
     "yaml_content_hash": "8e3c1bfc03b1a9550007cc6092f04a4caa2cbf8c535de2d7d89da8b721675a31"
   },
   "ArgumentKind.KEYWORD_ONLY": {
+    "baseline_yaml_content_hash": "cc185150002aacfec51af563dea9ab4554d49bd08843a1ae0515f771c78df9e3",
     "code_structure_hash": null,
     "yaml_content_hash": "cc185150002aacfec51af563dea9ab4554d49bd08843a1ae0515f771c78df9e3"
   },
   "ArgumentKind.POSITIONAL_ONLY": {
+    "baseline_yaml_content_hash": "6204746ee020f1b6f5fa8ad9d8b1e0ee6a13814b41903fc60f84392d8bc148de",
     "code_structure_hash": null,
     "yaml_content_hash": "6204746ee020f1b6f5fa8ad9d8b1e0ee6a13814b41903fc60f84392d8bc148de"
   },
   "ArgumentKind.POSITIONAL_OR_KEYWORD": {
+    "baseline_yaml_content_hash": "c9456877fff94885b9a9c8f1e3c5f2a9a2ca70ed7ae512e70f4adad51c9ba3a1",
     "code_structure_hash": null,
     "yaml_content_hash": "c9456877fff94885b9a9c8f1e3c5f2a9a2ca70ed7ae512e70f4adad51c9ba3a1"
   },
   "ArgumentKind.VAR_KEYWORD": {
+    "baseline_yaml_content_hash": "e0ccb186deeb77855fd312d4d79a0a4324e64cbb26c13f0e166fe284b711eb56",
     "code_structure_hash": null,
     "yaml_content_hash": "e0ccb186deeb77855fd312d4d79a0a4324e64cbb26c13f0e166fe284b711eb56"
   },
   "ArgumentKind.VAR_POSITIONAL": {
+    "baseline_yaml_content_hash": "e5372f46d57383eb1408e929d55a8174e865ccf183b27069841621d8e150568a",
     "code_structure_hash": null,
     "yaml_content_hash": "e5372f46d57383eb1408e929d55a8174e865ccf183b27069841621d8e150568a"
   },
   "Attribute": {
+    "baseline_yaml_content_hash": "71d4c4ba631412a1e0d9fa5efd09679c5f2447a18ec4eb650fe19da2875141ad",
     "code_structure_hash": null,
     "yaml_content_hash": "71d4c4ba631412a1e0d9fa5efd09679c5f2447a18ec4eb650fe19da2875141ad"
   },
   "Attribute.annotation": {
+    "baseline_yaml_content_hash": "d587f927611d8ac4dd1289bd738dd7ed05dfaaa44da3f3e6559a82a458d70d1b",
     "code_structure_hash": null,
     "yaml_content_hash": "d587f927611d8ac4dd1289bd738dd7ed05dfaaa44da3f3e6559a82a458d70d1b"
   },
   "Attribute.docstring": {
+    "baseline_yaml_content_hash": "5001ff4f18441ccc1cf3e72a1e46762392dfed14b60977cfbb1604f649b5daa3",
     "code_structure_hash": null,
     "yaml_content_hash": "5001ff4f18441ccc1cf3e72a1e46762392dfed14b60977cfbb1604f649b5daa3"
   },
   "Attribute.name": {
+    "baseline_yaml_content_hash": "dbcf97c4a4a016d98595663cd64cbfa15906e8a56a51550094231a010e44383f",
     "code_structure_hash": null,
     "yaml_content_hash": "dbcf97c4a4a016d98595663cd64cbfa15906e8a56a51550094231a010e44383f"
   },
   "Attribute.value": {
+    "baseline_yaml_content_hash": "4f52f76341d42b59b53c6a24ce4ca56d721c50847a5e785134f830cb657bce90",
     "code_structure_hash": null,
     "yaml_content_hash": "4f52f76341d42b59b53c6a24ce4ca56d721c50847a5e785134f830cb657bce90"
   },
   "ClassDef": {
+    "baseline_yaml_content_hash": "b9f57ce803b21cd56365bfa515bf6cbda2ec3e52ae16c2aa7c05c64e83dd044c",
     "code_structure_hash": null,
     "yaml_content_hash": "b9f57ce803b21cd56365bfa515bf6cbda2ec3e52ae16c2aa7c05c64e83dd044c"
   },
   "ClassDef.attributes": {
+    "baseline_yaml_content_hash": "fbee5dcf81c502493e38ed8afe0cfeba9210021619a4b330dedafcb334627b5a",
     "code_structure_hash": null,
     "yaml_content_hash": "fbee5dcf81c502493e38ed8afe0cfeba9210021619a4b330dedafcb334627b5a"
   },
   "ClassDef.bases": {
+    "baseline_yaml_content_hash": "07b7ad1379c2acfe349865251c4a370d7a7a17f2f95a3a70077f388d57109804",
     "code_structure_hash": null,
     "yaml_content_hash": "07b7ad1379c2acfe349865251c4a370d7a7a17f2f95a3a70077f388d57109804"
   },
   "ClassDef.decorators": {
+    "baseline_yaml_content_hash": "5a06c3a20fac9158eac3080264b6d72275d30419c7fd3c3b808cc19cef96ea08",
     "code_structure_hash": null,
     "yaml_content_hash": "5a06c3a20fac9158eac3080264b6d72275d30419c7fd3c3b808cc19cef96ea08"
   },
   "ClassDef.docstring": {
+    "baseline_yaml_content_hash": "00edb6e4924ebecf4341c3e4287b6c255338b101dbe0945f80cc7be8862e4364",
     "code_structure_hash": null,
     "yaml_content_hash": "00edb6e4924ebecf4341c3e4287b6c255338b101dbe0945f80cc7be8862e4364"
   },
   "ClassDef.methods": {
+    "baseline_yaml_content_hash": "65e1c7eb0a72c6985c0b56cf99e9dd37d5390a61cead3b5af39d06abbed32bdc",
     "code_structure_hash": null,
     "yaml_content_hash": "65e1c7eb0a72c6985c0b56cf99e9dd37d5390a61cead3b5af39d06abbed32bdc"
   },
   "ClassDef.name": {
+    "baseline_yaml_content_hash": "1f6f4002d135b5decc7ef864b10cc2ece5c8f182631bcd6cebc24f3e875f465d",
     "code_structure_hash": null,
     "yaml_content_hash": "1f6f4002d135b5decc7ef864b10cc2ece5c8f182631bcd6cebc24f3e875f465d"
   },
   "ConflictType": {
+    "baseline_yaml_content_hash": "a4671b4aa4899c85018a7edcb52f45e56ef4e81ac0e157285d854deff6b531a5",
     "code_structure_hash": null,
     "yaml_content_hash": "a4671b4aa4899c85018a7edcb52f45e56ef4e81ac0e157285d854deff6b531a5"
   },
   "ConflictType.CO_EVOLUTION": {
+    "baseline_yaml_content_hash": "23bf32f872edc3baf4fffa3e99d1f9309193a34ab870ddc6b0423b699336d50b",
     "code_structure_hash": null,
     "yaml_content_hash": "23bf32f872edc3baf4fffa3e99d1f9309193a34ab870ddc6b0423b699336d50b"
   },
   "ConflictType.SIGNATURE_DRIFT": {
+    "baseline_yaml_content_hash": "b72e4cf26a319796af6aa0aaa9c6bb8a64e12056d4ddf3039650eee2afd1d860",
     "code_structure_hash": null,
     "yaml_content_hash": "b72e4cf26a319796af6aa0aaa9c6bb8a64e12056d4ddf3039650eee2afd1d860"
   },
   "FunctionDef": {
+    "baseline_yaml_content_hash": "f5cc1f1b62b8e0ba6e18e60c8d1c120c58a03c8f60edf0a9f792f7d71bb3e4b0",
     "code_structure_hash": null,
     "yaml_content_hash": "f5cc1f1b62b8e0ba6e18e60c8d1c120c58a03c8f60edf0a9f792f7d71bb3e4b0"
   },
   "FunctionDef.args": {
+    "baseline_yaml_content_hash": "a86cc24a1403803dbf13f01a5404687a2e150fcda695dce993d6ed0c35fabf2d",
     "code_structure_hash": null,
     "yaml_content_hash": "a86cc24a1403803dbf13f01a5404687a2e150fcda695dce993d6ed0c35fabf2d"
   },
@@ -116,58 +144,72 @@
     "yaml_content_hash": "a54b1c8926ea1cc7343ce98625bfd92301ed5de6f836e25b050d13ae4dc95133"
   },
   "FunctionDef.decorators": {
+    "baseline_yaml_content_hash": "17f289bcac22ce9a2eb638bd6dcb2f36d24df59a4dbd8ea0e68b15c71f304f70",
     "code_structure_hash": null,
     "yaml_content_hash": "17f289bcac22ce9a2eb638bd6dcb2f36d24df59a4dbd8ea0e68b15c71f304f70"
   },
   "FunctionDef.docstring": {
+    "baseline_yaml_content_hash": "532766530fa64e27afa8d76bfd767d524e94cd3156060de9698d676645562eb0",
     "code_structure_hash": null,
     "yaml_content_hash": "532766530fa64e27afa8d76bfd767d524e94cd3156060de9698d676645562eb0"
   },
   "FunctionDef.is_async": {
+    "baseline_yaml_content_hash": "f89efbf7d8cc3804134869a90435348d77cf6add0c2dcdcfa457cedaae55cfce",
     "code_structure_hash": null,
     "yaml_content_hash": "f89efbf7d8cc3804134869a90435348d77cf6add0c2dcdcfa457cedaae55cfce"
   },
   "FunctionDef.is_class": {
+    "baseline_yaml_content_hash": "fb1a5c20f894ffd4312c5331aa3511689a4a77d93dc0b6e3924250d81e90f821",
     "code_structure_hash": null,
     "yaml_content_hash": "fb1a5c20f894ffd4312c5331aa3511689a4a77d93dc0b6e3924250d81e90f821"
   },
   "FunctionDef.is_static": {
+    "baseline_yaml_content_hash": "7f38ca254fc1c755dd52f81f69849eacdf107f8eefd463059bcea2385dd7d89f",
     "code_structure_hash": null,
     "yaml_content_hash": "7f38ca254fc1c755dd52f81f69849eacdf107f8eefd463059bcea2385dd7d89f"
   },
   "FunctionDef.name": {
+    "baseline_yaml_content_hash": "01c3b9dfd65649fafd25eb388ab77e199b51c6333d40594d624cf6e61584f59d",
     "code_structure_hash": null,
     "yaml_content_hash": "01c3b9dfd65649fafd25eb388ab77e199b51c6333d40594d624cf6e61584f59d"
   },
   "FunctionDef.return_annotation": {
+    "baseline_yaml_content_hash": "5ef37bea3eb55f1ef1cd6a6cb04534f8209ea090cd72a32529006ca3bcd5b916",
     "code_structure_hash": null,
     "yaml_content_hash": "5ef37bea3eb55f1ef1cd6a6cb04534f8209ea090cd72a32529006ca3bcd5b916"
   },
   "ModuleDef": {
+    "baseline_yaml_content_hash": "7b44cb86cdeed96153de0246a375ccb4eace928620bac59c14c99d3bcc5c0f7d",
     "code_structure_hash": null,
     "yaml_content_hash": "7b44cb86cdeed96153de0246a375ccb4eace928620bac59c14c99d3bcc5c0f7d"
   },
   "ModuleDef.attributes": {
+    "baseline_yaml_content_hash": "bf32bae54af07010a306989718ed573d92561f97307944472c2d314b5125c178",
     "code_structure_hash": null,
     "yaml_content_hash": "bf32bae54af07010a306989718ed573d92561f97307944472c2d314b5125c178"
   },
   "ModuleDef.classes": {
+    "baseline_yaml_content_hash": "f945fa0f0c60f4aff887949c3e244dd006db15369681b5166af212da6a65a035",
     "code_structure_hash": null,
     "yaml_content_hash": "f945fa0f0c60f4aff887949c3e244dd006db15369681b5166af212da6a65a035"
   },
   "ModuleDef.docstring": {
+    "baseline_yaml_content_hash": "5c6aae510b59fca91de8e1d4784dc24bd9d93a44f409e9f4994f86b8a8452a28",
     "code_structure_hash": null,
     "yaml_content_hash": "5c6aae510b59fca91de8e1d4784dc24bd9d93a44f409e9f4994f86b8a8452a28"
   },
   "ModuleDef.dunder_all": {
+    "baseline_yaml_content_hash": "abba6c9371744cccb21f7479869e904b9f5df23cfb0d913fa1b27417f2d84dc7",
     "code_structure_hash": null,
     "yaml_content_hash": "abba6c9371744cccb21f7479869e904b9f5df23cfb0d913fa1b27417f2d84dc7"
   },
   "ModuleDef.file_path": {
+    "baseline_yaml_content_hash": "a95d8e77b54b77f464404def7ad8ba45c74cff3c4422f99e4f1869b92a02a603",
     "code_structure_hash": null,
     "yaml_content_hash": "a95d8e77b54b77f464404def7ad8ba45c74cff3c4422f99e4f1869b92a02a603"
   },
   "ModuleDef.functions": {
+    "baseline_yaml_content_hash": "e4c9900c6832a69fd54881207da0c083e0ff685ed37d839311a28d2024acb4c4",
     "code_structure_hash": null,
     "yaml_content_hash": "e4c9900c6832a69fd54881207da0c083e0ff685ed37d839311a28d2024acb4c4"
   },
@@ -176,6 +218,7 @@
     "yaml_content_hash": "eab22c083d7be6a96b112664c09171b1db9dbcb8a36f2e8f3f6341b6d9fe09c9"
   },
   "ModuleDef.imports": {
+    "baseline_yaml_content_hash": "ea18f715854140f37f02682d5afc16f9f4ed62f82bfc0fde9d32d3866fd2c105",
     "code_structure_hash": null,
     "yaml_content_hash": "ea18f715854140f37f02682d5afc16f9f4ed62f82bfc0fde9d32d3866fd2c105"
   },
@@ -184,46 +227,57 @@
     "yaml_content_hash": "94066c283328e1833f58566531dab3f579f45e6540b5c7485d9ebb41a342fd81"
   },
   "Resolution": {
+    "baseline_yaml_content_hash": "bbfc93e8de4a20f3396fa1d074330b20507a9d08ff60dcf87b3c4288e10e8a5c",
     "code_structure_hash": null,
     "yaml_content_hash": "bbfc93e8de4a20f3396fa1d074330b20507a9d08ff60dcf87b3c4288e10e8a5c"
   },
   "Resolution.action": {
+    "baseline_yaml_content_hash": "744a677ce56ee02526025cc008adb5cd260e84a1202b418800c99fb56957d7cf",
     "code_structure_hash": null,
     "yaml_content_hash": "744a677ce56ee02526025cc008adb5cd260e84a1202b418800c99fb56957d7cf"
   },
   "Resolution.conflict_type": {
+    "baseline_yaml_content_hash": "1420df44bcaa0813b7c0c148fd49c859c81f53d4cfba2a488de9c7425661d333",
     "code_structure_hash": null,
     "yaml_content_hash": "1420df44bcaa0813b7c0c148fd49c859c81f53d4cfba2a488de9c7425661d333"
   },
   "Resolution.fqn": {
+    "baseline_yaml_content_hash": "b5135982635f1456f39b4dbbfec19299ac472b17840fb2ea4458906de4a64ebb",
     "code_structure_hash": null,
     "yaml_content_hash": "b5135982635f1456f39b4dbbfec19299ac472b17840fb2ea4458906de4a64ebb"
   },
   "ResolutionAction": {
+    "baseline_yaml_content_hash": "cb970d213f299e867fa79009e3e0b8735dc4a383bc92a80b50f2d752221383c4",
     "code_structure_hash": null,
     "yaml_content_hash": "cb970d213f299e867fa79009e3e0b8735dc4a383bc92a80b50f2d752221383c4"
   },
   "ResolutionAction.ABORT": {
+    "baseline_yaml_content_hash": "724f081b160160e9f3c3704b19f0ebc4b8d2db7d61a0cfbf4b290f9a25b7b1c5",
     "code_structure_hash": null,
     "yaml_content_hash": "724f081b160160e9f3c3704b19f0ebc4b8d2db7d61a0cfbf4b290f9a25b7b1c5"
   },
   "ResolutionAction.RECONCILE": {
+    "baseline_yaml_content_hash": "10020f30c8c0f299b0011c5e30c761fab35b7d048ec5484e755b4877b881565a",
     "code_structure_hash": null,
     "yaml_content_hash": "10020f30c8c0f299b0011c5e30c761fab35b7d048ec5484e755b4877b881565a"
   },
   "ResolutionAction.RELINK": {
+    "baseline_yaml_content_hash": "0c372c656a0eb0e2e8f700c4d57a9b74a0387a42946a37e0e665a1e251ebe2fb",
     "code_structure_hash": null,
     "yaml_content_hash": "0c372c656a0eb0e2e8f700c4d57a9b74a0387a42946a37e0e665a1e251ebe2fb"
   },
   "ResolutionAction.SKIP": {
+    "baseline_yaml_content_hash": "6e331d67cb3def20049f831d1b41f62d9c23f6383b43309c72516db51afa2e54",
     "code_structure_hash": null,
     "yaml_content_hash": "6e331d67cb3def20049f831d1b41f62d9c23f6383b43309c72516db51afa2e54"
   },
   "ResolutionPlan": {
+    "baseline_yaml_content_hash": "47da729513f045248fc20c72be274d93ac4997e4e6d99ba60675107572681798",
     "code_structure_hash": null,
     "yaml_content_hash": "47da729513f045248fc20c72be274d93ac4997e4e6d99ba60675107572681798"
   },
   "ResolutionPlan.resolutions": {
+    "baseline_yaml_content_hash": "1d4214565c02231907947de3c09b5d885ce9d8d74c12263509f0250d80196926",
     "code_structure_hash": null,
     "yaml_content_hash": "1d4214565c02231907947de3c09b5d885ce9d8d74c12263509f0250d80196926"
   }

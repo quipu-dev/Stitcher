@@ -1,5 +1,6 @@
 {
   "app": {
+    "baseline_yaml_content_hash": "1ff2e6cb63be8e6252a02fec4266d0aecd50953e9a9827d4495d4e417f5b0fc8",
     "code_structure_hash": null,
     "yaml_content_hash": "1ff2e6cb63be8e6252a02fec4266d0aecd50953e9a9827d4495d4e417f5b0fc8"
   },
@@ -8,6 +9,7 @@
     "yaml_content_hash": "e06eb864dd6d2b3b54aca37d557d70cb4b98daa0229bca10ed1112908ae04350"
   },
   "cli_renderer": {
+    "baseline_yaml_content_hash": "babb2eb1141dcfc90dbb2c20d84ad7f4872318e92d8d3016449a1a30505233a5",
     "code_structure_hash": null,
     "yaml_content_hash": "babb2eb1141dcfc90dbb2c20d84ad7f4872318e92d8d3016449a1a30505233a5"
   },
