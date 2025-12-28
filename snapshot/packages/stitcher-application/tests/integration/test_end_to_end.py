@@ -1,6 +1,6 @@
 import sys
 
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.config import StitcherConfig
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
@@ -17,7 +17,7 @@ def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
             """,
     ).build()
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
@@ -59,7 +59,7 @@ def test_app_run_from_config_with_source_files(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
@@ -107,7 +107,7 @@ stub_path = "typings/pkg_b"
         encoding="utf-8",
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # 2. Act
@@ -162,7 +162,7 @@ def test_app_generates_stubs_for_plugins_and_sources(tmp_path, monkeypatch):
     sys.path.insert(0, str(project_root))
 
     try:
-        app = StitcherApp(root_path=project_root)
+        app = create_test_app(root_path=project_root)
         spy_bus = SpyBus()
 
         # 2. Act

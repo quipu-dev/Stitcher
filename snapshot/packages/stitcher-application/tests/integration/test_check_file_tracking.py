@@ -1,4 +1,4 @@
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
@@ -26,7 +26,7 @@ def test_check_reports_untracked_with_details(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # 2. Act
@@ -65,7 +65,7 @@ def test_check_reports_simple_untracked_if_all_docs_present(tmp_path, monkeypatc
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
@@ -93,7 +93,7 @@ def test_check_is_silent_for_empty_untracked_file(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # 2. Act
@@ -126,7 +126,7 @@ def test_check_is_silent_for_boilerplate_untracked_file(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # 2. Act

@@ -1,5 +1,5 @@
 import yaml
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
@@ -14,7 +14,7 @@ def test_pump_adds_new_docs_to_yaml(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # Act
@@ -44,7 +44,7 @@ def test_pump_fails_on_conflict(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # Act
@@ -74,7 +74,7 @@ def test_pump_force_overwrites_conflict(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # Act
@@ -103,7 +103,7 @@ def test_pump_with_strip_removes_source_doc(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # Act
@@ -132,7 +132,7 @@ def test_pump_reconcile_ignores_source_conflict(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # Act

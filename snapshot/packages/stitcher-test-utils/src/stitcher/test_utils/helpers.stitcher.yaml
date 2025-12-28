@@ -1,3 +1,6 @@
+"create_test_app": |-
+  Factory function to create a fully assembled StitcherApp for testing purposes.
+  Automatically injects Python language adapters.
 "get_stored_hashes": |-
   Test helper to load the composite hashes for a given source file from the
   .stitcher/signatures directory.

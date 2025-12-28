@@ -1,5 +1,5 @@
 from typing import List
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.spec import ResolutionAction, ConflictType
 from stitcher.test_utils import WorkspaceFactory, SpyBus
@@ -32,7 +32,7 @@ def test_check_generates_signature_diff(tmp_path, monkeypatch):
     )
 
     # Run init to save baseline signature and TEXT
-    app_init = StitcherApp(root_path=project_root)
+    app_init = create_test_app(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app_init.run_init()
 
@@ -41,7 +41,7 @@ def test_check_generates_signature_diff(tmp_path, monkeypatch):
 
     # 3. Run check with capturing handler
     handler = CapturingHandler()
-    app_check = StitcherApp(root_path=project_root, interaction_handler=handler)
+    app_check = create_test_app(root_path=project_root, interaction_handler=handler)
 
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app_check.run_check()
@@ -76,7 +76,7 @@ def test_pump_generates_doc_diff(tmp_path, monkeypatch):
 
     # 2. Run pump with capturing handler
     handler = CapturingHandler()
-    app_pump = StitcherApp(root_path=project_root, interaction_handler=handler)
+    app_pump = create_test_app(root_path=project_root, interaction_handler=handler)
 
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app_pump.run_pump()

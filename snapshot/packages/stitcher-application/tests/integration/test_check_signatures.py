@@ -1,5 +1,5 @@
 from textwrap import dedent
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
@@ -27,7 +27,7 @@ def test_check_detects_signature_change(tmp_path, monkeypatch):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
 
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
@@ -62,7 +62,7 @@ def test_generate_does_not_update_signatures(tmp_path, monkeypatch):
         .with_docs("src/main.stitcher.yaml", {"func": "doc"})
         .build()
     )
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
 
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
@@ -90,7 +90,7 @@ def test_check_with_force_relink_reconciles_changes(tmp_path, monkeypatch):
         .with_source("src/main.py", 'def func(a: int):\n    """Doc."""\n    ...')
         .build()
     )
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app.run_init()
 

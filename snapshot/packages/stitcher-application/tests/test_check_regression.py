@@ -1,6 +1,6 @@
 from textwrap import dedent
 from pathlib import Path
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.test_utils import WorkspaceFactory, SpyBus, get_stored_hashes
 from needle.pointer import L
 
@@ -52,7 +52,7 @@ def func():
     )
 
     # 2. Initialize signatures (Run init)
-    app = StitcherApp(tmp_path)
+    app = create_test_app(tmp_path)
     app.run_init()
 
     # Verify init happened

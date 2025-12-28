@@ -1,6 +1,6 @@
 import pytest
 from typing import List
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.spec import ResolutionAction
 from stitcher.test_utils import WorkspaceFactory, SpyBus
@@ -43,7 +43,7 @@ def test_pump_interactive_overwrite(conflicting_workspace, monkeypatch):
     """
     # 1. Arrange: Inject a handler that simulates choosing 'Force-hydrate'
     handler = MockResolutionHandler([ResolutionAction.HYDRATE_OVERWRITE])
-    app = StitcherApp(root_path=conflicting_workspace, interaction_handler=handler)
+    app = create_test_app(root_path=conflicting_workspace, interaction_handler=handler)
     spy_bus = SpyBus()
 
     # 2. Act
@@ -70,7 +70,7 @@ def test_pump_interactive_reconcile(conflicting_workspace, monkeypatch):
     """
     # 1. Arrange: Inject a handler that simulates choosing 'Reconcile'
     handler = MockResolutionHandler([ResolutionAction.HYDRATE_KEEP_EXISTING])
-    app = StitcherApp(root_path=conflicting_workspace, interaction_handler=handler)
+    app = create_test_app(root_path=conflicting_workspace, interaction_handler=handler)
     spy_bus = SpyBus()
 
     # 2. Act
@@ -96,7 +96,7 @@ def test_pump_interactive_skip_leads_to_failure(conflicting_workspace, monkeypat
     """
     # 1. Arrange: Inject a handler that simulates choosing 'Skip'
     handler = MockResolutionHandler([ResolutionAction.SKIP])
-    app = StitcherApp(root_path=conflicting_workspace, interaction_handler=handler)
+    app = create_test_app(root_path=conflicting_workspace, interaction_handler=handler)
     spy_bus = SpyBus()
 
     # 2. Act
@@ -120,7 +120,7 @@ def test_pump_interactive_abort_stops_process(conflicting_workspace, monkeypatch
     """
     # 1. Arrange: Inject a handler that simulates choosing 'Abort'
     handler = MockResolutionHandler([ResolutionAction.ABORT])
-    app = StitcherApp(root_path=conflicting_workspace, interaction_handler=handler)
+    app = create_test_app(root_path=conflicting_workspace, interaction_handler=handler)
     spy_bus = SpyBus()
 
     # 2. Act

@@ -1,5 +1,5 @@
 from typing import List
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.spec import ResolutionAction
 from stitcher.test_utils import WorkspaceFactory, SpyBus, get_stored_hashes
@@ -46,7 +46,7 @@ def func_b(x: int):
         .build()
     )
 
-    app_for_init = StitcherApp(root_path=project_root)
+    app_for_init = create_test_app(root_path=project_root)
     with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
         app_for_init.run_init()
 
@@ -65,7 +65,7 @@ def func_b(x: str): # int -> str
 
     # 3. Define Interactive Decision and inject Handler
     handler = MockResolutionHandler([ResolutionAction.RELINK])
-    app = StitcherApp(root_path=project_root, interaction_handler=handler)
+    app = create_test_app(root_path=project_root, interaction_handler=handler)
 
     # 4. Run Check
     spy_bus = SpyBus()

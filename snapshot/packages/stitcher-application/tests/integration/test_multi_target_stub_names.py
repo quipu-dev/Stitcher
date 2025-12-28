@@ -5,7 +5,7 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.test_utils import WorkspaceFactory
 
 
@@ -42,7 +42,7 @@ stub_package = "stubs-b"
         encoding="utf-8",
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
 
     # 2. Act
     app.run_from_config()

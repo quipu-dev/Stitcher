@@ -1,105 +1,86 @@
-## [WIP] refactor: 更新 Stitcher CLI 工厂和测试以适配依赖注入
+## [WIP] refactor: 使用测试工厂方法重构测试套件
 
 ### 用户需求
-由于 `StitcherApp` 的构造函数签名已变更，现在需要更新 `stitcher-cli` 中的 `make_app` 工厂函数，以及 `stitcher-test-utils` 中的相关工具，以确保它们正确地实例化并注入 Python 语言适配器。
+为了适配 `StitcherApp` 新的依赖注入构造函数，需要创建一个测试工厂方法 `create_test_app`，并批量重构所有测试用例，将直接的 `StitcherApp(...)` 实例化替换为对该工厂方法的调用。
 
 ### 评论
-这是重构的“缝合”阶段。CLI 层作为组合根（Composition Root），负责将具体的实现（Python Adapter）与核心逻辑（Application）组装在一起。同时，测试工具也需要更新，以支持新的依赖注入模式，这也为未来在测试中注入 Mock 对象铺平了道路。
+这是本次重构中最具侵入性的一步。通过引入 `create_test_app`，我们不仅修复了当前的破坏性变更，还为未来在测试中统一配置 App（例如默认注入某些 Mock）提供了中心化入口。
+为了安全高效地处理大量文件，我们将编写一个一次性的 Python 脚本来执行代码替换。
 
 ### 目标
-1.  更新 `packages/stitcher-cli/pyproject.toml`，添加对 `stitcher-python-adapter` 的依赖。
-2.  更新 `packages/stitcher-cli/src/stitcher/cli/factories.py`，在 `make_app` 中实例化 Python 适配器并注入。
-3.  更新 `packages/stitcher-test-utils` 中的相关逻辑（如果测试中有直接实例化 App 的地方），确保测试套件能通过。
+1.  更新 `stitcher-test-utils`，使其依赖 `stitcher-application` 和 `stitcher-python-adapter`。
+2.  在 `stitcher-test-utils` 中实现 `create_test_app` 工厂函数。
+3.  使用脚本批量将测试代码中的 `from stitcher.app import StitcherApp` 和 `StitcherApp(...)` 替换为新的工厂调用。
 
 ### 基本原理
-组合根模式要求我们在应用程序的入口点（这里是 CLI 工厂）构建对象图。通过在这里显式地连接 `StitcherApp` 和 `Python*` 类，我们完成了依赖注入的闭环。
+测试代码不应关心 `StitcherApp` 的复杂构造细节（如 Parser、Adapter 的装配）。工厂模式将这些细节封装起来，使得测试代码只需关注“创建一个 App 并运行”这一高层意图。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/cli #comp/tests #scope/core #ai/instruct #task/domain/architecture #task/object/composition-root #task/action/update-factories #task/state/end
+#intent/refine #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/architecture #task/object/test-suite #task/action/refactor-tests #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 CLI 依赖
-首先，CLI 需要知道 `stitcher-python-adapter` 的存在。
+#### Acts 1: 更新 stitcher-test-utils 依赖
+首先，让测试工具包能够访问应用和适配器。
 
 ~~~~~act
 patch_file
-packages/stitcher-cli/pyproject.toml
+packages/stitcher-test-utils/pyproject.toml
 ~~~~~
 ~~~~~toml.old
 dependencies = [
-    "stitcher-application",
     "pyneedle",
-    "typer",
+    "PyYAML",
+    "tomli-w",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+
+[tool.uv.sources]
+pyneedle = { workspace = true }
 ~~~~~
 ~~~~~toml.new
 dependencies = [
+    "pyneedle",
+    "PyYAML",
+    "tomli-w",
     "stitcher-application",
     "stitcher-python-adapter",
-    "pyneedle",
-    "typer",
 ]
-~~~~~
 
-~~~~~act
-patch_file
-packages/stitcher-cli/pyproject.toml
-~~~~~
-~~~~~toml.old
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+
 [tool.uv.sources]
-stitcher-application = { workspace = true }
 pyneedle = { workspace = true }
-~~~~~
-~~~~~toml.new
-[tool.uv.sources]
 stitcher-application = { workspace = true }
 stitcher-python-adapter = { workspace = true }
-pyneedle = { workspace = true }
 ~~~~~
 
-#### Acts 2: 更新 make_app 工厂
-这是核心变更。我们将在这里实例化适配器。
+#### Acts 2: 实现 create_test_app 工厂
+在 `helpers.py` 中添加工厂函数。
 
 ~~~~~act
 patch_file
-packages/stitcher-cli/src/stitcher/cli/factories.py
+packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py
 ~~~~~
 ~~~~~python.old
-from typing import Optional
-
-from stitcher.app import StitcherApp
-from stitcher.app.protocols import InteractionHandler
-from stitcher.common import stitcher_nexus as nexus
-from .handlers import TyperInteractionHandler
-from .interactive import TyperInteractiveRenderer
+import json
+from pathlib import Path
 
 
-def get_project_root() -> Path:
-    return Path.cwd()
-
-
-def make_interaction_handler(
-    non_interactive: bool = False,
-    auto_resolve_mode: bool = False,
-) -> Optional[InteractionHandler]:
-    if sys.stdin.isatty() and not non_interactive and not auto_resolve_mode:
-        renderer = TyperInteractiveRenderer(nexus)
-        return TyperInteractionHandler(renderer)
-    return None
-
-
-def make_app(handler: Optional[InteractionHandler] = None) -> StitcherApp:
-    return StitcherApp(root_path=get_project_root(), interaction_handler=handler)
+def get_stored_hashes(project_root: Path, file_path: str) -> dict:
 ~~~~~
 ~~~~~python.new
+import json
+from pathlib import Path
 from typing import Optional
 
 from stitcher.app import StitcherApp
 from stitcher.app.protocols import InteractionHandler
-from stitcher.common import stitcher_nexus as nexus
 from stitcher.adapter.python import (
     PythonParser,
     PythonTransformer,
@@ -107,59 +88,142 @@ from stitcher.adapter.python import (
     PythonFingerprintStrategy,
 )
 
-from .handlers import TyperInteractionHandler
-from .interactive import TyperInteractiveRenderer
 
-
-def get_project_root() -> Path:
-    return Path.cwd()
-
-
-def make_interaction_handler(
-    non_interactive: bool = False,
-    auto_resolve_mode: bool = False,
-) -> Optional[InteractionHandler]:
-    if sys.stdin.isatty() and not non_interactive and not auto_resolve_mode:
-        renderer = TyperInteractiveRenderer(nexus)
-        return TyperInteractionHandler(renderer)
-    return None
-
-
-def make_app(handler: Optional[InteractionHandler] = None) -> StitcherApp:
-    # Composition Root: Assemble the dependencies
-    parser = PythonParser()
-    transformer = PythonTransformer()
-    generator = PythonStubGenerator()
-    strategy = PythonFingerprintStrategy()
-
+def create_test_app(
+    root_path: Path, interaction_handler: Optional[InteractionHandler] = None
+) -> StitcherApp:
+    """
+    Factory to create a StitcherApp instance with Python adapters pre-configured for testing.
+    """
     return StitcherApp(
-        root_path=get_project_root(),
-        parser=parser,
-        transformer=transformer,
-        stub_generator=generator,
-        fingerprint_strategy=strategy,
-        interaction_handler=handler,
+        root_path=root_path,
+        parser=PythonParser(),
+        transformer=PythonTransformer(),
+        stub_generator=PythonStubGenerator(),
+        fingerprint_strategy=PythonFingerprintStrategy(),
+        interaction_handler=interaction_handler,
     )
+
+
+def get_stored_hashes(project_root: Path, file_path: str) -> dict:
 ~~~~~
 
-#### Acts 3: 检查并更新测试工具
-我们需要检查 `packages/stitcher-test-utils` 是否有直接实例化 `StitcherApp` 的代码。通常集成测试会手动构建 App。我们需要更新那里的 helper。
-目前看起来 `stitcher-test-utils` 主要是 `WorkspaceFactory` 和 `Harness`，并没有直接提供 `create_app` 的 helper。但是，具体的测试文件（位于 `tests/` 目录下）肯定会有大量的 `StitcherApp(...)` 调用。
+~~~~~act
+patch_file
+packages/stitcher-test-utils/src/stitcher/test_utils/helpers.stitcher.yaml
+~~~~~
+~~~~~yaml.old
+"get_stored_hashes": |-
+  Test helper to load the composite hashes for a given source file from the
+  .stitcher/signatures directory.
+~~~~~
+~~~~~yaml.new
+"create_test_app": |-
+  Factory function to create a fully assembled StitcherApp for testing purposes.
+  Automatically injects Python language adapters.
+"get_stored_hashes": |-
+  Test helper to load the composite hashes for a given source file from the
+  .stitcher/signatures directory.
+~~~~~
 
-由于测试代码不在 `packages/` 下，而是在 `tests/` 下，我们需要扫描并更新它们。根据之前的上下文，我们有一个 `tests/integration/conftest.py` 或者各个测试文件中可能有实例化。
+#### Acts 3: 导出工厂函数
+更新 `__init__.py`。
 
-这里我们假设需要修复的是测试用例中的调用。
+~~~~~act
+patch_file
+packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py
+~~~~~
+~~~~~python.old
+from .workspace import WorkspaceFactory
+from .harness import VenvHarness
+from .helpers import get_stored_hashes
 
-为了确保测试通过，我需要更新 `tests/conftest.py` 或者相关的测试 helper。如果没有统一的 helper，我就得逐个修复测试文件。
+__all__ = [
+    "SpyBus",
+    "MockNexus",
+    "WorkspaceFactory",
+    "VenvHarness",
+    "get_stored_hashes",
+]
+~~~~~
+~~~~~python.new
+from .workspace import WorkspaceFactory
+from .harness import VenvHarness
+from .helpers import get_stored_hashes, create_test_app
 
-让我先查看一下 `tests/` 目录结构，以确定修改范围。
+__all__ = [
+    "SpyBus",
+    "MockNexus",
+    "WorkspaceFactory",
+    "VenvHarness",
+    "get_stored_hashes",
+    "create_test_app",
+]
+~~~~~
+
+#### Acts 4: 执行批量重构脚本
+我们将编写并运行一个脚本，该脚本会遍历所有测试文件并替换导入和调用。
+该脚本通过 `find` 命令获取文件列表，然后逐个处理。
 
 ~~~~~act
 run_command
 ~~~~~
 ~~~~~
-find tests -name "*.py" | grep -v "__init__"
+cat << 'EOF' > refactor_tests.py
+import os
+import sys
+
+def process_file(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # Skip files that don't use StitcherApp
+    if "StitcherApp" not in content:
+        return
+
+    original_content = content
+    
+    # Replace import
+    # This naive replacement assumes "from stitcher.app import StitcherApp" is on its own line
+    # or at least easily replaceable.
+    content = content.replace(
+        "from stitcher.app import StitcherApp", 
+        "from stitcher.test_utils import create_test_app"
+    )
+    
+    # Replace instantiation
+    content = content.replace("StitcherApp(", "create_test_app(")
+    
+    if content != original_content:
+        print(f"Refactoring {file_path}")
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+def main():
+    # Targets: "tests" and "packages/*/tests"
+    targets = ["tests"]
+    packages_dir = "packages"
+    if os.path.exists(packages_dir):
+        for pkg in os.listdir(packages_dir):
+            pkg_tests = os.path.join(packages_dir, pkg, "tests")
+            if os.path.exists(pkg_tests):
+                targets.append(pkg_tests)
+
+    print(f"Scanning targets: {targets}")
+
+    for target in targets:
+        for root, dirs, files in os.walk(target):
+            for file in files:
+                if file.endswith(".py"):
+                    process_file(os.path.join(root, file))
+
+if __name__ == "__main__":
+    main()
+EOF
+
+python3 refactor_tests.py
+rm refactor_tests.py
 ~~~~~
 
 ### 下一步建议
-通过 `find` 命令的结果，我将能够定位所有实例化 `StitcherApp` 的位置，并在下一个 Plan 中批量更新这些测试文件，使其使用新的构造函数签名。这可能包括创建一个测试辅助函数 `create_test_app` 来减少重复代码。
+重构脚本执行完毕后，所有测试用例应该已经适配了新的工厂方法。接下来的关键步骤是运行整个测试套件，验证重构的正确性，并确保没有因为依赖注入引入新的回归问题。这之后，我们就可以安全地删除 `stitcher-scanner` 和 `stitcher-io` 中被废弃的代码（或者保留它们作为 Adapter 的底层实现，但不再被 Application 直接引用）。

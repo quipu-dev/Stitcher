@@ -6,7 +6,7 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from stitcher.test_utils import WorkspaceFactory
 
 
@@ -40,7 +40,7 @@ def test_pep561_structure_compliance(tmp_path: Path):
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
 
     # 2. Act
     app.run_from_config()

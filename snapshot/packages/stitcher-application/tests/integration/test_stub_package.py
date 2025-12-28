@@ -5,7 +5,7 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-from stitcher.app import StitcherApp
+from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
@@ -36,7 +36,7 @@ def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypa
         .build()
     )
 
-    app = StitcherApp(root_path=project_root)
+    app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
     # 2. Act
