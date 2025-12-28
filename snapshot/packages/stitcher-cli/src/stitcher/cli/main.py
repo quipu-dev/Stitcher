@@ -14,11 +14,24 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-# --- Dependency Injection at the very start ---
-# The CLI is the composition root. It decides *which* renderer to use.
-cli_renderer = CliRenderer()
-bus.set_renderer(cli_renderer)
+# --- Dependency Injection Placeholder ---
+# Renderer will be configured in the callback
 # ---------------------------------------------
+
+
+@app.callback()
+def main(
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable debug logging."
+    ),
+):
+    """
+    Stitcher CLI entry point.
+    """
+    # The CLI is the composition root. It decides *which* renderer to use.
+    # We configure it here to capture the global verbose flag.
+    cli_renderer = CliRenderer(verbose=verbose)
+    bus.set_renderer(cli_renderer)
 
 
 @app.command(help=nexus.get(L.cli.command.generate.help))
