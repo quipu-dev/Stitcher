@@ -2,37 +2,32 @@ import json
 from pathlib import Path
 from typing import Dict
 
-from stitcher.spec import ModuleDef, Fingerprint, InvalidFingerprintKeyError
+from stitcher.spec import ModuleDef, Fingerprint, InvalidFingerprintKeyError, FingerprintStrategyProtocol
 
 
 class SignatureManager:
-    def __init__(self, root_path: Path):
+    def __init__(self, root_path: Path, fingerprint_strategy: FingerprintStrategyProtocol):
         self.root_path = root_path
         self.sig_root = root_path / ".stitcher" / "signatures"
+        self.fingerprint_strategy = fingerprint_strategy
 
     def _get_sig_path(self, module: ModuleDef) -> Path:
         rel_path = Path(module.file_path)
         return self.sig_root / rel_path.with_suffix(".json")
 
-    def compute_code_structure_hashes(self, module: ModuleDef) -> Dict[str, str]:
-        hashes = {}
+    def compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
+        """
+        Computes the complete fingerprints for all entities in the module
+        using the injected strategy.
+        """
+        fingerprints: Dict[str, Fingerprint] = {}
         for func in module.functions:
-            hashes[func.name] = func.compute_fingerprint()
+            fingerprints[func.name] = self.fingerprint_strategy.compute(func)
         for cls in module.classes:
             for method in cls.methods:
                 fqn = f"{cls.name}.{method.name}"
-                hashes[fqn] = method.compute_fingerprint()
-        return hashes
-
-    def extract_signature_texts(self, module: ModuleDef) -> Dict[str, str]:
-        texts = {}
-        for func in module.functions:
-            texts[func.name] = func.get_signature_string()
-        for cls in module.classes:
-            for method in cls.methods:
-                fqn = f"{cls.name}.{method.name}"
-                texts[fqn] = method.get_signature_string()
-        return texts
+                fingerprints[fqn] = self.fingerprint_strategy.compute(method)
+        return fingerprints
 
     def save_composite_hashes(
         self, module: ModuleDef, hashes: Dict[str, Fingerprint]
