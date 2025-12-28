@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: D loaders.json, D nexus.json, D __init__.json ... and 29 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766906028.7187188, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 复现 hydrate 命令重写未更改的指纹文件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766906029.4335396, "duration_ms": 0}}
