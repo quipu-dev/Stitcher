@@ -13,7 +13,7 @@ from stitcher.scanner import (
 )
 from stitcher.io import StubGenerator
 
-from stitcher.spec import ModuleDef, ConflictType, ResolutionAction
+from stitcher.spec import ModuleDef, ConflictType, ResolutionAction, Fingerprint
 from stitcher.common import bus
 from needle.pointer import L
 from stitcher.config import load_config_from_path, StitcherConfig
@@ -244,13 +244,17 @@ class StitcherApp:
                 output_path = self.doc_manager.save_docs_for_module(module)
                 code_hashes = self.sig_manager.compute_code_structure_hashes(module)
                 yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
-                combined = {}
+
+                combined: Dict[str, Fingerprint] = {}
                 all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
                 for fqn in all_fqns:
-                    combined[fqn] = {
-                        "baseline_code_structure_hash": code_hashes.get(fqn),
-                        "baseline_yaml_content_hash": yaml_hashes.get(fqn),
-                    }
+                    fp = Fingerprint()
+                    if fqn in code_hashes:
+                        fp["baseline_code_structure_hash"] = code_hashes[fqn]
+                    if fqn in yaml_hashes:
+                        fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
+                    combined[fqn] = fp
+
                 self.sig_manager.save_composite_hashes(module, combined)
                 if output_path and output_path.name:
                     relative_path = output_path.relative_to(self.root_path)
@@ -290,9 +294,14 @@ class StitcherApp:
         for fqn in sorted(list(all_fqns)):
             code_hash = current_code_map.get(fqn)
             yaml_hash = current_yaml_map.get(fqn)
-            stored = stored_hashes_map.get(fqn, {})
-            baseline_code_hash = stored.get("baseline_code_structure_hash")
-            baseline_yaml_hash = stored.get("baseline_yaml_content_hash")
+
+            stored_fp = stored_hashes_map.get(fqn)
+            baseline_code_hash = (
+                stored_fp.get("baseline_code_structure_hash") if stored_fp else None
+            )
+            baseline_yaml_hash = (
+                stored_fp.get("baseline_yaml_content_hash") if stored_fp else None
+            )
 
             if not code_hash and baseline_code_hash:  # Extra
                 continue
@@ -346,19 +355,16 @@ class StitcherApp:
             )
 
             for fqn, action in fqn_actions:
-                if action == ResolutionAction.RELINK:
-                    if fqn in new_hashes:
-                        new_hashes[fqn]["baseline_code_structure_hash"] = (
-                            current_code_map.get(fqn)
-                        )
-                elif action == ResolutionAction.RECONCILE:
-                    if fqn in new_hashes:
-                        new_hashes[fqn]["baseline_code_structure_hash"] = (
-                            current_code_map.get(fqn)
-                        )
-                        new_hashes[fqn]["baseline_yaml_content_hash"] = (
-                            current_yaml_map.get(fqn)
-                        )
+                if fqn in new_hashes:
+                    fp = new_hashes[fqn]
+                    if action == ResolutionAction.RELINK:
+                        if fqn in current_code_map:
+                            fp["baseline_code_structure_hash"] = current_code_map[fqn]
+                    elif action == ResolutionAction.RECONCILE:
+                        if fqn in current_code_map:
+                            fp["baseline_code_structure_hash"] = current_code_map[fqn]
+                        if fqn in current_yaml_map:
+                            fp["baseline_yaml_content_hash"] = current_yaml_map[fqn]
 
             if new_hashes != stored_hashes:
                 self.sig_manager.save_composite_hashes(module_def, new_hashes)
@@ -644,13 +650,16 @@ class StitcherApp:
             code_hashes = self.sig_manager.compute_code_structure_hashes(module)
             yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
             all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
-            combined = {
-                fqn: {
-                    "baseline_code_structure_hash": code_hashes.get(fqn),
-                    "baseline_yaml_content_hash": yaml_hashes.get(fqn),
-                }
-                for fqn in all_fqns
-            }
+
+            combined: Dict[str, Fingerprint] = {}
+            for fqn in all_fqns:
+                fp = Fingerprint()
+                if fqn in code_hashes:
+                    fp["baseline_code_structure_hash"] = code_hashes[fqn]
+                if fqn in yaml_hashes:
+                    fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
+                combined[fqn] = fp
+
             self.sig_manager.save_composite_hashes(module, combined)
             files_to_strip.append(module)
 

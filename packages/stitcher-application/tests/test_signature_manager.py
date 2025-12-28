@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from stitcher.spec import ModuleDef, FunctionDef, Argument, ArgumentKind
+from stitcher.spec import ModuleDef, FunctionDef, Argument, ArgumentKind, Fingerprint
 from stitcher.app.services import SignatureManager
 
 
@@ -49,15 +49,20 @@ def test_manager_save_and_load_composite_hashes(tmp_path: Path):
     manager = SignatureManager(root_path=tmp_path)
     module = ModuleDef(file_path="src/main.py", functions=[create_func(name="foo")])
 
+    # Data is now composed of Fingerprint objects
     hashes_to_save = {
-        "foo": {
-            "baseline_code_structure_hash": "abc",
-            "baseline_yaml_content_hash": "def",
-        },
-        "bar": {
-            "baseline_code_structure_hash": "123",
-            "baseline_yaml_content_hash": None,
-        },
+        "foo": Fingerprint.from_dict(
+            {
+                "baseline_code_structure_hash": "abc",
+                "baseline_yaml_content_hash": "def",
+            }
+        ),
+        "bar": Fingerprint.from_dict(
+            {
+                "baseline_code_structure_hash": "123",
+                "baseline_yaml_content_hash": None,
+            }
+        ),
     }
 
     # Act: Save
@@ -72,7 +77,8 @@ def test_manager_save_and_load_composite_hashes(tmp_path: Path):
         assert data["foo"]["baseline_code_structure_hash"] == "abc"
         assert data["foo"]["baseline_yaml_content_hash"] == "def"
         assert data["bar"]["baseline_code_structure_hash"] == "123"
-        assert data["bar"]["baseline_yaml_content_hash"] is None
+        # Since it was None, the key should be absent in the serialized JSON
+        assert "baseline_yaml_content_hash" not in data["bar"]
 
     # Act: Load
     loaded = manager.load_composite_hashes(module)
