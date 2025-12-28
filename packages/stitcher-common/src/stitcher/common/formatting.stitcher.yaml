@@ -1,0 +1,22 @@
+"format_docstring": |-
+  Formats a clean docstring into a raw string literal for source code insertion.
+
+  This is the inverse of `parse_docstring`. It follows ruff/black style.
+
+  Args:
+      content: The clean, canonical content of the docstring.
+      indent_str: The indentation string to apply to the docstring block.
+
+  Returns:
+      The formatted, quoted, and indented docstring literal.
+"parse_docstring": |-
+  Parses a raw docstring from source code into its clean, canonical form.
+
+  This is the inverse of `format_docstring`. It removes outer quotes and
+  common leading whitespace from multiline strings.
+
+  Args:
+      raw_docstring: The raw string literal, including quotes.
+
+  Returns:
+      The clean, dedented content of the docstring.

@@ -17,8 +17,10 @@ def test_inject_preserves_multiline_indentation():
     # 3. The expected, correctly formatted output
     expected_code = dedent("""
     def my_func(arg1: int):
-        \"\"\"This is the first line.
-        This is the second line.\"\"\"
+        \"\"\"
+        This is the first line.
+        This is the second line.
+        \"\"\"
         pass
     """).strip()
 
@@ -45,8 +47,10 @@ def test_inject_preserves_indentation_nested_class():
     expected_code = dedent("""
     class MyClass:
         def my_method(self):
-            \"\"\"Line 1.
-            Line 2.\"\"\"
+            \"\"\"
+            Line 1.
+            Line 2.
+            \"\"\"
             pass
     """).strip()
 

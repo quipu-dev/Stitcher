@@ -1,5 +1,3 @@
-"InjectorTransformer._create_docstring_node": |-
-  Creates a properly quoted docstring node.
 "StripperTransformer._is_docstring": |-
   Check if a statement is a standalone string expression (docstring).
 "StripperTransformer._process_body": |-
@@ -10,35 +8,23 @@
   Type alias for CST nodes that have a 'body' attribute.
 "InjectorTransformer": |-
   A LibCST transformer to inject docstrings into a source code AST.
-"InjectorTransformer._create_docstring_node": |-
-  Creates a properly quoted docstring node.
 "InjectorTransformer.leave_ClassDef": |-
   Injects a class docstring upon leaving the node.
 "InjectorTransformer.leave_FunctionDef": |-
   Injects a function docstring upon leaving the node.
-"InjectorTransformer.leave_IndentedBlock": |-
-  Pops an indentation level from the stack.
 "InjectorTransformer.leave_Module": |-
   Injects a module docstring upon leaving the module node.
 "InjectorTransformer.visit_ClassDef": |-
   Pushes the class name onto the scope stack.
 "InjectorTransformer.visit_FunctionDef": |-
   Pushes the function name onto the scope stack.
-"InjectorTransformer.visit_IndentedBlock": |-
-  Pushes an indentation level onto the stack.
 "StripperTransformer": |-
   A LibCST transformer to remove docstrings from a source code AST.
-"StripperTransformer._is_docstring": |-
-  Check if a statement is a standalone string expression (docstring).
-"StripperTransformer._process_body": |-
-  Removes docstring from body. If body becomes empty, inserts 'pass'.
 "StripperTransformer.leave_ClassDef": |-
   Applies body processing to a class definition.
 "StripperTransformer.leave_FunctionDef": |-
   Applies body processing to a function definition.
 "StripperTransformer.leave_Module": |-
   Applies body processing to a module.
-"inject_docstrings": |-
-  Injects docstrings from the dictionary into the source code.
 "strip_docstrings": |-
   Removes all docstrings from the source code.

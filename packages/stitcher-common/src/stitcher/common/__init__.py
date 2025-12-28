@@ -3,6 +3,7 @@ __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 from pathlib import Path
 from needle.nexus import OverlayNexus
 from needle.loaders.fs_loader import FileSystemLoader
+from .formatting import format_docstring, parse_docstring
 from .messaging.bus import MessageBus
 
 # --- Composition Root for Stitcher's Core Services ---
@@ -23,8 +24,12 @@ try:
         stitcher_loader.add_root(_assets_path)
 except NameError:
     pass
-# ---------------------------------------------
-
 
 # Public API for stitcher packages
-__all__ = ["bus", "stitcher_nexus", "stitcher_loader"]
+__all__ = [
+    "bus",
+    "stitcher_nexus",
+    "stitcher_loader",
+    "format_docstring",
+    "parse_docstring",
+]

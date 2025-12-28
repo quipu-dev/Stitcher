@@ -106,3 +106,41 @@ def test_generate_simple_pyi():
 
     # 4. Assert
     assert generated_code == expected_pyi
+
+
+def test_generate_pyi_with_correct_docstring_formatting():
+    # Arrange: Create an IR with problematic docstrings
+    module_def = ModuleDef(
+        file_path="formatter_test.py",
+        functions=[
+            FunctionDef(
+                name="multiline_doc",
+                docstring="First line.\nSecond line should be indented.",
+            ),
+            FunctionDef(
+                name="quotes_doc",
+                docstring='This docstring contains "quotes".',
+            ),
+        ],
+    )
+
+    # The "golden" output with correct formatting, following ruff/black style
+    expected_pyi = dedent("""
+        def multiline_doc():
+            \"\"\"
+            First line.
+            Second line should be indented.
+            \"\"\"
+            ...
+
+        def quotes_doc():
+            \"\"\"This docstring contains "quotes".\"\"\"
+            ...
+    """).strip()
+
+    # Act
+    generator = StubGenerator()
+    generated_code = generator.generate(module_def).strip()
+
+    # Assert
+    assert generated_code == expected_pyi
