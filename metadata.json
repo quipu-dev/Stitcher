@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 更新 scanner 测试以匹配 ruff 格式标准", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766892772.302237, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M formatting.py, A formatting.stitcher.yaml, M transformer.stitcher.yaml", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766892907.9961019, "duration_ms": 0}}
