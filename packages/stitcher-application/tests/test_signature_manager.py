@@ -44,45 +44,36 @@ def test_fingerprint_stability():
     assert fp1 != func5.compute_fingerprint()
 
 
-def test_manager_save_and_load(tmp_path: Path):
+def test_manager_save_and_load_composite_hashes(tmp_path: Path):
     # Arrange
     manager = SignatureManager(root_path=tmp_path)
     module = ModuleDef(file_path="src/main.py", functions=[create_func(name="foo")])
 
-    # Act: Save
-    manager.save_signatures(module)
+    hashes_to_save = {
+        "foo": {
+            "baseline_code_structure_hash": "abc",
+            "baseline_yaml_content_hash": "def",
+        },
+        "bar": {
+            "baseline_code_structure_hash": "123",
+            "baseline_yaml_content_hash": None,
+        },
+    }
 
-    # Assert: File exists and is JSON
+    # Act: Save
+    manager.save_composite_hashes(module, hashes_to_save)
+
+    # Assert: File exists and has correct structure
     sig_path = tmp_path / ".stitcher/signatures/src/main.json"
     assert sig_path.exists()
 
     with sig_path.open("r") as f:
         data = json.load(f)
-        assert "foo" in data
-        assert isinstance(data["foo"], str)
+        assert data["foo"]["baseline_code_structure_hash"] == "abc"
+        assert data["foo"]["baseline_yaml_content_hash"] == "def"
+        assert data["bar"]["baseline_code_structure_hash"] == "123"
+        assert data["bar"]["baseline_yaml_content_hash"] is None
 
     # Act: Load
-    loaded = manager.load_signatures(module)
-    assert loaded["foo"] == data["foo"]
-
-
-def test_manager_check_detects_mismatch(tmp_path: Path):
-    manager = SignatureManager(root_path=tmp_path)
-    module = ModuleDef(
-        file_path="src/main.py", functions=[create_func(name="foo", ret="int")]
-    )
-
-    # 1. Save baseline
-    manager.save_signatures(module)
-
-    # 2. Modify module (change return type)
-    module_modified = ModuleDef(
-        file_path="src/main.py", functions=[create_func(name="foo", ret="str")]
-    )
-
-    # 3. Check
-    issues = manager.check_signatures(module_modified)
-
-    # 4. Assert
-    assert "foo" in issues
-    assert issues["foo"] == "signature_mismatch"
+    loaded = manager.load_composite_hashes(module)
+    assert loaded == hashes_to_save

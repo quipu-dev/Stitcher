@@ -35,15 +35,24 @@ def init():
 
 @app.command(help=nexus.get(L.cli.command.check.help))
 def check(
-    update_signatures: bool = typer.Option(
+    force_relink: bool = typer.Option(
         False,
-        "--update-signatures",
-        help=nexus.get(L.cli.option.update_signatures.help),
+        "--force-relink",
+        help="For 'Signature Drift' errors, forces the new signature to be linked with the existing, unchanged documentation.",
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help="For 'Co-evolution' errors, accepts both signature and documentation changes as the new correct state.",
     ),
 ):
+    if force_relink and reconcile:
+        bus.error("Cannot use --force-relink and --reconcile simultaneously.")
+        raise typer.Exit(code=1)
+
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
-    success = app_instance.run_check(update_signatures=update_signatures)
+    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
     if not success:
         raise typer.Exit(code=1)
 

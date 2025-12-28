@@ -13,6 +13,10 @@
 "DocumentManager.check_module": |-
   Compares module structure against external docs.
   Returns a dict of issues: {'missing': set(...), 'extra': set(...), 'conflict': set(...)}
+"DocumentManager.compute_yaml_content_hash": |-
+  Computes the hash of a docstring content string.
+"DocumentManager.compute_yaml_content_hashes": |-
+  Computes hashes for each docstring in the corresponding YAML.
 "DocumentManager.flatten_module_docs": |-
   Converts a ModuleDef IR into a flat dictionary of docstrings.
   Keys are relative FQNs (e.g. "MyClass.method").

@@ -1,17 +1,12 @@
 "SignatureManager": |-
-  Manages the persistence and verification of code structure fingerprints.
-  Stores fingerprints in .stitcher/signatures/ mirroring the source tree.
+  Manages the persistence of composite hashes (signature and document).
 "SignatureManager._get_sig_path": |-
   Determines the storage path for a module's signatures.
   e.g. src/app.py -> .stitcher/signatures/src/app.json
-"SignatureManager.check_signatures": |-
-  Compares current module structure against stored signatures.
-  Returns a dict of changed items: { "FQN": "signature_mismatch" }
-"SignatureManager.compute_module_fingerprints": |-
-  Computes fingerprints for all addressable functions/methods in the module.
-  Returns: { "FQN": "hash" }
-"SignatureManager.load_signatures": |-
-  Loads the stored signatures for a module.
-  Returns empty dict if no signature file exists.
-"SignatureManager.save_signatures": |-
-  Computes and saves the current signatures of the module to disk.
+"SignatureManager.compute_code_structure_hashes": |-
+  Computes structural fingerprints for all addressable functions/methods.
+"SignatureManager.load_composite_hashes": |-
+  Loads the composite hash map for a module.
+"SignatureManager.save_composite_hashes": |-
+  Saves the composite hash map for a module.
+  Expected format: { "FQN": { "baseline_code_structure_hash": "...", "baseline_yaml_content_hash": "..." } }
