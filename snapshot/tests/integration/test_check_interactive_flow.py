@@ -1,4 +1,5 @@
 import pytest
+from typing import List
 from stitcher.app import StitcherApp
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.spec import ResolutionAction, ConflictType
@@ -7,13 +8,14 @@ from needle.pointer import L
 
 class MockResolutionHandler(InteractionHandler):
     """A handler that returns a pre-defined sequence of actions."""
-    def __init__(self, actions: list[ResolutionAction]):
+    def __init__(self, actions: List[ResolutionAction]):
         self.actions = actions
-        self.called_with = []
+        self.called_with: List[InteractionContext] = []
 
-    def process_interactive_session(self, contexts: list[InteractionContext]) -> list[ResolutionAction]:
+    def process_interactive_session(self, contexts: List[InteractionContext]) -> List[ResolutionAction]:
         self.called_with = contexts
-        return self.actions
+        # Return the pre-programmed sequence of actions
+        return self.actions * len(contexts) if len(self.actions) == 1 else self.actions
 
 def test_check_workflow_mixed_auto_and_interactive(tmp_path, monkeypatch):
     """
@@ -37,8 +39,9 @@ def func_b(x: int):
         .build()
     )
     
-    app = StitcherApp(root_path=project_root)
-    app.run_init()
+    app_for_init = StitcherApp(root_path=project_root)
+    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+        app_for_init.run_init()
 
     # 2. Trigger Changes
     # Change A: Modify YAML directly (Doc Improvement)
@@ -53,9 +56,9 @@ def func_b(x: str): # int -> str
     pass
 ''')
 
-    # 3. Define Interactive Decision
+    # 3. Define Interactive Decision and inject Handler
     handler = MockResolutionHandler([ResolutionAction.RELINK])
-    app.interaction_handler = handler
+    app = StitcherApp(root_path=project_root, interaction_handler=handler)
 
     # 4. Run Check
     spy_bus = SpyBus()
@@ -64,9 +67,12 @@ def func_b(x: str): # int -> str
 
     # 5. Assertions
     assert success is True
-    # Verify Auto-reconcile report
-    spy_bus.assert_id_called(L.check.state.doc_updated, level="info")
-    # Verify Interactive resolution report
+    # Verify Auto-reconcile report for func_a
+    doc_updated_msg = next((m for m in spy_bus.get_messages() if m["id"] == str(L.check.state.doc_updated)), None)
+    assert doc_updated_msg is not None
+    assert doc_updated_msg["params"]["key"] == "func_a"
+    
+    # Verify Interactive resolution report for func_b
     spy_bus.assert_id_called(L.check.state.relinked, level="success")
     
     # Verify Hashes are actually updated in storage
@@ -78,4 +84,5 @@ def func_b(x: str): # int -> str
     assert final_hashes["func_a"]["baseline_yaml_content_hash"] == expected_doc_a_hash
     
     # func_b should have updated code hash due to RELINK
+    assert "baseline_code_structure_hash" in final_hashes["func_b"]
     assert final_hashes["func_b"]["baseline_code_structure_hash"] is not None
