@@ -1,50 +1,39 @@
-好的，根据您的要求，我将创建一个 `[COMMIT]` 计划来固化上一步的文件结构调整。
+# 📸 Snapshot Capture
 
-## [COMMIT] refactor(tests): Relocate most integration tests to pkg directories
+检测到工作区发生变更。
 
-### 用户需求
-提交集成测试文件结构调整，以将应用级别的集成测试归档到相应的软件包目录中，并清理根集成测试目录。
-
-### 评论
-文件归类完成后，项目的测试结构变得更清晰、更模块化。这提高了开发人员体验（DX），因为测试现在与其所测试的组件位于同一命名空间下。
-
-### 目标
-通过 `git commit` 操作，记录以下变更：
-1.  将大部分应用集成测试（共 14 个文件）从 `tests/integration/` 迁移到 `packages/stitcher-application/tests/integration/`。
-2.  确保保留在根 `tests/integration/` 目录中的测试文件（如 `test_ide_proxy.py` 和 `test_stub_package_resolution.py`）以及 `conftest.py` 继续被跟踪。
-
-### 基本原理
-遵守 [指令级约束：脚本与 Git 操作互斥] 原则，本计划只包含 `git_add` 和 `git_commit`，不包含任何文件修改操作。Git 的文件重命名检测机制将确保这些 `move_file` 操作被正确记录为重命名，而不是删除和新增。
-
-### 标签
-#intent/refine #flow/done #priority/medium #comp/tests #scope/dx #ai/instruct #task/domain/testing #task/object/integration-tests #task/action/refactor #task/state/end
-
----
-### Script
-
-#### Acts 1: 添加所有更改到暂存区并创建提交
-
-我们将所有受影响的路径添加到暂存区，然后创建一条描述此次结构调整的提交。
-
-~~~~~act
-git_add
-packages/stitcher-application/tests/integration/
-tests/integration/
-~~~~~
-
-~~~~~act
-git_commit
-~~~~~
-~~~~~text
-refactor(tests): Relocate most integration tests to pkg directories
-
-Moves the majority of application-level integration tests from the top-level 
-`tests/integration/` directory into `packages/stitcher-application/tests/integration/`. 
-This enhances modularity and improves test discoverability.
-
-The root `tests/integration/` is now reserved exclusively for high-cost, 
-end-to-end tests that require a virtual environment (e.g., type-checker validation).
-~~~~~
-
-### 下一步建议
-如果未来需要将 `test_hydrate_interactive_flow.py` 或 `test_check_regression.py` 等非 `VenvHarness` 依赖的测试文件也归类到 `stitcher-application` 中，可以随时使用 `move_file` 指令执行后续的结构调整。目前，提交已经完成。
+### 📝 变更文件摘要:
+```
+.../pyneedle-nexus/src/needle/nexus/loaders.json   |  15 --
+ .../pyneedle-nexus/src/needle/nexus/nexus.json     |  43 ----
+ .../src/needle/pointer/__init__.json               |   7 -
+ .../pyneedle-pointer/src/needle/pointer/core.json  |  51 ----
+ .../pyneedle-pointer/src/needle/pointer/set.json   |  19 --
+ .../pyneedle-spec/src/needle/spec/protocols.json   | 100 --------
+ .../src/stitcher/app/core.json                     | 108 --------
+ .../src/stitcher/app/handlers/noop_handler.json    |  15 --
+ .../src/stitcher/app/protocols.json                |  16 --
+ .../src/stitcher/app/services/doc_manager.json     |  63 -----
+ .../stitcher/app/services/signature_manager.json   |  27 --
+ .../app/services/stub_package_manager.json         |  15 --
+ .../stitcher-cli/src/stitcher/cli/handlers.json    |  11 -
+ .../stitcher-cli/src/stitcher/cli/main.json        |  36 ---
+ .../stitcher-cli/src/stitcher/cli/rendering.json   |  11 -
+ .../src/stitcher/common/__init__.json              |  17 --
+ .../src/stitcher/common/formatting.json            |  10 -
+ .../src/stitcher/common/messaging/bus.json         |  39 ---
+ .../src/stitcher/common/messaging/protocols.json   |  11 -
+ .../src/stitcher/config/loader.json                |  44 ----
+ .../src/stitcher/io/adapters/yaml_adapter.json     |  15 --
+ .../stitcher-io/src/stitcher/io/interfaces.json    |  15 --
+ .../src/stitcher/io/stub_generator.json            |  35 ---
+ .../src/stitcher/scanner/inspector.json            |  19 --
+ .../src/stitcher/scanner/parser.json               |  63 -----
+ .../src/stitcher/scanner/transformer.json          |  81 ------
+ .../stitcher-spec/src/stitcher/spec/models.json    | 284 ---------------------
+ .../src/stitcher/test_utils/bus.json               |  49 ----
+ .../src/stitcher/test_utils/harness.json           |  47 ----
+ .../src/stitcher/test_utils/helpers.json           |   6 -
+ ...
+ 32 files changed, 1326 deletions(-)
+```
