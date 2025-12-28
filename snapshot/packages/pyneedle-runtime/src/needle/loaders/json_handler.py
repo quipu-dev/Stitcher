@@ -35,7 +35,7 @@ class JsonHandler(FileHandlerProtocol):
             new_key = f"{parent_key}.{k}" if parent_key else k
             if k == "_":
                 new_key = parent_key
-            
+
             if isinstance(v, dict):
                 items.update(self._flatten_dict(v, new_key))
             else:
@@ -56,15 +56,15 @@ class JsonHandler(FileHandlerProtocol):
                         # Convert 'val' to {'_': 'val'}
                         d_curr[part] = {"_": d_curr[part]}
                 d_curr = d_curr[part]
-            
+
             last_part = parts[-1]
             if last_part in d_curr:
-                 # Conflict: 'a' was a node (or leaf), now assigning a value to it.
-                 if isinstance(d_curr[last_part], dict):
-                     d_curr[last_part]["_"] = v
-                 else:
-                     # Overwrite (should generally not happen with clean input)
-                     d_curr[last_part] = v
+                # Conflict: 'a' was a node (or leaf), now assigning a value to it.
+                if isinstance(d_curr[last_part], dict):
+                    d_curr[last_part]["_"] = v
+                else:
+                    # Overwrite (should generally not happen with clean input)
+                    d_curr[last_part] = v
             else:
                 d_curr[last_part] = v
         return result

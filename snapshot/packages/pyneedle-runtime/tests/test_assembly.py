@@ -70,25 +70,26 @@ def test_nexus_with_fs_loader_handles_overrides(multi_root_workspace):
     # 4. Non-existent key should fall back to identity
     assert nexus.get(L.unknown.key) == "unknown.key"
 
+
 def test_fs_loader_put_writes_to_correct_location(tmp_path: Path):
     # Arrange
     project_root = tmp_path / "project"
     project_root.mkdir()
-    
+
     loader = FileSystemLoader(root=project_root)
     nexus = OverlayNexus(loaders=[loader])
-    
+
     # Act
     nexus.put(L.app.title, "My New App", domain="en")
-    
+
     # Assert
     expected_path = project_root / ".stitcher/needle/en/app.json"
     assert expected_path.is_file()
-    
+
     # Verify content was inflated correctly
     # Note: Our simple handler inflates {"app.title": "..."} to {"app": {"title": "..."}}
     assert '"title": "My New App"' in expected_path.read_text()
-    
+
     # Verify that the value can be read back
     nexus.reload("en")
     assert nexus.get(L.app.title, domain="en") == "My New App"

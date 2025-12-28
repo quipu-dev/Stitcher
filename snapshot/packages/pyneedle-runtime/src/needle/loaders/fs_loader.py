@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Union, Tuple
-from collections import ChainMap
 
 from .protocols import FileHandlerProtocol
 from .json_handler import JsonHandler
@@ -20,7 +19,7 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         super().__init__(default_domain)
         self.handlers = handlers or [JsonHandler()]
         self.root = root
-        
+
         # Cache structure: domain -> flattened_dict
         self._data_cache: Dict[str, Dict[str, str]] = {}
 
@@ -35,9 +34,9 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
     def _scan_root(self, domain: str) -> Dict[str, str]:
         """Scans the single root and returns a merged, flattened dictionary."""
         merged_data: Dict[str, str] = {}
-        
+
         # Priority: .stitcher/needle overrides needle/
-        
+
         # 1. Load from standard asset path first (lower priority)
         asset_path = self.root / "needle" / domain
         if asset_path.is_dir():
@@ -47,7 +46,7 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         hidden_path = self.root / ".stitcher" / "needle" / domain
         if hidden_path.is_dir():
             merged_data.update(self._scan_directory_to_dict(hidden_path))
-                
+
         return merged_data
 
     def _scan_directory_to_dict(self, root_path: Path) -> Dict[str, str]:
@@ -112,7 +111,7 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
     ) -> Optional[str]:
         if ignore_cache:
             self._data_cache.pop(domain, None)
-        
+
         data = self._ensure_loaded(domain)
         return data.get(pointer)
 
@@ -120,7 +119,7 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         """Returns the aggregated view of the domain for this root."""
         if ignore_cache:
             self._data_cache.pop(domain, None)
-        
+
         # Return a copy to prevent mutation
         return self._ensure_loaded(domain).copy()
 
@@ -131,7 +130,7 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
 
         key = str(pointer)
         base_dir = self.root / ".stitcher" / "needle" / domain
-        
+
         parts = key.split(".")
         filename = f"{parts[0]}.json"  # Default to JSON
         return base_dir / filename
@@ -139,27 +138,27 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
     def put(self, pointer: Union[str, Any], value: Any, domain: str) -> bool:
         key = str(pointer)
         str_value = str(value)
-        
+
         # 1. Determine target path (always writes to .stitcher for user overrides)
         target_path = self.locate(key, domain)
-        
+
         # 2. Load existing data from that specific file, or create empty dict
-        handler = self.handlers[0] # Default to JSON
+        handler = self.handlers[0]  # Default to JSON
         file_data = {}
         if target_path.exists():
             # NOTE: We load the raw file, not from our merged cache,
             # to avoid writing aggregated data back into a single file.
             # The handler will flatten it for us.
             file_data = handler.load(target_path)
-            
+
         # 3. Update the file's data
         file_data[key] = str_value
-        
+
         # 4. Save back to the specific file
         success = handler.save(target_path, file_data)
-        
+
         # 5. Invalidate cache for this domain to force a reload on next access
         if success:
             self._data_cache.pop(domain, None)
-            
+
         return success
