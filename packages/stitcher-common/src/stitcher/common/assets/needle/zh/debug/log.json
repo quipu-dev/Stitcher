@@ -1,0 +1,6 @@
+{
+  "msg": "🔍 {msg}",
+  "scan_path": "🔍 扫描路径: {path}",
+  "file_found": "🔍 发现文件: {path}",
+  "file_ignored": "🔍 忽略文件: {path} ({reason})"
+}

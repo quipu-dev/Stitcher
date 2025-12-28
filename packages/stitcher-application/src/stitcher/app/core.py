@@ -205,10 +205,22 @@ class StitcherApp:
         files_to_scan = []
         for scan_path_str in config.scan_paths:
             scan_path = self.root_path / scan_path_str
+            bus.debug(L.debug.log.scan_path, path=str(scan_path))
+
             if scan_path.is_dir():
-                files_to_scan.extend(scan_path.rglob("*.py"))
+                found = list(scan_path.rglob("*.py"))
+                bus.debug(
+                    L.debug.log.msg,
+                    msg=f"Found {len(found)} .py files in {scan_path}",
+                )
+                files_to_scan.extend(found)
             elif scan_path.is_file():
+                bus.debug(L.debug.log.file_found, path=str(scan_path))
                 files_to_scan.append(scan_path)
+            else:
+                bus.debug(
+                    L.debug.log.file_ignored, path=str(scan_path), reason="Not found"
+                )
         return sorted(list(set(files_to_scan)))
 
     def run_from_config(self) -> List[Path]:
@@ -217,6 +229,13 @@ class StitcherApp:
         for config in configs:
             if config.name != "default":
                 bus.info(L.generate.target.processing, name=config.name)
+
+            # Debug config info
+            bus.debug(
+                L.debug.log.msg,
+                msg=f"Config '{config.name}': scan_paths={config.scan_paths}",
+            )
+
             if config.stub_package:
                 stub_base_name = (
                     config.name if config.name != "default" else project_name

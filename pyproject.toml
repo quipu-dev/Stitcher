@@ -77,6 +77,7 @@ scan_paths = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-nexus/src",
+    "packages/pyneedle-runtime/src",
     "packages/pyneedle/src",
 ]
 stub_package = "packages/needle-stubs"

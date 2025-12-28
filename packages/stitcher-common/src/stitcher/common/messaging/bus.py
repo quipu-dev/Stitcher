@@ -42,6 +42,9 @@ class MessageBus:
     def error(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
         self._render("error", msg_id, **kwargs)
 
+    def debug(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        self._render("debug", msg_id, **kwargs)
+
     def render_to_string(
         self, msg_id: Union[str, SemanticPointer], **kwargs: Any
     ) -> str:

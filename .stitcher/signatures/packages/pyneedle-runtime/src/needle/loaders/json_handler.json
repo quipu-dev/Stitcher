@@ -1,0 +1,22 @@
+{
+  "JsonHandler": {
+    "baseline_yaml_content_hash": "eeba7cb8fa980f55054110a945a4717d89710d654cb244d7ebe97a12fe199a99"
+  },
+  "JsonHandler._flatten_dict": {
+    "baseline_code_structure_hash": "6775ff6a5bb365f991e0a196ac556c8d8c9be3b1c6a9f18121f6ffe1cfceffed"
+  },
+  "JsonHandler._inflate_dict": {
+    "baseline_code_structure_hash": "431ad3fe5f936d8cd6d6c91e9050164d18ff81c9ac1e95df579c409b0fcd5f62"
+  },
+  "JsonHandler.load": {
+    "baseline_code_structure_hash": "eabd26163ff572de5814f693e2b0ee951c1a9f1150be6aa50b3a914e0e8114bf",
+    "baseline_yaml_content_hash": "e76f2b95845df776f97d97f0055e115310cc1fd1b2352ccc9cf6cc6f8c3e84e4"
+  },
+  "JsonHandler.match": {
+    "baseline_code_structure_hash": "038a100a9554d156488e14f71d321d8b71ba11afa9d140be448070643d79ace1",
+    "baseline_yaml_content_hash": "d4b9e31a4417fe4e2e6d8d20d41f95363a273724216809f82d918fb4daf436b7"
+  },
+  "JsonHandler.save": {
+    "baseline_code_structure_hash": "9d71fdde26ac2d1bcafdb0b1e71ae9214f95dd6c9d09cad8ca7c7d09fa51ee5b"
+  }
+}

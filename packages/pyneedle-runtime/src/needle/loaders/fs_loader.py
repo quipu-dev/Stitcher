@@ -32,7 +32,6 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         return self._data_cache[domain]
 
     def _scan_root(self, domain: str) -> Dict[str, str]:
-        """Scans the single root and returns a merged, flattened dictionary."""
         merged_data: Dict[str, str] = {}
 
         # Priority: .stitcher/needle overrides needle/
@@ -50,7 +49,6 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         return merged_data
 
     def _scan_directory_to_dict(self, root_path: Path) -> Dict[str, str]:
-        """Scans a directory and merges all found files into a single dictionary."""
         data: Dict[str, str] = {}
         for dirpath, _, filenames in os.walk(root_path):
             for filename in sorted(filenames):
@@ -68,12 +66,6 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         return data
 
     def _scan_directory(self, root_path: Path) -> List[Tuple[Path, Dict[str, str]]]:
-        """
-        Scans a directory for supported files.
-        Returns a list of layers.
-        Note: The order of files within a directory is OS-dependent,
-        but we process them deterministically if needed.
-        """
         layers = []
         # We walk top-down.
         for dirpath, _, filenames in os.walk(root_path):
@@ -116,7 +108,6 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         return data.get(pointer)
 
     def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:
-        """Returns the aggregated view of the domain for this root."""
         if ignore_cache:
             self._data_cache.pop(domain, None)
 
@@ -124,7 +115,6 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
         return self._ensure_loaded(domain).copy()
 
     def locate(self, pointer: Union[str, Any], domain: str) -> Path:
-        """For a single-root loader, locate is deterministic."""
         if not self.root:
             raise RuntimeError("Cannot locate path on a loader with no root.")
 

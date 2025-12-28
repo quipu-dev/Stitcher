@@ -21,6 +21,10 @@
     "baseline_code_structure_hash": "a7fedacf3aecbe844b02a5001fb7bd6307e4335426258e85fc7ea04433259520",
     "baseline_yaml_content_hash": "eb3e766a7dd7951b758cc6016d7401f3dd8adb000dfccbf34df6a1fbd3fd8451"
   },
+  "main": {
+    "baseline_code_structure_hash": "076eabe38102a00125bd8d006b0da14fc43d9aaeff1435e9385c7fc14a7f004f",
+    "baseline_yaml_content_hash": "00b4b655f6abbcb58feab8172c3942e14703213c3b57aa70cb8074b7d47eacce"
+  },
   "pump": {
     "baseline_code_structure_hash": "5edccea3caa1f41d50b15e206e3c0a99617dd9a62ddb0aece1b68cf6eb69ee67",
     "baseline_yaml_content_hash": "2cccec68c077201671594a353708fcead9c11e53d111a579aba4e559d526116d"

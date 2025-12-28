@@ -1,0 +1,6 @@
+{
+  "msg": "🔍 {msg}",
+  "scan_path": "🔍 Scanning path: {path}",
+  "file_found": "🔍 Found file: {path}",
+  "file_ignored": "🔍 Ignored file: {path} ({reason})"
+}

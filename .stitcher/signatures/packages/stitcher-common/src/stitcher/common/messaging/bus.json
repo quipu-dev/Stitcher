@@ -9,6 +9,9 @@
   "MessageBus._render": {
     "baseline_code_structure_hash": "62bae7b961efe5621e5b64a83611c62aa2288d458f49ad015c3e927b42ff3ddb"
   },
+  "MessageBus.debug": {
+    "baseline_code_structure_hash": "8bb9b2e3b119b4f2dafdad526c65c49080dc5ac58e6a3e82137814a6844d8d26"
+  },
   "MessageBus.error": {
     "baseline_code_structure_hash": "9929be86f3572ebf6d23aab5fed5b3d32a90ea9f0fcba0ff0ccaed0e767f1366",
     "baseline_yaml_content_hash": "402fb048fe23b2b066058add62b707cc907224bdf758dfcbeb00257083fcf39e"
