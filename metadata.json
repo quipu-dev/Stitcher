@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修正 stitcher.spec 中缺失的模型导出", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766901537.3718774, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 恢复文档改进的自动调和与报告", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766901710.491741, "duration_ms": 0}}

@@ -372,8 +372,26 @@ class StitcherApp:
                 result, conflicts = self._analyze_file(module)
                 all_results.append(result)
                 all_conflicts.extend(conflicts)
+        
+        # 2. Execution Phase (Auto-reconciliation for doc improvements)
+        for res in all_results:
+            if res.infos["doc_improvement"]:
+                module_def = next((m for m in modules if m.file_path == res.path), None)
+                if not module_def: continue
+                
+                stored_hashes = self.sig_manager.load_composite_hashes(module_def)
+                new_hashes = copy.deepcopy(stored_hashes)
+                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module_def)
 
-        # 2. Interactive Resolution Phase
+                for fqn in res.infos["doc_improvement"]:
+                    if fqn in new_hashes:
+                        new_hashes[fqn]["baseline_yaml_content_hash"] = current_yaml_map.get(fqn)
+                
+                if new_hashes != stored_hashes:
+                    self.sig_manager.save_composite_hashes(module_def, new_hashes)
+
+
+        # 3. Interactive Resolution Phase
         if all_conflicts and self.interaction_handler:
             chosen_actions = self.interaction_handler.process_interactive_session(all_conflicts)
             
@@ -389,28 +407,24 @@ class StitcherApp:
                     resolutions_by_file[context.file_path].append((context.fqn, action))
                     reconciled_results[context.file_path]["reconcile"].append(context.fqn)
                 elif action == ResolutionAction.SKIP:
-                    # Find the corresponding result and add the error
                     for res in all_results:
                         if res.path == context.file_path:
                             error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
                             res.errors[error_key].append(context.fqn)
                             break
                 elif action == ResolutionAction.ABORT:
-                    bus.warning(L.strip.run.aborted) # Re-use abort message for now
+                    bus.warning(L.strip.run.aborted)
                     return False
             
-            # 3. Execution Phase
             self._apply_resolutions(dict(resolutions_by_file))
             
-            # Update results with reconciled items for reporting
             for res in all_results:
                 if res.path in reconciled_results:
                     res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
                     res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
-        else: # Non-interactive mode
+        else:
             handler = NoOpInteractionHandler(force_relink, reconcile)
             chosen_actions = handler.process_interactive_session(all_conflicts)
-            # Logic is similar to above, can be refactored later
             resolutions_by_file = defaultdict(list)
             reconciled_results = defaultdict(lambda: defaultdict(list))
             for i, context in enumerate(all_conflicts):
@@ -434,6 +448,10 @@ class StitcherApp:
         global_failed_files = 0
         global_warnings_files = 0
         for res in all_results:
+            # Report infos first, even on clean files
+            for key in sorted(res.infos["doc_improvement"]):
+                bus.info(L.check.state.doc_updated, key=key)
+
             if res.is_clean:
                 continue
 
