@@ -2,7 +2,9 @@
   Verify consistency between code and docs.
 
   Args:
-    update_signatures: Accept and update signature changes in the stored fingerprints.
+    force_relink: [Non-interactive] For 'Signature Drift' errors, forces relinking.
+    reconcile: [Non-interactive] For 'Co-evolution' errors, accepts both changes.
+    non_interactive: Force non-interactive mode, failing on unresolved conflicts.
 "eject": |-
   Inject docstrings from .stitcher.yaml files back into code.
 "generate": |-

@@ -1,236 +1,176 @@
-分析得非常到位。这是一个经典的重构引入的回归错误。
+好的，这是一个非常合理且重要的补充。
 
-在我将 `run_check` 重构成“分析-决策-执行”模型时，我过度专注于处理需要用户决策的**冲突 (conflicts)**，却疏忽了另一种重要情况：**无需决策的自动修复 (auto-reconciliation)**，即“文档改进 (Documentation Improvement)”。
+引入一个明确的 `--non-interactive` 标志是 CLI 设计的最佳实践。它消除了行为的模糊性，让用户（尤其是编写脚本的用户）能够显式地控制程序的行为，而不是依赖于对 TTY 环境的隐式检测。
 
-1.  **逻辑丢失**: 在旧的实现中，`_analyze_file` 会在发现“文档改进”时，**立即**准备好要更新的哈希值。而新的 `_analyze_file` 被重构成纯分析函数，它正确地将“文档改进”记录在 `result.infos` 中，但**不再处理哈希更新**。
-2.  **执行缺失**: 新的 `run_check` 方法中，我添加了处理交互式会话返回结果的“执行阶段”(`_apply_resolutions`)，但这个阶段只关心 `ResolutionAction`，完全忽略了 `result.infos` 中记录的、需要自动执行的修复。
-3.  **报告遗漏**: 最直接导致测试失败的原因是，在新的“报告阶段”，我遗漏了遍历 `result.infos["doc_improvement"]` 并发送 `L.check.state.doc_updated` 消息的代码。
+我将为你生成一个计划来实现这个功能。
 
-因此，测试失败是必然的：应用既没有更新哈希，也没有发送预期的 `info` 消息。
-
-我将生成一个修复计划来纠正这个问题。
-
-## [WIP] fix: 恢复文档改进的自动调和与报告
-
-### 错误分析
-在将 `run_check` 重构为多阶段执行模型后，处理“文档改进”（即代码签名未变，但 YAML 文档更新）的逻辑被意外移除。这导致应用既没有自动更新存储的文档哈希基线，也没有在报告阶段发出 `L.check.state.doc_updated` 的 `info` 消息，从而导致 `test_state_doc_improvement_auto_reconciled` 测试断言失败。
+## [WIP] feat: 为 `check` 命令添加 `--non-interactive` 标志
 
 ### 用户需求
-修复此回归错误。`stitcher check` 命令在遇到“文档改进”时，必须能够：
-1.  自动更新并保存新的文档内容哈希。
-2.  向用户报告已更新的文档。
-3.  最终检查结果应为成功。
+为 `stitcher check` 命令添加一个 `--non-interactive` 标志。当使用此标志时，即使在交互式终端（TTY）中，命令也应采取非交互式行为，即在遇到需要决策的冲突时直接报错退出，而不是启动交互式向导。
 
 ### 评论
-这是一个重要的修复，它确保了在引入复杂的交互式功能的同时，原有的、高效的自动化修复流程依然健壮。这体现了对不同使用场景（交互式修复 vs. CI/CD 自动化）的全面考虑。
+这是一个出色的可用性改进。它将先前隐式的行为（依赖于 TTY 和其他标志）变为显式的用户选择，这对于自动化脚本和要求行为确定性的高级用户来说至关重要。这使得 `check` 命令的行为更加健壮和可预测。
 
 ### 目标
-1.  在 `StitcherApp.run_check` 方法中，增加一个新的逻辑阶段，专门用于处理并执行 `result.infos` 中记录的自动调和项。
-2.  在报告阶段，恢复遍历 `result.infos` 并发送相应 `info` 消息的代码。
+1.  在 `stitcher.cli.main` 的 `check` 命令定义中，添加一个新的 `typer.Option` 用于 `--non-interactive`。
+2.  更新 `check` 命令的逻辑，将此标志作为启动交互式处理器的首要否决条件。
+3.  更新相关的帮助文档（英文和中文），以反映新选项并阐明 `force-relink` 和 `reconcile` 标志主要用于非交互模式。
+4.  更新 `main.stitcher.yaml` 中的内部文档。
 
 ### 基本原理
-我们将把 `run_check` 的执行逻辑细化为三个清晰的步骤：
-1.  **分析**: 遍历所有文件，生成分析结果和待处理冲突列表。
-2.  **执行**:
-    *   **自动执行**: 处理所有无需用户输入的修复（如文档改进）。
-    *   **交互/委托执行**: 处理所有需要用户决策的冲突。
-3.  **报告**: 汇总所有结果并统一输出。
-通过这个修正，我们将恢复丢失的功能，并使整个流程更加清晰、无懈可击。
+我们将在 `check` 命令的入口处修改决策逻辑。启动 `TyperInteractionHandler` 的条件将从 `isatty()` 变为 `isatty() and not non_interactive`。这确保了用户可以通过一个简单的标志完全控制交互行为，而无需改变任何核心应用层的代码，完美体现了表现层与应用层解耦的优势。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/application #scope/core #ai/instruct #task/domain/cli #task/object/interactive-check #task/action/bug-fix #task/state/continue
+#intent/build #flow/ready #priority/medium #comp/cli #scope/ux #scope/dx #ai/instruct #task/domain/cli #task/object/interactive-check #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `run_check` 方法
+#### Acts 1: 更新 `check` 命令以包含新标志和逻辑
 
-我们将对 `run_check` 方法进行一次精确的手术，在“分析阶段”之后、“交互解决阶段”之前，插入一个“自动调和阶段”，并在最后的“报告阶段”恢复丢失的 `info` 消息报告。
+我们将修改 `packages/stitcher-cli/src/stitcher/cli/main.py` 中的 `check` 函数。
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+packages/stitcher-cli/src/stitcher/cli/main.py
 ~~~~~
 ~~~~~python.old
-        # 1. Analysis Phase
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-            unique_files = self._get_files_from_config(config)
-            modules = self._scan_files(unique_files)
-            for module in modules:
-                result, conflicts = self._analyze_file(module)
-                all_results.append(result)
-                all_conflicts.extend(conflicts)
+@app.command(help=nexus.get(L.cli.command.check.help))
+def check(
+    force_relink: bool = typer.Option(
+        False,
+        "--force-relink",
+        help="[Non-interactive] For 'Signature Drift' errors, forces relinking.",
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help="[Non-interactive] For 'Co-evolution' errors, accepts both changes.",
+    ),
+):
+    if force_relink and reconcile:
+        bus.error("Cannot use --force-relink and --reconcile simultaneously.")
+        raise typer.Exit(code=1)
 
-        # 2. Interactive Resolution Phase
-        if all_conflicts and self.interaction_handler:
-            chosen_actions = self.interaction_handler.process_interactive_session(all_conflicts)
-            
-            resolutions_by_file = defaultdict(list)
-            reconciled_results = defaultdict(lambda: defaultdict(list))
+    project_root = Path.cwd()
+    
+    handler = None
+    if sys.stdin.isatty() and not force_relink and not reconcile:
+        handler = TyperInteractionHandler()
 
-            for i, context in enumerate(all_conflicts):
-                action = chosen_actions[i]
-                if action == ResolutionAction.RELINK:
-                    resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path]["force_relink"].append(context.fqn)
-                elif action == ResolutionAction.RECONCILE:
-                    resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path]["reconcile"].append(context.fqn)
-                elif action == ResolutionAction.SKIP:
-                    # Find the corresponding result and add the error
-                    for res in all_results:
-                        if res.path == context.file_path:
-                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
-                            res.errors[error_key].append(context.fqn)
-                            break
-                elif action == ResolutionAction.ABORT:
-                    bus.warning(L.strip.run.aborted) # Re-use abort message for now
-                    return False
-            
-            # 3. Execution Phase
-            self._apply_resolutions(dict(resolutions_by_file))
-            
-            # Update results with reconciled items for reporting
-            for res in all_results:
-                if res.path in reconciled_results:
-                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
-                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
-        else: # Non-interactive mode
-            handler = NoOpInteractionHandler(force_relink, reconcile)
-            chosen_actions = handler.process_interactive_session(all_conflicts)
-            # Logic is similar to above, can be refactored later
-            resolutions_by_file = defaultdict(list)
-            reconciled_results = defaultdict(lambda: defaultdict(list))
-            for i, context in enumerate(all_conflicts):
-                action = chosen_actions[i]
-                if action != ResolutionAction.SKIP:
-                    key = "force_relink" if action == ResolutionAction.RELINK else "reconcile"
-                    resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path][key].append(context.fqn)
-                else:
-                     for res in all_results:
-                        if res.path == context.file_path:
-                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
-                            res.errors[error_key].append(context.fqn)
-            self._apply_resolutions(dict(resolutions_by_file))
-            for res in all_results:
-                if res.path in reconciled_results:
-                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
-                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
-
-        # 4. Reporting Phase
-        global_failed_files = 0
-        global_warnings_files = 0
-        for res in all_results:
-            if res.is_clean:
-                continue
-
-            if res.reconciled_count > 0:
-                for key in res.reconciled.get("force_relink", []):
-                    bus.success(L.check.state.relinked, key=key, path=res.path)
-                for key in res.reconciled.get("reconcile", []):
-                    bus.success(L.check.state.reconciled, key=key, path=res.path)
+    app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
+    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
+    if not success:
+        raise typer.Exit(code=1)
 ~~~~~
 ~~~~~python.new
-        # 1. Analysis Phase
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-            unique_files = self._get_files_from_config(config)
-            modules = self._scan_files(unique_files)
-            for module in modules:
-                result, conflicts = self._analyze_file(module)
-                all_results.append(result)
-                all_conflicts.extend(conflicts)
-        
-        # 2. Execution Phase (Auto-reconciliation for doc improvements)
-        for res in all_results:
-            if res.infos["doc_improvement"]:
-                module_def = next((m for m in modules if m.file_path == res.path), None)
-                if not module_def: continue
-                
-                stored_hashes = self.sig_manager.load_composite_hashes(module_def)
-                new_hashes = copy.deepcopy(stored_hashes)
-                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module_def)
+@app.command(help=nexus.get(L.cli.command.check.help))
+def check(
+    force_relink: bool = typer.Option(
+        False,
+        "--force-relink",
+        help="[Non-interactive] For 'Signature Drift' errors, forces relinking.",
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help="[Non-interactive] For 'Co-evolution' errors, accepts both changes.",
+    ),
+    non_interactive: bool = typer.Option(
+        False,
+        "--non-interactive",
+        help="Force non-interactive mode, failing on unresolved conflicts.",
+    ),
+):
+    if force_relink and reconcile:
+        bus.error("Cannot use --force-relink and --reconcile simultaneously.")
+        raise typer.Exit(code=1)
 
-                for fqn in res.infos["doc_improvement"]:
-                    if fqn in new_hashes:
-                        new_hashes[fqn]["baseline_yaml_content_hash"] = current_yaml_map.get(fqn)
-                
-                if new_hashes != stored_hashes:
-                    self.sig_manager.save_composite_hashes(module_def, new_hashes)
+    project_root = Path.cwd()
+    
+    handler = None
+    # Interactive mode is the default in a TTY, unless explicitly disabled.
+    if sys.stdin.isatty() and not non_interactive and not force_relink and not reconcile:
+        handler = TyperInteractionHandler()
 
-
-        # 3. Interactive Resolution Phase
-        if all_conflicts and self.interaction_handler:
-            chosen_actions = self.interaction_handler.process_interactive_session(all_conflicts)
-            
-            resolutions_by_file = defaultdict(list)
-            reconciled_results = defaultdict(lambda: defaultdict(list))
-
-            for i, context in enumerate(all_conflicts):
-                action = chosen_actions[i]
-                if action == ResolutionAction.RELINK:
-                    resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path]["force_relink"].append(context.fqn)
-                elif action == ResolutionAction.RECONCILE:
-                    resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path]["reconcile"].append(context.fqn)
-                elif action == ResolutionAction.SKIP:
-                    for res in all_results:
-                        if res.path == context.file_path:
-                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
-                            res.errors[error_key].append(context.fqn)
-                            break
-                elif action == ResolutionAction.ABORT:
-                    bus.warning(L.strip.run.aborted)
-                    return False
-            
-            self._apply_resolutions(dict(resolutions_by_file))
-            
-            for res in all_results:
-                if res.path in reconciled_results:
-                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
-                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
-        else:
-            handler = NoOpInteractionHandler(force_relink, reconcile)
-            chosen_actions = handler.process_interactive_session(all_conflicts)
-            resolutions_by_file = defaultdict(list)
-            reconciled_results = defaultdict(lambda: defaultdict(list))
-            for i, context in enumerate(all_conflicts):
-                action = chosen_actions[i]
-                if action != ResolutionAction.SKIP:
-                    key = "force_relink" if action == ResolutionAction.RELINK else "reconcile"
-                    resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path][key].append(context.fqn)
-                else:
-                     for res in all_results:
-                        if res.path == context.file_path:
-                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
-                            res.errors[error_key].append(context.fqn)
-            self._apply_resolutions(dict(resolutions_by_file))
-            for res in all_results:
-                if res.path in reconciled_results:
-                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
-                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
-
-        # 4. Reporting Phase
-        global_failed_files = 0
-        global_warnings_files = 0
-        for res in all_results:
-            # Report infos first, even on clean files
-            for key in sorted(res.infos["doc_improvement"]):
-                bus.info(L.check.state.doc_updated, key=key)
-
-            if res.is_clean:
-                continue
-
-            if res.reconciled_count > 0:
-                for key in res.reconciled.get("force_relink", []):
-                    bus.success(L.check.state.relinked, key=key, path=res.path)
-                for key in res.reconciled.get("reconcile", []):
-                    bus.success(L.check.state.reconciled, key=key, path=res.path)
+    app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
+    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
+    if not success:
+        raise typer.Exit(code=1)
 ~~~~~
+
+#### Acts 2: 更新 CLI 的帮助文档
+
+##### 2.1: 英文帮助文档
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/assets/needle/en/commands.json
+~~~~~
+~~~~~json.old
+    "cli.option.strip.help": "Remove docstrings from source code after hydration.",
+    "cli.option.force.help": "Code-first: Overwrite YAML content if it differs from source code.",
+    "cli.option.reconcile.help": "YAML-first: Ignore source docstrings if they conflict with existing YAML.",
+    "cli.option.update_signatures.help": "Accept signature changes and update the stored fingerprints."
+}
+~~~~~
+~~~~~json.new
+    "cli.option.strip.help": "Remove docstrings from source code after hydration.",
+    "cli.option.force.help": "Code-first: Overwrite YAML content if it differs from source code.",
+    "cli.option.reconcile.help": "YAML-first: Ignore source docstrings if they conflict with existing YAML.",
+    "cli.option.update_signatures.help": "Accept signature changes and update the stored fingerprints.",
+    "cli.option.non_interactive.help": "Force non-interactive mode, failing on unresolved conflicts."
+}
+~~~~~
+
+##### 2.2: 中文帮助文档
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/assets/needle/zh/commands.json
+~~~~~
+~~~~~json.old
+    "cli.option.strip.help": "在补水后立即从源码中移除文档字符串。",
+    "cli.option.force.help": "代码优先：如果内容不一致，覆盖 YAML 内容。",
+    "cli.option.reconcile.help": "YAML 优先：忽略与现有 YAML 冲突的源码文档。",
+    "cli.option.update_signatures.help": "接受签名变更并更新存储的指纹。"
+}
+~~~~~
+~~~~~json.new
+    "cli.option.strip.help": "在补水后立即从源码中移除文档字符串。",
+    "cli.option.force.help": "代码优先：如果内容不一致，覆盖 YAML 内容。",
+    "cli.option.reconcile.help": "YAML 优先：忽略与现有 YAML 冲突的源码文档。",
+    "cli.option.update_signatures.help": "接受签名变更并更新存储的指纹。",
+    "cli.option.non_interactive.help": "强制使用非交互模式，在遇到无法解决的冲突时失败。"
+}
+~~~~~
+
+#### Acts 3: 更新内部文档 (`main.stitcher.yaml`)
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/main.stitcher.yaml
+~~~~~
+~~~~~yaml.old
+"check": |-
+  Verify consistency between code and docs.
+
+  Args:
+    update_signatures: Accept and update signature changes in the stored fingerprints.
+~~~~~
+~~~~~yaml.new
+"check": |-
+  Verify consistency between code and docs.
+
+  Args:
+    force_relink: [Non-interactive] For 'Signature Drift' errors, forces relinking.
+    reconcile: [Non-interactive] For 'Co-evolution' errors, accepts both changes.
+    non_interactive: Force non-interactive mode, failing on unresolved conflicts.
+~~~~~
+
+### 下一步建议
+我们已经成功地为 `check` 命令添加了 `--non-interactive` 标志，并更新了所有相关文档。这标志着“交互式引导”这个宏大功能的开发工作已全部完成。
+
+现在，我建议创建一个 `[COMMIT]` 计划，将自 `#task/state/begin` 以来的所有相关修改（领域模型、应用层重构、CLI 实现及修复）作为一个完整的、原子性的功能单元进行提交。

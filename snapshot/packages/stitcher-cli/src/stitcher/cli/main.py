@@ -47,6 +47,11 @@ def check(
         "--reconcile",
         help="[Non-interactive] For 'Co-evolution' errors, accepts both changes.",
     ),
+    non_interactive: bool = typer.Option(
+        False,
+        "--non-interactive",
+        help="Force non-interactive mode, failing on unresolved conflicts.",
+    ),
 ):
     if force_relink and reconcile:
         bus.error("Cannot use --force-relink and --reconcile simultaneously.")
@@ -55,7 +60,8 @@ def check(
     project_root = Path.cwd()
     
     handler = None
-    if sys.stdin.isatty() and not force_relink and not reconcile:
+    # Interactive mode is the default in a TTY, unless explicitly disabled.
+    if sys.stdin.isatty() and not non_interactive and not force_relink and not reconcile:
         handler = TyperInteractionHandler()
 
     app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
