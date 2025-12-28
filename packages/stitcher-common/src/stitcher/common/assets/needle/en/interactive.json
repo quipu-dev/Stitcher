@@ -1,0 +1,24 @@
+{
+  "header": {
+    "title": "Conflict {current}/{total} in {path}",
+    "symbol": "Symbol: {fqn}"
+  },
+  "reason": {
+    "signature_drift": "Reason: Signature has changed, but docs have not (Signature Drift).",
+    "co_evolution": "Reason: Both signature and docs have changed (Co-evolution).",
+    "doc_content_conflict": "Reason: Source code docstring differs from YAML docstring."
+  },
+  "option": {
+    "relink": { "label": "[F]orce-relink", "desc": "Force-relink new signature with old docs." },
+    "reconcile": { "label": "[R]econcile", "desc": "Accept both changes as the new correct state." },
+    "overwrite": { "label": "[F]orce overwrite", "desc": "Overwrite YAML with code docs (Code-first)." },
+    "keep": { "label": "[R]econcile", "desc": "Keep existing YAML docs (YAML-first)." },
+    "skip": { "label": "[S]kip", "desc": "Skip this conflict for now." },
+    "abort": { "label": "[A]bort", "desc": "Abort the entire check process." },
+    "undo": { "label": "[Z]Undo", "desc": "Go back to the previous conflict." }
+  },
+  "prompt": "Please choose an action:",
+  "summary": "Found {count} conflicts. Please review them one by one.",
+  "invalid_choice": "Invalid choice, please try again.",
+  "already_at_start": "Already at the first conflict."
+}

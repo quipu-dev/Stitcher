@@ -1,0 +1,10 @@
+"SemanticMenuOption": |-
+  Data model representing a single option in an interactive menu, linking a key/action to semantic L pointers.
+"TyperInteractiveRenderer": |-
+  Renders interactive prompts using Typer, resolving text via Nexus.
+"TyperInteractiveRenderer.prompt": |-
+  Displays the full conflict resolution menu and captures user input.
+"TyperInteractiveRenderer.show_message": |-
+  Displays a formatted message resolved from an L pointer.
+"TyperInteractiveRenderer.show_summary": |-
+  Displays the summary of conflicts found.

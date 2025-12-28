@@ -142,7 +142,10 @@ class FileSystemLoader(BaseLoader, WritableResourceLoaderProtocol):
             file_data = handler.load(target_path)
 
         # 3. Update the file's data
-        file_data[key] = str_value
+        parts = key.split(".", 1)
+        # The key inside the file is relative to the filename (which is parts[0])
+        relative_key = parts[1] if len(parts) > 1 else key
+        file_data[relative_key] = str_value
 
         # 4. Save back to the specific file
         success = handler.save(target_path, file_data)

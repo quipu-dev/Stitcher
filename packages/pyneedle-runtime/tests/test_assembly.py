@@ -14,11 +14,11 @@ def multi_root_workspace(tmp_path: Path) -> dict:
     # 1. Define package assets (low priority)
     pkg_root = tmp_path / "pkg_assets"
     factory.with_source(
-        f"{pkg_root.name}/needle/en/main.json",
+        f"{pkg_root.name}/needle/en/cli.json",
         """
         {
-            "cli.default": "I am a default",
-            "cli.override_me": "Default Value"
+            "default": "I am a default",
+            "override_me": "Default Value"
         }
         """,
     )
@@ -28,11 +28,11 @@ def multi_root_workspace(tmp_path: Path) -> dict:
     factory.with_source(
         f"{project_root.name}/pyproject.toml", "[project]\nname='my-project'"
     ).with_source(
-        f"{project_root.name}/.stitcher/needle/en/overrides.json",
+        f"{project_root.name}/.stitcher/needle/en/cli.json",
         """
         {
-            "cli.override_me": "User Override!",
-            "cli.user_only": "I am from the user"
+            "override_me": "User Override!",
+            "user_only": "I am from the user"
         }
         """,
     )
