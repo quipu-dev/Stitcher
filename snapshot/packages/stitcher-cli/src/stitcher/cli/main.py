@@ -86,19 +86,19 @@ def strip():
     app_instance.run_strip()
 
 
-@app.command(help=nexus.get(L.cli.command.eject.help))
-def eject():
-    if not typer.confirm(bus.render_to_string(L.eject.run.confirm)):
-        bus.warning(L.eject.run.aborted)
+@app.command(help=nexus.get(L.cli.command.inject.help))
+def inject():
+    if not typer.confirm(bus.render_to_string(L.inject.run.confirm)):
+        bus.warning(L.inject.run.aborted)
         raise typer.Abort()
 
     project_root = Path.cwd()
     app_instance = StitcherApp(root_path=project_root)
-    app_instance.run_eject()
+    app_instance.run_inject()
 
 
-@app.command(help=nexus.get(L.cli.command.hydrate.help))
-def hydrate(
+@app.command(help=nexus.get(L.cli.command.pump.help))
+def pump(
     strip: bool = typer.Option(
         False, "--strip", help=nexus.get(L.cli.option.strip.help)
     ),
@@ -125,13 +125,24 @@ def hydrate(
     project_root = Path.cwd()
 
     handler = None
-    if sys.stdin.isatty() and not non_interactive and not force and not reconcile:
+    is_interactive = sys.stdin.isatty() and not non_interactive
+
+    if is_interactive and not force and not reconcile:
         handler = TyperInteractionHandler()
 
     app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
-    success = app_instance.run_hydrate(strip=strip, force=force, reconcile=reconcile)
-    if not success:
+    # 1. Run Pump
+    # Even if we want to strip, we might do it interactively later if strip=False
+    result = app_instance.run_pump(strip=strip, force=force, reconcile=reconcile)
+    if not result.success:
         raise typer.Exit(code=1)
+
+    # 2. Interactive Strip Confirmation (New Logic)
+    if result.redundant_files and is_interactive and not strip:
+        typer.echo("")
+        typer.secho(f"Found {len(result.redundant_files)} file(s) with redundant docstrings in source code.", fg=typer.colors.YELLOW)
+        if typer.confirm("Do you want to strip them now?", default=True):
+             app_instance.run_strip(files=result.redundant_files)
 
 
 if __name__ == "__main__":

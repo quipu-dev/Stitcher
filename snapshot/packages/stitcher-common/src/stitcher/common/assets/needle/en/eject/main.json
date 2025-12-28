@@ -1,7 +1,0 @@
-{
-    "eject.run.confirm": "⚠️  This will overwrite source files with content from .stitcher.yaml files. Any docstrings currently in your code will be replaced. Are you sure you want to continue?",
-    "eject.run.aborted": "Eject operation aborted.",
-    "eject.file.success": "📝 Injected docstrings into: {path}",
-    "eject.run.complete": "🎉 Eject complete. {count} files modified.",
-    "eject.no_docs_found": "🤔 No docstrings found in any .stitcher.yaml files. Nothing to eject."
-}

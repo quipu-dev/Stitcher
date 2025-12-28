@@ -57,6 +57,12 @@ class FileCheckResult:
         )
 
 
+@dataclass
+class PumpResult:
+    success: bool
+    redundant_files: List[Path] = field(default_factory=list)
+
+
 class StitcherApp:
     def __init__(
         self,
@@ -551,10 +557,10 @@ class StitcherApp:
             bus.success(L.check.run.success)
         return True
 
-    def run_hydrate(
+    def run_pump(
         self, strip: bool = False, force: bool = False, reconcile: bool = False
-    ) -> bool:
-        bus.info(L.hydrate.run.start)
+    ) -> PumpResult:
+        bus.info(L.pump.run.start)
         configs, _ = load_config_from_path(self.root_path)
 
         all_modules: List[ModuleDef] = []
@@ -600,14 +606,15 @@ class StitcherApp:
             for i, context in enumerate(all_conflicts):
                 action = chosen_actions[i]
                 if action == ResolutionAction.ABORT:
-                    bus.error(L.hydrate.run.aborted)
-                    return False
+                    bus.error(L.pump.run.aborted)
+                    return PumpResult(success=False)
                 resolutions_by_file[context.file_path][context.fqn] = action
 
         # 3. Execution Phase
         total_updated = 0
         total_conflicts_remaining = 0
-        files_to_strip = []
+        redundant_files: List[Path] = []
+        files_to_strip_now = []
 
         for module in all_modules:
             resolution_map = resolutions_by_file.get(module.file_path, {})
@@ -626,7 +633,7 @@ class StitcherApp:
                 total_conflicts_remaining += len(result["conflicts"])
                 for conflict_key in result["conflicts"]:
                     bus.error(
-                        L.hydrate.error.conflict,
+                        L.pump.error.conflict,
                         path=module.file_path,
                         key=conflict_key,
                     )
@@ -634,14 +641,14 @@ class StitcherApp:
 
             if result["reconciled_keys"]:
                 bus.info(
-                    L.hydrate.info.reconciled,
+                    L.pump.info.reconciled,
                     path=module.file_path,
                     count=len(result["reconciled_keys"]),
                 )
             if result["updated_keys"]:
                 total_updated += 1
                 bus.success(
-                    L.hydrate.file.success,
+                    L.pump.file.success,
                     path=module.file_path,
                     count=len(result["updated_keys"]),
                 )
@@ -661,12 +668,27 @@ class StitcherApp:
                 combined[fqn] = fp
 
             self.sig_manager.save_composite_hashes(module, combined)
-            files_to_strip.append(module)
 
-        # 4. Strip Phase (Optional)
-        if strip and files_to_strip:
+            # Collect candidates for stripping
+            if strip:
+                files_to_strip_now.append(module)
+            else:
+                # If we are NOT stripping now, we check if there are docs in code
+                # that are redundant (meaning they are safe to strip later)
+                # We check this by seeing if the file content would change if stripped
+                source_path = self.root_path / module.file_path
+                try:
+                    original = source_path.read_text(encoding="utf-8")
+                    stripped = strip_docstrings(original)
+                    if original != stripped:
+                        redundant_files.append(source_path)
+                except Exception:
+                    pass
+
+        # 4. Strip Phase (Immediate)
+        if files_to_strip_now:
             stripped_count = 0
-            for module in files_to_strip:
+            for module in files_to_strip_now:
                 source_path = self.root_path / module.file_path
                 try:
                     original_content = source_path.read_text(encoding="utf-8")
@@ -682,38 +704,45 @@ class StitcherApp:
                 bus.success(L.strip.run.complete, count=stripped_count)
 
         if total_conflicts_remaining > 0:
-            bus.error(L.hydrate.run.conflict, count=total_conflicts_remaining)
-            return False
+            bus.error(L.pump.run.conflict, count=total_conflicts_remaining)
+            return PumpResult(success=False)
 
         if total_updated == 0:
-            bus.info(L.hydrate.run.no_changes)
+            bus.info(L.pump.run.no_changes)
         else:
-            bus.success(L.hydrate.run.complete, count=total_updated)
+            bus.success(L.pump.run.complete, count=total_updated)
 
-        return True
+        return PumpResult(success=True, redundant_files=redundant_files)
 
-    # ... rest of methods (run_strip, run_eject) remain same ...
-    def run_strip(self) -> List[Path]:
-        configs, _ = load_config_from_path(self.root_path)
+    def run_strip(self, files: Optional[List[Path]] = None) -> List[Path]:
         all_modified_files: List[Path] = []
-        for config in configs:
-            files_to_scan = self._get_files_from_config(config)
-            for file_path in files_to_scan:
-                try:
-                    original_content = file_path.read_text(encoding="utf-8")
-                    stripped_content = strip_docstrings(original_content)
-                    if original_content != stripped_content:
-                        file_path.write_text(stripped_content, encoding="utf-8")
-                        all_modified_files.append(file_path)
-                        relative_path = file_path.relative_to(self.root_path)
-                        bus.success(L.strip.file.success, path=relative_path)
-                except Exception as e:
-                    bus.error(L.error.generic, error=e)
+        files_to_process = []
+
+        if files:
+            files_to_process = files
+        else:
+            configs, _ = load_config_from_path(self.root_path)
+            for config in configs:
+                files_to_process.extend(self._get_files_from_config(config))
+            files_to_process = sorted(list(set(files_to_process)))
+
+        for file_path in files_to_process:
+            try:
+                original_content = file_path.read_text(encoding="utf-8")
+                stripped_content = strip_docstrings(original_content)
+                if original_content != stripped_content:
+                    file_path.write_text(stripped_content, encoding="utf-8")
+                    all_modified_files.append(file_path)
+                    relative_path = file_path.relative_to(self.root_path)
+                    bus.success(L.strip.file.success, path=relative_path)
+            except Exception as e:
+                bus.error(L.error.generic, error=e)
+
         if all_modified_files:
             bus.success(L.strip.run.complete, count=len(all_modified_files))
         return all_modified_files
 
-    def run_eject(self) -> List[Path]:
+    def run_inject(self) -> List[Path]:
         configs, _ = load_config_from_path(self.root_path)
         all_modified_files: List[Path] = []
         total_docs_found = 0
@@ -733,11 +762,11 @@ class StitcherApp:
                         source_path.write_text(injected_content, encoding="utf-8")
                         all_modified_files.append(source_path)
                         relative_path = source_path.relative_to(self.root_path)
-                        bus.success(L.eject.file.success, path=relative_path)
+                        bus.success(L.inject.file.success, path=relative_path)
                 except Exception as e:
                     bus.error(L.error.generic, error=e)
         if all_modified_files:
-            bus.success(L.eject.run.complete, count=len(all_modified_files))
+            bus.success(L.inject.run.complete, count=len(all_modified_files))
         elif total_docs_found == 0:
-            bus.info(L.eject.no_docs_found)
+            bus.info(L.inject.no_docs_found)
         return all_modified_files
