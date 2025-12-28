@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复过时的 FileSystemLoader 测试并修正 put 方法", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766922207.333604, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(cli): 交互式提示本地化与 FileSystemLoader 修复", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766922272.2662163, "duration_ms": 0}}
