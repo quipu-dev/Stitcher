@@ -143,7 +143,9 @@ class InjectorTransformer(cst.CSTTransformer):
                     new_body_stmts.extend(body.body)
             else:
                 new_body_stmts.append(new_doc_node)
-            return updated_node.with_changes(body=body.with_changes(body=new_body_stmts))
+            return updated_node.with_changes(
+                body=body.with_changes(body=new_body_stmts)
+            )
 
         return updated_node
 

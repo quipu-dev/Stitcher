@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix: 统一文档字符串格式化逻辑并采纳 ruff 风格", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766892943.465346, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M __init__.py, M formatting.py, M stub_generator.py ... and 1 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766893231.6132405, "duration_ms": 0}}
