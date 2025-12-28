@@ -134,8 +134,16 @@ class DocumentManager:
         }
 
     def hydrate_module(
-        self, module: ModuleDef, force: bool = False, reconcile: bool = False
+        self,
+        module: ModuleDef,
+        force: bool = False,
+        reconcile: bool = False,
+        resolution_map: Optional[Dict[str, Any]] = None,
+        dry_run: bool = False,
     ) -> Dict[str, Any]:
+        # resolution_map: Dict[fqn, ResolutionAction]
+        resolution_map = resolution_map or {}
+
         source_docs = self.flatten_module_docs(module)
         if not source_docs:
             return {
@@ -155,10 +163,17 @@ class DocumentManager:
                 new_yaml_docs[key] = source_content
                 updated_keys.append(key)
             elif yaml_docs[key] != source_content:
-                if reconcile:
+                # Check for specific resolution first
+                action = resolution_map.get(key)
+
+                # Determine strategy
+                should_force = force or (action == "HYDRATE_OVERWRITE")
+                should_reconcile = reconcile or (action == "HYDRATE_KEEP_EXISTING")
+
+                if should_reconcile:
                     reconciled_keys.append(key)
                     continue
-                elif force:
+                elif should_force:
                     new_yaml_docs[key] = source_content
                     updated_keys.append(key)
                 else:
@@ -172,7 +187,7 @@ class DocumentManager:
                 "reconciled_keys": [],
             }
 
-        if updated_keys:
+        if updated_keys and not dry_run:
             module_path = self.root_path / module.file_path
             output_path = module_path.with_suffix(".stitcher.yaml")
             self.adapter.save(output_path, new_yaml_docs)

@@ -139,11 +139,16 @@ class ModuleDef:
 class ConflictType(str, Enum):
     SIGNATURE_DRIFT = "SIGNATURE_DRIFT"
     CO_EVOLUTION = "CO_EVOLUTION"
+    DOC_CONTENT_CONFLICT = "DOC_CONTENT_CONFLICT"
 
 
 class ResolutionAction(str, Enum):
     RELINK = "RELINK"
     RECONCILE = "RECONCILE"
+    HYDRATE_OVERWRITE = "HYDRATE_OVERWRITE"  # Equivalent to --force (Code wins)
+    HYDRATE_KEEP_EXISTING = (
+        "HYDRATE_KEEP_EXISTING"  # Equivalent to --reconcile (YAML wins)
+    )
     SKIP = "SKIP"
     ABORT = "ABORT"
 

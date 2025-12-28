@@ -58,10 +58,15 @@ def check(
         raise typer.Exit(code=1)
 
     project_root = Path.cwd()
-    
+
     handler = None
     # Interactive mode is the default in a TTY, unless explicitly disabled.
-    if sys.stdin.isatty() and not non_interactive and not force_relink and not reconcile:
+    if (
+        sys.stdin.isatty()
+        and not non_interactive
+        and not force_relink
+        and not reconcile
+    ):
         handler = TyperInteractionHandler()
 
     app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
@@ -107,13 +112,23 @@ def hydrate(
         "--reconcile",
         help=nexus.get(L.cli.option.reconcile.help),
     ),
+    non_interactive: bool = typer.Option(
+        False,
+        "--non-interactive",
+        help="Force non-interactive mode, failing on unresolved conflicts.",
+    ),
 ):
     if force and reconcile:
         bus.error("Cannot use --force and --reconcile simultaneously.")
         raise typer.Exit(code=1)
 
     project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
+
+    handler = None
+    if sys.stdin.isatty() and not non_interactive and not force and not reconcile:
+        handler = TyperInteractionHandler()
+
+    app_instance = StitcherApp(root_path=project_root, interaction_handler=handler)
     success = app_instance.run_hydrate(strip=strip, force=force, reconcile=reconcile)
     if not success:
         raise typer.Exit(code=1)

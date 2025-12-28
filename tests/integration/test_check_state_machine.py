@@ -1,5 +1,3 @@
-from pathlib import Path
-import json
 from stitcher.app import StitcherApp
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory, get_stored_hashes
