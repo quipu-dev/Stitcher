@@ -7,7 +7,7 @@
     "baseline_yaml_content_hash": "e06eb864dd6d2b3b54aca37d557d70cb4b98daa0229bca10ed1112908ae04350"
   },
   "cli_renderer": {
-    "baseline_yaml_content_hash": "babb2eb1141dcfc90dbb2c20d84ad7f4872318e92d8d3016449a1a30505233a5"
+    "baseline_yaml_content_hash": null
   },
   "generate": {
     "baseline_code_structure_hash": "e8ca74d268e321ce1fe6db6c1251edaf57633a1626d94398b748e20434678393",

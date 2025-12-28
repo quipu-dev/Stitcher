@@ -7,8 +7,6 @@
     force_relink: [Non-interactive] For 'Signature Drift' errors, forces relinking.
     reconcile: [Non-interactive] For 'Co-evolution' errors, accepts both changes.
     non_interactive: Force non-interactive mode, failing on unresolved conflicts.
-"cli_renderer": |-
-  The CLI-specific renderer instance used by the message bus.
 "generate": |-
   Generate .pyi stubs based on pyproject.toml config.
 "init": |-
