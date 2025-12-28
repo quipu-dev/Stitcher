@@ -1,214 +1,218 @@
-简要回答
-好的，我们继续进行 CLI 重构的最后一步。这将彻底净化 `main.py`，使其仅作为命令注册的入口，并将所有具体命令逻辑分散到独立的模块中。
+简短回答
+好的，我们开始第二阶段的核心逻辑实现。首先，我们需要升级底层数据模型和服务，使其具备“捕获”和“存储”函数签名文本的能力，这是生成 Diff 的前提。
 
-## [WIP] refactor(cli): 迁移基础命令以完成 CLI 模块化
+## [WIP] feat(core): 支持函数签名文本的提取与持久化
 
 ### 用户需求
-为了彻底净化 `main.py` 并完成 CLI 的模块化重构，需要将剩余的基础命令（`init`, `generate`, `strip`, `inject`）迁移到独立的模块中。
+为了在 `check` 命令中展示代码变更的差异（Diff），系统需要能够获取函数的“人类可读”签名文本，并将其作为基线（Baseline）持久化存储。
 
 ### 评论
-完成这一步后，`main.py` 将变得极其简洁，仅负责应用初始化和命令装配。这将极大地提升代码库的组织性，使得添加新命令（如未来的 `viewdiff` 增强）变得更加模块化且无干扰。
+当前系统只存储了签名的哈希值（`structure_hash`），这足以检测**变化**，但无法展示**哪里变了**。我们需要扩展 `Fingerprint` 规范以支持存储文本，并增强 `FunctionDef` 模型以能够自我重构为签名字符串。
 
 ### 目标
-1.  创建 `stitcher.cli.commands.basics` 模块。
-2.  将 `generate` 命令迁移至该模块。
-3.  将 `init` 命令迁移至该模块。
-4.  将 `strip` 命令迁移至该模块。
-5.  将 `inject` 命令迁移至该模块。
-6.  更新 `stitcher.cli.main`，导入并注册这些基础命令。
+1.  修改 `stitcher.spec.FunctionDef`，添加 `get_signature_string()` 方法。
+2.  修改 `stitcher.spec.Fingerprint`，更新键名校验正则，允许存储 `_text` 后缀的数据。
+3.  修改 `stitcher.app.services.SignatureManager`，添加 `extract_signature_texts()` 方法。
 
 ### 基本原理
--   **关注点分离**: `main.py` 关注“配置与组装”，子模块关注“执行逻辑”。
--   **代码复用**: 所有的命令现在都通过 `factories.make_app` 获取应用实例，统一了构造方式。
+-   **所见即所得**: `get_signature_string` 应该尽可能还原代码中的函数定义行（`def foo(...) -> ...:`），以便用户在 Diff 中看到熟悉的 Python 语法。
+-   **非破坏性扩展**: 通过扩展 `Fingerprint` 的正则校验，我们可以在不改变现有存储结构（JSON）的前提下，向其中注入新的元数据字段（`baseline_code_signature_text`）。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium
-#comp/cli #concept/structure
-#task/domain/cli #task/object/command-structure #task/action/refactor
-#task/state/begin
+#intent/build #flow/ready #priority/high
+#comp/spec #comp/application #concept/state
+#task/domain/core #task/object/signature #task/action/enhance
+#task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建基础命令模块
+#### Acts 1: 增强 FunctionDef 模型
 
-创建 `basics.py` 并迁移四个基础命令。注意我们复用 `factories.make_app`。
-
-~~~~~act
-write_file
-packages/stitcher-cli/src/stitcher/cli/commands/basics.py
-~~~~~
-~~~~~python
-import typer
-from needle.pointer import L
-from stitcher.common import bus
-from stitcher.cli.factories import make_app
-
-
-def generate_command():
-    app_instance = make_app()
-    app_instance.run_from_config()
-
-
-def init_command():
-    app_instance = make_app()
-    app_instance.run_init()
-
-
-def strip_command():
-    if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
-        bus.warning(L.strip.run.aborted)
-        raise typer.Abort()
-
-    app_instance = make_app()
-    app_instance.run_strip()
-
-
-def inject_command():
-    if not typer.confirm(bus.render_to_string(L.inject.run.confirm)):
-        bus.warning(L.inject.run.aborted)
-        raise typer.Abort()
-
-    app_instance = make_app()
-    app_instance.run_inject()
-~~~~~
-
-#### Acts 2: 最终净化 Main 入口
-
-现在 `main.py` 只负责导入和注册。
+我们需要实现一个方法，将 `FunctionDef` 对象反向组装成函数定义字符串。
 
 ~~~~~act
 patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
+packages/stitcher-spec/src/stitcher/spec/models.py
 ~~~~~
 ~~~~~python.old
-from stitcher.app import StitcherApp
-from stitcher.common import bus, stitcher_nexus as nexus
-from needle.pointer import L
-from .rendering import CliRenderer
+    def compute_fingerprint(self) -> str:
+        # Build a stable string representation of the signature
+        parts = [
+            f"name:{self.name}",
+            f"async:{self.is_async}",
+            f"static:{self.is_static}",
+            f"class:{self.is_class}",
+            f"ret:{self.return_annotation or ''}",
+        ]
 
-# Import commands
-from .commands.check import check_command
-from .commands.pump import pump_command
+        for arg in self.args:
+            arg_sig = (
+                f"{arg.name}:{arg.kind}:{arg.annotation or ''}:{arg.default or ''}"
+            )
+            parts.append(arg_sig)
 
-app = typer.Typer(
-    name="stitcher",
-    help=nexus.get(L.cli.app.description),
-    no_args_is_help=True,
-)
+        # We deliberately exclude decorators from the fingerprint for now,
+        # as they often change without affecting the core API contract relevant to docs.
+        # We also strictly exclude self.docstring.
 
-# Register complex commands
-app.command(name="check", help=nexus.get(L.cli.command.check.help))(check_command)
-app.command(name="pump", help=nexus.get(L.cli.command.pump.help))(pump_command)
-
-
-@app.callback()
-def main(
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help=nexus.get(L.cli.option.verbose.help)
-    ),
-):
-    # The CLI is the composition root. It decides *which* renderer to use.
-    # We configure it here to capture the global verbose flag.
-    cli_renderer = CliRenderer(verbose=verbose)
-    bus.set_renderer(cli_renderer)
-
-
-@app.command(help=nexus.get(L.cli.command.generate.help))
-def generate():
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-    app_instance.run_from_config()
-
-
-@app.command(help=nexus.get(L.cli.command.init.help))
-def init():
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-    app_instance.run_init()
-
-
-@app.command(help=nexus.get(L.cli.command.strip.help))
-def strip():
-    if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
-        bus.warning(L.strip.run.aborted)
-        raise typer.Abort()
-
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-    app_instance.run_strip()
-
-
-@app.command(help=nexus.get(L.cli.command.inject.help))
-def inject():
-    if not typer.confirm(bus.render_to_string(L.inject.run.confirm)):
-        bus.warning(L.inject.run.aborted)
-        raise typer.Abort()
-
-    project_root = Path.cwd()
-    app_instance = StitcherApp(root_path=project_root)
-    app_instance.run_inject()
-
-
-if __name__ == "__main__":
-    app()
+        sig_str = "|".join(parts)
+        return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
 ~~~~~
 ~~~~~python.new
-import typer
-from stitcher.common import bus, stitcher_nexus as nexus
-from needle.pointer import L
-from .rendering import CliRenderer
+    def compute_fingerprint(self) -> str:
+        # Build a stable string representation of the signature
+        parts = [
+            f"name:{self.name}",
+            f"async:{self.is_async}",
+            f"static:{self.is_static}",
+            f"class:{self.is_class}",
+            f"ret:{self.return_annotation or ''}",
+        ]
 
-# Import commands
-from .commands.check import check_command
-from .commands.pump import pump_command
-from .commands.basics import (
-    generate_command,
-    init_command,
-    strip_command,
-    inject_command,
-)
+        for arg in self.args:
+            arg_sig = (
+                f"{arg.name}:{arg.kind}:{arg.annotation or ''}:{arg.default or ''}"
+            )
+            parts.append(arg_sig)
 
-app = typer.Typer(
-    name="stitcher",
-    help=nexus.get(L.cli.app.description),
-    no_args_is_help=True,
-)
+        # We deliberately exclude decorators from the fingerprint for now,
+        # as they often change without affecting the core API contract relevant to docs.
+        # We also strictly exclude self.docstring.
+
+        sig_str = "|".join(parts)
+        return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
+
+    def get_signature_string(self) -> str:
+        """
+        Reconstructs the function signature as a string.
+        Example: async def foo(a: int, b: str = 'default') -> bool:
+        """
+        parts = []
+        if self.is_async:
+            parts.append("async")
+        parts.append("def")
+        parts.append(f"{self.name}(")
+
+        arg_strs = []
+        # Simple reconstruction. Note: Does not handle / and * markers perfectly
+        # for complex cases, but sufficient for diffing context.
+        # To improve, we could reuse logic similar to StubGenerator._generate_args
+        # but keep it simple for now.
+        for arg in self.args:
+            s = arg.name
+            if arg.kind == ArgumentKind.VAR_POSITIONAL:
+                s = f"*{arg.name}"
+            elif arg.kind == ArgumentKind.VAR_KEYWORD:
+                s = f"**{arg.name}"
+            
+            if arg.annotation:
+                s += f": {arg.annotation}"
+            if arg.default:
+                s += f" = {arg.default}"
+            arg_strs.append(s)
+        
+        parts.append(", ".join(arg_strs))
+        parts.append(")")
+        
+        if self.return_annotation:
+            parts.append(f"-> {self.return_annotation}")
+        
+        parts.append(":")
+        return " ".join(parts).replace("( ", "(").replace(" )", ")")
+~~~~~
+
+#### Acts 2: 更新 Fingerprint 校验规则
+
+更新正则表达式，允许 `_text` 后缀的键名，以便存储 `baseline_code_signature_text`。
+
+~~~~~act
+patch_file
+packages/stitcher-spec/src/stitcher/spec/fingerprint.py
+~~~~~
+~~~~~python.old
+# Axiom: [State]_[Source]_[Object]_hash
+# Example: baseline_code_structure_hash
+# We enforce 4 segments, starting with state, ending with hash.
+FINGERPRINT_KEY_PATTERN = re.compile(r"^(baseline|current)_[a-z]+_[a-z]+_hash$")
 
 
-@app.callback()
-def main(
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help=nexus.get(L.cli.option.verbose.help)
-    ),
-):
-    # The CLI is the composition root. It decides *which* renderer to use.
-    # We configure it here to capture the global verbose flag.
-    cli_renderer = CliRenderer(verbose=verbose)
-    bus.set_renderer(cli_renderer)
+class InvalidFingerprintKeyError(KeyError):
+    def __init__(self, key: str):
+        super().__init__(
+            f"Key '{key}' does not conform to the Fingerprint naming axiom "
+            "('^(baseline|current)_[a-z]+_[a-z]+_hash$')."
+        )
+~~~~~
+~~~~~python.new
+# Axiom: [State]_[Source]_[Object]_[Type]
+# Example: baseline_code_structure_hash, baseline_code_signature_text
+# We enforce 4 segments, starting with state, ending with type (hash or text).
+FINGERPRINT_KEY_PATTERN = re.compile(r"^(baseline|current)_[a-z]+_[a-z]+_(hash|text)$")
 
 
-# Register commands
-app.command(name="check", help=nexus.get(L.cli.command.check.help))(check_command)
-app.command(name="pump", help=nexus.get(L.cli.command.pump.help))(pump_command)
-app.command(name="generate", help=nexus.get(L.cli.command.generate.help))(
-    generate_command
-)
-app.command(name="init", help=nexus.get(L.cli.command.init.help))(init_command)
-app.command(name="strip", help=nexus.get(L.cli.command.strip.help))(strip_command)
-app.command(name="inject", help=nexus.get(L.cli.command.inject.help))(inject_command)
+class InvalidFingerprintKeyError(KeyError):
+    def __init__(self, key: str):
+        super().__init__(
+            f"Key '{key}' does not conform to the Fingerprint naming axiom "
+            "('^(baseline|current)_[a-z]+_[a-z]+_(hash|text)$')."
+        )
+~~~~~
 
+#### Acts 3: 扩展 SignatureManager
 
-if __name__ == "__main__":
-    app()
+添加 `extract_signature_texts` 方法，用于批量提取模块中所有函数的签名文本。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/services/signature_manager.py
+~~~~~
+~~~~~python.old
+    def compute_code_structure_hashes(self, module: ModuleDef) -> Dict[str, str]:
+        hashes = {}
+        for func in module.functions:
+            hashes[func.name] = func.compute_fingerprint()
+        for cls in module.classes:
+            for method in cls.methods:
+                fqn = f"{cls.name}.{method.name}"
+                hashes[fqn] = method.compute_fingerprint()
+        return hashes
+
+    def save_composite_hashes(
+        self, module: ModuleDef, hashes: Dict[str, Fingerprint]
+    ) -> None:
+~~~~~
+~~~~~python.new
+    def compute_code_structure_hashes(self, module: ModuleDef) -> Dict[str, str]:
+        hashes = {}
+        for func in module.functions:
+            hashes[func.name] = func.compute_fingerprint()
+        for cls in module.classes:
+            for method in cls.methods:
+                fqn = f"{cls.name}.{method.name}"
+                hashes[fqn] = method.compute_fingerprint()
+        return hashes
+
+    def extract_signature_texts(self, module: ModuleDef) -> Dict[str, str]:
+        texts = {}
+        for func in module.functions:
+            texts[func.name] = func.get_signature_string()
+        for cls in module.classes:
+            for method in cls.methods:
+                fqn = f"{cls.name}.{method.name}"
+                texts[fqn] = method.get_signature_string()
+        return texts
+
+    def save_composite_hashes(
+        self, module: ModuleDef, hashes: Dict[str, Fingerprint]
+    ) -> None:
 ~~~~~
 
 ### 下一步建议
-CLI 重构已完成，代码结构现在非常清晰且模块化。
-我们可以回到 `viewdiff` 的实施计划。
-第一阶段（扩展 `InteractionContext`）已经通过（在早前的对话中确认过代码变更），我们现在可以直接进入 **第二阶段：核心逻辑实现**。
-首先需要为 `check` 命令实现生成 `signature_diff` 的逻辑。这需要：
-1.  让 `FunctionDef` 支持输出签名的文本表示。
-2.  让 `SignatureManager` 支持持久化和读取这个签名文本。
-3.  在 `check` 的分析阶段生成 diff。
+基础设施已经就绪。接下来的步骤是：
+1.  **应用层变更**: 更新 `StitcherApp`。
+    *   在 `run_init` 和 `run_pump` 中调用 `extract_signature_texts` 并保存签名文本。
+    *   在 `run_check` 中利用这些文本生成 Diff。
+2.  **Pump Diff**: 在 `pump` 流程中生成文档内容的 Diff。
+3.  **UI 层**: 更新 Handler 以显示这些 Diff。

@@ -2,17 +2,17 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 
-# Axiom: [State]_[Source]_[Object]_hash
-# Example: baseline_code_structure_hash
-# We enforce 4 segments, starting with state, ending with hash.
-FINGERPRINT_KEY_PATTERN = re.compile(r"^(baseline|current)_[a-z]+_[a-z]+_hash$")
+# Axiom: [State]_[Source]_[Object]_[Type]
+# Example: baseline_code_structure_hash, baseline_code_signature_text
+# We enforce 4 segments, starting with state, ending with type (hash or text).
+FINGERPRINT_KEY_PATTERN = re.compile(r"^(baseline|current)_[a-z]+_[a-z]+_(hash|text)$")
 
 
 class InvalidFingerprintKeyError(KeyError):
     def __init__(self, key: str):
         super().__init__(
             f"Key '{key}' does not conform to the Fingerprint naming axiom "
-            "('^(baseline|current)_[a-z]+_[a-z]+_hash$')."
+            "('^(baseline|current)_[a-z]+_[a-z]+_(hash|text)$')."
         )
 
 

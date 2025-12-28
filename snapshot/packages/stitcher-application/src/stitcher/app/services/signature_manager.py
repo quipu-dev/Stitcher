@@ -24,6 +24,16 @@ class SignatureManager:
                 hashes[fqn] = method.compute_fingerprint()
         return hashes
 
+    def extract_signature_texts(self, module: ModuleDef) -> Dict[str, str]:
+        texts = {}
+        for func in module.functions:
+            texts[func.name] = func.get_signature_string()
+        for cls in module.classes:
+            for method in cls.methods:
+                fqn = f"{cls.name}.{method.name}"
+                texts[fqn] = method.get_signature_string()
+        return texts
+
     def save_composite_hashes(
         self, module: ModuleDef, hashes: Dict[str, Fingerprint]
     ) -> None:

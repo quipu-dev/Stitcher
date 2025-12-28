@@ -64,6 +64,44 @@ class FunctionDef:
         sig_str = "|".join(parts)
         return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
 
+    def get_signature_string(self) -> str:
+        """
+        Reconstructs the function signature as a string.
+        Example: async def foo(a: int, b: str = 'default') -> bool:
+        """
+        parts = []
+        if self.is_async:
+            parts.append("async")
+        parts.append("def")
+        parts.append(f"{self.name}(")
+
+        arg_strs = []
+        # Simple reconstruction. Note: Does not handle / and * markers perfectly
+        # for complex cases, but sufficient for diffing context.
+        # To improve, we could reuse logic similar to StubGenerator._generate_args
+        # but keep it simple for now.
+        for arg in self.args:
+            s = arg.name
+            if arg.kind == ArgumentKind.VAR_POSITIONAL:
+                s = f"*{arg.name}"
+            elif arg.kind == ArgumentKind.VAR_KEYWORD:
+                s = f"**{arg.name}"
+            
+            if arg.annotation:
+                s += f": {arg.annotation}"
+            if arg.default:
+                s += f" = {arg.default}"
+            arg_strs.append(s)
+        
+        parts.append(", ".join(arg_strs))
+        parts.append(")")
+        
+        if self.return_annotation:
+            parts.append(f"-> {self.return_annotation}")
+        
+        parts.append(":")
+        return " ".join(parts).replace("( ", "(").replace(" )", ")")
+
 
 @dataclass
 class ClassDef:
