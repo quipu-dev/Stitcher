@@ -40,7 +40,33 @@ class PointerSetProtocol(Protocol):
 
 
 class ResourceLoaderProtocol(Protocol):
-    def load(self, domain: str) -> Dict[str, Any]: ...
+    def fetch(
+        self,
+        pointer: Union[str, SemanticPointerProtocol],
+        domain: str,
+        ignore_cache: bool = False,
+    ) -> Union[str, None]:
+        """
+        Atomic lookup in a specific domain.
+        Must NOT perform language fallback or cross-layer fallback internally.
+        """
+        ...
+
+    def get(
+        self, pointer: Union[str, SemanticPointerProtocol], domain: str | None = None
+    ) -> str:
+        """
+        Policy-based lookup.
+        Handles language fallback (Horizontal) and Identity fallback.
+        """
+        ...
+
+    def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:
+        """
+        Eagerly load all data for a domain.
+        Mainly for debugging, exporting, or cache warming.
+        """
+        ...
 
 
 class WritableResourceLoaderProtocol(ResourceLoaderProtocol, Protocol):
@@ -51,11 +77,3 @@ class WritableResourceLoaderProtocol(ResourceLoaderProtocol, Protocol):
     def locate(
         self, pointer: Union[str, SemanticPointerProtocol], domain: str
     ) -> Path: ...
-
-
-class NexusProtocol(ResourceLoaderProtocol, Protocol):
-    def get(
-        self, pointer: Union[str, SemanticPointerProtocol], domain: str | None = None
-    ) -> str: ...
-
-    def reload(self, domain: str | None = None) -> None: ...

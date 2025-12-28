@@ -6,7 +6,6 @@ from .protocols import (
     PointerSetProtocol,
     ResourceLoaderProtocol,
     WritableResourceLoaderProtocol,
-    NexusProtocol,
 )
 
 __all__ = [
@@ -14,5 +13,4 @@ __all__ = [
     "PointerSetProtocol",
     "ResourceLoaderProtocol",
     "WritableResourceLoaderProtocol",
-    "NexusProtocol",
 ]

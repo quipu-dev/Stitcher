@@ -1,107 +1,55 @@
-import os
-from collections import ChainMap
 from typing import List, Dict, Optional, Union, Any
-from needle.spec import NexusProtocol, ResourceLoaderProtocol, SemanticPointerProtocol
-
-
+from needle.spec import ResourceLoaderProtocol, WritableResourceLoaderProtocol, SemanticPointerProtocol
 from pathlib import Path
-from needle.spec import WritableResourceLoaderProtocol
+from collections import ChainMap
+
+from .base import BaseLoader
 
 
-class OverlayNexus(NexusProtocol):
+class OverlayNexus(BaseLoader):
+    """
+    Implements the 'Composition Layer' (Vertical Fallback).
+    It is just a loader that iterates over other loaders.
+    """
+
     def __init__(
         self, loaders: List[ResourceLoaderProtocol], default_domain: str = "en"
     ):
+        super().__init__(default_domain)
         self.loaders = loaders
-        self.default_domain = default_domain
-        self._views: Dict[str, ChainMap[str, Any]] = {}
 
-    def load(self, domain: str) -> Dict[str, Any]:
-        return self._get_or_create_view(domain)
-
-    def _get_or_create_view(self, domain: str) -> ChainMap[str, Any]:
-        if domain not in self._views:
-            # Trigger load() on all loaders for the requested domain.
-            # The order of `self.loaders` is preserved (Priority: First > Last)
-            maps = [loader.load(domain) for loader in self.loaders]
-            self._views[domain] = ChainMap(*maps)
-        return self._views[domain]
-
-    def _resolve_domain(self, explicit_domain: Optional[str] = None) -> str:
-        if explicit_domain:
-            return explicit_domain
-
-        # Priority 1: NEEDLE_LANG (renamed concept mapping)
-        needle_domain = os.getenv("NEEDLE_LANG")
-        if needle_domain:
-            return needle_domain
-
-        # Priority 2: STITCHER_LANG (legacy compatibility)
-        stitcher_domain = os.getenv("STITCHER_LANG")
-        if stitcher_domain:
-            return stitcher_domain
-
-        system_domain = os.getenv("LANG")
-        if system_domain:
-            return system_domain.split("_")[0].split(".")[0].lower()
-
-        return self.default_domain
-
-    def get(
+    def fetch(
         self,
         pointer: Union[str, SemanticPointerProtocol],
-        domain: Optional[str] = None,
-    ) -> str:
+        domain: str,
+        ignore_cache: bool = False,
+    ) -> Optional[str]:
         key = str(pointer)
-        target_domain = self._resolve_domain(domain)
+        # Vertical Traversal: Check each loader in order
+        for loader in self.loaders:
+            val = loader.fetch(key, domain, ignore_cache)
+            if val is not None:
+                return val
+        return None
 
-        # 1. Try target domain
-        target_view = self._get_or_create_view(target_domain)
-        value = target_view.get(key)
-        if value is not None:
-            return str(value)
-
-        # 2. Try default domain (if different)
-        if target_domain != self.default_domain:
-            default_view = self._get_or_create_view(self.default_domain)
-            value = default_view.get(key)
-            if value is not None:
-                return str(value)
-
-        # 3. Fallback to Identity
-        return key
-
-    def reload(self, domain: Optional[str] = None) -> None:
-        if domain:
-            self._views.pop(domain, None)
-        else:
-            self._views.clear()
+    def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:
+        # Merge all views. Last loader is bottom layer, first is top layer.
+        # ChainMap looks up from first to last.
+        # So we want loaders[0] to be the first in ChainMap.
+        maps = [loader.load(domain, ignore_cache) for loader in self.loaders]
+        # Flatten for the dump
+        return dict(ChainMap(*maps))
 
     # --- Write Support ---
-
+    # Nexus itself does NOT support put() to avoid ambiguity.
+    # Users should obtain a specific WritableLoader to write.
+    
     def _get_writable_loader(self) -> Optional[WritableResourceLoaderProtocol]:
+        # Helper for locating, but NOT for putting.
         for loader in self.loaders:
             if isinstance(loader, WritableResourceLoaderProtocol):
                 return loader
         return None
-
-    def put(
-        self,
-        pointer: Union[str, SemanticPointerProtocol],
-        value: Any,
-        domain: Optional[str] = None,
-    ) -> bool:
-        target_domain = self._resolve_domain(domain)
-        loader = self._get_writable_loader()
-        if not loader:
-            return False
-
-        success = loader.put(pointer, value, target_domain)
-        if success:
-            # If write succeeded, we must invalidate the cache for this domain
-            # so subsequent reads reflect the change.
-            self.reload(target_domain)
-        return success
 
     def locate(
         self,
