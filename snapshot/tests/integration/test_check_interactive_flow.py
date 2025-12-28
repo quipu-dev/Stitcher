@@ -3,7 +3,7 @@ from typing import List
 from stitcher.app import StitcherApp
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.spec import ResolutionAction, ConflictType
-from stitcher.test_utils import WorkspaceFactory, SpyBus
+from stitcher.test_utils import WorkspaceFactory, SpyBus, get_stored_hashes
 from needle.pointer import L
 
 class MockResolutionHandler(InteractionHandler):
@@ -76,8 +76,7 @@ def func_b(x: str): # int -> str
     spy_bus.assert_id_called(L.check.state.relinked, level="success")
     
     # Verify Hashes are actually updated in storage
-    from tests.integration.test_check_state_machine import _get_stored_hashes
-    final_hashes = _get_stored_hashes(project_root, "src/app.py")
+    final_hashes = get_stored_hashes(project_root, "src/app.py")
     
     # func_a should have updated yaml hash
     expected_doc_a_hash = app.doc_manager.compute_yaml_content_hash("New Doc A.")

@@ -2,17 +2,7 @@ from pathlib import Path
 import json
 from stitcher.app import StitcherApp
 from needle.pointer import L
-from stitcher.test_utils import SpyBus, WorkspaceFactory
-
-
-def _get_stored_hashes(project_root: Path, file_path: str) -> dict:
-    sig_file = (
-        project_root / ".stitcher/signatures" / Path(file_path).with_suffix(".json")
-    )
-    if not sig_file.exists():
-        return {}
-    with sig_file.open("r") as f:
-        return json.load(f)
+from stitcher.test_utils import SpyBus, WorkspaceFactory, get_stored_hashes
 
 
 def _assert_no_errors_or_warnings(spy_bus: SpyBus):
@@ -76,7 +66,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
         f'__doc__: "Module Doc"\nfunc: "{new_doc_content}"\n', encoding="utf-8"
     )
 
-    initial_hashes = _get_stored_hashes(project_root, "src/module.py")
+    initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
@@ -87,7 +77,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.state.doc_updated, level="info")
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
-    final_hashes = _get_stored_hashes(project_root, "src/module.py")
+    final_hashes = get_stored_hashes(project_root, "src/module.py")
     assert (
         final_hashes["func"]["baseline_code_structure_hash"]
         == initial_hashes["func"]["baseline_code_structure_hash"]
@@ -140,7 +130,7 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
 
-    initial_hashes = _get_stored_hashes(project_root, "src/module.py")
+    initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
@@ -150,7 +140,7 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.state.relinked, level="success")
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
-    final_hashes = _get_stored_hashes(project_root, "src/module.py")
+    final_hashes = get_stored_hashes(project_root, "src/module.py")
 
     assert (
         final_hashes["func"]["baseline_code_structure_hash"]
@@ -216,7 +206,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
         f'__doc__: "Module Doc"\nfunc: "{new_doc_content}"\n', encoding="utf-8"
     )
 
-    initial_hashes = _get_stored_hashes(project_root, "src/module.py")
+    initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
@@ -226,7 +216,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.state.reconciled, level="success")
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
-    final_hashes = _get_stored_hashes(project_root, "src/module.py")
+    final_hashes = get_stored_hashes(project_root, "src/module.py")
     assert (
         final_hashes["func"]["baseline_code_structure_hash"]
         != initial_hashes["func"]["baseline_code_structure_hash"]

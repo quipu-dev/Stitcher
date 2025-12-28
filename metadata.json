@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 为交互式检查流程添加回归测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766902136.5203037, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 将哈希加载函数重构为共享测试工具", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766902436.2383838, "duration_ms": 0}}
