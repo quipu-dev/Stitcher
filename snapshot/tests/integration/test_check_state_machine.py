@@ -1,3 +1,4 @@
+from pathlib import Path
 from textwrap import dedent
 from stitcher.app import StitcherApp
 from needle.pointer import L
