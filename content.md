@@ -1,238 +1,190 @@
-You are absolutely right. The test failure is a direct result of a flaw in my previous plan. I physically deleted the `stitcher-scanner` package, but `stitcher-application`'s `core.py` still retained an import from it. This is a critical oversight.
+Of course. My apologies. The refactoring was incomplete. In my haste to remove the old packages, I missed another critical dependency chain. The `DocumentManager` still depends on `stitcher.io`, which no longer exists.
 
-The function `parse_plugin_entry` is a special case. Unlike the general-purpose parser, it's inherently tied to Python's runtime introspection (`importlib`, `inspect`) and therefore correctly belongs with the Python-specific logic. I should have moved it, not deleted it.
+You are correct to point this out. The `DocumentAdapter` and `YamlAdapter` are general IO utilities. The correct place for them in the new architecture is `stitcher-common`.
 
-## [WIP] fix: Repair broken imports post-refactor
+## [WIP] fix: Relocate IO adapters to stitcher-common
 
 ### 错误分析
-1.  **根本原因**: `ModuleNotFoundError: No module named 'stitcher.scanner'`.
-2.  **具体分析**: 在上一步中，我删除了 `stitcher-scanner` 包，但 `stitcher-application` 中的 `core.py` 仍然保留了 `from stitcher.scanner import parse_plugin_entry, InspectionError`。
-3.  **架构问题**: `parse_plugin_entry` 的逻辑是 Python 特有的，它应该被迁移到 `stitcher-python-adapter` 中，而不是被删除。
-4.  **依赖缺失**: `stitcher-application` 现在逻辑上依赖于语言适配器来提供插件解析功能，因此需要在其 `pyproject.toml` 中声明对 `stitcher-python-adapter` 的依赖。
+1.  **根本原因**: `ModuleNotFoundError: No module named 'stitcher.io'`.
+2.  **具体分析**: The file `packages/stitcher-application/src/stitcher/app/services/doc_manager.py` contains the import `from stitcher.io import DocumentAdapter, YamlAdapter`. However, the `stitcher-io` package was deleted in the previous step.
+3.  **架构修正**: The `DocumentAdapter` protocol and the `YamlAdapter` implementation are foundational IO utilities. They are not specific to the core application logic. Their correct home is the `stitcher-common` package, which houses shared tools and definitions used across the ecosystem.
 
 ### 用户需求
-修复因 `stitcher-scanner` 被删除而导致的 `ImportError`，使测试套件能够重新通过。
+Fix the final `ImportError` by relocating the necessary IO components from the defunct `stitcher-io` package to `stitcher-common` and updating the import paths.
 
 ### 评论
-这是一个典型的重构后清理失误。通过将 `inspector.py` 的逻辑（插件解析）正式迁移到 `stitcher-python-adapter` 中，我们不仅修复了错误，而且进一步巩固了新架构的正确性——所有 Python 特定的代码现在都集中在一个地方。
+This is the final piece of the puzzle. This error highlights the deep-seated nature of the original coupling. By moving these last components to their proper, shared location, we complete the architectural vision of a decoupled core application that relies on common, swappable services.
 
 ### 目标
-1.  将 `inspector.py` 的逻辑物理地迁移到 `stitcher-python-adapter` 中。
-2.  从 `stitcher-python-adapter` 中导出 `parse_plugin_entry` 和 `InspectionError`。
-3.  为 `stitcher-application` 添加对 `stitcher-python-adapter` 的依赖。
-4.  修复 `stitcher-application/src/stitcher/app/core.py` 中的 import 语句。
+1.  Relocate the `DocumentAdapter` protocol to `stitcher-common`.
+2.  Relocate the `YamlAdapter` implementation to `stitcher-common`.
+3.  Update `stitcher-common`'s public API to export these components.
+4.  Fix the import statement in `stitcher-application`'s `doc_manager.py`.
 
 ### 基本原理
-我们将 `inspector.py` 视为 Python 适配器提供的一项服务。`StitcherApp` 消费这项服务，因此需要从适配器导入它，并且其所在的包 (`stitcher-application`) 必须在其构建配置中声明这种依赖关系。
+Placing shared, low-level utilities like file format adapters into a common library (`stitcher-common`) is a standard practice that promotes reuse and clarifies dependencies. The application (`stitcher-application`) consumes these common utilities.
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/runtime #comp/tests #scope/core #ai/instruct #task/domain/architecture #task/object/dependencies #task/action/fix-imports #task/state/end
+#intent/fix #flow/ready #priority/critical #comp/io #comp/common #scope/core #ai/instruct #task/domain/architecture #task/object/dependencies #task/action/fix-imports #task-state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 将插件检查逻辑迁移到 Adapter
-我们将 `inspector.py` 的内容重新创建在 `stitcher-python-adapter` 中。
+#### Acts 1: Re-create DocumentAdapter Protocol in `stitcher-common`
+We'll create a new `interfaces.py` in `stitcher-common`.
 
 ~~~~~act
 write_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/inspector.py
+packages/stitcher-common/src/stitcher/common/interfaces.py
 ~~~~~
 ~~~~~python
-import inspect
-import importlib
-from typing import Callable, Any
-from stitcher.spec import Argument, ArgumentKind, FunctionDef
+from typing import Dict, Protocol
+from pathlib import Path
 
 
-class InspectionError(Exception):
-    pass
+class DocumentAdapter(Protocol):
+    def load(self, path: Path) -> Dict[str, str]: ...
+
+    def save(self, path: Path, data: Dict[str, str]) -> None: ...
+~~~~~
+
+#### Acts 2: Re-create YamlAdapter in `stitcher-common`
+We'll create a new `adapters` sub-package for this.
+
+~~~~~act
+run_command
+~~~~~
+~~~~~
+mkdir -p packages/stitcher-common/src/stitcher/common/adapters
+~~~~~
+
+~~~~~act
+write_file
+packages/stitcher-common/src/stitcher/common/adapters/yaml_adapter.py
+~~~~~
+~~~~~python
+from pathlib import Path
+from typing import Dict
+import yaml
+
+from stitcher.common.interfaces import DocumentAdapter
 
 
-def _map_param_kind(kind: inspect._ParameterKind) -> ArgumentKind:
-    if kind == inspect.Parameter.POSITIONAL_ONLY:
-        return ArgumentKind.POSITIONAL_ONLY
-    if kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
-        return ArgumentKind.POSITIONAL_OR_KEYWORD
-    if kind == inspect.Parameter.VAR_POSITIONAL:
-        return ArgumentKind.VAR_POSITIONAL
-    if kind == inspect.Parameter.KEYWORD_ONLY:
-        return ArgumentKind.KEYWORD_ONLY
-    if kind == inspect.Parameter.VAR_KEYWORD:
-        return ArgumentKind.VAR_KEYWORD
-    raise ValueError(f"Unknown parameter kind: {kind}")
+class YamlAdapter(DocumentAdapter):
+    def load(self, path: Path) -> Dict[str, str]:
+        if not path.exists():
+            return {}
 
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                content = yaml.safe_load(f)
 
-def _get_annotation_str(annotation: Any) -> str:
-    if annotation == inspect.Parameter.empty:
-        return ""
+            if not isinstance(content, dict):
+                return {}
 
-    # Handle generic types from typing module
-    if hasattr(annotation, "__origin__"):
-        return str(annotation).replace("typing.", "")
+            return {str(k): str(v) for k, v in content.items() if v is not None}
 
-    if hasattr(annotation, "__name__"):
-        return annotation.__name__
+        except yaml.YAMLError:
+            return {}
 
-    return str(annotation)
+    def save(self, path: Path, data: Dict[str, str]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        sorted_data = dict(sorted(data.items()))
+        
+        class MultilineDumper(yaml.SafeDumper):
+            pass
 
+        def str_presenter(dumper, data):
+            return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
 
-def parse_plugin_entry(entry_point_str: str) -> FunctionDef:
-    try:
-        module_str, callable_str = entry_point_str.split(":", 1)
-        module = importlib.import_module(module_str)
-        target_callable: Callable = getattr(module, callable_str)
-    except (ImportError, AttributeError, ValueError) as e:
-        raise InspectionError(
-            f"Could not load entry point '{entry_point_str}': {e}"
-        ) from e
+        MultilineDumper.add_representer(str, str_presenter)
 
-    try:
-        signature = inspect.signature(target_callable)
-        docstring = inspect.getdoc(target_callable)
-    except (TypeError, ValueError) as e:
-        raise InspectionError(
-            f"Could not inspect signature of '{entry_point_str}': {e}"
-        ) from e
-
-    # Build arguments
-    args: list[Argument] = []
-    for param in signature.parameters.values():
-        default_val = None
-        if param.default != inspect.Parameter.empty:
-            default_val = repr(param.default)
-
-        args.append(
-            Argument(
-                name=param.name,
-                kind=_map_param_kind(param.kind),
-                annotation=_get_annotation_str(param.annotation) or None,
-                default=default_val,
+        with path.open("w", encoding="utf-8") as f:
+            yaml.dump(
+                sorted_data,
+                f,
+                Dumper=MultilineDumper,
+                allow_unicode=True,
+                default_flow_style=False,
+                sort_keys=False,
             )
-        )
-
-    # Build FunctionDef
-    return_annotation = _get_annotation_str(signature.return_annotation)
-    func_name = target_callable.__name__
-
-    return FunctionDef(
-        name=func_name,
-        args=args,
-        docstring=docstring,
-        return_annotation=return_annotation or None,
-        is_async=inspect.iscoroutinefunction(target_callable),
-    )
 ~~~~~
 
-#### Acts 2: 从 Adapter 导出插件检查功能
-更新 `stitcher-python-adapter` 的 `__init__.py`。
+#### Acts 3: Export the new components from `stitcher-common`
+Update the `__init__.py`.
 
 ~~~~~act
 patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/__init__.py
+packages/stitcher-common/src/stitcher/common/__init__.py
 ~~~~~
 ~~~~~python.old
-from .parser import PythonParser
-from .transformer import PythonTransformer
-from .generator import PythonStubGenerator
-from .fingerprint import PythonFingerprintStrategy
+from .formatting import format_docstring, parse_docstring
+from .messaging.bus import MessageBus
 
+# --- Composition Root for Stitcher's Core Services ---
+~~~~~
+~~~~~python.new
+from .formatting import format_docstring, parse_docstring
+from .messaging.bus import MessageBus
+from .interfaces import DocumentAdapter
+from .adapters.yaml_adapter import YamlAdapter
+
+# --- Composition Root for Stitcher's Core Services ---
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-common/src/stitcher/common/__init__.py
+~~~~~
+~~~~~python.old
 __all__ = [
-    "PythonParser",
-    "PythonTransformer",
-    "PythonStubGenerator",
-    "PythonFingerprintStrategy",
+    "bus",
+    "stitcher_nexus",
+    "stitcher_loader",
+    "format_docstring",
+    "parse_docstring",
 ]
 ~~~~~
 ~~~~~python.new
-from .parser import PythonParser
-from .transformer import PythonTransformer
-from .generator import PythonStubGenerator
-from .fingerprint import PythonFingerprintStrategy
-from .inspector import parse_plugin_entry, InspectionError
-
 __all__ = [
-    "PythonParser",
-    "PythonTransformer",
-    "PythonStubGenerator",
-    "PythonFingerprintStrategy",
-    "parse_plugin_entry",
-    "InspectionError",
+    "bus",
+    "stitcher_nexus",
+    "stitcher_loader",
+    "format_docstring",
+    "parse_docstring",
+    "DocumentAdapter",
+    "YamlAdapter",
 ]
 ~~~~~
 
-#### Acts 3: 修复 Application 的依赖
-在 `stitcher-application/pyproject.toml` 中添加对适配器的依赖。
+#### Acts 4: Fix the import in `doc_manager.py`
+This is the final fix that resolves the `ModuleNotFoundError`.
 
 ~~~~~act
 patch_file
-packages/stitcher-application/pyproject.toml
-~~~~~
-~~~~~toml.old
-dependencies = [
-    "stitcher-spec",
-    "stitcher-common",
-    "stitcher-scanner",
-    "stitcher-io",
-    "stitcher-config",
-    "pyneedle",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
-
-[tool.uv.sources]
-stitcher-spec = { workspace = true }
-stitcher-common = { workspace = true }
-stitcher-scanner = { workspace = true }
-stitcher-io = { workspace = true }
-stitcher-config = { workspace = true }
-pyneedle = { workspace = true }
-~~~~~
-~~~~~toml.new
-dependencies = [
-    "stitcher-spec",
-    "stitcher-common",
-    "stitcher-config",
-    "stitcher-python-adapter",
-    "pyneedle",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/stitcher"]
-
-[tool.uv.sources]
-stitcher-spec = { workspace = true }
-stitcher-common = { workspace = true }
-stitcher-config = { workspace = true }
-stitcher-python-adapter = { workspace = true }
-pyneedle = { workspace = true }
-~~~~~
-
-#### Acts 4: 修复 core.py 中的导入
-最后，修正 `core.py` 中错误的 import 语句。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+packages/stitcher-application/src/stitcher/app/services/doc_manager.py
 ~~~~~
 ~~~~~python.old
-from stitcher.scanner import (
-    parse_plugin_entry,
-    InspectionError,
-)
+from typing import Dict, Optional, Any
 
-from stitcher.spec import (
+from stitcher.spec import ModuleDef, ClassDef, FunctionDef
+from stitcher.io import DocumentAdapter, YamlAdapter
+
+
+class DocumentManager:
+    def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):
 ~~~~~
 ~~~~~python.new
-from stitcher.adapter.python import (
-    parse_plugin_entry,
-    InspectionError,
-)
+from typing import Dict, Optional, Any
 
-from stitcher.spec import (
+from stitcher.spec import ModuleDef, ClassDef, FunctionDef
+from stitcher.common import DocumentAdapter, YamlAdapter
+
+
+class DocumentManager:
+    def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):
 ~~~~~
 
 ### 下一步建议
-再次运行测试套件。这次，`ImportError` 应该已经解决，所有测试应该会通过。
+The last remaining import error should now be resolved. Let's run the test suite one more time. A successful run will confirm that the refactoring is complete and the architecture is stable.

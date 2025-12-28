@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Optional, Any
 
 from stitcher.spec import ModuleDef, ClassDef, FunctionDef
-from stitcher.io import DocumentAdapter, YamlAdapter
+from stitcher.common import DocumentAdapter, YamlAdapter
 
 
 class DocumentManager:

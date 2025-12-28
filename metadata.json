@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: Repair broken imports post-refactor", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766931544.096778, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: Relocate IO adapters to stitcher-common", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766931612.0772128, "duration_ms": 0}}
