@@ -1,491 +1,375 @@
-好的，根据基础设施的就绪状态，我将生成执行 **Application Layer (Diff 生成/保存)** 和 **UI Layer (Diff 渲染)** 变更的计划。
+此计划执行两个核心任务：
+1.  **重构测试架构**: 将所有包的测试套件严格划分为 `unit` 和 `integration` 两个层级，解决当前测试文件存放混乱的问题。
+2.  **创建 ViewDiff 测试**: 新增针对 `viewdiff` 功能的单元测试（签名文本提取）和集成测试（Diff 生成流），以验证上一阶段的应用层变更。
 
-这将分为两个主要部分：
-1.  **`stitcher-application`**: 修改 `core.py` 以集成 `difflib`，并在 `init`/`pump` 时保存签名文本，在 `check`/`pump` 时生成差异。
-2.  **`stitcher-cli`**: 修改 `interactive.py` 以美观地渲染这些差异。
+## [WIP] test: 重构测试目录结构并添加 ViewDiff 测试套件
 
-简要回答：
-将通过修改 `core.py` 实现签名文本的持久化和差异生成逻辑，并更新 CLI 的 `interactive.py` 以支持差异的彩色渲染。
-
-## [WIP] feat: 实现 viewdiff 核心逻辑与 UI 渲染
+### 摘要头
+## [WIP] test: 重构测试目录结构并添加 ViewDiff 测试套件
 
 ### 用户需求
-在交互式解决冲突（`check` 或 `pump`）时，用户目前只能看到冲突的键名，处于“盲选”状态。用户希望直接在 CLI 中看到具体的差异（Diff），以便做出明智的决策。
+1.  将现有的测试文件按照 `unit` 和 `integration` 进行分类移动，规范化测试目录结构。
+2.  为新实现的 `viewdiff` 功能（签名文本提取、Diff 生成与传递）编写测试用例。
 
 ### 评论
-这是一个极高价值的 DX 改进。通过在 `check`（签名漂移）和 `pump`（文档冲突）阶段提供上下文差异，Stitcher 将从一个单纯的报错工具转变为一个辅助决策工具。由于基础设施（Protocol 和 Fingerprint 验证）已支持携带 diff 和 text 字段，此计划主要关注业务逻辑的串联。
+测试结构的规范化是项目长期维护的基础。将单元测试与集成测试分离可以提高 CI 反馈速度（先跑单元测试），并使测试意图更清晰。针对 `viewdiff` 的测试是验证本次核心功能变更的关键，确保了用户在交互式界面中能看到预期的差异信息。
 
 ### 目标
-1.  **持久化签名文本**: 在 `init` 和 `pump` 时，除了保存哈希，还要保存 `baseline_code_signature_text` 到签名文件中。
-2.  **生成差异**:
-    *   `check`: 在检测到 `SIGNATURE_DRIFT` 或 `CO_EVOLUTION` 时，对比当前代码签名与基线签名，生成 `signature_diff`。
-    *   `pump`: 在检测到 `DOC_CONTENT_CONFLICT` 时，对比当前代码文档与 YAML 文档，生成 `doc_diff`。
-3.  **渲染差异**: 在 CLI 交互界面中，自动展示生成的 diff，并使用红/绿颜色高亮差异行。
+1.  在所有 `packages/*/tests` 目录下建立 `unit` 子目录（`integration` 目录部分包已有）。
+2.  将纯函数/类测试移动到 `unit` 目录。
+3.  保持涉及 `StitcherApp` 完整流程的测试在 `integration` 目录。
+4.  创建 `test_signature_extraction.py` 验证 `SignatureManager` 的新能力。
+5.  创建 `test_viewdiff_flow.py` 验证 `check` 和 `pump` 命令中 Diff 数据的生成与传递。
 
 ### 基本原理
-*   **Diff 引擎**: 使用 Python 标准库 `difflib.unified_diff` 生成差异。
-*   **数据流**: `StitcherApp` 负责生成数据并填充到 `InteractionContext` 中 -> `TyperInteractiveRenderer` 负责消费并展示数据。
-*   **签名文本存储**: 利用 `Fingerprint` 类已有的灵活键值验证机制 (`^(baseline|current)_[a-z]+_[a-z]+_(hash|text)$`)，新增 `baseline_code_signature_text` 字段，无需修改 Schema。
+*   **重构**: 使用 `move_file` 指令重新组织文件结构。
+*   **测试策略**:
+    *   **Unit**: 验证 `SignatureManager` 能正确通过 `extract_signature_texts` 还原函数签名字符串。
+    *   **Integration**: 使用 `WorkspaceFactory` 构建真实项目环境，触发 `SIGNATURE_DRIFT` 和 `DOC_CONTENT_CONFLICT` 场景，通过自定义 `InteractionHandler` 捕获并断言 `InteractionContext` 对象中是否携带了正确的 `diff` 数据。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/runtime #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/viewdiff #task/action/implementation #task/state/continue
+#intent/tooling #intent/test #flow/ready #priority/medium #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/test-suite #task/action/refactor
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 StitcherApp 核心逻辑
+#### Acts 1: 重构 stitcher-application 测试结构
 
-我们将修改 `core.py`。
-1.  引入 `difflib`。
-2.  在 `run_init` 和 `run_pump` 的保存阶段，调用 `extract_signature_texts` 并保存为 `baseline_code_signature_text`。
-3.  在 `_analyze_file` (用于 `check`) 中，生成签名 Diff。
-4.  在 `run_pump` 的分析阶段，生成文档 Diff。
+将 `stitcher-application` 中属于单元测试的文件从 `integration` 移至 `unit`。
 
 ~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+move_file
+packages/stitcher-application/tests/test_doc_manager.py
+packages/stitcher-application/tests/unit/test_doc_manager.py
 ~~~~~
-~~~~~python.old
-import copy
-from pathlib import Path
-from typing import Dict, List, Optional
-from collections import defaultdict
-from dataclasses import dataclass, field
+~~~~~act
+move_file
+packages/stitcher-application/tests/test_doc_manager.stitcher.yaml
+packages/stitcher-application/tests/unit/test_doc_manager.stitcher.yaml
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-application/tests/test_doc_overlay.py
+packages/stitcher-application/tests/unit/test_doc_overlay.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-application/tests/test_doc_overlay.stitcher.yaml
+packages/stitcher-application/tests/unit/test_doc_overlay.stitcher.yaml
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-application/tests/test_signature_manager.py
+packages/stitcher-application/tests/unit/test_signature_manager.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-application/tests/test_signature_manager.stitcher.yaml
+packages/stitcher-application/tests/unit/test_signature_manager.stitcher.yaml
+~~~~~
 
-from stitcher.scanner import (
-~~~~~
-~~~~~python.new
-import copy
-import difflib
-from pathlib import Path
-from typing import Dict, List, Optional
-from collections import defaultdict
-from dataclasses import dataclass, field
+#### Acts 2: 重构 stitcher-scanner 测试结构
 
-from stitcher.scanner import (
-~~~~~
+`stitcher-scanner` 的测试目前都在根目录，全部视为单元测试移入 `unit`。
 
 ~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+move_file
+packages/stitcher-scanner/tests/test_inspector.py
+packages/stitcher-scanner/tests/unit/test_inspector.py
 ~~~~~
-~~~~~python.old
-    def run_init(self) -> List[Path]:
-        configs, _ = load_config_from_path(self.root_path)
-        all_created_files: List[Path] = []
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-            unique_files = self._get_files_from_config(config)
-            modules = self._scan_files(unique_files)
-            if not modules:
-                continue
-            for module in modules:
-                output_path = self.doc_manager.save_docs_for_module(module)
-                code_hashes = self.sig_manager.compute_code_structure_hashes(module)
-                yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
-
-                combined: Dict[str, Fingerprint] = {}
-                all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
-                for fqn in all_fqns:
-                    fp = Fingerprint()
-                    if fqn in code_hashes:
-                        fp["baseline_code_structure_hash"] = code_hashes[fqn]
-                    if fqn in yaml_hashes:
-                        fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
-                    combined[fqn] = fp
-
-                self.sig_manager.save_composite_hashes(module, combined)
-                if output_path and output_path.name:
-                    relative_path = output_path.relative_to(self.root_path)
-                    bus.success(L.init.file.created, path=relative_path)
-                    all_created_files.append(output_path)
-        if all_created_files:
-            bus.success(L.init.run.complete, count=len(all_created_files))
-        else:
-            bus.info(L.init.no_docs_found)
-        return all_created_files
-
-    def _analyze_file(
-        self, module: ModuleDef
-    ) -> tuple[FileCheckResult, list[InteractionContext]]:
-        result = FileCheckResult(path=module.file_path)
-        unresolved_conflicts: list[InteractionContext] = []
-
-        # Content checks (unchanged)
-        if (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists():
-            doc_issues = self.doc_manager.check_module(module)
-            result.warnings["missing"].extend(doc_issues["missing"])
-            result.warnings["redundant"].extend(doc_issues["redundant"])
-            result.errors["pending"].extend(doc_issues["pending"])
-            result.errors["conflict"].extend(doc_issues["conflict"])
-            result.errors["extra"].extend(doc_issues["extra"])
-
-        # State machine analysis
-        is_tracked = (
-            (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
-        )
-        current_code_map = self.sig_manager.compute_code_structure_hashes(module)
-        current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module)
-        stored_hashes_map = self.sig_manager.load_composite_hashes(module)
-
-        all_fqns = set(current_code_map.keys()) | set(stored_hashes_map.keys())
-
-        for fqn in sorted(list(all_fqns)):
-            code_hash = current_code_map.get(fqn)
-            yaml_hash = current_yaml_map.get(fqn)
-
-            stored_fp = stored_hashes_map.get(fqn)
-            baseline_code_hash = (
-                stored_fp.get("baseline_code_structure_hash") if stored_fp else None
-            )
-            baseline_yaml_hash = (
-                stored_fp.get("baseline_yaml_content_hash") if stored_fp else None
-            )
-
-            if not code_hash and baseline_code_hash:  # Extra
-                continue
-            if code_hash and not baseline_code_hash:  # New
-                continue
-
-            code_matches = code_hash == baseline_code_hash
-            yaml_matches = yaml_hash == baseline_yaml_hash
-
-            if code_matches and not yaml_matches:  # Doc improvement
-                result.infos["doc_improvement"].append(fqn)
-            elif not code_matches and yaml_matches:  # Signature Drift
-                unresolved_conflicts.append(
-                    InteractionContext(
-                        module.file_path, fqn, ConflictType.SIGNATURE_DRIFT
-                    )
-                )
-            elif not code_matches and not yaml_matches:  # Co-evolution
-                unresolved_conflicts.append(
-                    InteractionContext(module.file_path, fqn, ConflictType.CO_EVOLUTION)
-                )
-
-        # Untracked file check
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_inspector.stitcher.yaml
+packages/stitcher-scanner/tests/unit/test_inspector.stitcher.yaml
 ~~~~~
-~~~~~python.new
-    def run_init(self) -> List[Path]:
-        configs, _ = load_config_from_path(self.root_path)
-        all_created_files: List[Path] = []
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-            unique_files = self._get_files_from_config(config)
-            modules = self._scan_files(unique_files)
-            if not modules:
-                continue
-            for module in modules:
-                output_path = self.doc_manager.save_docs_for_module(module)
-                code_hashes = self.sig_manager.compute_code_structure_hashes(module)
-                code_texts = self.sig_manager.extract_signature_texts(module)
-                yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
-
-                combined: Dict[str, Fingerprint] = {}
-                all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
-                for fqn in all_fqns:
-                    fp = Fingerprint()
-                    if fqn in code_hashes:
-                        fp["baseline_code_structure_hash"] = code_hashes[fqn]
-                    if fqn in code_texts:
-                        fp["baseline_code_signature_text"] = code_texts[fqn]
-                    if fqn in yaml_hashes:
-                        fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
-                    combined[fqn] = fp
-
-                self.sig_manager.save_composite_hashes(module, combined)
-                if output_path and output_path.name:
-                    relative_path = output_path.relative_to(self.root_path)
-                    bus.success(L.init.file.created, path=relative_path)
-                    all_created_files.append(output_path)
-        if all_created_files:
-            bus.success(L.init.run.complete, count=len(all_created_files))
-        else:
-            bus.info(L.init.no_docs_found)
-        return all_created_files
-
-    def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:
-        return "\n".join(
-            difflib.unified_diff(
-                a.splitlines(),
-                b.splitlines(),
-                fromfile=label_a,
-                tofile=label_b,
-                lineterm="",
-            )
-        )
-
-    def _analyze_file(
-        self, module: ModuleDef
-    ) -> tuple[FileCheckResult, list[InteractionContext]]:
-        result = FileCheckResult(path=module.file_path)
-        unresolved_conflicts: list[InteractionContext] = []
-
-        # Content checks (unchanged)
-        if (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists():
-            doc_issues = self.doc_manager.check_module(module)
-            result.warnings["missing"].extend(doc_issues["missing"])
-            result.warnings["redundant"].extend(doc_issues["redundant"])
-            result.errors["pending"].extend(doc_issues["pending"])
-            result.errors["conflict"].extend(doc_issues["conflict"])
-            result.errors["extra"].extend(doc_issues["extra"])
-
-        # State machine analysis
-        is_tracked = (
-            (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
-        )
-        current_code_map = self.sig_manager.compute_code_structure_hashes(module)
-        current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module)
-        current_sig_texts = self.sig_manager.extract_signature_texts(module)
-        stored_hashes_map = self.sig_manager.load_composite_hashes(module)
-
-        all_fqns = set(current_code_map.keys()) | set(stored_hashes_map.keys())
-
-        for fqn in sorted(list(all_fqns)):
-            code_hash = current_code_map.get(fqn)
-            yaml_hash = current_yaml_map.get(fqn)
-
-            stored_fp = stored_hashes_map.get(fqn)
-            baseline_code_hash = (
-                stored_fp.get("baseline_code_structure_hash") if stored_fp else None
-            )
-            baseline_yaml_hash = (
-                stored_fp.get("baseline_yaml_content_hash") if stored_fp else None
-            )
-            baseline_sig_text = (
-                stored_fp.get("baseline_code_signature_text") if stored_fp else None
-            )
-
-            if not code_hash and baseline_code_hash:  # Extra
-                continue
-            if code_hash and not baseline_code_hash:  # New
-                continue
-
-            code_matches = code_hash == baseline_code_hash
-            yaml_matches = yaml_hash == baseline_yaml_hash
-
-            if code_matches and not yaml_matches:  # Doc improvement
-                result.infos["doc_improvement"].append(fqn)
-            elif not code_matches:
-                # Signature changed (either Drift or Co-evolution)
-                sig_diff = None
-                if baseline_sig_text and fqn in current_sig_texts:
-                    sig_diff = self._generate_diff(
-                        baseline_sig_text,
-                        current_sig_texts[fqn],
-                        "baseline",
-                        "current",
-                    )
-                elif fqn in current_sig_texts:
-                    sig_diff = f"(No baseline signature stored)\n+++ current\n{current_sig_texts[fqn]}"
-
-                conflict_type = (
-                    ConflictType.SIGNATURE_DRIFT
-                    if yaml_matches
-                    else ConflictType.CO_EVOLUTION
-                )
-
-                unresolved_conflicts.append(
-                    InteractionContext(
-                        module.file_path, fqn, conflict_type, signature_diff=sig_diff
-                    )
-                )
-
-        # Untracked file check
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_parser_advanced.py
+packages/stitcher-scanner/tests/unit/test_parser_advanced.py
 ~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_parser_advanced.stitcher.yaml
+packages/stitcher-scanner/tests/unit/test_parser_advanced.stitcher.yaml
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_parser_basic.py
+packages/stitcher-scanner/tests/unit/test_parser_basic.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_parser_basic.stitcher.yaml
+packages/stitcher-scanner/tests/unit/test_parser_basic.stitcher.yaml
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_parser_dunder_all.py
+packages/stitcher-scanner/tests/unit/test_parser_dunder_all.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_parser_dunder_all.stitcher.yaml
+packages/stitcher-scanner/tests/unit/test_parser_dunder_all.stitcher.yaml
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_parser_imports.py
+packages/stitcher-scanner/tests/unit/test_parser_imports.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_parser_imports.stitcher.yaml
+packages/stitcher-scanner/tests/unit/test_parser_imports.stitcher.yaml
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_transformer.py
+packages/stitcher-scanner/tests/unit/test_transformer.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_transformer.stitcher.yaml
+packages/stitcher-scanner/tests/unit/test_transformer.stitcher.yaml
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_transformer_multiline.py
+packages/stitcher-scanner/tests/unit/test_transformer_multiline.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-scanner/tests/test_transformer_multiline.stitcher.yaml
+packages/stitcher-scanner/tests/unit/test_transformer_multiline.stitcher.yaml
+~~~~~
+
+#### Acts 3: 重构 stitcher-io 测试结构
+
+`stitcher-io` 的测试也全部移入 `unit`。
 
 ~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+move_file
+packages/stitcher-io/tests/test_document_io.py
+packages/stitcher-io/tests/unit/test_document_io.py
 ~~~~~
-~~~~~python.old
-    def run_pump(
-        self, strip: bool = False, force: bool = False, reconcile: bool = False
-    ) -> PumpResult:
-        bus.info(L.pump.run.start)
-        configs, _ = load_config_from_path(self.root_path)
-
-        all_modules: List[ModuleDef] = []
-        all_conflicts: List[InteractionContext] = []
-
-        # 1. Analysis Phase (Dry Run)
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-            unique_files = self._get_files_from_config(config)
-            modules = self._scan_files(unique_files)
-            if not modules:
-                continue
-            all_modules.extend(modules)
-
-            for module in modules:
-                # Dry run to detect conflicts
-                res = self.doc_manager.hydrate_module(
-                    module, force=force, reconcile=reconcile, dry_run=True
-                )
-                if not res["success"]:
-                    for key in res["conflicts"]:
-                        all_conflicts.append(
-                            InteractionContext(
-                                module.file_path, key, ConflictType.DOC_CONTENT_CONFLICT
-                            )
-                        )
-
-        # 2. Decision Phase
+~~~~~act
+move_file
+packages/stitcher-io/tests/test_document_io.stitcher.yaml
+packages/stitcher-io/tests/unit/test_document_io.stitcher.yaml
 ~~~~~
-~~~~~python.new
-    def run_pump(
-        self, strip: bool = False, force: bool = False, reconcile: bool = False
-    ) -> PumpResult:
-        bus.info(L.pump.run.start)
-        configs, _ = load_config_from_path(self.root_path)
-
-        all_modules: List[ModuleDef] = []
-        all_conflicts: List[InteractionContext] = []
-
-        # 1. Analysis Phase (Dry Run)
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-            unique_files = self._get_files_from_config(config)
-            modules = self._scan_files(unique_files)
-            if not modules:
-                continue
-            all_modules.extend(modules)
-
-            for module in modules:
-                # Dry run to detect conflicts
-                res = self.doc_manager.hydrate_module(
-                    module, force=force, reconcile=reconcile, dry_run=True
-                )
-                if not res["success"]:
-                    # Generate content diffs for conflicts
-                    source_docs = self.doc_manager.flatten_module_docs(module)
-                    yaml_docs = self.doc_manager.load_docs_for_module(module)
-
-                    for key in res["conflicts"]:
-                        doc_diff = None
-                        if key in source_docs and key in yaml_docs:
-                            doc_diff = self._generate_diff(
-                                yaml_docs[key], source_docs[key], "yaml", "code"
-                            )
-
-                        all_conflicts.append(
-                            InteractionContext(
-                                module.file_path,
-                                key,
-                                ConflictType.DOC_CONTENT_CONFLICT,
-                                doc_diff=doc_diff,
-                            )
-                        )
-
-        # 2. Decision Phase
+~~~~~act
+move_file
+packages/stitcher-io/tests/test_generator_dunder_all.py
+packages/stitcher-io/tests/unit/test_generator_dunder_all.py
 ~~~~~
+~~~~~act
+move_file
+packages/stitcher-io/tests/test_generator_dunder_all.stitcher.yaml
+packages/stitcher-io/tests/unit/test_generator_dunder_all.stitcher.yaml
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-io/tests/test_stub_generator.py
+packages/stitcher-io/tests/unit/test_stub_generator.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-io/tests/test_stub_generator.stitcher.yaml
+packages/stitcher-io/tests/unit/test_stub_generator.stitcher.yaml
+~~~~~
+
+#### Acts 4: 重构其他包测试结构
+
+整理 `stitcher-common` 和 `stitcher-config`。
 
 ~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+move_file
+packages/stitcher-common/tests/test_message_bus.py
+packages/stitcher-common/tests/unit/test_message_bus.py
 ~~~~~
-~~~~~python.old
-            # Update signatures if successful
-            code_hashes = self.sig_manager.compute_code_structure_hashes(module)
-            yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
-            all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
-
-            combined: Dict[str, Fingerprint] = {}
-            for fqn in all_fqns:
-                fp = Fingerprint()
-                if fqn in code_hashes:
-                    fp["baseline_code_structure_hash"] = code_hashes[fqn]
-                if fqn in yaml_hashes:
-                    fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
-                combined[fqn] = fp
-
-            self.sig_manager.save_composite_hashes(module, combined)
+~~~~~act
+move_file
+packages/stitcher-common/tests/test_message_bus.stitcher.yaml
+packages/stitcher-common/tests/unit/test_message_bus.stitcher.yaml
 ~~~~~
-~~~~~python.new
-            # Update signatures if successful
-            code_hashes = self.sig_manager.compute_code_structure_hashes(module)
-            code_texts = self.sig_manager.extract_signature_texts(module)
-            yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
-            all_fqns = set(code_hashes.keys()) | set(yaml_hashes.keys())
-
-            combined: Dict[str, Fingerprint] = {}
-            for fqn in all_fqns:
-                fp = Fingerprint()
-                if fqn in code_hashes:
-                    fp["baseline_code_structure_hash"] = code_hashes[fqn]
-                if fqn in code_texts:
-                    fp["baseline_code_signature_text"] = code_texts[fqn]
-                if fqn in yaml_hashes:
-                    fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
-                combined[fqn] = fp
-
-            self.sig_manager.save_composite_hashes(module, combined)
+~~~~~act
+move_file
+packages/stitcher-config/tests/test_loader.py
+packages/stitcher-config/tests/unit/test_loader.py
+~~~~~
+~~~~~act
+move_file
+packages/stitcher-config/tests/test_loader.stitcher.yaml
+packages/stitcher-config/tests/unit/test_loader.stitcher.yaml
 ~~~~~
 
-#### Acts 2: 更新交互式渲染器 (UI)
+#### Acts 5: 创建 ViewDiff 单元测试
 
-我们将修改 `TyperInteractiveRenderer` 以支持 diff 显示。
+测试 `SignatureManager.extract_signature_texts` 的能力。
 
 ~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/interactive.py
+write_file
+packages/stitcher-application/tests/unit/test_signature_extraction.py
 ~~~~~
-~~~~~python.old
-        # Reason
-        reason_map = {
-            ConflictType.SIGNATURE_DRIFT: L.interactive.reason.signature_drift,
-            ConflictType.CO_EVOLUTION: L.interactive.reason.co_evolution,
-            ConflictType.DOC_CONTENT_CONFLICT: L.interactive.reason.doc_content_conflict,
-        }
-        reason_l = reason_map.get(context.conflict_type)
-        if reason_l:
-            typer.secho("  " + self.nexus.get(reason_l), fg=typer.colors.YELLOW)
+~~~~~python
+from textwrap import dedent
+from stitcher.spec import Argument, ArgumentKind, FunctionDef, ModuleDef
+from stitcher.app.services import SignatureManager
 
-        # Prompt
-        typer.echo("  " + self.nexus.get(L.interactive.prompt))
+
+def test_extract_signature_text_simple():
+    # Arrange
+    func = FunctionDef(
+        name="my_func",
+        args=[
+            Argument(
+                name="a",
+                kind=ArgumentKind.POSITIONAL_OR_KEYWORD,
+                annotation="int",
+            ),
+            Argument(
+                name="b",
+                kind=ArgumentKind.POSITIONAL_OR_KEYWORD,
+                annotation="str",
+                default="'default'",
+            ),
+        ],
+        return_annotation="bool",
+    )
+    module = ModuleDef(file_path="src/main.py", functions=[func])
+    
+    manager = SignatureManager(root_path=None) # type: ignore
+
+    # Act
+    texts = manager.extract_signature_texts(module)
+
+    # Assert
+    expected = "def my_func(a: int, b: str = 'default') -> bool:"
+    assert texts["my_func"] == expected
+
+
+def test_extract_signature_text_async():
+    # Arrange
+    func = FunctionDef(
+        name="run",
+        is_async=True,
+        args=[],
+        return_annotation="None",
+    )
+    module = ModuleDef(file_path="src/main.py", functions=[func])
+    
+    manager = SignatureManager(root_path=None) # type: ignore
+
+    # Act
+    texts = manager.extract_signature_texts(module)
+
+    # Assert
+    expected = "async def run() -> None:"
+    assert texts["run"] == expected
 ~~~~~
-~~~~~python.new
-        # Reason
-        reason_map = {
-            ConflictType.SIGNATURE_DRIFT: L.interactive.reason.signature_drift,
-            ConflictType.CO_EVOLUTION: L.interactive.reason.co_evolution,
-            ConflictType.DOC_CONTENT_CONFLICT: L.interactive.reason.doc_content_conflict,
-        }
-        reason_l = reason_map.get(context.conflict_type)
-        if reason_l:
-            typer.secho("  " + self.nexus.get(reason_l), fg=typer.colors.YELLOW)
 
-        # View Diff
-        if context.signature_diff:
-            typer.echo("")
-            typer.secho("  [ SIGNATURE DIFF ]", bold=True)
-            for line in context.signature_diff.splitlines():
-                color = None
-                if line.startswith("+"):
-                    color = typer.colors.GREEN
-                elif line.startswith("-"):
-                    color = typer.colors.RED
-                typer.secho(f"  {line}", fg=color)
+#### Acts 6: 创建 ViewDiff 集成测试
 
-        if context.doc_diff:
-            typer.echo("")
-            typer.secho("  [ DOCSTRING DIFF ]", bold=True)
-            for line in context.doc_diff.splitlines():
-                color = None
-                if line.startswith("+"):
-                    color = typer.colors.GREEN
-                elif line.startswith("-"):
-                    color = typer.colors.RED
-                typer.secho(f"  {line}", fg=color)
+验证完整的 diff 生成和传递流程。
 
-        # Prompt
-        typer.echo("\n  " + self.nexus.get(L.interactive.prompt))
+~~~~~act
+write_file
+packages/stitcher-application/tests/integration/test_viewdiff_flow.py
 ~~~~~
+~~~~~python
+from typing import List
+from stitcher.app import StitcherApp
+from stitcher.app.protocols import InteractionHandler, InteractionContext
+from stitcher.spec import ResolutionAction, ConflictType
+from stitcher.test_utils import WorkspaceFactory, SpyBus
 
-### 下一步建议
-运行 `check` 和 `pump` 的集成测试，验证 `InteractionContext` 中是否正确生成并传递了 diff 文本。特别是要验证 `baseline` 缺失时的回退行为，以及 `relink` 操作后签名文本是否正确更新到了存储中。
+
+class CapturingHandler(InteractionHandler):
+    """A handler that captures the contexts passed to it and returns SKIP."""
+    def __init__(self):
+        self.captured_contexts: List[InteractionContext] = []
+
+    def process_interactive_session(
+        self, contexts: List[InteractionContext]
+    ) -> List[ResolutionAction]:
+        self.captured_contexts.extend(contexts)
+        return [ResolutionAction.SKIP] * len(contexts)
+
+
+def test_check_generates_signature_diff(tmp_path, monkeypatch):
+    """
+    Verifies that when a signature changes, 'check' generates a unified diff
+    and passes it in the InteractionContext.
+    """
+    # 1. Arrange: Init project with baseline
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/main.py", "def func(a: int): ...")
+        .build()
+    )
+    
+    # Run init to save baseline signature and TEXT
+    app_init = StitcherApp(root_path=project_root)
+    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+        app_init.run_init()
+
+    # 2. Modify code to cause signature drift
+    (project_root / "src/main.py").write_text("def func(a: str): ...", encoding="utf-8")
+
+    # 3. Run check with capturing handler
+    handler = CapturingHandler()
+    app_check = StitcherApp(root_path=project_root, interaction_handler=handler)
+    
+    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+        app_check.run_check()
+
+    # 4. Assert
+    assert len(handler.captured_contexts) == 1
+    ctx = handler.captured_contexts[0]
+    
+    assert ctx.conflict_type == ConflictType.SIGNATURE_DRIFT
+    assert ctx.signature_diff is not None
+    
+    # Check for unified diff markers
+    assert "--- baseline" in ctx.signature_diff
+    assert "+++ current" in ctx.signature_diff
+    assert "-def func(a: int):" in ctx.signature_diff
+    assert "+def func(a: str):" in ctx.signature_diff
+
+
+def test_pump_generates_doc_diff(tmp_path, monkeypatch):
+    """
+    Verifies that when doc content conflicts, 'pump' generates a unified diff
+    and passes it in the InteractionContext.
+    """
+    # 1. Arrange: Project with conflicting docs
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/main.py", 'def func():\n    """Code Doc"""\n    pass')
+        .with_docs("src/main.stitcher.yaml", {"func": "YAML Doc"})
+        .build()
+    )
+
+    # 2. Run pump with capturing handler
+    handler = CapturingHandler()
+    app_pump = StitcherApp(root_path=project_root, interaction_handler=handler)
+    
+    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+        app_pump.run_pump()
+
+    # 3. Assert
+    assert len(handler.captured_contexts) == 1
+    ctx = handler.captured_contexts[0]
+    
+    assert ctx.conflict_type == ConflictType.DOC_CONTENT_CONFLICT
+    assert ctx.doc_diff is not None
+    
+    # Check for unified diff markers
+    assert "--- yaml" in ctx.doc_diff
+    assert "+++ code" in ctx.doc_diff
+    assert "-YAML Doc" in ctx.doc_diff
+    assert "+Code Doc" in ctx.doc_diff
+~~~~~
