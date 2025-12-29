@@ -2,66 +2,87 @@ __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
 import os
 from pathlib import Path
+from typing import Dict
+from needle.pointer import L, SemanticPointerProtocol
 from needle.nexus import OverlayOperator
-from needle.operators import FileSystemOperator
+from needle.operators import I18NFactoryOperator
 from needle.runtime import _find_project_root
 from .formatting import format_docstring, parse_docstring
 from .messaging.bus import MessageBus
 from .interfaces import DocumentAdapter
 from .adapters.yaml_adapter import YamlAdapter
 
-# --- Composition Root for Stitcher's Core Services ---
+# --- Composition Root ---
 
-def _create_scoped_operator(scope: str):
+# 1. Config Sources
+# We determine roots once at startup.
+_project_root = _find_project_root()
+_common_assets_root = Path(__file__).parent / "assets"
+
+# 2. Factories
+# Create factories for each layer.
+# Note: User overrides live in .stitcher/needle, defaults in needle/.
+# This path logic is technically part of the factory configuration.
+
+# For user overrides, the root passed to Factory is the project root + .stitcher
+# because Factory expects `root / needle / {lang}` structure?
+# Wait, I18NFactory implementation does `root / needle / lang`.
+# User overrides are at `project_root / .stitcher / needle / lang`.
+# So we pass `project_root / .stitcher` as the root to the user factory.
+_user_factory = I18NFactoryOperator(_project_root / ".stitcher")
+_default_factory = I18NFactoryOperator(_common_assets_root)
+
+# 3. Dynamic Pipeline with Caching
+_operator_cache: Dict[str, OverlayOperator] = {}
+
+def get_current_renderer() -> OverlayOperator:
     """
-    Factory function to create the final composed operator for a given scope (e.g. language).
-    This replaces the implicit logic inside the old FileSystemLoader.
+    Returns the OverlayOperator for the current configured language.
+    This implements the 'Lazy Pipeline Construction' pattern.
     """
+    lang_code = os.getenv("STITCHER_LANG", "en")
     
-    # 1. Discover Roots
-    project_root = _find_project_root()
-    common_assets_root = Path(__file__).parent / "assets"
+    if lang_code in _operator_cache:
+        return _operator_cache[lang_code]
+    
+    # Construct the pipeline on demand
+    # L.en or L.zh based on env string
+    # We use a simple pointer construction here.
+    lang_ptr = getattr(L, lang_code)
+    
+    user_op = _user_factory(lang_ptr)
+    default_op = _default_factory(lang_ptr)
+    
+    # Priority: User > Default
+    pipeline = OverlayOperator([user_op, default_op])
+    
+    _operator_cache[lang_code] = pipeline
+    return pipeline
 
-    # 2. Sub-paths for the requested scope (e.g. "needle/en")
-    #    Assumption: scope is something like "en" or "needle/en".
-    #    In the old system, FSLoader looked into root/needle/{domain} and root/.stitcher/needle/{domain}
-    #    Let's reconstruct the pointer semantics. 
-    #    Normally we pass the *base* to FS Operator, and it does key -> filename.
-    #    So we need Operators pointing to `.../needle/{lang}`.
-    
-    #    Let's check Env Vars for language, defaulting to 'en'
-    #    Strictly, this should be an I18NFactory, but for now we hardcode the pipeline for 'en' default
-    #    or fetch from env to bootstrap.
-    lang = os.getenv("STITCHER_LANG", "en")
-    
-    # 3. Create Operators
-    #    Priorities: 
-    #    A. User Overrides: project/.stitcher/needle/{lang}
-    #    B. Default Assets: common/needle/{lang}
-    
-    user_override_path = project_root / ".stitcher" / "needle" / lang
-    default_assets_path = common_assets_root / "needle" / lang
-    
-    ops = []
-    
-    # Only add if directory exists? FS Operator lazily handles missing files but expects root to exist?
-    # FS Operator will do path joining. If root doesn't exist, file open fails -> returns empty.
-    # So it is safe to just create them.
-    
-    ops.append(FileSystemOperator(user_override_path))
-    ops.append(FileSystemOperator(default_assets_path))
-    
-    return OverlayOperator(ops)
 
-# Global singleton representing the "Current Context"
-# In a future refactor, this should be dynamic or request-scoped.
-stitcher_operator = _create_scoped_operator("en")
+# 4. Message Bus
+# The bus needs an object that has a __call__ (OperatorProtocol).
+# We pass a proxy lambda that delegates to the current renderer.
+# This ensures that if the env var changes, the next call picks it up (if we cleared cache)
+# or at least allows dynamic resolution per call if we didn't cache aggressively.
+# Given the cache above, it's 'Session Scope' caching.
 
-# 4. Create the bus instance.
+# To adapt to MessageBus which expects an object with `.get()` (Legacy) or `__call__` (New),
+# we need to make sure MessageBus is updated. 
+# For now, let's create a proxy object that acts as the "Stitcher Operator".
+
+class StitcherOperatorProxy:
+    def __call__(self, key):
+        renderer = get_current_renderer()
+        return renderer(key)
+    
+    # Legacy compat if MessageBus still calls get()
+    def get(self, key):
+        return self.__call__(key)
+
+stitcher_operator = StitcherOperatorProxy()
 bus = MessageBus(nexus_instance=stitcher_operator)
 
-# Note: stitcher_loader (writable) is temporarily removed until Write Operator is defined.
-# stitcher_nexus is removed.
 
 __all__ = [
     "bus",

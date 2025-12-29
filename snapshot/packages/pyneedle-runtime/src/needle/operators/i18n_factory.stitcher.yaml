@@ -1,0 +1,10 @@
+"I18NFactoryOperator": |-
+  A Factory Operator for Internationalization.
+  
+  It bridges the static asset structure with dynamic language selection.
+  Input: A SemanticPointer representing the language (e.g., L.en, L.zh).
+  Output: A FileSystemOperator configured for that language's asset directory.
+"I18NFactoryOperator.__call__": |-
+  Generates a FileSystemOperator for the requested language.
+"I18NFactoryOperator.__init__": |-
+  Initializes the factory with a base assets root directory.
