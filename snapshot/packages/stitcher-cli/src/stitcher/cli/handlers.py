@@ -66,15 +66,17 @@ class TyperInteractionHandler(InteractionHandler):
                         desc_id=L.interactive.option.keep.desc,
                     )
                 )
+                # NOTE: Skip is disabled for pump to prevent data loss with file-level strip
+                if context.conflict_type != ConflictType.DOC_CONTENT_CONFLICT:
+                    options.append(
+                        SemanticMenuOption(
+                            key="s",
+                            action=ResolutionAction.SKIP,
+                            label_id=L.interactive.option.skip.label,
+                            desc_id=L.interactive.option.skip.desc,
+                        )
+                    )
 
-            options.append(
-                SemanticMenuOption(
-                    key="s",
-                    action=ResolutionAction.SKIP,
-                    label_id=L.interactive.option.skip.label,
-                    desc_id=L.interactive.option.skip.desc,
-                )
-            )
             options.append(
                 SemanticMenuOption(
                     key="a",
