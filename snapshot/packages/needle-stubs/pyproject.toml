@@ -1,0 +1,15 @@
+[build-system]
+requires = [
+    "hatchling",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "needle-stubs"
+version = "0.1.0"
+description = "PEP 561 type stubs for needle"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/needle-stubs",
+]
