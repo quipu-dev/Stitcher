@@ -1,6 +1,27 @@
 import pytest
+from typing import Dict, Any, Optional
 from needle.pointer import L
-from needle.nexus import OverlayNexus, MemoryLoader
+from needle.nexus import OverlayNexus
+from needle.nexus.base import BaseLoader
+
+# MemoryLoader was deleted. We define a local Mock for testing legacy Nexus.
+class MockLoader(BaseLoader):
+    def __init__(self, data: Dict[str, Dict[str, Any]], default_domain: str = "en"):
+        super().__init__(default_domain)
+        self._data = data
+
+    def fetch(
+        self, pointer: str, domain: str, ignore_cache: bool = False
+    ) -> Optional[str]:
+        domain_data = self._data.get(domain)
+        if domain_data:
+            val = domain_data.get(pointer)
+            if val is not None:
+                return str(val)
+        return None
+
+    def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:
+        return self._data.get(domain, {})\
 
 
 @pytest.fixture(autouse=True)
@@ -23,7 +44,7 @@ def nexus_instance() -> OverlayNexus:
 
     # loader1 has higher priority
     return OverlayNexus(
-        loaders=[MemoryLoader(loader1_data), MemoryLoader(loader2_data)]
+        loaders=[MockLoader(loader1_data), MockLoader(loader2_data)]
     )
 
 
@@ -49,7 +70,7 @@ def test_get_domain_specificity_and_fallback(nexus_instance: OverlayNexus):
     assert nexus_instance.get(L.app.welcome, domain="zh") == "欢迎！"
 
     # 3. Key missing in both loaders for 'zh', falls back to 'en'
-    loader_fallback = MemoryLoader({"en": {"only.in.en": "Fallback Value"}, "zh": {}})
+    loader_fallback = MockLoader({"en": {"only.in.en": "Fallback Value"}, "zh": {}})
     nexus_fallback = OverlayNexus([loader_fallback])
 
     assert nexus_fallback.get("only.in.en", domain="zh") == "Fallback Value"
@@ -60,7 +81,7 @@ def test_reload_clears_cache_and_refetches_data():
     initial_data = {"en": {"key": "initial_value"}}
 
     # Create the loader and nexus
-    loader = MemoryLoader(initial_data)
+    loader = MockLoader(initial_data)
     nexus = OverlayNexus(loaders=[loader])
 
     # 1. First get, value is 'initial_value' and this is cached
@@ -82,7 +103,7 @@ def test_reload_clears_cache_and_refetches_data():
 def test_domain_resolution_priority(monkeypatch):
     nexus = OverlayNexus(
         loaders=[
-            MemoryLoader(
+            MockLoader(
                 {"de": {"key": "de"}, "fr": {"key": "fr"}, "en": {"key": "en"}}
             )
         ]

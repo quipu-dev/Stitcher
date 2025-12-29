@@ -14,13 +14,30 @@ class BaseLoader(ResourceLoaderProtocol, OperatorProtocol):
     def __init__(self, default_domain: str = "en"):
         self.default_domain = default_domain
 
-    def __call__(self, key: Union[str, SemanticPointerProtocol]) -> str:
+    def __call__(self, key: Union[str, SemanticPointerProtocol]) -> Optional[str]:
         """
         Operator Protocol Implementation.
-        Delegates to get() which handles domain resolution via env vars.
-        This provides backward compatibility, allowing any Loader to act as an Operator.
+        
+        CRITICAL: Unlike get(), this does NOT fallback to identity.
+        If the key is not found in the target or default domain, it returns None.
+        This allows it to be used correctly in OverlayOperator chains.
         """
-        return self.get(key)
+        pointer = str(key)
+        target_domain = self._resolve_domain(None)
+        
+        # 1. Try target domain
+        val = self.fetch(pointer, target_domain)
+        if val is not None:
+            return val
+            
+        # 2. Try default domain
+        if target_domain != self.default_domain:
+            val = self.fetch(pointer, self.default_domain)
+            if val is not None:
+                return val
+                
+        # 3. No result (Do NOT return identity)
+        return None
 
     def fetch(
         self, pointer: str, domain: str, ignore_cache: bool = False

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 阶段一 Part 2 - 引入 OverlayOperator 并实现 Loader 兼容", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766982571.0729058, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 统一 Operator 模型并修复组合测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766982840.2576206, "duration_ms": 0}}
