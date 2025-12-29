@@ -11,6 +11,7 @@ dependencies = [
     "stitcher-spec",
     "stitcher-common",
     "libcst",
+    "griffe",
 ]
 
 [tool.hatch.build.targets.wheel]

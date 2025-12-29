@@ -1,101 +1,58 @@
-好的，我们继续。现在，我将为 `GriffePythonParser` 实现属性（Attributes）的映射逻辑。
+您完全正确，非常抱歉。这是一个典型的依赖管理疏忽。
 
-这是一个很好的增量步骤，因为属性的结构相对简单，能让我们快速验证 Griffe 对象到 Stitcher IR 的基本转换流程是否正确。
+我添加了导入 `griffe` 的代码，但没有在 `stitcher-python-adapter` 包的 `pyproject.toml` 文件中声明 `griffe` 是一个必需的依赖项。因此，当测试环境尝试运行代码时，由于 `griffe` 库没有被安装，导致了 `ModuleNotFoundError`。
 
-## [WIP] feat: 在 GriffePythonParser 中实现属性映射
+我将立即修正这个问题。
+
+## [WIP] fix: 为 python-adapter 声明 griffe 核心依赖
+
+### 错误分析
+测试执行失败，抛出 `ModuleNotFoundError: No module named 'griffe.dataclasses'`。根本原因是 `stitcher-python-adapter` 包在其代码 (`griffe_parser.py`) 中引入了对 `griffe` 库的依赖，但在其配置文件 (`pyproject.toml`) 中并未声明此依赖。这导致 `uv` 或 `pip` 等包管理器在构建环境时不会安装 `griffe`，从而在运行时引发导入错误。
 
 ### 用户需求
-继续 Griffe 集成工作，具体实现 `_map_attribute` 方法，用于将 Griffe 的 `Attribute` 对象转换为 Stitcher 的 `Attribute` IR。
+修复由缺少 `griffe` 依赖声明而导致的测试中断问题。
 
 ### 评论
-这是一个完美的增量步骤。属性映射逻辑清晰直接，是验证我们适配器模式正确性的理想起点。完成这一步后，我们的新解析器将首次能够产出有意义的、可验证的 IR 数据。
+这是一个关键且必要的修复。确保每个包都正确声明其依赖关系是维持 monorepo 健康和可维护性的基石。此修复将使 `stitcher-python-adapter` 包变得自包含且正确。
 
 ### 目标
-1.  在 `GriffePythonParser` 中完整实现 `_map_attribute` 方法的转换逻辑。
-2.  处理 Griffe 属性的 `name`、`annotation`、`value` 和 `docstring` 字段，并将它们正确映射到 Stitcher IR 对象的相应字段。
-3.  在主 `parse` 方法中激活对模块级属性的映射调用。
+1.  定位到 `packages/stitcher-python-adapter/pyproject.toml` 文件。
+2.  将其核心依赖 `griffe` 添加到 `[project].dependencies` 列表中。
 
 ### 基本原理
-我们将直接利用 Griffe 提供的结构化数据。`griffe.dataclasses.Attribute` 对象已经包含了我们需要的所有信息。我们的 `_map_attribute` 方法将作为一个纯粹的转换函数，接收 Griffe 对象并返回我们的 IR 对象。通过在 `parse` 方法中调用此函数，我们正式开始将 Griffe 的解析结果集成到 Stitcher 的数据流中。
+根据 Python 的打包规范，一个包的所有直接依赖都必须在其 `pyproject.toml` 的 `[project].dependencies` 部分中明确列出。`stitcher-python-adapter` 现在直接导入并使用 `griffe`，因此必须将其添加为例行依赖。这样做可以确保任何使用该包的环境（无论是开发、测试还是生产）都会自动安装正确版本的 `griffe`。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/python-adapter #concept/parser #scope/core #ai/instruct #task/domain/parsing #task/object/griffe-adapter #task/action/implementation #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/python-adapter #comp/build #scope/dx #ai/instruct #task/domain/parsing #task/object/griffe-adapter #task/action/implementation #task/state/continue
 
 ---
 ### Script
 
-#### Acts 1: 实现属性映射逻辑
+#### Acts 1: 将 griffe 添加到适配器包的依赖中
 
-我们将修改 `griffe_parser.py` 文件，填充 `_map_attribute` 方法并启用它。该方法将处理名称、注解、值和文档字符串的转换。
+我们将修改 `stitcher-python-adapter` 的 `pyproject.toml` 文件，以正式包含 `griffe` 库。
 
 ~~~~~act
 patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py
+packages/stitcher-python-adapter/pyproject.toml
 ~~~~~
-~~~~~python.old
-        # to stitcher.spec.ModuleDef.
-
-        # Placeholder implementation for the skeleton:
-        return ModuleDef(
-            file_path=file_path,
-            docstring=griffe_module.docstring.value if griffe_module.docstring else None,
-            # functions=[self._map_function(f) for f in griffe_module.functions.values()],
-            # classes=[self._map_class(c) for c in griffe_module.classes.values()],
-            # attributes=[self._map_attribute(a) for a in griffe_module.attributes.values()],
-        )
-
-    def _map_function(self, griffe_func: dc.Function) -> FunctionDef:
-        # TODO: Map Griffe function to FunctionDef
-        pass
-
-    def _map_class(self, griffe_class: dc.Class) -> ClassDef:
-        # TODO: Map Griffe class to ClassDef
-        pass
-
-    def _map_attribute(self, griffe_attr: dc.Attribute) -> Attribute:
-        # TODO: Map Griffe attribute to AttributeDef
-        pass
+~~~~~toml.old
+dependencies = [
+    "stitcher-spec",
+    "stitcher-common",
+    "libcst",
+]
 ~~~~~
-~~~~~python.new
-        # to stitcher.spec.ModuleDef.
-
-        # Placeholder implementation for the skeleton:
-        return ModuleDef(
-            file_path=file_path,
-            docstring=griffe_module.docstring.value if griffe_module.docstring else None,
-            # functions=[self._map_function(f) for f in griffe_module.functions.values()],
-            # classes=[self._map_class(c) for c in griffe_module.classes.values()],
-            attributes=[
-                self._map_attribute(a) for a in griffe_module.attributes.values()
-            ],
-        )
-
-    def _map_function(self, griffe_func: dc.Function) -> FunctionDef:
-        # TODO: Map Griffe function to FunctionDef
-        pass
-
-    def _map_class(self, griffe_class: dc.Class) -> ClassDef:
-        # TODO: Map Griffe class to ClassDef
-        pass
-
-    def _map_attribute(self, griffe_attr: dc.Attribute) -> Attribute:
-        """Maps a Griffe Attribute to a Stitcher IR Attribute."""
-        return Attribute(
-            name=griffe_attr.name,
-            annotation=str(griffe_attr.annotation)
-            if griffe_attr.annotation
-            else None,
-            value=griffe_attr.value if griffe_attr.value else None,
-            docstring=griffe_attr.docstring.value if griffe_attr.docstring else None,
-        )
+~~~~~toml.new
+dependencies = [
+    "stitcher-spec",
+    "stitcher-common",
+    "libcst",
+    "griffe",
+]
 ~~~~~
 
 ### 下一步建议
-属性映射已经完成。合乎逻辑的下一步是处理函数（Functions）的映射。这将是更复杂的一步，因为它涉及到参数、返回类型、装饰器和异步标志。
+在您运行 `uv sync` 或等效的依赖安装命令后，此 `ModuleNotFoundError` 应该会得到解决。
 
-我建议我们接下来：
-1.  **实现 `_map_function`**: 将 Griffe 的 `Function` 对象映射到我们的 `stitcher.spec.FunctionDef` IR。
-2.  **实现一个辅助方法 `_map_argument`**: 用于处理函数参数的复杂映射。
-3.  **在 `parse` 方法中启用 functions 的映射**。
-
-如果您同意，我将为此生成详细计划。
+一旦环境恢复正常，我建议我们继续之前的计划：**实现 `_map_function` 方法**，以处理 Griffe 函数对象到 Stitcher IR 的转换。如果您同意，请告诉我，我将生成该计划。
