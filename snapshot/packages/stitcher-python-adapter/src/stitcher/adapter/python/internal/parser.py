@@ -127,7 +127,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
         # Continue visiting children (to find methods)
         return True
 
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> None:
+    def leave_ClassDef(self, original_node: cst.ClassDef) -> None:
         # Pop the finished class from stack
         finished_cls = self._class_stack.pop()
 
