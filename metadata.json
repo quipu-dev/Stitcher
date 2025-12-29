@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(adapter): 为 Griffe 解析器实现基于 AST 的 Import 语句提取", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766991878.9981887, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(adapter): 禁止类属性生成赋值以防止作用域错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766992363.14416, "duration_ms": 0}}

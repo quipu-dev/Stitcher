@@ -1,210 +1,163 @@
 简要回答
-好的，进入下一阶段：补全 `GriffePythonParser` 的 Import 提取能力。这将解决生成的 `.pyi` 文件因缺少导入语句而无法使用的问题。
+针对 `InMemoryStateBackend.pyi` 中出现的 `_run_id: Any = run_id` 作用域错误，我们需要修改 `StubGenerator`，使其在生成类属性时强制忽略赋值。这是因为在 `.pyi` 文件中，类体内的赋值通常会引用 `__init__` 上下文中才存在的局部变量，从而导致语法错误。
 
-## [WIP] feat(adapter): 为 Griffe 解析器实现基于 AST 的 Import 语句提取
+我将生成一个计划来实施此修复，并更新相关的单元测试。
+
+## [WIP] fix(adapter): 禁止类属性生成赋值以防止作用域错误
 
 ### 用户需求
-1.  扩展 `GriffePythonParser`，使其能够提取源码中的 `import` 和 `from ... import` 语句。
-2.  确保生成的 `ModuleDef.imports` 列表被正确填充。
+修复生成的 `.pyi` 文件中，类属性错误地包含从 `__init__` 提取的局部变量赋值（如 `_run_id: Any = run_id`），导致生成的文件包含无效代码。
 
 ### 评论
-虽然 Griffe 提供了高级的语义模型，但为了高效且格式规范地提取 Import 语句（用于 `.pyi` 生成），直接利用 Python 内置的 `ast` 模块进行遍历是最稳健且低成本的方案。我们已经在代码中为了语法检查而生成了 AST 树，现在只是充分利用它。
+这是一个关键的正确性修复。虽然简单的字面量赋值（如 `x = 1`）在 `.pyi` 中是合法的，但没有任何简单的方法能区分“安全的字面量”和“不安全的局部变量引用”。因此，**在生成类属性存根时统一丢弃赋值**是最安全、最稳健的策略，这也是 PEP 484 推荐的做法（即 `name: type`）。模块级属性的赋值将保留。
 
 ### 目标
-1.  修改 `packages/stitcher-python-adapter/tests/unit/test_griffe_parser.py`，增加针对 Import 提取的测试用例。
-2.  修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py`，实现 `ImportVisitor` 并集成到 `parse` 流程中。
+1.  修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py`，为 `_generate_attribute` 添加 `include_value` 参数。
+2.  在 `_generate_class` 中调用该方法时，强制传入 `include_value=False`。
+3.  更新 `packages/stitcher-python-adapter/tests/unit/test_stub_generator.py`，验证类属性不再包含赋值，同时确保模块级属性仍然包含赋值。
 
 ### 基本原理
-我们利用 `ast.NodeVisitor` 遍历语法树的顶层节点，识别 `Import` 和 `ImportFrom` 节点，并使用 `ast.unparse` (Python 3.9+) 将其还原为标准化的字符串代码。
+`.pyi` 文件的核心职责是类型定义。类属性的默认值或初始值对于静态类型检查通常是次要的，而错误的赋值会直接破坏文件。通过在类作用域内禁用赋值生成，我们消除了这种风险。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/runtime #concept/parser #scope/core #ai/instruct
-#task/domain/engine #task/object/griffe-parser #task/action/expand #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/codegen #scope/core #ai/instruct
+#task/domain/engine #task/object/stub-generator #task/action/fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 添加 Import 提取测试
+#### Acts 1: 修改 StubGenerator 逻辑
 
-在单元测试中增加一个专门测试 Import 提取的方法。
-
-~~~~~act
-patch_file
-packages/stitcher-python-adapter/tests/unit/test_griffe_parser.py
-~~~~~
-~~~~~python.old
-        method = cls.methods[0]
-        assert method.name == "method"
-        assert len(method.args) == 1
-        assert method.args[0].name == "self"
-~~~~~
-~~~~~python.new
-        method = cls.methods[0]
-        assert method.name == "method"
-        assert len(method.args) == 1
-        assert method.args[0].name == "self"
-
-    def test_parse_imports(self, parser):
-        code = """
-import os
-from typing import List, Optional
-import sys as system
-"""
-        module = parser.parse(code)
-        
-        # ast.unparse normalizes output
-        expected_imports = [
-            "import os",
-            "from typing import List, Optional",
-            "import sys as system"
-        ]
-        
-        # Check that we caught all of them. Order should be preserved.
-        assert len(module.imports) == 3
-        for expected in expected_imports:
-            assert expected in module.imports
-~~~~~
-
-#### Acts 2: 实现 ImportVisitor 并集成
-
-我们定义一个内部类 `_ImportVisitor`，并在 `parse` 方法中使用它。
+我们将修改 `_generate_attribute` 方法以支持可选地忽略值，并在生成类属性时使用此选项。
 
 ~~~~~act
 patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py
+packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py
 ~~~~~
 ~~~~~python.old
-class GriffePythonParser(LanguageParserProtocol):
-    """
-    A Python parser implementation using Griffe.
-    """
+    def _indent(self, level: int) -> str:
+        return self._indent_str * level
 
-    def parse(self, source_code: str, file_path: str = "") -> ModuleDef:
-        """
-        Parses the given source code into a Stitcher ModuleDef IR using Griffe.
-        """
-        # 1. Parse into AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError as e:
-            raise ValueError(f"Syntax error in {file_path}: {e}") from e
+    def _generate_attribute(self, attr: Attribute, level: int) -> str:
+        indent = self._indent(level)
+        # In .pyi files, we prefer Type Hints:  name: type
+        # If value is present (constant), we might output: name: type = value
+        # But PEP 484 recommends name: type = ... for constants or just name: type
+        # Let's stick to name: type for now as per test expectation.
 
-        # 2. Visit with Griffe
-        module_name = file_path.replace("/", ".").replace(".py", "") or "module"
+        annotation = attr.annotation if attr.annotation else "Any"
+        line = f"{indent}{attr.name}: {annotation}"
+
+        if attr.value:
+            line += f" = {attr.value}"
+
+        return line
+
+    def _generate_args(self, args: List[Argument]) -> str:
 ~~~~~
 ~~~~~python.new
-class _ImportVisitor(ast.NodeVisitor):
-    def __init__(self):
-        self.imports: List[str] = []
+    def _indent(self, level: int) -> str:
+        return self._indent_str * level
 
-    def visit_Import(self, node: ast.Import) -> None:
-        self.imports.append(ast.unparse(node))
+    def _generate_attribute(
+        self, attr: Attribute, level: int, include_value: bool = True
+    ) -> str:
+        indent = self._indent(level)
+        # In .pyi files, we prefer Type Hints:  name: type
+        # If value is present (constant), we might output: name: type = value
+        # But PEP 484 recommends name: type = ... for constants or just name: type
+        # For class attributes, we purposefully exclude values to avoid scoping issues.
 
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-        self.imports.append(ast.unparse(node))
+        annotation = attr.annotation if attr.annotation else "Any"
+        line = f"{indent}{attr.name}: {annotation}"
 
+        if include_value and attr.value:
+            line += f" = {attr.value}"
 
-class GriffePythonParser(LanguageParserProtocol):
-    """
-    A Python parser implementation using Griffe.
-    """
+        return line
 
-    def parse(self, source_code: str, file_path: str = "") -> ModuleDef:
-        """
-        Parses the given source code into a Stitcher ModuleDef IR using Griffe.
-        """
-        # 1. Parse into AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError as e:
-            raise ValueError(f"Syntax error in {file_path}: {e}") from e
-        
-        # 1.5 Extract Imports via AST
-        import_visitor = _ImportVisitor()
-        import_visitor.visit(tree)
-        imports = import_visitor.imports
-
-        # 2. Visit with Griffe
-        module_name = file_path.replace("/", ".").replace(".py", "") or "module"
+    def _generate_args(self, args: List[Argument]) -> str:
 ~~~~~
 
 ~~~~~act
 patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py
+packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py
 ~~~~~
 ~~~~~python.old
-        # 3. Map to Stitcher IR
-        return self._map_module(griffe_module, file_path)
+        # Attributes
+        for attr in cls.attributes:
+            lines.append(self._generate_attribute(attr, level + 1))
+            has_content = True
 
-    def _map_module(self, gm: griffe.Module, file_path: str) -> ModuleDef:
-        functions = []
-        classes = []
-        attributes = []
-
-        for member in gm.members.values():
-            # Skip aliases (imported names) to prevent resolution errors
-            # We only want to map symbols DEFINED in this module.
-            if member.is_alias:
-                continue
-
-            if member.is_function:
-                functions.append(self._map_function(member))
-            elif member.is_class:
-                classes.append(self._map_class(member))
-            elif member.is_attribute:
-                attributes.append(self._map_attribute(member))
-
-        docstring = gm.docstring.value if gm.docstring else None
-
-        return ModuleDef(
-            file_path=file_path,
-            docstring=docstring,
-            functions=functions,
-            classes=classes,
-            attributes=attributes,
-            imports=[] # Imports handling to be added later
-        )
+        if has_content and cls.methods:
 ~~~~~
 ~~~~~python.new
-        # 3. Map to Stitcher IR
-        return self._map_module(griffe_module, file_path, imports)
+        # Attributes
+        for attr in cls.attributes:
+            # We explicitly DISABLE value generation for class attributes.
+            # This prevents bugs where instance attributes initialized from __init__ arguments
+            # (e.g. self.x = x) are generated as class attrs with invalid values (x: Any = x).
+            lines.append(
+                self._generate_attribute(attr, level + 1, include_value=False)
+            )
+            has_content = True
 
-    def _map_module(self, gm: griffe.Module, file_path: str, imports: List[str]) -> ModuleDef:
-        functions = []
-        classes = []
-        attributes = []
+        if has_content and cls.methods:
+~~~~~
 
-        for member in gm.members.values():
-            # Skip aliases (imported names) to prevent resolution errors
-            # We only want to map symbols DEFINED in this module.
-            if member.is_alias:
-                continue
+#### Acts 2: 更新单元测试
 
-            if member.is_function:
-                functions.append(self._map_function(member))
-            elif member.is_class:
-                classes.append(self._map_class(member))
-            elif member.is_attribute:
-                attributes.append(self._map_attribute(member))
+修改现有的测试用例以反映新的预期行为，并添加一个新的测试用例来专门验证类属性值已被移除。
 
-        docstring = gm.docstring.value if gm.docstring else None
+~~~~~act
+patch_file
+packages/stitcher-python-adapter/tests/unit/test_stub_generator.py
+~~~~~
+~~~~~python.old
+        output = generator.generate(module)
 
-        return ModuleDef(
-            file_path=file_path,
-            docstring=docstring,
-            functions=functions,
-            classes=classes,
-            attributes=attributes,
-            imports=imports
-        )
+        assert "@decorator" in output
+        assert "class MyClass(Base1, Base2):" in output
+        assert "    x: int = 1" in output
+        assert "    def method(self): ..." in output
+~~~~~
+~~~~~python.new
+        output = generator.generate(module)
+
+        assert "@decorator" in output
+        assert "class MyClass(Base1, Base2):" in output
+        # Class attribute values should be stripped
+        assert "    x: int" in output
+        assert "    x: int =" not in output
+        assert "    def method(self): ..." in output
+
+    def test_generate_attribute_value_handling(self, generator):
+        """
+        Verify that module attributes KEEP values, but class attributes DROP values.
+        """
+        # Module attribute
+        mod_attr = Attribute(name="CONST", annotation="int", value="42")
+        
+        # Class attribute (simulating self.param = param injection)
+        cls_attr = Attribute(name="param", annotation="str", value="param")
+        cls = ClassDef(name="MyClass", attributes=[cls_attr])
+        
+        module = ModuleDef(file_path="test.py", attributes=[mod_attr], classes=[cls])
+        
+        output = generator.generate(module)
+        
+        # Module level: "CONST: int = 42"
+        assert "CONST: int = 42" in output
+        
+        # Class level: "    param: str" (No "= param")
+        assert "    param: str" in output
+        assert " = param" not in output
 ~~~~~
 
 ### 下一步建议
 
-运行单元测试。如果通过，我们可以进行一次手动验证：
-1.  创建一个通过测试项目。
-2.  运行 `stitcher generate`。
-3.  检查生成的 `.pyi` 文件是否包含了正确的 import 语句。
+由于这是对生成逻辑的核心修改，建议在应用修复后再次运行 `test_stub_generator.py`。
+然后，你可以再次尝试 `stitcher generate` 或查看之前生成的 `.pyi` 文件（如果测试环境中有的话），确认 `InMemoryStateBackend.pyi` 中的 `_run_id: Any` 后面的 `= run_id` 是否已经消失。
 
-（**注**：`_enrich_typing_imports` 的逻辑——即自动补充缺失的 `List`, `Optional` 等导入——仍然是缺失的。对于严格的类型检查通过，这是必需的。我们可以在确认基础 Import 提取工作正常后，决定是否立即移植该逻辑。）
+此修复目前只涉及 `stitcher-python-adapter`，不会影响 CLI 或 Application 的逻辑，因此风险较低。
