@@ -1,254 +1,241 @@
 简要回答
-好的，我们继续扩展 `GriffePythonParser` 的能力，使其支持 Python 类（Class）和属性（Attribute）的解析。
+好的，我们现在将“混合解析器模式”从架构设计转化为 `stitcher-cli` 的实际代码。我们将修改工厂函数以支持解析器选择，并根据命令的性质（分析型 vs 转换型）配置相应的解析器。
 
-## [WIP] feat(adapter): 扩展 Griffe 解析器以支持类和属性
+## [WIP] feat(cli): 实施混合解析器架构 (CST/Griffe)
 
 ### 用户需求
-1.  扩展 `GriffePythonParser`，使其能够解析 `class` 定义，包括基类、方法和类属性。
-2.  扩展 `GriffePythonParser`，使其能够解析模块级别的变量（Attributes）。
-3.  补充相应的单元测试。
+在 `stitcher-cli` 中实现命令驱动的解析器选择策略：
+1.  **纯分析命令** (`generate`, `check`)：使用 **Griffe** 解析器，以获得更强的语义理解能力。
+2.  **转换/混合命令** (`init`, `pump`, `strip`, `inject`)：保持使用 **LibCST** 解析器 (CST)，以确保代码修改的无损性和格式保留。
 
 ### 评论
-这是完成解析器核心功能的关键一步。Griffe 将类和模块都统一抽象为容器，拥有 `members` 字典，这使得递归处理（如类中的方法）变得相对直观。我们需要特别注意属性（Attribute）的处理，因为它们不仅包含值，还可能包含注解和文档字符串。
+**注意**：目前的 `GriffePythonParser` 实现尚处于 MVP 阶段，尚未包含完整的 Import 语句提取逻辑。这意味着 `stitcher generate` 在本次变更后生成的 `.pyi` 文件可能会暂时缺少导入语句。这是一个已知的过渡状态，我们将在此架构变更完成后，立即在下一阶段完善 Griffe 解析器的 Import 处理逻辑。
 
 ### 目标
-1.  更新 `packages/stitcher-python-adapter/tests/unit/test_griffe_parser.py`，增加类和属性的测试用例。
-2.  修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py`，实现 `_map_class` 和 `_map_attribute` 方法，并完善 `_map_module`。
+1.  修改 `packages/stitcher-cli/src/stitcher/cli/factories.py`：扩展 `make_app` 函数，增加 `parser_type` 参数 (支持 "cst" 和 "griffe")。
+2.  修改 `packages/stitcher-cli/src/stitcher/cli/commands/basics.py`：将 `generate` 切换为 Griffe，`init`, `strip`, `inject` 明确锁定为 CST。
+3.  修改 `packages/stitcher-cli/src/stitcher/cli/commands/check.py`：将 `check` 切换为 Griffe。
+4.  修改 `packages/stitcher-cli/src/stitcher/cli/commands/pump.py`：将 `pump` 明确锁定为 CST。
 
 ### 基本原理
-我们将利用 Griffe 的 `Class` 和 `Attribute` 对象模型。
-- **类 (Class)**: 映射为 `stitcher.spec.ClassDef`。需要遍历其 `members` 来分离方法和属性。
-- **属性 (Attribute)**: 映射为 `stitcher.spec.Attribute`。需要提取其注解（`annotation`）和赋值（`value`）。
+通过在 Composition Root（即 CLI 命令层）进行依赖注入的配置，我们实现了策略模式，使得底层的 `StitcherApp` 依然保持对具体解析器的无感知（只依赖 `LanguageParserProtocol`），同时又能针对不同任务特性选择最优工具。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/runtime #concept/parser #scope/core #ai/instruct
-#task/domain/engine #task/object/griffe-parser #task/action/expand #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/cli #concept/parser #scope/core #ai/instruct
+#task/domain/architecture #task/object/hybrid-parser-strategy #task/action/integration #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 扩展单元测试
+#### Acts 1: 更新工厂函数以支持解析器选择
 
-我们在测试文件中添加一个新的测试类 `TestGriffeParserStructure`，专门涵盖类、继承、模块属性和嵌套成员的解析。
+首先，更新 `make_app` 工厂，使其能够根据参数实例化不同的解析器。
 
 ~~~~~act
 patch_file
-packages/stitcher-python-adapter/tests/unit/test_griffe_parser.py
+packages/stitcher-cli/src/stitcher/cli/factories.py
 ~~~~~
 ~~~~~python.old
-        assert args[1].name == "b"
-        assert args[1].kind == ArgumentKind.POSITIONAL_OR_KEYWORD
-~~~~~
-~~~~~python.new
-        assert args[1].name == "b"
-        assert args[1].kind == ArgumentKind.POSITIONAL_OR_KEYWORD
-
-class TestGriffeParserStructure:
-    @pytest.fixture
-    def parser(self):
-        return GriffePythonParser()
-
-    def test_parse_module_attributes(self, parser):
-        code = """
-CONST_VAL: int = 42
-\"\"\"Constant docstring.\"\"\"
-simple_var = "hello"
-"""
-        module = parser.parse(code)
-        
-        assert len(module.attributes) == 2
-        
-        attr1 = next(a for a in module.attributes if a.name == "CONST_VAL")
-        assert attr1.annotation == "int"
-        assert attr1.value == "42"
-        assert attr1.docstring == "Constant docstring."
-
-        attr2 = next(a for a in module.attributes if a.name == "simple_var")
-        assert attr2.value == "'hello'"  # Normalized quotes
-
-    def test_parse_class_def(self, parser):
-        code = """
-class MyClass(Base1, Base2):
-    \"\"\"Class doc.\"\"\"
-    field: str = "init"
-    
-    def method(self):
-        pass
-"""
-        module = parser.parse(code)
-        assert len(module.classes) == 1
-        cls = module.classes[0]
-        
-        assert cls.name == "MyClass"
-        assert cls.docstring == "Class doc."
-        assert cls.bases == ["Base1", "Base2"]
-        
-        # Check Attribute
-        assert len(cls.attributes) == 1
-        attr = cls.attributes[0]
-        assert attr.name == "field"
-        assert attr.annotation == "str"
-        assert attr.value == "'init'"
-        
-        # Check Method
-        assert len(cls.methods) == 1
-        method = cls.methods[0]
-        assert method.name == "method"
-        assert len(method.args) == 1
-        assert method.args[0].name == "self"
-~~~~~
-
-#### Acts 2: 实现类与属性解析逻辑
-
-我们在 `GriffePythonParser` 中增加 `_map_class` 和 `_map_attribute` 方法，并在 `_map_module` 中集成它们。此变更较大，我们重写整个文件以保持清晰。
-
-~~~~~act
-write_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py
-~~~~~
-~~~~~python
-import ast
-import griffe
-from typing import List, Optional, Any
-from stitcher.spec import (
-    ModuleDef,
-    LanguageParserProtocol,
-    FunctionDef,
-    Argument,
-    ArgumentKind,
-    ClassDef,
-    Attribute
+from stitcher.common import stitcher_operator as nexus
+from stitcher.adapter.python import (
+    PythonParser,
+    PythonTransformer,
+    PythonStubGenerator,
+    PythonFingerprintStrategy,
 )
 
+from .handlers import TyperInteractionHandler
+~~~~~
+~~~~~python.new
+from stitcher.common import stitcher_operator as nexus
+from stitcher.adapter.python import (
+    PythonParser,
+    GriffePythonParser,
+    PythonTransformer,
+    PythonStubGenerator,
+    PythonFingerprintStrategy,
+)
 
-class GriffePythonParser(LanguageParserProtocol):
-    """
-    A Python parser implementation using Griffe.
-    """
+from .handlers import TyperInteractionHandler
+~~~~~
 
-    def parse(self, source_code: str, file_path: str = "") -> ModuleDef:
-        """
-        Parses the given source code into a Stitcher ModuleDef IR using Griffe.
-        """
-        # 1. Parse into AST
-        try:
-            tree = ast.parse(source_code)
-        except SyntaxError as e:
-            raise ValueError(f"Syntax error in {file_path}: {e}") from e
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/factories.py
+~~~~~
+~~~~~python.old
+def make_app(handler: Optional[InteractionHandler] = None) -> StitcherApp:
+    # Composition Root: Assemble the dependencies
+    parser = PythonParser()
+    transformer = PythonTransformer()
+    generator = PythonStubGenerator()
+    strategy = PythonFingerprintStrategy()
 
-        # 2. Visit with Griffe
-        module_name = file_path.replace("/", ".").replace(".py", "") or "module"
-        griffe_module = griffe.visit(module_name, filepath=None, code=source_code)
+    return StitcherApp(
+        root_path=get_project_root(),
+        parser=parser,
+        transformer=transformer,
+        stub_generator=generator,
+        fingerprint_strategy=strategy,
+        interaction_handler=handler,
+    )
+~~~~~
+~~~~~python.new
+def make_app(
+    handler: Optional[InteractionHandler] = None,
+    parser_type: str = "cst",
+) -> StitcherApp:
+    # Composition Root: Assemble the dependencies
+    if parser_type == "griffe":
+        parser = GriffePythonParser()
+    else:
+        parser = PythonParser()
 
-        # 3. Map to Stitcher IR
-        return self._map_module(griffe_module, file_path)
+    transformer = PythonTransformer()
+    generator = PythonStubGenerator()
+    strategy = PythonFingerprintStrategy()
 
-    def _map_module(self, gm: griffe.Module, file_path: str) -> ModuleDef:
-        functions = []
-        classes = []
-        attributes = []
+    return StitcherApp(
+        root_path=get_project_root(),
+        parser=parser,
+        transformer=transformer,
+        stub_generator=generator,
+        fingerprint_strategy=strategy,
+        interaction_handler=handler,
+    )
+~~~~~
 
-        for member in gm.members.values():
-            if member.is_function:
-                functions.append(self._map_function(member))
-            elif member.is_class:
-                classes.append(self._map_class(member))
-            elif member.is_attribute:
-                attributes.append(self._map_attribute(member))
+#### Acts 2: 配置基础命令 (Generate, Init, Strip, Inject)
 
-        docstring = gm.docstring.value if gm.docstring else None
+将 `generate` 切换到 Griffe，其他保持 CST。
 
-        return ModuleDef(
-            file_path=file_path,
-            docstring=docstring,
-            functions=functions,
-            classes=classes,
-            attributes=attributes,
-            imports=[] # Imports handling to be added later
-        )
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/basics.py
+~~~~~
+~~~~~python.old
+def generate_command():
+    app_instance = make_app()
+    app_instance.run_from_config()
 
-    def _map_class(self, gc: griffe.Class) -> ClassDef:
-        methods = []
-        attributes = []
 
-        for member in gc.members.values():
-            if member.is_function:
-                methods.append(self._map_function(member))
-            elif member.is_attribute:
-                attributes.append(self._map_attribute(member))
+def init_command():
+    app_instance = make_app()
+    app_instance.run_init()
 
-        docstring = gc.docstring.value if gc.docstring else None
-        
-        # Bases are expressions, we stringify them
-        bases = [str(b) for b in gc.bases]
 
-        return ClassDef(
-            name=gc.name,
-            bases=bases,
-            decorators=[str(d.value) for d in gc.decorators],
-            docstring=docstring,
-            attributes=attributes,
-            methods=methods
-        )
+def strip_command():
+    if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
+        bus.warning(L.strip.run.aborted)
+        raise typer.Abort()
 
-    def _map_attribute(self, ga: griffe.Attribute) -> Attribute:
-        annotation = str(ga.annotation) if ga.annotation else None
-        value = str(ga.value) if ga.value else None
-        docstring = ga.docstring.value if ga.docstring else None
+    app_instance = make_app()
+    app_instance.run_strip()
 
-        return Attribute(
-            name=ga.name,
-            annotation=annotation,
-            value=value,
-            docstring=docstring
-        )
 
-    def _map_function(self, gf: griffe.Function) -> FunctionDef:
-        args = [self._map_argument(p) for p in gf.parameters]
-        
-        return_annotation = None
-        if gf.returns:
-             return_annotation = str(gf.returns)
+def inject_command():
+    if not typer.confirm(bus.render_to_string(L.inject.run.confirm)):
+        bus.warning(L.inject.run.aborted)
+        raise typer.Abort()
 
-        docstring = gf.docstring.value if gf.docstring else None
+    app_instance = make_app()
+    app_instance.run_inject()
+~~~~~
+~~~~~python.new
+def generate_command():
+    app_instance = make_app(parser_type="griffe")
+    app_instance.run_from_config()
 
-        return FunctionDef(
-            name=gf.name,
-            args=args,
-            return_annotation=return_annotation,
-            docstring=docstring,
-            is_async="async" in gf.labels,
-            decorators=[str(d.value) for d in gf.decorators],
-            is_static="staticmethod" in gf.labels,
-            is_class="classmethod" in gf.labels,
-        )
 
-    def _map_argument(self, param: griffe.Parameter) -> Argument:
-        kind_map = {
-            "positional-only": ArgumentKind.POSITIONAL_ONLY,
-            "positional-or-keyword": ArgumentKind.POSITIONAL_OR_KEYWORD,
-            "keyword-only": ArgumentKind.KEYWORD_ONLY,
-            "variadic positional": ArgumentKind.VAR_POSITIONAL,
-            "variadic keyword": ArgumentKind.VAR_KEYWORD,
-        }
-        
-        st_kind = ArgumentKind.POSITIONAL_OR_KEYWORD
-        if param.kind:
-             slug = str(param.kind.value)
-             st_kind = kind_map.get(slug, ArgumentKind.POSITIONAL_OR_KEYWORD)
+def init_command():
+    app_instance = make_app(parser_type="cst")
+    app_instance.run_init()
 
-        annotation = str(param.annotation) if param.annotation else None
-        default = str(param.default) if param.default else None
 
-        return Argument(
-            name=param.name,
-            kind=st_kind,
-            annotation=annotation,
-            default=default
-        )
+def strip_command():
+    if not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
+        bus.warning(L.strip.run.aborted)
+        raise typer.Abort()
+
+    app_instance = make_app(parser_type="cst")
+    app_instance.run_strip()
+
+
+def inject_command():
+    if not typer.confirm(bus.render_to_string(L.inject.run.confirm)):
+        bus.warning(L.inject.run.aborted)
+        raise typer.Abort()
+
+    app_instance = make_app(parser_type="cst")
+    app_instance.run_inject()
+~~~~~
+
+#### Acts 3: 配置 Check 命令
+
+将 `check` 切换到 Griffe，因为它主要依赖读取能力进行状态比对。
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/check.py
+~~~~~
+~~~~~python.old
+    # Use factory to decide if we need an interaction handler
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force_relink or reconcile),
+    )
+
+    app_instance = make_app(handler)
+    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
+    if not success:
+~~~~~
+~~~~~python.new
+    # Use factory to decide if we need an interaction handler
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force_relink or reconcile),
+    )
+
+    app_instance = make_app(handler, parser_type="griffe")
+    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
+    if not success:
+~~~~~
+
+#### Acts 4: 配置 Pump 命令
+
+将 `pump` 明确配置为使用 CST，因为它可能涉及 `--strip` 操作，需要 CST 的支持。
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/pump.py
+~~~~~
+~~~~~python.old
+    # Use factory logic
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force or reconcile),
+    )
+
+    app_instance = make_app(handler)
+
+    # 1. Run Pump
+    result = app_instance.run_pump(strip=strip, force=force, reconcile=reconcile)
+~~~~~
+~~~~~python.new
+    # Use factory logic
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force or reconcile),
+    )
+
+    app_instance = make_app(handler, parser_type="cst")
+
+    # 1. Run Pump
+    result = app_instance.run_pump(strip=strip, force=force, reconcile=reconcile)
 ~~~~~
 
 ### 下一步建议
+架构迁移已完成。现在，任何运行 `generate` 或 `check` 的操作都将使用 Griffe 解析器。
 
-现在我们已经基本完成了 `GriffePythonParser` 的核心数据结构映射（Function, Class, Attribute, Module）。下一步，我们可以考虑运行测试，并在通过后**集成 `stitcher-cli`**，将这个新的解析器作为可通过配置切换的选项，完成技术提案中的第三步。
+接下来的当务之急是**完善 Griffe 解析器的能力**，特别是实现 `imports` 语句的提取和映射。如果没有这个，生成的 `.pyi` 文件将无法正确引用导入的类型，导致 stub 文件不可用。我们应该立即创建一个修复计划来解决这个问题。
