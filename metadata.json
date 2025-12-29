@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 阶段二 Part 2 - 适配 MessageBus 至 Operator 协议", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766983573.952742, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 从测试工具中移除 MockNexus 并统一使用 Operator", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766983872.3590076, "duration_ms": 0}}
