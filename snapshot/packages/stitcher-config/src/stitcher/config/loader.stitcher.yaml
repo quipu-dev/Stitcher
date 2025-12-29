@@ -1,7 +1,3 @@
-"_find_plugins": |-
-  Scans the entire workspace for stitcher plugins in pyproject.toml files.
-"_find_pyproject_toml": |-
-  Traverse upwards to find pyproject.toml.
 "StitcherConfig": |-
   Dataclass representing the [tool.stitcher] configuration.
 "StitcherConfig.name": |-
@@ -14,5 +10,9 @@
   The path (relative to root) to the dedicated PEP 561 stub package directory (e.g., 'stubs').
 "StitcherConfig.stub_path": |-
   The path (relative to root) where .pyi files should be generated (e.g., 'typings'). Mutually exclusive with stub_package.
+"_find_plugins": |-
+  Scans the entire workspace for stitcher plugins in pyproject.toml files.
+"_find_pyproject_toml": |-
+  Traverse upwards to find pyproject.toml.
 "load_config_from_path": |-
   Finds and loads stitcher configuration from pyproject.toml, handling both single-target and multi-target modes. Returns a list of configurations.

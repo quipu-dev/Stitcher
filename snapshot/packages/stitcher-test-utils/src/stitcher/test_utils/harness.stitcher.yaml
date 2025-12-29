@@ -1,9 +1,5 @@
 "VenvHarness": |-
   A test utility for creating and managing isolated virtual environments.
-"VenvHarness.root": |-
-  The root directory for the virtual environment.
-"VenvHarness.venv_dir": |-
-  The path to the virtual environment directory itself.
 "VenvHarness.__init__": |-
   Initializes the harness.
 
@@ -27,6 +23,8 @@
   Runs 'pip list' and returns the output.
 "VenvHarness.python_exe": |-
   Returns the path to the Python executable in the virtual environment.
+"VenvHarness.root": |-
+  The root directory for the virtual environment.
 "VenvHarness.run_pyright_check": |-
   Runs pyright on a given project/file within the virtual environment.
 
@@ -47,3 +45,5 @@
 
   Returns:
       The result of the subprocess call.
+"VenvHarness.venv_dir": |-
+  The path to the virtual environment directory itself.
