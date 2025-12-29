@@ -1,3 +1,4 @@
+import os
 from collections import ChainMap
 from typing import List, Dict, Optional, Union, Any
 from needle.spec import (
@@ -10,7 +11,12 @@ from .base import BaseLoader
 from pathlib import Path
 
 
-class OverlayNexus(BaseLoader, NexusProtocol):
+class OverlayLoader(BaseLoader, NexusProtocol):
+    """
+    A pure composition of loaders that implements the overlay logic.
+    It does NOT handle environment variable resolution.
+    """
+
     def __init__(
         self, loaders: List[ResourceLoaderProtocol], default_domain: str = "en"
     ):
@@ -22,11 +28,6 @@ class OverlayNexus(BaseLoader, NexusProtocol):
         self, pointer: str, domain: str, ignore_cache: bool = False
     ) -> Optional[str]:
         # Optimization: If we have a cached view, check it first
-        # But for 'fetch' semantic (atomic lookup), maybe we should iterate loaders?
-        # To be strictly correct with "Composition Layer", we should delegate to loaders.
-        # However, OverlayNexus typically caches views for performance using ChainMap.
-
-        # Let's use the view cache for performance, as it represents the composed state.
         if not ignore_cache:
             view = self._get_or_create_view(domain)
             val = view.get(pointer)
@@ -49,8 +50,6 @@ class OverlayNexus(BaseLoader, NexusProtocol):
     def _get_or_create_view(self, domain: str) -> ChainMap[str, Any]:
         if domain not in self._views:
             # Trigger load() on all loaders for the requested domain.
-            # The order of `self.loaders` is preserved (Priority: First > Last)
-            # Note: We call load() on children, not fetch(), to build the view.
             maps = [loader.load(domain) for loader in self.loaders]
             self._views[domain] = ChainMap(*maps)
         return self._views[domain]
@@ -78,7 +77,7 @@ class OverlayNexus(BaseLoader, NexusProtocol):
         value: Any,
         domain: Optional[str] = None,
     ) -> bool:
-        target_domain = self._resolve_domain(domain)
+        target_domain = domain or self.default_domain
         loader = self._get_writable_loader()
         if not loader:
             return False
@@ -93,8 +92,65 @@ class OverlayNexus(BaseLoader, NexusProtocol):
         pointer: Union[str, SemanticPointerProtocol],
         domain: Optional[str] = None,
     ) -> Optional[Path]:
-        target_domain = self._resolve_domain(domain)
+        target_domain = domain or self.default_domain
         loader = self._get_writable_loader()
         if not loader:
             return None
         return loader.locate(pointer, target_domain)
+
+
+class OverlayNexus(OverlayLoader):
+    """
+    Legacy Shim: Adds environment variable resolution on top of OverlayLoader.
+    This ensures backward compatibility for existing code relying on implicit
+    domain resolution via env vars (NEEDLE_LANG, STITCHER_LANG, LANG).
+    """
+
+    def _resolve_domain(self, explicit_domain: Optional[str] = None) -> str:
+        if explicit_domain:
+            return explicit_domain
+
+        # Priority 1: NEEDLE_LANG
+        needle_domain = os.getenv("NEEDLE_LANG")
+        if needle_domain:
+            return needle_domain
+
+        # Priority 2: STITCHER_LANG (legacy compatibility)
+        stitcher_domain = os.getenv("STITCHER_LANG")
+        if stitcher_domain:
+            return stitcher_domain
+
+        # Priority 3: System LANG
+        system_domain = os.getenv("LANG")
+        if system_domain:
+            return system_domain.split("_")[0].split(".")[0].lower()
+
+        return self.default_domain
+
+    def get(
+        self,
+        pointer: Union[str, SemanticPointerProtocol],
+        domain: Optional[str] = None,
+    ) -> str:
+        # Intercept get() to inject env-aware domain resolution
+        target_domain = self._resolve_domain(domain)
+        return super().get(pointer, target_domain)
+
+    def put(
+        self,
+        pointer: Union[str, SemanticPointerProtocol],
+        value: Any,
+        domain: Optional[str] = None,
+    ) -> bool:
+        # Intercept put() to inject env-aware domain resolution
+        target_domain = self._resolve_domain(domain)
+        return super().put(pointer, value, target_domain)
+
+    def locate(
+        self,
+        pointer: Union[str, SemanticPointerProtocol],
+        domain: Optional[str] = None,
+    ) -> Optional[Path]:
+        # Intercept locate() to inject env-aware domain resolution
+        target_domain = self._resolve_domain(domain)
+        return super().locate(pointer, target_domain)

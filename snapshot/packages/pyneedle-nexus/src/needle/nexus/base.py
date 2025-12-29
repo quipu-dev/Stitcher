@@ -18,34 +18,15 @@ class BaseLoader(ResourceLoaderProtocol):
     def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]:
         raise NotImplementedError
 
-    def _resolve_domain(self, explicit_domain: Optional[str] = None) -> str:
-        if explicit_domain:
-            return explicit_domain
-
-        # Priority 1: NEEDLE_LANG
-        needle_domain = os.getenv("NEEDLE_LANG")
-        if needle_domain:
-            return needle_domain
-
-        # Priority 2: STITCHER_LANG (legacy compatibility)
-        stitcher_domain = os.getenv("STITCHER_LANG")
-        if stitcher_domain:
-            return stitcher_domain
-
-        # Priority 3: System LANG
-        system_domain = os.getenv("LANG")
-        if system_domain:
-            return system_domain.split("_")[0].split(".")[0].lower()
-
-        return self.default_domain
-
     def get(
         self,
         pointer: Union[str, SemanticPointerProtocol],
         domain: Optional[str] = None,
     ) -> str:
         key = str(pointer)
-        target_domain = self._resolve_domain(domain)
+        # In the pure BaseLoader, we no longer resolve env vars.
+        # We rely on explicit domain or default.
+        target_domain = domain or self.default_domain
 
         # 1. Try target domain
         value = self.fetch(key, target_domain)

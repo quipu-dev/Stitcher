@@ -1,8 +1,8 @@
 "BaseLoader": |-
   [Policy Layer]
-  Implements the standard policy for language and identity fallback.
-  All specific loaders should inherit from this class and implement the
-  Primitive Layer `fetch` method.
+  The pure base class for all resource loaders.
+  It implements the core fallback policy (Target -> Default -> Identity)
+  but is agnostic to environmental context (like env vars).
 "BaseLoader.fetch": |-
   [Primitive Layer]
   Must be implemented by subclasses.
@@ -10,7 +10,7 @@
 "BaseLoader.get": |-
   [Policy Layer Implementation]
   Orchestrates the fallback logic:
-  1. Target Domain -> 2. Default Domain -> 3. Identity
+  1. Explicit/Target Domain -> 2. Default Domain -> 3. Identity
 "BaseLoader.load": |-
   [Utility]
   Must be implemented by subclasses.

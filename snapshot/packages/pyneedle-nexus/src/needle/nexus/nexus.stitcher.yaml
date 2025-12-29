@@ -1,25 +1,32 @@
-"OverlayNexus": |-
-  [Composition Layer]
+"OverlayLoader": |-
+  [Composition Layer - Pure]
   Implements vertical fallback by iterating through a stack of loaders.
-  Inherits policy logic (get) from BaseLoader.
-"OverlayNexus.__init__": |-
-  Initializes the Nexus with a list of loaders.
+  It is a pure data composition tool and does not handle environment variables.
+"OverlayLoader.__init__": |-
+  Initializes the Loader with a list of child loaders.
 
   Args:
-      loaders: A list of resource loaders. The order determines priority;
-               loaders at the beginning of the list override those at the end.
-      default_domain: The fallback domain to use if the target domain is not found.
-"OverlayNexus._get_or_create_view": |-
+      loaders: A list of resource loaders. Priority is First > Last.
+      default_domain: The fallback domain to use if explicit domain is missing.
+"OverlayLoader._get_or_create_view": |-
   Lazily loads and caches the ChainMap view for a given domain.
-"OverlayNexus.fetch": |-
-  [Composition Layer Implementation]
+"OverlayLoader.fetch": |-
   Vertical Fallback: Ask each loader in order. First one to return non-None wins.
-"OverlayNexus.load": |-
-  Returns the overlay view for the requested domain. This enables a Nexus
-  to act as a data source for another Nexus.
-"OverlayNexus.locate": |-
+"OverlayLoader.load": |-
+  Returns the overlay view for the requested domain.
+"OverlayLoader.locate": |-
   Finds the physical path for a resource by delegating to the first writable loader.
-"OverlayNexus.put": |-
+"OverlayLoader.put": |-
   Writes a value to a resource by delegating to the first writable loader.
-"OverlayNexus.reload": |-
+"OverlayLoader.reload": |-
   Clears internal caches for one or all domains.
+"OverlayNexus": |-
+  [Legacy Shim]
+  Inherits from OverlayLoader and adds environment variable resolution (NEEDLE_LANG, etc.).
+  Maintained for backward compatibility.
+"OverlayNexus.get": |-
+  Env-aware wrapper around OverlayLoader.get.
+"OverlayNexus.locate": |-
+  Env-aware wrapper around OverlayLoader.locate.
+"OverlayNexus.put": |-
+  Env-aware wrapper around OverlayLoader.put.
