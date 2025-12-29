@@ -31,7 +31,8 @@ def my_func(a: int, b: str = "default") -> bool:
         
         arg2 = func.args[1]
         assert arg2.name == "b"
-        assert arg2.default == '"default"'
+        # Griffe (via ast.unparse) normalizes string literals to single quotes
+        assert arg2.default == "'default'"
 
     def test_parse_async_function(self, parser):
         code = "async def runner(): pass"

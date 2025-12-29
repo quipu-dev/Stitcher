@@ -1,94 +1,54 @@
 简要回答
-针对 `AttributeError: 'Function' object has no attribute 'is_async'` 错误，我们需要修改 `GriffePythonParser`。Griffe 模型使用 `labels` 集合（如 `{'async'}`）来标识这些属性，而不是直接的布尔字段。我将生成一个修复计划，改用 `labels` 来检测异步、静态方法和类方法。
+测试 `test_parse_simple_function` 失败的原因是 `Griffe`（及其底层的 `ast.unparse`）在将默认值表达式转换为字符串时，默认优先使用单引号 `'`，而源代码和测试断言中使用的是双引号 `"`。这是基于 AST 解析器的预期行为（标准化格式），而非错误。
 
-## [WIP] fix(adapter): 使用 labels 属性检测 Griffe 函数修饰符并修复 Argument Kind 映射
+我们将更新测试用例，使其预期结果与 Griffe 的标准输出（单引号）保持一致。
 
-### 错误分析
-单元测试失败，抛出 `AttributeError: 'Function' object has no attribute 'is_async'`。
-这是因为 `Griffe` 的对象模型（v0.x/v1.x）并不直接在 `Function` 对象上暴露 `is_async`、`is_static` 等布尔属性，而是通过 `labels` 集合属性来存储这些状态（例如包含 `"async"`, `"staticmethod"`, `"classmethod"` 字符串）。
-
-此外，代码中的参数 Kind 映射逻辑 (`str(param.kind.value)`) 可能存在风险，虽然此次未报错，但应一并优化以确保稳健性。
+## [WIP] test(adapter): 修正单元测试以匹配 Griffe 的 AST 字符串标准化行为
 
 ### 用户需求
-修复 `GriffePythonParser` 中的属性访问错误，使单元测试通过。
+修复 `packages/stitcher-python-adapter/tests/unit/test_griffe_parser.py` 中的断言错误。
 
 ### 评论
-使用 `labels` 集合是 Griffe 的标准做法，这不仅解决了当前的崩溃，还简化了我们在原代码中通过解析装饰器列表来判断 `staticmethod`/`classmethod` 的脆弱逻辑。
+Griffe 通过 `ast` 模块解析代码，在将默认值节点转换回字符串时，Python 的 `ast.unparse` 会标准化引号样式（通常优先使用单引号）。测试应该验证语义等价性，接受这种标准化行为。
 
 ### 目标
-1.  修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py`，改用 `gf.labels` 检查函数属性。
+修改 `tests/unit/test_griffe_parser.py`，将预期值从 `"default"` (双引号) 调整为 `'default'` (单引号)。
 
 ### 基本原理
-将直接属性访问 `gf.is_async` 替换为成员检查 `"async" in gf.labels`。同理优化静态方法和类方法的检测逻辑。
+AST 解析会丢失原始的引号风格信息。除非使用 CST（如 LibCST），否则无法保留原始引用风格。我们在适配器层接受这种标准化是合理的。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/parser #scope/core #ai/instruct
-#task/domain/engine #task/object/griffe-parser #task/action/fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/tests #concept/parser #scope/core #ai/instruct
+#task/domain/testing #task/object/unit-test #task/action/fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 Griffe 属性访问
+#### Acts 1: 修正测试断言
 
-我们将修改 `_map_function` 方法，使用 `labels` 集合来判断函数的异步和方法类型状态。
+我们将更新测试文件，使其期望默认值参数被格式化为单引号字符串。
 
 ~~~~~act
 patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py
+packages/stitcher-python-adapter/tests/unit/test_griffe_parser.py
 ~~~~~
 ~~~~~python.old
-    def _map_function(self, gf: griffe.Function) -> FunctionDef:
-        args = [self._map_argument(p) for p in gf.parameters]
-        
-        # Griffe stores return annotation object, we need source string or name
-        return_annotation = None
-        if gf.returns:
-            # gf.returns is typically an ExprName or similar. We want the string representation.
-            # Griffe < 1.0 might act differently, assuming modern/stable API behavior:
-            # We use .source or try to stringify
-             return_annotation = str(gf.returns)
+        arg2 = func.args[1]
+        assert arg2.name == "b"
+        assert arg2.default == '"default"'
 
-        docstring = gf.docstring.value if gf.docstring else None
-
-        return FunctionDef(
-            name=gf.name,
-            args=args,
-            return_annotation=return_annotation,
-            docstring=docstring,
-            is_async=gf.is_async,
-            decorators=[str(d.value) for d in gf.decorators],
-            # Basic static/class method detection from decorators
-            is_static="staticmethod" in [d.value.name for d in gf.decorators if hasattr(d.value, "name")],
-            is_class="classmethod" in [d.value.name for d in gf.decorators if hasattr(d.value, "name")],
-        )
+    def test_parse_async_function(self, parser):
 ~~~~~
 ~~~~~python.new
-    def _map_function(self, gf: griffe.Function) -> FunctionDef:
-        args = [self._map_argument(p) for p in gf.parameters]
-        
-        # Griffe stores return annotation object, we need source string or name
-        return_annotation = None
-        if gf.returns:
-            # gf.returns is typically an ExprName or similar. We want the string representation.
-            # Griffe < 1.0 might act differently, assuming modern/stable API behavior:
-            # We use .source or try to stringify
-             return_annotation = str(gf.returns)
+        arg2 = func.args[1]
+        assert arg2.name == "b"
+        # Griffe (via ast.unparse) normalizes string literals to single quotes
+        assert arg2.default == "'default'"
 
-        docstring = gf.docstring.value if gf.docstring else None
-
-        return FunctionDef(
-            name=gf.name,
-            args=args,
-            return_annotation=return_annotation,
-            docstring=docstring,
-            is_async="async" in gf.labels,
-            decorators=[str(d.value) for d in gf.decorators],
-            is_static="staticmethod" in gf.labels,
-            is_class="classmethod" in gf.labels,
-        )
+    def test_parse_async_function(self, parser):
 ~~~~~
 
 ### 下一步建议
 
-修复应用后，应重新运行 `packages/stitcher-python-adapter/tests/unit/test_griffe_parser.py` 测试以验证崩溃是否解决。如果测试通过，我们可以继续完善 `_map_module` 逻辑，处理类定义和模块属性。
+测试修正后，我们应当确信核心函数解析逻辑是工作的。接下来可以继续扩展 `GriffePythonParser` 以支持类（Class）和属性（Attribute）的解析，这是实现完整功能的关键步骤。

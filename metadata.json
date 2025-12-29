@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(adapter): 使用 labels 属性检测 Griffe 函数修饰符并修复 Argument Kind 映射", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766990834.665923, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test(adapter): 修正单元测试以匹配 Griffe 的 AST 字符串标准化行为", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766991125.8940885, "duration_ms": 0}}
