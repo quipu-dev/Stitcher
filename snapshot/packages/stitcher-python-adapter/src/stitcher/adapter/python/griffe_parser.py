@@ -45,6 +45,11 @@ class GriffePythonParser(LanguageParserProtocol):
         attributes = []
 
         for member in gm.members.values():
+            # Skip aliases (imported names) to prevent resolution errors
+            # We only want to map symbols DEFINED in this module.
+            if member.is_alias:
+                continue
+
             if member.is_function:
                 functions.append(self._map_function(member))
             elif member.is_class:

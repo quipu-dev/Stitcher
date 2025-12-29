@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(adapter): 为 Griffe 分配 Filepath 以解决相对导入崩溃", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766991687.7003646, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(adapter): 在 Griffe 解析中抑制 AliasResolutionError", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766991736.103534, "duration_ms": 0}}
