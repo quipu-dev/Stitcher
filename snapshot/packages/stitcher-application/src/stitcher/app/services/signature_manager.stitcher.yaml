@@ -14,6 +14,9 @@
   using the injected strategy.
 "SignatureManager.load_composite_hashes": |-
   Loads the composite hash map for a module.
+"SignatureManager.reformat_hashes_for_module": |-
+  Re-formats an existing signature file to enforce canonical styling.
+  Returns True if the file was reformatted, False otherwise.
 "SignatureManager.save_composite_hashes": |-
   Saves the composite hash map for a module.
   Expected format: { "FQN": { "baseline_code_structure_hash": "...", "baseline_yaml_content_hash": "..." } }

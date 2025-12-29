@@ -235,3 +235,18 @@ class DocumentManager:
             fqn: self.compute_yaml_content_hash(doc_content)
             for fqn, doc_content in docs.items()
         }
+
+    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
+        if not module.file_path:
+            return False
+        module_path = self.root_path / module.file_path
+        doc_path = module_path.with_suffix(".stitcher.yaml")
+        if not doc_path.exists():
+            return False
+
+        docs = self.adapter.load(doc_path)
+        if not docs:
+            return False  # Do not reformat empty or invalid files
+
+        self.adapter.save(doc_path, docs)
+        return True

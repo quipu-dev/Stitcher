@@ -30,6 +30,9 @@
 "DocumentManager.load_docs_for_module": |-
   Loads documentation from the corresponding .stitcher.yaml file.
   Returns empty dict if file does not exist.
+"DocumentManager.reformat_docs_for_module": |-
+  Re-formats an existing documentation file to enforce canonical styling.
+  Returns True if the file was reformatted, False otherwise.
 "DocumentManager.save_docs_for_module": |-
   Extracts docs from the module and saves them to a sidecar .stitcher.yaml file.
   Returns the path to the saved file.

@@ -1,6 +1,6 @@
 {
-  "fail": "🚫 检查失败，在 {count} 个文件中发现错误。",
-  "signatures_updated": "✅ {path}: 已接受 {count} 项签名变更。",
-  "success": "\n\n✨ 所有检查通过，文档保持同步。",
-  "success_with_warnings": "⚠️  检查通过，但在 {count} 个文件中发现警告。"
+    "fail": "检查失败，{count} 个文件存在问题。",
+    "reformatting": "正在重新格式化 YAML 和签名文件以确保一致性...",
+    "success": "检查成功通过。",
+    "success_with_warnings": "检查通过，但有 {count} 个文件存在警告。"
 }

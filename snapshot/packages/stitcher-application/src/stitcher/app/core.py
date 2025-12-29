@@ -580,7 +580,13 @@ class StitcherApp:
                         "reconcile"
                     ]
 
-        # 4. Reporting Phase
+        # 4. Reformatting Phase
+        bus.info(L.check.run.reformatting)
+        for module in all_modules:
+            self.doc_manager.reformat_docs_for_module(module)
+            self.sig_manager.reformat_hashes_for_module(module)
+
+        # 5. Reporting Phase
         global_failed_files = 0
         global_warnings_files = 0
         for res in all_results:

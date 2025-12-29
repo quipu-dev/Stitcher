@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M core.json, M set.json, M dict_operator.json ... and 21 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766993803.9229968, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 为 `check` 命令添加自动文件格式化功能", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766993827.792136, "duration_ms": 0}}

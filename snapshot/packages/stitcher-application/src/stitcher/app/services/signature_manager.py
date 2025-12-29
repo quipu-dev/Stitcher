@@ -70,3 +70,15 @@ class SignatureManager:
         except (json.JSONDecodeError, OSError, InvalidFingerprintKeyError):
             # InvalidFingerprintKeyError triggers "clean slate" logic
             return {}
+
+    def reformat_hashes_for_module(self, module: ModuleDef) -> bool:
+        sig_path = self._get_sig_path(module)
+        if not sig_path.exists():
+            return False
+
+        hashes = self.load_composite_hashes(module)
+        if not hashes:
+            return False  # Do not reformat empty or invalid files
+
+        self.save_composite_hashes(module, hashes)
+        return True
