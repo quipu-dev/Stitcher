@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(runtime): 恢复 FileSystemOperator 的递归目录扫描能力", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766985149.9184973, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(common): 增强语言自动检测逻辑 (LANG 支持)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766985317.7862203, "duration_ms": 0}}

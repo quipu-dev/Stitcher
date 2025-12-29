@@ -36,12 +36,32 @@ _default_factory = I18NFactoryOperator(_common_assets_root)
 # 3. Dynamic Pipeline with Caching
 _operator_cache: Dict[str, OverlayOperator] = {}
 
+
+def _detect_lang() -> str:
+    # 1. Explicit override
+    stitcher_lang = os.getenv("STITCHER_LANG")
+    if stitcher_lang:
+        return stitcher_lang
+
+    # 2. System LANG (e.g. "zh_CN.UTF-8" -> "zh")
+    sys_lang = os.getenv("LANG")
+    if sys_lang:
+        # Extract "zh" from "zh_CN.UTF-8" or "en_US"
+        # Split by '.' first to remove encoding, then '_' to remove territory
+        base_lang = sys_lang.split(".")[0].split("_")[0]
+        if base_lang:
+            return base_lang
+
+    # 3. Default fallback
+    return "en"
+
+
 def get_current_renderer() -> OverlayOperator:
     """
     Returns the OverlayOperator for the current configured language.
     This implements the 'Lazy Pipeline Construction' pattern.
     """
-    lang_code = os.getenv("STITCHER_LANG", "en")
+    lang_code = _detect_lang()
     
     if lang_code in _operator_cache:
         return _operator_cache[lang_code]
