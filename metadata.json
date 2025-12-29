@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: D a.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766996914.811099, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(config): 同步 pytest 的 pythonpath 与 pyright 的 extraPaths", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766996922.0289388, "duration_ms": 0}}

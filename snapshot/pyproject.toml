@@ -52,7 +52,8 @@ pythonpath = [
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-runtime/src",
     "packages/pyneedle/src",
-    "packages/stitcher-test-utils/src"
+    "packages/stitcher-test-utils/src",
+    "packages/needle-stubs/src"
 ]
 
 [tool.stitcher.targets.stitcher]
