@@ -1,76 +1,61 @@
-非常抱歉，这是我的疏忽。在迁移代码时，我未能同步迁移配套的 `.stitcher.yaml` 元数据文件，导致它们在工作区被误删。
+好的，所有的代码迁移和元数据找回工作已经完成。现在我们将这些变更打包成一个完整的逻辑单元并提交到仓库。
 
-这些 YAML 文件包含了代码的语义描述和文档，是 Stitcher 系统的核心组成部分，必须与代码保持同步迁移。我将立即为您找回并移动它们。
-
-## [WIP] fix(pyneedle): 找回并迁移丢失的 .stitcher.yaml 元数据文件
-
-### 错误分析
-在上一阶段的重构中，我只迁移了 `.py` 文件，而忽略了同目录下的 `.stitcher.yaml` 文件。由于在执行迁移后清理了旧目录，导致这些文件在 Git 索引中被标记为删除。
+## [COMMIT] refactor(pyneedle): 将 nexus 包合并到 runtime 中
 
 ### 用户需求
-从 Git 中找回误删的 `.stitcher.yaml` 文件，并将其迁移到 `pyneedle-runtime` 包中的对应位置。
+将 `pyneedle-nexus` 包的功能合并到 `pyneedle-runtime` 中，简化项目结构，并确保所有元数据文件完整迁移。
 
 ### 评论
-元数据文件是代码的“灵魂”，迁移时绝对不能遗漏。感谢您的细心发现。
+这次重构不仅减少了项目中的包数量，还通过合并 `OverlayOperator` 到 `runtime` 中增强了运行时的核心能力。同时，纠正了迁移过程中遗漏元数据的问题，确保了系统的语义完整性。
 
 ### 目标
-1.  恢复 `operators.stitcher.yaml`、`test_overlay_operator.stitcher.yaml` 和 `test_nexus.stitcher.yaml`。
-2.  将它们迁移并重命名到 `pyneedle-runtime` 中的正确位置。
+1.  提交所有文件迁移和路径更新的变更。
+2.  确保 `pyneedle-nexus` 包被彻底从版本控制和物理路径中移除。
 
 ### 基本原理
-利用 `git restore` 找回被删除的文件。随后，将 `operators.stitcher.yaml` 重命名为 `overlay_operator.stitcher.yaml` 以匹配已迁移的 Python 文件名，并将其他测试相关的 YAML 移动到 `runtime` 的测试目录下。
+我们将把当前工作区中所有关于此次重构的变更（包括 Python 代码、YAML 元数据、项目配置文件）添加到暂存区，并创建一个描述详尽的 Git 提交。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/runtime #comp/docs #scope/core #ai/instruct #task/domain/architecture #task/object/metadata-migration #task/action/recovery #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/runtime #comp/build #scope/core #ai/instruct #task/domain/architecture #task/object/package-structure #task/action/refactor #task/state/end #task/status/completed
 
 ---
 ### Script
 
-#### Acts 1: 恢复误删的 YAML 文件
+#### Acts 1: 提交重构变更
 
-我们首先利用 Git 将文件从暂存区/库中恢复。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-git restore packages/pyneedle-nexus/src/needle/nexus/operators.stitcher.yaml
-git restore packages/pyneedle-nexus/tests/test_overlay_operator.stitcher.yaml
-git restore packages/pyneedle-nexus/tests/test_nexus.stitcher.yaml
-~~~~~
-
-#### Acts 2: 迁移并重命名元数据文件
-
-现在将这些文件移动到 `pyneedle-runtime` 的对应位置。
+我们将所有变更添加到 Git，并提交。
 
 ~~~~~act
-move_file
-packages/pyneedle-nexus/src/needle/nexus/operators.stitcher.yaml
+git_add
+packages/pyneedle/pyproject.toml
+packages/pyneedle/src/needle/__init__.py
+packages/pyneedle-runtime/pyproject.toml
+packages/pyneedle-runtime/src/needle/operators/__init__.py
+packages/pyneedle-runtime/src/needle/operators/overlay_operator.py
 packages/pyneedle-runtime/src/needle/operators/overlay_operator.stitcher.yaml
-~~~~~
-
-~~~~~act
-move_file
-packages/pyneedle-nexus/tests/test_overlay_operator.stitcher.yaml
+packages/pyneedle-runtime/src/needle/runtime.py
+packages/pyneedle-runtime/tests/test_overlay_operator.py
 packages/pyneedle-runtime/tests/test_overlay_operator.stitcher.yaml
-~~~~~
-
-~~~~~act
-move_file
-packages/pyneedle-nexus/tests/test_nexus.stitcher.yaml
 packages/pyneedle-runtime/tests/test_nexus.stitcher.yaml
+packages/pyneedle-runtime/tests/test_pipeline_integration.py
+packages/stitcher-common/src/stitcher/common/__init__.py
+pyproject.toml
 ~~~~~
-
-#### Acts 3: 最终清理
-
-移除已经变为空目录（或仅剩无关残留）的旧路径。
 
 ~~~~~act
-run_command
+git_commit
 ~~~~~
-~~~~~
-rm -rf packages/pyneedle-nexus
+~~~~~text
+refactor(pyneedle): merge nexus package into runtime
+
+- Relocated OverlayOperator from 'pyneedle-nexus' to 'pyneedle-runtime'.
+- Updated all import references in the codebase (runtime, stitcher-common, etc.).
+- Migrated all associated .stitcher.yaml metadata files to their new locations.
+- Removed 'pyneedle-nexus' from dependencies in pyproject.toml and workspace configurations.
+- Deleted the 'packages/pyneedle-nexus' directory.
+
+This simplification reduces package boilerplate and increases the cohesion of the runtime's operator set.
 ~~~~~
 
 ### 下一步建议
-文件已找回并正确迁移。建议您再次运行 `git status` 检查是否还有遗漏。如果一切正常，我们可以准备进行 `[COMMIT]` 阶段的操作。
+重构已正式提交。建议执行 `uv sync` 来更新锁文件并确保本地环境与新的项目结构完全同步。

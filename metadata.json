@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(pyneedle): 找回并迁移丢失的 .stitcher.yaml 元数据文件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766988763.7550218, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(pyneedle): 将 nexus 包合并到 runtime 中", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766988839.6997721, "duration_ms": 0}}
