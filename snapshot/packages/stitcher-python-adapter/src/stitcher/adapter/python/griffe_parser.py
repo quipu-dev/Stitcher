@@ -1,5 +1,8 @@
-import griffe.dataclasses as dc
 import griffe.loader
+from griffe import Function as GriffeFunction
+from griffe import Class as GriffeClass
+from griffe import Attribute as GriffeAttribute
+
 from stitcher.spec import (
     ModuleDef,
     FunctionDef,
@@ -45,15 +48,15 @@ class GriffePythonParser(LanguageParserProtocol):
             ],
         )
 
-    def _map_function(self, griffe_func: dc.Function) -> FunctionDef:
+    def _map_function(self, griffe_func: GriffeFunction) -> FunctionDef:
         # TODO: Map Griffe function to FunctionDef
         pass
 
-    def _map_class(self, griffe_class: dc.Class) -> ClassDef:
+    def _map_class(self, griffe_class: GriffeClass) -> ClassDef:
         # TODO: Map Griffe class to ClassDef
         pass
 
-    def _map_attribute(self, griffe_attr: dc.Attribute) -> Attribute:
+    def _map_attribute(self, griffe_attr: GriffeAttribute) -> Attribute:
         """Maps a Griffe Attribute to a Stitcher IR Attribute."""
         return Attribute(
             name=griffe_attr.name,
