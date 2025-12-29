@@ -1,130 +1,85 @@
 简要回答
-我们遇到了大规模的 "Could not resolve alias" 错误。这表明 Griffe 在解析源代码时，无法正确通过 `griffe.visit` 在内存中构建模块与其导入之间的依赖关系。
+测试成功复现了崩溃，错误堆栈非常清晰：`griffe._internal.exceptions.BuiltinModuleError: src.pkg.main`。
 
-## [WIP] test(adapter): 增强 Griffe 集成测试以复现 Alias Resolution 错误
+崩溃发生在我们调用 `griffe.visit` 时。关键原因是 Griffe 在处理相对导入 `from .models import User` 时，需要确定当前模块 `src.pkg.main` 是否是一个包（package），这依赖于检查其 `filepath` 是否为 `__init__.py`。然而，我们在 `griffe.visit` 中传递了 `filepath=None`，导致 Griffe 无法确定模块性质，从而在 `is_init_module` 属性访问时抛出异常。
+
+为了解决这个问题，我们需要在调用 `griffe.visit` 时提供正确的 `filepath` 参数。
+
+## [WIP] fix(adapter): 为 Griffe 分配 Filepath 以解决相对导入崩溃
 
 ### 错误分析
-Griffe 作为一个基于静态分析的工具，非常依赖于对模块结构的完整理解。
-1.  **路径问题**: 错误日志显示模块名被解析为 `packages.stitcher-application.src...`，这显然是因为我们在 `_map_module` 中构造 `module_name` 时使用了文件路径，而没有考虑到 Python 的包搜索路径 (PYTHONPATH)。Griffe 对此非常敏感，因为它需要通过模块名来解析导入关系。
-2.  **上下文缺失**: `griffe.visit` 是针对单个文件的。当它遇到 `from typing import List` 时，它需要知道 `typing` 是什么。对于标准库通常没问题，但对于项目内部的引用，如果模块名结构错误，Griffe 就无法找到对应的定义，从而在解析 Alias 时失败。
-
-错误信息 `Could not resolve alias ... pointing at ...` 实际上是 Griffe 在尝试解析一个 `Alias` 对象（即导入的名称）并获取其目标对象时抛出的异常，或者我们在代码中尝试访问此 Alias 的某些属性时触发的。
+`griffe.visit` 在处理相对导入（`from . import ...`）时，必须知道当前模块在文件系统中的位置，以判断它是包 (`__init__.py`) 还是普通模块。
+我们在 `GriffePythonParser.parse` 调用中：
+`griffe.visit(module_name, filepath=None, code=source_code)`
+显式传递了 `filepath=None`，剥夺了 Griffe 进行相对路径计算的能力，导致其内部抛出 `BuiltinModuleError`。
 
 ### 用户需求
-创建一个重现此问题的集成测试，模拟真实的包结构和导入关系，以便我们后续修复模块名解析和搜索路径配置问题。
+修复 `GriffePythonParser`，使其能够处理包含相对导入的代码而不崩溃。
 
 ### 评论
-当前的单元测试过于简单，只测试了单一的字符串代码片段，没有模拟多模块、跨文件引用的场景。我们需要一个基于文件系统的集成测试。
+虽然我们通过 `code` 参数传递了源代码内容，但文件路径对于上下文解析（尤其是相对导入）是必不可少的。我们需要将传入 `parse` 方法的 `file_path` 参数传递给 Griffe。
 
 ### 目标
-在 `packages/stitcher-python-adapter/tests/integration` 下创建 `test_griffe_resolution.py`，复现跨模块导入和标准库导入时的解析错误。
+修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py`，将 `file_path` 传递给 `griffe.visit`。
 
 ### 基本原理
-我们将使用 `WorkspaceFactory` 构建一个包含两个模块的迷你项目：
-1.  `models.py`: 定义一个类。
-2.  `main.py`: 导入 `models.py` 中的类和标准库 `typing.List`。
-然后使用 `GriffePythonParser` 解析 `main.py`，这应该会触发类似的 Alias Resolution 错误，验证我们的假设。
+提供 `filepath` 使 Griffe 能够正确执行 `relative_to_absolute` 逻辑，从而解决相对导入路径。
 
 ### 标签
-#intent/test #flow/ready #priority/high #comp/tests #concept/parser #scope/core #ai/instruct
-#task/domain/testing #task/object/integration-test #task/action/create #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/parser #scope/core #ai/instruct
+#task/domain/engine #task/object/griffe-parser #task/action/fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建集成测试目录
+#### Acts 1: 修复 filepath 传递
+
+我们将修改 `parse` 方法，将 `file_path` 参数（转换为 `Path` 对象）传递给 `griffe.visit`。
 
 ~~~~~act
-run_command
+patch_file
+packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py
 ~~~~~
-~~~~~bash
-mkdir -p packages/stitcher-python-adapter/tests/integration
+~~~~~python.old
+import ast
+import griffe
+from typing import List, Optional, Any
 ~~~~~
-
-#### Acts 2: 编写复现测试
-
-在这个测试中，我们不 mock 任何东西，而是真实地创建文件。我们需要确保存储库根目录（Project Root）被正确识别，以便 Griffe 能理解模块路径。
-
-~~~~~act
-write_file
-packages/stitcher-python-adapter/tests/integration/test_griffe_resolution.py
-~~~~~
-~~~~~python
-import pytest
+~~~~~python.new
+import ast
 from pathlib import Path
-from stitcher.test_utils import WorkspaceFactory
-from stitcher.adapter.python import GriffePythonParser
+import griffe
+from typing import List, Optional, Any
+~~~~~
 
-def test_griffe_resolves_imports(tmp_path):
-    """
-    Integration test to reproduce 'Could not resolve alias' error.
-    Simulates a project with local imports and standard library imports.
-    """
-    # 1. Setup specific project structure
-    # src/
-    #   pkg/
-    #     __init__.py
-    #     models.py  (Defines User)
-    #     main.py    (Imports User and List)
-    
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/pkg/__init__.py", "")
-        .with_source(
-            "src/pkg/models.py", 
-            """
-class User:
-    name: str = "Alice"
-            """
-        )
-        .with_source(
-            "src/pkg/main.py",
-            """
-from typing import List
-from .models import User
+~~~~~act
+patch_file
+packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py
+~~~~~
+~~~~~python.old
+        # 2. Visit with Griffe
+        module_name = file_path.replace("/", ".").replace(".py", "") or "module"
+        griffe_module = griffe.visit(module_name, filepath=None, code=source_code)
 
-def get_users() -> List[User]:
-    return [User()]
-            """
-        )
-        .build()
-    )
+        # 3. Map to Stitcher IR
+        return self._map_module(griffe_module, file_path)
+~~~~~
+~~~~~python.new
+        # 2. Visit with Griffe
+        module_name = file_path.replace("/", ".").replace(".py", "") or "module"
+        
+        # Griffe needs a Path object for filepath to correctly handle relative imports
+        path_obj = Path(file_path) if file_path else None
+        
+        griffe_module = griffe.visit(module_name, filepath=path_obj, code=source_code)
 
-    parser = GriffePythonParser()
-    
-    # We simulate what StitcherApp does: iterate files and parse them.
-    # The critical part is what we pass as 'file_path'.
-    # In the app, it is relative to root, e.g., "src/pkg/main.py"
-    
-    main_py_path = "src/pkg/main.py"
-    source_code = (project_root / main_py_path).read_text(encoding="utf-8")
-    
-    # 2. Act
-    # This might fail or return a ModuleDef with broken annotations depending on 
-    # how Griffe handles the missing context if we don't config search paths.
-    try:
-        module = parser.parse(source_code, file_path=main_py_path)
-    except Exception as e:
-        pytest.fail(f"Griffe parsing crashed: {e}")
-
-    # 3. Assert
-    assert len(module.functions) == 1
-    func = module.functions[0]
-    
-    # If alias resolution fails, Griffe might return the Alias object string rep 
-    # or crash when we try to str() it in our parser implementation.
-    # We want to see if the return annotation is correctly resolved to a string "List[User]"
-    # or at least a string representation that doesn't crash.
-    
-    # Note: Griffe 1.0+ might resolve this to "typing.List[src.pkg.models.User]" or similar
-    # if paths are correct. If not, it might explain the crash.
-    print(f"Return annotation: {func.return_annotation}")
-    assert func.return_annotation is not None
-    assert "List" in func.return_annotation
+        # 3. Map to Stitcher IR
+        return self._map_module(griffe_module, file_path)
 ~~~~~
 
 ### 下一步建议
 
-运行此测试。如果它通过了，说明问题可能出在 `stitcher check` 运行时的特定**文件路径传递方式**或**PYTHONPATH 环境**上。如果它失败（带着类似的 `Could not resolve alias` 或具体的 Crash），我们就成功复现了问题，并可以着手修复 `GriffePythonParser` 中的模块名计算逻辑和 `griffe.Loader` 的搜索路径配置。
+修复应用后，应重新运行 `test_griffe_resolves_imports` 集成测试。
+**注意**：这只是解决了 `Crash` 问题。`Could not resolve alias` 的警告可能仍然存在，因为简单的 `visit` 并没有加载整个项目上下文（即它不知道 `models` 模块的具体内容）。
+如果集成测试通过且没有 crash，但注解是 `List` 而不是完整的类型，那也是一种进步。如果我们要彻底解决跨文件引用解析，可能需要从 `visit`（单文件）转向 `load`（多文件/项目级），但这会显著改变架构。目前的 MVP 目标是**不崩溃**并能提取基本信息。

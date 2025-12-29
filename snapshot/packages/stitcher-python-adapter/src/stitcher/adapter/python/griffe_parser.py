@@ -1,4 +1,5 @@
 import ast
+from pathlib import Path
 import griffe
 from typing import List, Optional, Any
 from stitcher.spec import (
@@ -29,7 +30,11 @@ class GriffePythonParser(LanguageParserProtocol):
 
         # 2. Visit with Griffe
         module_name = file_path.replace("/", ".").replace(".py", "") or "module"
-        griffe_module = griffe.visit(module_name, filepath=None, code=source_code)
+        
+        # Griffe needs a Path object for filepath to correctly handle relative imports
+        path_obj = Path(file_path) if file_path else None
+        
+        griffe_module = griffe.visit(module_name, filepath=path_obj, code=source_code)
 
         # 3. Map to Stitcher IR
         return self._map_module(griffe_module, file_path)
