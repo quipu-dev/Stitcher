@@ -127,7 +127,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
         # Continue visiting children (to find methods)
         return True
 
-    def leave_ClassDef(self, node: cst.ClassDef) -> None:
+    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> None:
         # Pop the finished class from stack
         finished_cls = self._class_stack.pop()
 
@@ -210,25 +210,9 @@ class IRBuildingVisitor(cst.CSTVisitor):
         dummy_module = cst.Module([])
 
         def extract_arg(
-            param: Union[cst.Param, cst.ParamStar], kind: ArgumentKind
+            param: cst.Param, kind: ArgumentKind
         ) -> Argument:
             # cst.Param has 'name' (Name), 'annotation' (Annotation), 'default' (Expr)
-            # cst.ParamStar only has name if it's *args (not just *)
-
-            if isinstance(param, cst.ParamStar):
-                # Handle *args. A bare '*' separator won't have a .name attribute.
-                name = ""
-                if hasattr(param, "name") and isinstance(param.name, cst.Name):
-                    name = param.name.value
-
-                annotation = None
-                if hasattr(param, "annotation") and isinstance(
-                    param.annotation, cst.Annotation
-                ):
-                    annotation = dummy_module.code_for_node(
-                        param.annotation.annotation
-                    ).strip()
-                return Argument(name=name, kind=kind, annotation=annotation)
 
             # Normal cst.Param
             name = param.name.value
@@ -256,7 +240,9 @@ class IRBuildingVisitor(cst.CSTVisitor):
             result.append(extract_arg(p, ArgumentKind.POSITIONAL_OR_KEYWORD))
 
         # 3. *args
-        if isinstance(params.star_arg, cst.ParamStar):
+        # params.star_arg can be Param (named *args) or ParamStar (bare *)
+        # We only care about named *args for the Argument model.
+        if isinstance(params.star_arg, cst.Param):
             result.append(extract_arg(params.star_arg, ArgumentKind.VAR_POSITIONAL))
 
         # 4. Keyword Only

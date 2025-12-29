@@ -6,8 +6,12 @@ import sys
 from types import ModuleType
 
 
+class MockModule:
+    pass
+
+
 def setup_mock_module(monkeypatch):
-    mock_mod = ModuleType("my_plugin")
+    mock_mod = MockModule()
 
     def valid_func(a: int) -> str:
         """My Docstring"""
@@ -16,9 +20,9 @@ def setup_mock_module(monkeypatch):
     async def async_func():
         pass
 
-    mock_mod.valid_func = valid_func
-    mock_mod.async_func = async_func
-    mock_mod.not_callable = "I am a string"
+    mock_mod.valid_func = valid_func  # type: ignore
+    mock_mod.async_func = async_func  # type: ignore
+    mock_mod.not_callable = "I am a string"  # type: ignore
 
     monkeypatch.setitem(sys.modules, "my_plugin", mock_mod)
 

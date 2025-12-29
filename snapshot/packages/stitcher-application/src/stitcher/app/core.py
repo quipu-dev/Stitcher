@@ -446,12 +446,12 @@ class StitcherApp:
                     current_fp = computed_fingerprints.get(fqn, Fingerprint())
                     current_code_hash = current_fp.get("current_code_structure_hash")
 
-                    if action == ResolutionAction.RELINK:
-                        if current_code_hash:
-                            fp["baseline_code_structure_hash"] = current_code_hash
-                    elif action == ResolutionAction.RECONCILE:
-                        if current_code_hash:
-                            fp["baseline_code_structure_hash"] = current_code_hash
+                if action == ResolutionAction.RELINK:
+                    if current_code_hash:
+                        fp["baseline_code_structure_hash"] = str(current_code_hash)
+                elif action == ResolutionAction.RECONCILE:
+                    if current_code_hash:
+                        fp["baseline_code_structure_hash"] = str(current_code_hash)
                         if fqn in current_yaml_map:
                             fp["baseline_yaml_content_hash"] = current_yaml_map[fqn]
 
