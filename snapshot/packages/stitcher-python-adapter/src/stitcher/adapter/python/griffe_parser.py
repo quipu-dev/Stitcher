@@ -40,7 +40,9 @@ class GriffePythonParser(LanguageParserProtocol):
             docstring=griffe_module.docstring.value if griffe_module.docstring else None,
             # functions=[self._map_function(f) for f in griffe_module.functions.values()],
             # classes=[self._map_class(c) for c in griffe_module.classes.values()],
-            # attributes=[self._map_attribute(a) for a in griffe_module.attributes.values()],
+            attributes=[
+                self._map_attribute(a) for a in griffe_module.attributes.values()
+            ],
         )
 
     def _map_function(self, griffe_func: dc.Function) -> FunctionDef:
@@ -52,5 +54,12 @@ class GriffePythonParser(LanguageParserProtocol):
         pass
 
     def _map_attribute(self, griffe_attr: dc.Attribute) -> Attribute:
-        # TODO: Map Griffe attribute to AttributeDef
-        pass
+        """Maps a Griffe Attribute to a Stitcher IR Attribute."""
+        return Attribute(
+            name=griffe_attr.name,
+            annotation=str(griffe_attr.annotation)
+            if griffe_attr.annotation
+            else None,
+            value=griffe_attr.value if griffe_attr.value else None,
+            docstring=griffe_attr.docstring.value if griffe_attr.docstring else None,
+        )

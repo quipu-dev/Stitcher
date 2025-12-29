@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 创建 GriffePythonParser 的骨架实现", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766990163.41036, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 在 GriffePythonParser 中实现属性映射", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766990205.5374467, "duration_ms": 0}}
