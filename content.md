@@ -1,163 +1,280 @@
 简要回答
-针对 `InMemoryStateBackend.pyi` 中出现的 `_run_id: Any = run_id` 作用域错误，我们需要修改 `StubGenerator`，使其在生成类属性时强制忽略赋值。这是因为在 `.pyi` 文件中，类体内的赋值通常会引用 `__init__` 上下文中才存在的局部变量，从而导致语法错误。
+好的，现在我们将为 `GriffePythonParser` 实现缺失的 `_enrich_typing_imports` 逻辑。这样可以确保生成的 `.pyi` 文件即使在源代码中缺少 `typing` 等导入的情况下，也能自动补全，从而变得类型安全和可用。
 
-我将生成一个计划来实施此修复，并更新相关的单元测试。
-
-## [WIP] fix(adapter): 禁止类属性生成赋值以防止作用域错误
+## [WIP] feat(adapter): 为 Griffe 解析器移植 `_enrich_typing_imports` 逻辑
 
 ### 用户需求
-修复生成的 `.pyi` 文件中，类属性错误地包含从 `__init__` 提取的局部变量赋值（如 `_run_id: Any = run_id`），导致生成的文件包含无效代码。
+完善 `GriffePythonParser`，使其能够自动检测注解中使用的 `typing` 模块符号（如 `List`, `Optional`, `Any` 等），并在生成的 `ModuleDef.imports` 列表中补全缺失的导入语句。
 
 ### 评论
-这是一个关键的正确性修复。虽然简单的字面量赋值（如 `x = 1`）在 `.pyi` 中是合法的，但没有任何简单的方法能区分“安全的字面量”和“不安全的局部变量引用”。因此，**在生成类属性存根时统一丢弃赋值**是最安全、最稳健的策略，这也是 PEP 484 推荐的做法（即 `name: type`）。模块级属性的赋值将保留。
+这个功能对于确保生成存根文件的健壮性至关重要。我们将复用旧 `PythonParser` 中已有的 `_collect_annotations` 和 `_enrich_typing_imports` 函数，因为它们是独立于解析器实现的通用逻辑，可以直接适配到 `GriffePythonParser` 的 `parse` 流程中。
 
 ### 目标
-1.  修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py`，为 `_generate_attribute` 添加 `include_value` 参数。
-2.  在 `_generate_class` 中调用该方法时，强制传入 `include_value=False`。
-3.  更新 `packages/stitcher-python-adapter/tests/unit/test_stub_generator.py`，验证类属性不再包含赋值，同时确保模块级属性仍然包含赋值。
+1.  将辅助函数 `_collect_annotations`, `_has_unannotated_attributes`, `_enrich_typing_imports` 从 `packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/parser.py` 中移植到 `packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py`。
+2.  在 `GriffePythonParser.parse` 的末尾调用 `_enrich_typing_imports` 来丰富 `ModuleDef`。
+3.  在 `tests/unit/test_griffe_parser.py` 中增加一个测试用例，验证即使源代码缺少 `typing` 导入，生成的 `ModuleDef` 也会自动包含它。
 
 ### 基本原理
-`.pyi` 文件的核心职责是类型定义。类属性的默认值或初始值对于静态类型检查通常是次要的，而错误的赋值会直接破坏文件。通过在类作用域内禁用赋值生成，我们消除了这种风险。
+我们将 `_enrich_typing_imports` 作为一个后处理步骤。在通过 Griffe 构建了基本的 `ModuleDef` 之后，我们遍历其所有注解，查找 `typing` 模块的常用符号，并与 `ModuleDef.imports` 列表进行比对，补全缺失的项。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/codegen #scope/core #ai/instruct
-#task/domain/engine #task/object/stub-generator #task/action/fix #task/state/continue
+#intent/build #flow/ready #priority/high #comp/runtime #concept/parser #scope/core #ai/instruct
+#task/domain/engine #task/object/griffe-parser #task/action/expand #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修改 StubGenerator 逻辑
+#### Acts 1: 将辅助函数移植到 `griffe_parser.py`
 
-我们将修改 `_generate_attribute` 方法以支持可选地忽略值，并在生成类属性时使用此选项。
-
-~~~~~act
-patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py
-~~~~~
-~~~~~python.old
-    def _indent(self, level: int) -> str:
-        return self._indent_str * level
-
-    def _generate_attribute(self, attr: Attribute, level: int) -> str:
-        indent = self._indent(level)
-        # In .pyi files, we prefer Type Hints:  name: type
-        # If value is present (constant), we might output: name: type = value
-        # But PEP 484 recommends name: type = ... for constants or just name: type
-        # Let's stick to name: type for now as per test expectation.
-
-        annotation = attr.annotation if attr.annotation else "Any"
-        line = f"{indent}{attr.name}: {annotation}"
-
-        if attr.value:
-            line += f" = {attr.value}"
-
-        return line
-
-    def _generate_args(self, args: List[Argument]) -> str:
-~~~~~
-~~~~~python.new
-    def _indent(self, level: int) -> str:
-        return self._indent_str * level
-
-    def _generate_attribute(
-        self, attr: Attribute, level: int, include_value: bool = True
-    ) -> str:
-        indent = self._indent(level)
-        # In .pyi files, we prefer Type Hints:  name: type
-        # If value is present (constant), we might output: name: type = value
-        # But PEP 484 recommends name: type = ... for constants or just name: type
-        # For class attributes, we purposefully exclude values to avoid scoping issues.
-
-        annotation = attr.annotation if attr.annotation else "Any"
-        line = f"{indent}{attr.name}: {annotation}"
-
-        if include_value and attr.value:
-            line += f" = {attr.value}"
-
-        return line
-
-    def _generate_args(self, args: List[Argument]) -> str:
-~~~~~
+我们从 `internal/parser.py` 中复制 `_collect_annotations` 等函数，并将其作为顶级函数粘贴到 `griffe_parser.py` 中。
 
 ~~~~~act
-patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py
+write_file
+packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py
 ~~~~~
-~~~~~python.old
-        # Attributes
+~~~~~python
+import ast
+from pathlib import Path
+import re
+import griffe
+from typing import List, Optional, Any, Set
+from stitcher.spec import (
+    ModuleDef,
+    LanguageParserProtocol,
+    FunctionDef,
+    ClassDef,
+    Attribute,
+    Argument,
+    ArgumentKind,
+)
+
+
+# --- Ported utility functions from internal/parser.py ---
+
+def _collect_annotations(module: ModuleDef) -> Set[str]:
+    annotations = set()
+
+    def add_if_exists(ann: Optional[str]):
+        if ann:
+            annotations.add(ann)
+
+    for attr in module.attributes:
+        add_if_exists(attr.annotation)
+
+    def collect_from_func(func: FunctionDef):
+        add_if_exists(func.return_annotation)
+        for arg in func.args:
+            add_if_exists(arg.annotation)
+
+    for func in module.functions:
+        collect_from_func(func)
+
+    for cls in module.classes:
         for attr in cls.attributes:
-            lines.append(self._generate_attribute(attr, level + 1))
-            has_content = True
+            add_if_exists(attr.annotation)
+        for method in cls.methods:
+            collect_from_func(method)
 
-        if has_content and cls.methods:
+    return annotations
+
+
+def _has_unannotated_attributes(module: ModuleDef) -> bool:
+    if any(attr.annotation is None for attr in module.attributes):
+        return True
+    for cls in module.classes:
+        if any(attr.annotation is None for attr in cls.attributes):
+            return True
+    return False
+
+
+def _enrich_typing_imports(module: ModuleDef):
+    TYPING_SYMBOLS = {
+        "List", "Dict", "Tuple", "Set", "Optional", "Union", "Any",
+        "Callable", "Sequence", "Iterable", "Type", "Final", "ClassVar", "Mapping"
+    }
+    required_symbols = set()
+
+    if _has_unannotated_attributes(module):
+        required_symbols.add("Any")
+
+    annotations = _collect_annotations(module)
+    for ann in annotations:
+        for symbol in TYPING_SYMBOLS:
+            if re.search(rf"\b{symbol}\b", ann):
+                required_symbols.add(symbol)
+
+    if not required_symbols:
+        return
+
+    existing_imports_text = "\n".join(module.imports)
+    for symbol in sorted(list(required_symbols)):
+        if not re.search(rf"\b{symbol}\b", existing_imports_text):
+            module.imports.append(f"from typing import {symbol}")
+
+
+# --- Main Parser Class ---
+
+class _ImportVisitor(ast.NodeVisitor):
+    def __init__(self):
+        self.imports: List[str] = []
+
+    def visit_Import(self, node: ast.Import) -> None:
+        self.imports.append(ast.unparse(node))
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        self.imports.append(ast.unparse(node))
+
+
+class GriffePythonParser(LanguageParserProtocol):
+    """
+    A Python parser implementation using Griffe.
+    """
+
+    def parse(self, source_code: str, file_path: str = "") -> ModuleDef:
+        """
+        Parses the given source code into a Stitcher ModuleDef IR using Griffe.
+        """
+        # 1. Parse into AST
+        try:
+            tree = ast.parse(source_code)
+        except SyntaxError as e:
+            raise ValueError(f"Syntax error in {file_path}: {e}") from e
+        
+        # 1.5 Extract Imports via AST
+        import_visitor = _ImportVisitor()
+        import_visitor.visit(tree)
+        imports = import_visitor.imports
+
+        # 2. Visit with Griffe
+        module_name = file_path.replace("/", ".").replace(".py", "") or "module"
+        path_obj = Path(file_path) if file_path else None
+        griffe_module = griffe.visit(module_name, filepath=path_obj, code=source_code)
+
+        # 3. Map to Stitcher IR
+        module_def = self._map_module(griffe_module, file_path, imports)
+
+        # 4. Enrich imports
+        _enrich_typing_imports(module_def)
+
+        return module_def
+
+    def _map_module(self, gm: griffe.Module, file_path: str, imports: List[str]) -> ModuleDef:
+        functions = []
+        classes = []
+        attributes = []
+
+        for member in gm.members.values():
+            if member.is_alias:
+                continue
+            if member.is_function:
+                functions.append(self._map_function(member))
+            elif member.is_class:
+                classes.append(self._map_class(member))
+            elif member.is_attribute:
+                attributes.append(self._map_attribute(member))
+
+        docstring = gm.docstring.value if gm.docstring else None
+
+        return ModuleDef(
+            file_path=file_path,
+            docstring=docstring,
+            functions=functions,
+            classes=classes,
+            attributes=attributes,
+            imports=imports
+        )
+
+    def _map_class(self, gc: griffe.Class) -> ClassDef:
+        methods = []
+        attributes = []
+        for member in gc.members.values():
+            if member.is_function:
+                methods.append(self._map_function(member))
+            elif member.is_attribute:
+                attributes.append(self._map_attribute(member))
+        docstring = gc.docstring.value if gc.docstring else None
+        bases = [str(b) for b in gc.bases]
+        return ClassDef(
+            name=gc.name,
+            bases=bases,
+            decorators=[str(d.value) for d in gc.decorators],
+            docstring=docstring,
+            attributes=attributes,
+            methods=methods
+        )
+
+    def _map_attribute(self, ga: griffe.Attribute) -> Attribute:
+        annotation = str(ga.annotation) if ga.annotation else None
+        value = str(ga.value) if ga.value else None
+        docstring = ga.docstring.value if ga.docstring else None
+        return Attribute(name=ga.name, annotation=annotation, value=value, docstring=docstring)
+
+    def _map_function(self, gf: griffe.Function) -> FunctionDef:
+        args = [self._map_argument(p) for p in gf.parameters]
+        return_annotation = str(gf.returns) if gf.returns else None
+        docstring = gf.docstring.value if gf.docstring else None
+        return FunctionDef(
+            name=gf.name,
+            args=args,
+            return_annotation=return_annotation,
+            docstring=docstring,
+            is_async="async" in gf.labels,
+            decorators=[str(d.value) for d in gf.decorators],
+            is_static="staticmethod" in gf.labels,
+            is_class="classmethod" in gf.labels,
+        )
+
+    def _map_argument(self, param: griffe.Parameter) -> Argument:
+        kind_map = {
+            "positional-only": ArgumentKind.POSITIONAL_ONLY,
+            "positional-or-keyword": ArgumentKind.POSITIONAL_OR_KEYWORD,
+            "keyword-only": ArgumentKind.KEYWORD_ONLY,
+            "variadic positional": ArgumentKind.VAR_POSITIONAL,
+            "variadic keyword": ArgumentKind.VAR_KEYWORD,
+        }
+        st_kind = ArgumentKind.POSITIONAL_OR_KEYWORD
+        if param.kind:
+             slug = str(param.kind.value)
+             st_kind = kind_map.get(slug, ArgumentKind.POSITIONAL_OR_KEYWORD)
+        annotation = str(param.annotation) if param.annotation else None
+        default = str(param.default) if param.default else None
+        return Argument(name=param.name, kind=st_kind, annotation=annotation, default=default)
 ~~~~~
-~~~~~python.new
-        # Attributes
-        for attr in cls.attributes:
-            # We explicitly DISABLE value generation for class attributes.
-            # This prevents bugs where instance attributes initialized from __init__ arguments
-            # (e.g. self.x = x) are generated as class attrs with invalid values (x: Any = x).
-            lines.append(
-                self._generate_attribute(attr, level + 1, include_value=False)
-            )
-            has_content = True
 
-        if has_content and cls.methods:
-~~~~~
+#### Acts 2: 添加 enriquecer-imports 测试
 
-#### Acts 2: 更新单元测试
-
-修改现有的测试用例以反映新的预期行为，并添加一个新的测试用例来专门验证类属性值已被移除。
+我们增加一个测试，专门验证当源代码缺少 `typing` 导入时，解析器是否能自动补全。
 
 ~~~~~act
 patch_file
-packages/stitcher-python-adapter/tests/unit/test_stub_generator.py
+packages/stitcher-python-adapter/tests/unit/test_griffe_parser.py
 ~~~~~
 ~~~~~python.old
-        output = generator.generate(module)
-
-        assert "@decorator" in output
-        assert "class MyClass(Base1, Base2):" in output
-        assert "    x: int = 1" in output
-        assert "    def method(self): ..." in output
+        # Check that we caught all of them. Order should be preserved.
+        assert len(module.imports) == 3
+        for expected in expected_imports:
+            assert expected in module.imports
 ~~~~~
 ~~~~~python.new
-        output = generator.generate(module)
+        # Check that we caught all of them. Order should be preserved.
+        assert len(module.imports) == 3
+        for expected in expected_imports:
+            assert expected in module.imports
 
-        assert "@decorator" in output
-        assert "class MyClass(Base1, Base2):" in output
-        # Class attribute values should be stripped
-        assert "    x: int" in output
-        assert "    x: int =" not in output
-        assert "    def method(self): ..." in output
-
-    def test_generate_attribute_value_handling(self, generator):
-        """
-        Verify that module attributes KEEP values, but class attributes DROP values.
-        """
-        # Module attribute
-        mod_attr = Attribute(name="CONST", annotation="int", value="42")
+    def test_enrich_typing_imports(self, parser):
+        # Code explicitly missing 'from typing import List'
+        code = """
+def process_list(items: List[int]) -> None:
+    pass
+"""
+        module = parser.parse(code)
         
-        # Class attribute (simulating self.param = param injection)
-        cls_attr = Attribute(name="param", annotation="str", value="param")
-        cls = ClassDef(name="MyClass", attributes=[cls_attr])
-        
-        module = ModuleDef(file_path="test.py", attributes=[mod_attr], classes=[cls])
-        
-        output = generator.generate(module)
-        
-        # Module level: "CONST: int = 42"
-        assert "CONST: int = 42" in output
-        
-        # Class level: "    param: str" (No "= param")
-        assert "    param: str" in output
-        assert " = param" not in output
+        # Check that the import was added automatically
+        assert "from typing import List" in module.imports
 ~~~~~
 
 ### 下一步建议
 
-由于这是对生成逻辑的核心修改，建议在应用修复后再次运行 `test_stub_generator.py`。
-然后，你可以再次尝试 `stitcher generate` 或查看之前生成的 `.pyi` 文件（如果测试环境中有的话），确认 `InMemoryStateBackend.pyi` 中的 `_run_id: Any` 后面的 `= run_id` 是否已经消失。
-
-此修复目前只涉及 `stitcher-python-adapter`，不会影响 CLI 或 Application 的逻辑，因此风险较低。
+运行单元测试。如果通过，`GriffePythonParser` 的核心功能就已完备。
+这意味着我们可以为整个 “集成Griffe” 任务创建一个 `[COMMIT]` 计划，将 `test(adapter): ...`, `fix(adapter): ...`, `feat(adapter): ...` 等一系列的 `[WIP]` 成果汇总为一个逻辑单元提交。

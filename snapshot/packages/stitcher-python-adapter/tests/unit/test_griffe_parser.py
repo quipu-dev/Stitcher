@@ -122,3 +122,14 @@ import sys as system
         assert len(module.imports) == 3
         for expected in expected_imports:
             assert expected in module.imports
+
+    def test_enrich_typing_imports(self, parser):
+        # Code explicitly missing 'from typing import List'
+        code = """
+def process_list(items: List[int]) -> None:
+    pass
+"""
+        module = parser.parse(code)
+        
+        # Check that the import was added automatically
+        assert "from typing import List" in module.imports

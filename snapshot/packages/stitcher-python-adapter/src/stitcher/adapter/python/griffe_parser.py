@@ -1,17 +1,83 @@
 import ast
 from pathlib import Path
+import re
 import griffe
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Set
 from stitcher.spec import (
     ModuleDef,
     LanguageParserProtocol,
     FunctionDef,
+    ClassDef,
+    Attribute,
     Argument,
     ArgumentKind,
-    ClassDef,
-    Attribute
 )
 
+
+# --- Ported utility functions from internal/parser.py ---
+
+def _collect_annotations(module: ModuleDef) -> Set[str]:
+    annotations = set()
+
+    def add_if_exists(ann: Optional[str]):
+        if ann:
+            annotations.add(ann)
+
+    for attr in module.attributes:
+        add_if_exists(attr.annotation)
+
+    def collect_from_func(func: FunctionDef):
+        add_if_exists(func.return_annotation)
+        for arg in func.args:
+            add_if_exists(arg.annotation)
+
+    for func in module.functions:
+        collect_from_func(func)
+
+    for cls in module.classes:
+        for attr in cls.attributes:
+            add_if_exists(attr.annotation)
+        for method in cls.methods:
+            collect_from_func(method)
+
+    return annotations
+
+
+def _has_unannotated_attributes(module: ModuleDef) -> bool:
+    if any(attr.annotation is None for attr in module.attributes):
+        return True
+    for cls in module.classes:
+        if any(attr.annotation is None for attr in cls.attributes):
+            return True
+    return False
+
+
+def _enrich_typing_imports(module: ModuleDef):
+    TYPING_SYMBOLS = {
+        "List", "Dict", "Tuple", "Set", "Optional", "Union", "Any",
+        "Callable", "Sequence", "Iterable", "Type", "Final", "ClassVar", "Mapping"
+    }
+    required_symbols = set()
+
+    if _has_unannotated_attributes(module):
+        required_symbols.add("Any")
+
+    annotations = _collect_annotations(module)
+    for ann in annotations:
+        for symbol in TYPING_SYMBOLS:
+            if re.search(rf"\b{symbol}\b", ann):
+                required_symbols.add(symbol)
+
+    if not required_symbols:
+        return
+
+    existing_imports_text = "\n".join(module.imports)
+    for symbol in sorted(list(required_symbols)):
+        if not re.search(rf"\b{symbol}\b", existing_imports_text):
+            module.imports.append(f"from typing import {symbol}")
+
+
+# --- Main Parser Class ---
 
 class _ImportVisitor(ast.NodeVisitor):
     def __init__(self):
@@ -46,14 +112,16 @@ class GriffePythonParser(LanguageParserProtocol):
 
         # 2. Visit with Griffe
         module_name = file_path.replace("/", ".").replace(".py", "") or "module"
-        
-        # Griffe needs a Path object for filepath to correctly handle relative imports
         path_obj = Path(file_path) if file_path else None
-        
         griffe_module = griffe.visit(module_name, filepath=path_obj, code=source_code)
 
         # 3. Map to Stitcher IR
-        return self._map_module(griffe_module, file_path, imports)
+        module_def = self._map_module(griffe_module, file_path, imports)
+
+        # 4. Enrich imports
+        _enrich_typing_imports(module_def)
+
+        return module_def
 
     def _map_module(self, gm: griffe.Module, file_path: str, imports: List[str]) -> ModuleDef:
         functions = []
@@ -61,11 +129,8 @@ class GriffePythonParser(LanguageParserProtocol):
         attributes = []
 
         for member in gm.members.values():
-            # Skip aliases (imported names) to prevent resolution errors
-            # We only want to map symbols DEFINED in this module.
             if member.is_alias:
                 continue
-
             if member.is_function:
                 functions.append(self._map_function(member))
             elif member.is_class:
@@ -87,18 +152,13 @@ class GriffePythonParser(LanguageParserProtocol):
     def _map_class(self, gc: griffe.Class) -> ClassDef:
         methods = []
         attributes = []
-
         for member in gc.members.values():
             if member.is_function:
                 methods.append(self._map_function(member))
             elif member.is_attribute:
                 attributes.append(self._map_attribute(member))
-
         docstring = gc.docstring.value if gc.docstring else None
-        
-        # Bases are expressions, we stringify them
         bases = [str(b) for b in gc.bases]
-
         return ClassDef(
             name=gc.name,
             bases=bases,
@@ -112,23 +172,12 @@ class GriffePythonParser(LanguageParserProtocol):
         annotation = str(ga.annotation) if ga.annotation else None
         value = str(ga.value) if ga.value else None
         docstring = ga.docstring.value if ga.docstring else None
-
-        return Attribute(
-            name=ga.name,
-            annotation=annotation,
-            value=value,
-            docstring=docstring
-        )
+        return Attribute(name=ga.name, annotation=annotation, value=value, docstring=docstring)
 
     def _map_function(self, gf: griffe.Function) -> FunctionDef:
         args = [self._map_argument(p) for p in gf.parameters]
-        
-        return_annotation = None
-        if gf.returns:
-             return_annotation = str(gf.returns)
-
+        return_annotation = str(gf.returns) if gf.returns else None
         docstring = gf.docstring.value if gf.docstring else None
-
         return FunctionDef(
             name=gf.name,
             args=args,
@@ -148,18 +197,10 @@ class GriffePythonParser(LanguageParserProtocol):
             "variadic positional": ArgumentKind.VAR_POSITIONAL,
             "variadic keyword": ArgumentKind.VAR_KEYWORD,
         }
-        
         st_kind = ArgumentKind.POSITIONAL_OR_KEYWORD
         if param.kind:
              slug = str(param.kind.value)
              st_kind = kind_map.get(slug, ArgumentKind.POSITIONAL_OR_KEYWORD)
-
         annotation = str(param.annotation) if param.annotation else None
         default = str(param.default) if param.default else None
-
-        return Argument(
-            name=param.name,
-            kind=st_kind,
-            annotation=annotation,
-            default=default
-        )
+        return Argument(name=param.name, kind=st_kind, annotation=annotation, default=default)
