@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Visitor 签名错误与 Bus 类型定义", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766998536.7516923, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 core.py 中的缩进逻辑错误与类型问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766998705.5598, "duration_ms": 0}}
