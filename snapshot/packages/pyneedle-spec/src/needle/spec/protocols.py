@@ -39,34 +39,6 @@ class PointerSetProtocol(Protocol):
     def __mul__(self, other: Iterable[str]) -> "PointerSetProtocol": ...
 
 
-class ResourceLoaderProtocol(Protocol):
-    def fetch(
-        self, pointer: str, domain: str, ignore_cache: bool = False
-    ) -> str | None: ...
-
-    def get(
-        self,
-        pointer: Union[str, "SemanticPointerProtocol"],
-        domain: str | None = None,
-    ) -> str: ...
-
-    def load(self, domain: str, ignore_cache: bool = False) -> Dict[str, Any]: ...
-
-
-class WritableResourceLoaderProtocol(ResourceLoaderProtocol, Protocol):
-    def put(
-        self, pointer: Union[str, SemanticPointerProtocol], value: Any, domain: str
-    ) -> bool: ...
-
-    def locate(
-        self, pointer: Union[str, SemanticPointerProtocol], domain: str
-    ) -> Path: ...
-
-
-class NexusProtocol(ResourceLoaderProtocol, Protocol):
-    def reload(self, domain: str | None = None) -> None: ...
-
-
 class OperatorProtocol(Protocol):
     """
     The unified interface for all operators (Config, Factory, Executor).
