@@ -57,17 +57,19 @@ class StubGenerator:
     def _indent(self, level: int) -> str:
         return self._indent_str * level
 
-    def _generate_attribute(self, attr: Attribute, level: int) -> str:
+    def _generate_attribute(
+        self, attr: Attribute, level: int, include_value: bool = True
+    ) -> str:
         indent = self._indent(level)
         # In .pyi files, we prefer Type Hints:  name: type
         # If value is present (constant), we might output: name: type = value
         # But PEP 484 recommends name: type = ... for constants or just name: type
-        # Let's stick to name: type for now as per test expectation.
+        # For class attributes, we purposefully exclude values to avoid scoping issues.
 
         annotation = attr.annotation if attr.annotation else "Any"
         line = f"{indent}{attr.name}: {annotation}"
 
-        if attr.value:
+        if include_value and attr.value:
             line += f" = {attr.value}"
 
         return line
@@ -185,7 +187,12 @@ class StubGenerator:
 
         # Attributes
         for attr in cls.attributes:
-            lines.append(self._generate_attribute(attr, level + 1))
+            # We explicitly DISABLE value generation for class attributes.
+            # This prevents bugs where instance attributes initialized from __init__ arguments
+            # (e.g. self.x = x) are generated as class attrs with invalid values (x: Any = x).
+            lines.append(
+                self._generate_attribute(attr, level + 1, include_value=False)
+            )
             has_content = True
 
         if has_content and cls.methods:

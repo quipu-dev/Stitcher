@@ -96,5 +96,29 @@ class TestStubGenerator:
 
         assert "@decorator" in output
         assert "class MyClass(Base1, Base2):" in output
-        assert "    x: int = 1" in output
+        # Class attribute values should be stripped
+        assert "    x: int" in output
+        assert "    x: int =" not in output
         assert "    def method(self): ..." in output
+
+    def test_generate_attribute_value_handling(self, generator):
+        """
+        Verify that module attributes KEEP values, but class attributes DROP values.
+        """
+        # Module attribute
+        mod_attr = Attribute(name="CONST", annotation="int", value="42")
+        
+        # Class attribute (simulating self.param = param injection)
+        cls_attr = Attribute(name="param", annotation="str", value="param")
+        cls = ClassDef(name="MyClass", attributes=[cls_attr])
+        
+        module = ModuleDef(file_path="test.py", attributes=[mod_attr], classes=[cls])
+        
+        output = generator.generate(module)
+        
+        # Module level: "CONST: int = 42"
+        assert "CONST: int = 42" in output
+        
+        # Class level: "    param: str" (No "= param")
+        assert "    param: str" in output
+        assert " = param" not in output

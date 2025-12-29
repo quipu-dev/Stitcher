@@ -7,6 +7,7 @@ from stitcher.app.protocols import InteractionHandler
 from stitcher.common import stitcher_operator as nexus
 from stitcher.adapter.python import (
     PythonParser,
+    GriffePythonParser,
     PythonTransformer,
     PythonStubGenerator,
     PythonFingerprintStrategy,
@@ -30,9 +31,16 @@ def make_interaction_handler(
     return None
 
 
-def make_app(handler: Optional[InteractionHandler] = None) -> StitcherApp:
+def make_app(
+    handler: Optional[InteractionHandler] = None,
+    parser_type: str = "cst",
+) -> StitcherApp:
     # Composition Root: Assemble the dependencies
-    parser = PythonParser()
+    if parser_type == "griffe":
+        parser = GriffePythonParser()
+    else:
+        parser = PythonParser()
+
     transformer = PythonTransformer()
     generator = PythonStubGenerator()
     strategy = PythonFingerprintStrategy()
