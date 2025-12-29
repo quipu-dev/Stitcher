@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M __init__.py, M __init__.py, M protocols.py ... and 4 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767014333.4191887, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(app): 统一解析器为 Griffe 以解决签名不一致问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767015147.9226635, "duration_ms": 0}}
