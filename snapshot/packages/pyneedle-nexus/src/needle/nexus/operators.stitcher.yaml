@@ -1,0 +1,9 @@
+"OverlayOperator": |-
+  A pure functional operator used to compose multiple operators vertically.
+  
+  Unlike `OverlayNexus`, it has no concept of 'domain', 'fallback', or 'cache'.
+  It simply tries each operator in the list until one returns a value.
+"OverlayOperator.__call__": |-
+  Iterates through child operators and returns the first non-None result.
+"OverlayOperator.__init__": |-
+  Initializes with a prioritized list of operators (first has highest priority).

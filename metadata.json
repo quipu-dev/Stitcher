@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 阶段一 - 定义 OperatorProtocol 并实现基础算子", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766982409.8103092, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 阶段一 Part 2 - 引入 OverlayOperator 并实现 Loader 兼容", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766982571.0729058, "duration_ms": 0}}

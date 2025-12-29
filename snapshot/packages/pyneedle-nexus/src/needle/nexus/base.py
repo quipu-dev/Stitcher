@@ -1,14 +1,26 @@
 import os
 from typing import Optional, Union, Dict, Any, TYPE_CHECKING
-from needle.spec import ResourceLoaderProtocol, SemanticPointerProtocol
+from needle.spec import (
+    ResourceLoaderProtocol,
+    SemanticPointerProtocol,
+    OperatorProtocol,
+)
 
 if TYPE_CHECKING:
     pass
 
 
-class BaseLoader(ResourceLoaderProtocol):
+class BaseLoader(ResourceLoaderProtocol, OperatorProtocol):
     def __init__(self, default_domain: str = "en"):
         self.default_domain = default_domain
+
+    def __call__(self, key: Union[str, SemanticPointerProtocol]) -> str:
+        """
+        Operator Protocol Implementation.
+        Delegates to get() which handles domain resolution via env vars.
+        This provides backward compatibility, allowing any Loader to act as an Operator.
+        """
+        return self.get(key)
 
     def fetch(
         self, pointer: str, domain: str, ignore_cache: bool = False
