@@ -2,11 +2,18 @@ import json
 from pathlib import Path
 from typing import Dict
 
-from stitcher.spec import ModuleDef, Fingerprint, InvalidFingerprintKeyError, FingerprintStrategyProtocol
+from stitcher.spec import (
+    ModuleDef,
+    Fingerprint,
+    InvalidFingerprintKeyError,
+    FingerprintStrategyProtocol,
+)
 
 
 class SignatureManager:
-    def __init__(self, root_path: Path, fingerprint_strategy: FingerprintStrategyProtocol):
+    def __init__(
+        self, root_path: Path, fingerprint_strategy: FingerprintStrategyProtocol
+    ):
         self.root_path = root_path
         self.sig_root = root_path / ".stitcher" / "signatures"
         self.fingerprint_strategy = fingerprint_strategy
@@ -16,10 +23,6 @@ class SignatureManager:
         return self.sig_root / rel_path.with_suffix(".json")
 
     def compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
-        """
-        Computes the complete fingerprints for all entities in the module
-        using the injected strategy.
-        """
         fingerprints: Dict[str, Fingerprint] = {}
         for func in module.functions:
             fingerprints[func.name] = self.fingerprint_strategy.compute(func)

@@ -9,6 +9,10 @@
     "baseline_code_signature_text": "def __contains__(self, key: str) -> bool:",
     "baseline_code_structure_hash": "ed325d05437653b67270450880bb84a8ccfdbe3871bb1352a7c3a1d0b2d689be"
   },
+  "Fingerprint.__delitem__": {
+    "baseline_code_signature_text": "def __delitem__(self, key: str) -> None:",
+    "baseline_code_structure_hash": "b29972343906b3bc9c8cfaae7885b352bc6e067e2046199b7baf400ddc72e745"
+  },
   "Fingerprint.__eq__": {
     "baseline_code_signature_text": "def __eq__(self, other: Any) -> bool:",
     "baseline_code_structure_hash": "64791379f55526bfbcdbd5e4eb5f170164c62aa5da15a0cdc77d330d85988545"

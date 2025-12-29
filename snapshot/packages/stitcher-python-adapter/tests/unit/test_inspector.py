@@ -5,27 +5,29 @@ from stitcher.adapter.python.inspector import parse_plugin_entry, InspectionErro
 import sys
 from types import ModuleType
 
+
 def setup_mock_module(monkeypatch):
     mock_mod = ModuleType("my_plugin")
-    
+
     def valid_func(a: int) -> str:
         """My Docstring"""
         return str(a)
-    
+
     async def async_func():
         pass
 
     mock_mod.valid_func = valid_func
     mock_mod.async_func = async_func
     mock_mod.not_callable = "I am a string"
-    
+
     monkeypatch.setitem(sys.modules, "my_plugin", mock_mod)
+
 
 class TestInspector:
     def test_parse_valid_entry(self, monkeypatch):
         setup_mock_module(monkeypatch)
         func_def = parse_plugin_entry("my_plugin:valid_func")
-        
+
         assert func_def.name == "valid_func"
         assert func_def.docstring == "My Docstring"
         assert func_def.return_annotation == "str"

@@ -25,7 +25,7 @@ class YamlAdapter(DocumentAdapter):
     def save(self, path: Path, data: Dict[str, str]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         sorted_data = dict(sorted(data.items()))
-        
+
         class MultilineDumper(yaml.SafeDumper):
             pass
 

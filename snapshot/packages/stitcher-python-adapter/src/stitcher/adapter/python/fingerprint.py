@@ -1,17 +1,24 @@
 import hashlib
-from typing import Protocol, List, Union, Dict
+from typing import Protocol, List, Union
 from stitcher.spec import FunctionDef, ClassDef, Fingerprint, ArgumentKind
+
 
 class EntityHasher(Protocol):
     """Protocol for individual hashing strategies."""
-    def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:
+
+    def update(
+        self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
+    ) -> None:
         """Calculate specific hashes and update the fingerprint object."""
         ...
 
+
 class StructureHasher:
     """Computes the structural hash (signature shape) of a function."""
-    
-    def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:
+
+    def update(
+        self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
+    ) -> None:
         if isinstance(entity, FunctionDef):
             h = self._compute_func_hash(entity)
             fingerprint["current_code_structure_hash"] = h
@@ -39,14 +46,17 @@ class StructureHasher:
         sig_str = "|".join(parts)
         return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
 
+
 class SignatureTextHasher:
     """Generates the human-readable signature text for diffing."""
 
-    def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:
+    def update(
+        self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
+    ) -> None:
         if isinstance(entity, FunctionDef):
             text = self._get_signature_string(entity)
             fingerprint["current_code_signature_text"] = text
-    
+
     def _get_signature_string(self, func: FunctionDef) -> str:
         # Extracted from stitcher.spec.models.FunctionDef.get_signature_string
         parts = []
@@ -78,10 +88,12 @@ class SignatureTextHasher:
         parts.append(":")
         return " ".join(parts).replace("( ", "(").replace(" )", ")").replace(" :", ":")
 
+
 class PythonFingerprintStrategy:
     """
     Coordinator that delegates to a list of composable Hashers.
     """
+
     def __init__(self):
         self.hashers: List[EntityHasher] = [
             StructureHasher(),

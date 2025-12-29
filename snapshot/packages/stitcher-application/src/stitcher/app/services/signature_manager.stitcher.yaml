@@ -3,8 +3,9 @@
 "SignatureManager._get_sig_path": |-
   Determines the storage path for a module's signatures.
   e.g. src/app.py -> .stitcher/signatures/src/app.json
-"SignatureManager.compute_code_structure_hashes": |-
-  Computes structural fingerprints for all addressable functions/methods.
+"SignatureManager.compute_fingerprints": |-
+  Computes the complete fingerprints for all entities in the module
+  using the injected strategy.
 "SignatureManager.load_composite_hashes": |-
   Loads the composite hash map for a module.
 "SignatureManager.save_composite_hashes": |-

@@ -37,10 +37,7 @@ def test_extract_signature_text_simple(tmp_path):
     # Assert
     # The key for signature text is 'current_code_signature_text' defined in PythonFingerprintStrategy
     expected = "def my_func(a: int, b: str = 'default') -> bool:"
-    assert (
-        fingerprints["my_func"]["current_code_signature_text"]
-        == expected
-    )
+    assert fingerprints["my_func"]["current_code_signature_text"] == expected
 
 
 def test_extract_signature_text_async(tmp_path):

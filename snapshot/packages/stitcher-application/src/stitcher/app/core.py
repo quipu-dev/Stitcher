@@ -11,9 +11,9 @@ from stitcher.adapter.python import (
 )
 
 from stitcher.spec import (
-    ModuleDef, 
-    ConflictType, 
-    ResolutionAction, 
+    ModuleDef,
+    ConflictType,
+    ResolutionAction,
     Fingerprint,
     LanguageParserProtocol,
     LanguageTransformerProtocol,
@@ -277,31 +277,35 @@ class StitcherApp:
                 continue
             for module in modules:
                 output_path = self.doc_manager.save_docs_for_module(module)
-                
+
                 # Use the new unified compute method
                 computed_fingerprints = self.sig_manager.compute_fingerprints(module)
                 yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
 
                 combined: Dict[str, Fingerprint] = {}
                 all_fqns = set(computed_fingerprints.keys()) | set(yaml_hashes.keys())
-                
+
                 for fqn in all_fqns:
                     # Get the base computed fingerprint (code structure, sig text, etc.)
                     fp = computed_fingerprints.get(fqn, Fingerprint())
-                    
+
                     # Convert 'current' keys to 'baseline' keys for storage
                     # This mapping is critical: what we just computed is now the baseline
                     if "current_code_structure_hash" in fp:
-                        fp["baseline_code_structure_hash"] = fp["current_code_structure_hash"]
+                        fp["baseline_code_structure_hash"] = fp[
+                            "current_code_structure_hash"
+                        ]
                         del fp["current_code_structure_hash"]
-                    
+
                     if "current_code_signature_text" in fp:
-                        fp["baseline_code_signature_text"] = fp["current_code_signature_text"]
+                        fp["baseline_code_signature_text"] = fp[
+                            "current_code_signature_text"
+                        ]
                         del fp["current_code_signature_text"]
 
                     if fqn in yaml_hashes:
                         fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
-                    
+
                     combined[fqn] = fp
 
                 self.sig_manager.save_composite_hashes(module, combined)
@@ -345,7 +349,7 @@ class StitcherApp:
         is_tracked = (
             (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
         )
-        
+
         computed_fingerprints = self.sig_manager.compute_fingerprints(module)
         current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module)
         stored_hashes_map = self.sig_manager.load_composite_hashes(module)
@@ -354,7 +358,7 @@ class StitcherApp:
 
         for fqn in sorted(list(all_fqns)):
             computed_fp = computed_fingerprints.get(fqn, Fingerprint())
-            
+
             # Extract standard keys using O(1) access from Fingerprint object
             code_hash = computed_fp.get("current_code_structure_hash")
             current_sig_text = computed_fp.get("current_code_signature_text")
@@ -441,7 +445,7 @@ class StitcherApp:
                     fp = new_hashes[fqn]
                     current_fp = computed_fingerprints.get(fqn, Fingerprint())
                     current_code_hash = current_fp.get("current_code_structure_hash")
-                    
+
                     if action == ResolutionAction.RELINK:
                         if current_code_hash:
                             fp["baseline_code_structure_hash"] = current_code_hash
@@ -753,14 +757,18 @@ class StitcherApp:
             combined: Dict[str, Fingerprint] = {}
             for fqn in all_fqns:
                 fp = computed_fingerprints.get(fqn, Fingerprint())
-                
+
                 # Convert 'current' to 'baseline'
                 if "current_code_structure_hash" in fp:
-                    fp["baseline_code_structure_hash"] = fp["current_code_structure_hash"]
+                    fp["baseline_code_structure_hash"] = fp[
+                        "current_code_structure_hash"
+                    ]
                     del fp["current_code_structure_hash"]
-                
+
                 if "current_code_signature_text" in fp:
-                    fp["baseline_code_signature_text"] = fp["current_code_signature_text"]
+                    fp["baseline_code_signature_text"] = fp[
+                        "current_code_signature_text"
+                    ]
                     del fp["current_code_signature_text"]
 
                 if fqn in yaml_hashes:

@@ -56,17 +56,10 @@
   Represents a function or method definition.
 "FunctionDef.args": |-
   A list of arguments for the function.
-"FunctionDef.compute_fingerprint": |-
-  Computes a stable hash of the function signature (excluding docstring).
-  Includes: name, args (name, kind, annotation, default), return annotation,
-  async status, and static/class flags.
 "FunctionDef.decorators": |-
   A list of decorators applied to the function.
 "FunctionDef.docstring": |-
   The docstring of the function.
-"FunctionDef.get_signature_string": |-
-  Reconstructs the function signature as a string.
-  Example: async def foo(a: int, b: str = 'default') -> bool:
 "FunctionDef.is_async": |-
   Flag indicating if the function is async.
 "FunctionDef.is_class": |-

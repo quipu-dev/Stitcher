@@ -1,0 +1,39 @@
+{
+  "FingerprintStrategyProtocol": {
+    "baseline_yaml_content_hash": "548744f31aa0f674d6e0fc3ead1e689063fdddc0e0213a3f6d19ac377e985f44"
+  },
+  "FingerprintStrategyProtocol.compute": {
+    "baseline_code_signature_text": "def compute(self, entity: Union[FunctionDef, ClassDef]) -> Fingerprint:",
+    "baseline_code_structure_hash": "256ccdba13895196e98d14eb59d4f59ed77c7cbf590278e1bd62205ac6786445",
+    "baseline_yaml_content_hash": "75511827e16a5cbae8b7637274ccb07eecdbacc737f83b41cdfa1ea1d85cb770"
+  },
+  "LanguageParserProtocol": {
+    "baseline_yaml_content_hash": "731038358df80327e6b0c887d95ed77daefcfc7e10f3cc07c397d64f7a2b39ca"
+  },
+  "LanguageParserProtocol.parse": {
+    "baseline_code_signature_text": "def parse(self, source_code: str, file_path: str = \"\") -> ModuleDef:",
+    "baseline_code_structure_hash": "64b9f646b14eaca480fe0eae43c5c43f55d4e6e3f814841693c7b9d890433e42",
+    "baseline_yaml_content_hash": "df8f393e34a1c637eb7d036a23f7b6a8a6834f7a5f5754ec70a700563c748790"
+  },
+  "LanguageTransformerProtocol": {
+    "baseline_yaml_content_hash": "8dee9701e2dc9ec73c07c3514abed2d03c180a019d6813906ac1c6e0c4add942"
+  },
+  "LanguageTransformerProtocol.inject": {
+    "baseline_code_signature_text": "def inject(self, source_code: str, docs: Dict[str, str]) -> str:",
+    "baseline_code_structure_hash": "ef494fc152be9e03c4ca9f79c166d30156e7b748fa031c7addad035cf93ef0f3",
+    "baseline_yaml_content_hash": "3f7752a1e04bdf86ba0e6c8a290015293b53d8f441245d7a88eb236a4a88352f"
+  },
+  "LanguageTransformerProtocol.strip": {
+    "baseline_code_signature_text": "def strip(self, source_code: str) -> str:",
+    "baseline_code_structure_hash": "c112a4e0ebc74d7a2f8479a60d36d75d1bf4d2fb04f96a910b3e54fcf7c1b396",
+    "baseline_yaml_content_hash": "c75993ea132ca585aa3f48387d9e38b80e024e4bdfb66904760df0e5b3ccfaec"
+  },
+  "StubGeneratorProtocol": {
+    "baseline_yaml_content_hash": "6d70a575c8266a36af1be6730b09f83ac28b923aaa45a90ce6a0d261550cfcd7"
+  },
+  "StubGeneratorProtocol.generate": {
+    "baseline_code_signature_text": "def generate(self, module: ModuleDef) -> str:",
+    "baseline_code_structure_hash": "adacc0cc22b1339cccea480553349f87a33d15a01b47bf8dffc816c42b0cee5a",
+    "baseline_yaml_content_hash": "0a8a2fbcfe57549b0c535e801106a8494ca1627641f9e3b1de4b7e8739cf2683"
+  }
+}

@@ -15,9 +15,6 @@ from stitcher.adapter.python import (
 def create_test_app(
     root_path: Path, interaction_handler: Optional[InteractionHandler] = None
 ) -> StitcherApp:
-    """
-    Factory to create a StitcherApp instance with Python adapters pre-configured for testing.
-    """
     return StitcherApp(
         root_path=root_path,
         parser=PythonParser(),

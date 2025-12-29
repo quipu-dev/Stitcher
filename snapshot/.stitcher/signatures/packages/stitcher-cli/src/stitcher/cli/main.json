@@ -2,27 +2,9 @@
   "app": {
     "baseline_yaml_content_hash": "1ff2e6cb63be8e6252a02fec4266d0aecd50953e9a9827d4495d4e417f5b0fc8"
   },
-  "check": {
-    "baseline_yaml_content_hash": null
-  },
-  "generate": {
-    "baseline_yaml_content_hash": null
-  },
-  "init": {
-    "baseline_yaml_content_hash": null
-  },
-  "inject": {
-    "baseline_yaml_content_hash": null
-  },
   "main": {
     "baseline_code_signature_text": "def main(verbose: bool = typer.Option(\n        False, \"--verbose\", \"-v\", help=nexus.get(L.cli.option.verbose.help)\n   )):",
     "baseline_code_structure_hash": "076eabe38102a00125bd8d006b0da14fc43d9aaeff1435e9385c7fc14a7f004f",
     "baseline_yaml_content_hash": "00b4b655f6abbcb58feab8172c3942e14703213c3b57aa70cb8074b7d47eacce"
-  },
-  "pump": {
-    "baseline_yaml_content_hash": null
-  },
-  "strip": {
-    "baseline_yaml_content_hash": null
   }
 }
