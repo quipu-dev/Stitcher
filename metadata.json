@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(cli): 适配 Operator 架构，修复 stitcher_nexus 引用", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766984859.565544, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(runtime): 恢复 FileSystemOperator 的递归目录扫描能力", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1766985149.9184973, "duration_ms": 0}}

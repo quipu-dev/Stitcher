@@ -1,52 +1,57 @@
+import os
 from pathlib import Path
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Dict, Any, List
 from needle.spec import OperatorProtocol, SemanticPointerProtocol
 from needle.operators.helpers.json_handler import JsonHandler
 
 
 class FileSystemOperator(OperatorProtocol):
     """
-    An Executor Operator that loads resources from a specific directory on demand.
+    A scanning Executor Operator that recursively loads resources from a directory.
+
+    It mimics the logic of the legacy FileSystemLoader:
+    1. Scans the root directory recursively.
+    2. Handles nested directories and __init__.json files.
+    3. Flattens the entire structure into a single key-value map during initialization.
     """
 
     def __init__(self, root: Union[str, Path]):
         self.root = Path(root)
         self._handler = JsonHandler()
-        # Cache for loaded file contents: filename -> flat_dict
-        self._file_cache: Dict[str, Dict[str, Any]] = {}
+        # The flat map of all resources: "cli.command.check.help" -> "Verify..."
+        self._data: Dict[str, str] = self._scan_root(self.root)
+
+    def _scan_root(self, root_path: Path) -> Dict[str, str]:
+        if not root_path.exists():
+            return {}
+
+        data: Dict[str, str] = {}
+        for dirpath, _, filenames in os.walk(root_path):
+            for filename in sorted(filenames):
+                file_path = Path(dirpath) / filename
+                if self._handler.match(file_path):
+                    content = self._handler.load(file_path)
+                    prefix = self._calculate_prefix(file_path, root_path)
+
+                    for k, v in content.items():
+                        str_k = str(k)
+                        full_key = f"{prefix}.{str_k}" if prefix else str_k
+                        data[full_key] = str(v)
+        return data
+
+    def _calculate_prefix(self, file_path: Path, root_path: Path) -> str:
+        try:
+            rel_path = file_path.relative_to(root_path)
+        except ValueError:
+            return ""
+
+        # Remove suffix (e.g. .json)
+        parts = list(rel_path.with_suffix("").parts)
+        # Handle __init__ convention: remove it from prefix
+        if parts and parts[-1] == "__init__":
+            parts.pop()
+        return ".".join(parts)
 
     def __call__(self, pointer: Union[str, SemanticPointerProtocol]) -> Optional[str]:
         key = str(pointer)
-        if not key:
-            return None
-
-        parts = key.split(".")
-        filename = parts[0]
-        # The key to look up inside the file (rest of the pointer)
-        # If key is "app", inner_key is None (or we can decide behavior)
-        # Assuming standard behavior: L.app.title -> file: app.json, key: title
-        inner_key = ".".join(parts[1:]) if len(parts) > 1 else None
-
-        # 1. Ensure file is loaded
-        if filename not in self._file_cache:
-            file_path = self.root / f"{filename}.json"
-            if file_path.is_file():
-                # Load and flatten using existing handler logic
-                self._file_cache[filename] = self._handler.load(file_path)
-            else:
-                self._file_cache[filename] = {}
-
-        # 2. Retrieve value
-        data = self._file_cache[filename]
-        
-        # If no inner key, checking for existence of file/module itself?
-        # For now, we only support leaf retrieval inside files.
-        if inner_key:
-            val = data.get(inner_key)
-            return str(val) if val is not None else None
-        
-        # Accessing the file root directly (L.app) is not typically a string value,
-        # but could be supported if we want to return a sub-dict? 
-        # But OperatorProtocol usually implies retrieving a specific resource unit (str).
-        # Let's return None for now if it's not a leaf node string.
-        return None
+        return self._data.get(key)

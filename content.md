@@ -1,387 +1,162 @@
-## [WIP] fix(cli): 适配 Operator 架构，修复 stitcher_nexus 引用
+我们之前的 `FileSystemOperator` 实现过于天真，假设了 `L.a.b` 必然对应 `a.json` 中的 `b`。但实际上，Stitcher 的资源采用了嵌套目录结构（例如 `cli/command.json`），旧版的 `Loader` 通过递归扫描 (`os.walk`) 和前缀计算 (`_calculate_prefix`) 来处理这种结构。
+
+由于当前的简单实现找不到嵌套文件，导致 `stitcher_operator` 返回 `None`，Typer/Click 随后回退到了默认的英文帮助文本，而非我们 JSON 中定义的文本（无论中英文）。
+
+我们将移植旧版 `FileSystemLoader` 的核心扫描逻辑到新的 `FileSystemOperator` 中。
+
+## [WIP] fix(runtime): 恢复 FileSystemOperator 的递归目录扫描能力
 
 ### 摘要头
-## [WIP] fix(cli): 适配 Operator 架构，简化 CLI 中的资源访问
+## [WIP] fix(runtime): 移植旧版目录扫描逻辑至 FileSystemOperator
 
 ### 用户需求
-1.  **修复 API 断裂**: 之前的重构移除了 `stitcher_nexus` 属性，导致 CLI 启动失败。
-2.  **适配 Operator 调用**: 将 `nexus.get(L...)` 迁移为函数调用形式 `nexus(L...)`，符合 `OperatorProtocol`。
-3.  **暴露 `stitcher_operator`**: `stitcher.common` 需要公开一个可调用的接口（`stitcher_operator`），供下游直接获取原始字符串（如 Help Text、TUI 提示等）。
+1.  **修复资源加载**: 解决因无法读取嵌套目录结构（如 `cli/command.json`）导致的资源查找失败问题。
+2.  **移植扫描逻辑**: 将旧版 `FileSystemLoader` 中的 `_scan_root`、`_scan_directory_to_dict` 和 `_calculate_prefix` 逻辑移植到当前的 operator 中。
+3.  **支持中文**: 即使环境变量设置正确，如果读不到文件也无法显示中文。修复加载机制是支持多语言的前提。
 
 ### 评论
-CLI 中的多个模块 (`main.py`, `pump.py`, `factories.py`) 仍然依赖已废弃的 `stitcher_nexus` 及其 `.get()` 方法。虽然 `MessageBus` 已经成功封装了这些调用，但 CLI 在构建 Help Text 和 Interactive Menu 时，仍需直接访问资源。我们不能简单地将 `stitcher_nexus` 加回来（那是倒退），而是应该让 CLI 依赖新的 `stitcher_operator`，并根据 Operator 协议 (`__call__`) 更新所有调用点。
+这不仅是"恢复"旧功能，而是让新的 Operator 架构具备生产级的能力。我们将保持 Operator 的“只读/无状态”特性（与其 `__init__` 时加载的理念一致），但增加其初始化的智力。这是一种 `Eager Construction, Lookup Execution` 模式。
 
 ### 目标
-1.  修改 `stitcher-cli/src/stitcher/cli/main.py`: 导入 `stitcher_operator` 并替换所有 `nexus.get(...)` 为 `operator(...)`。
-2.  修改 `stitcher-cli/src/stitcher/cli/commands/pump.py`: 同上。
-3.  修改 `stitcher-cli/src/stitcher/cli/factories.py`: 传递 `stitcher_operator` 给交互式渲染器。
-4.  修改 `stitcher-cli/src/stitcher/cli/interactive.py`: 适配 Operator 调用方式。
-5.  修改 `stitcher-common/src/stitcher/common/__init__.py`: 移除残留的 YAML 文档引用（`stitcher_nexus`）。
+1.  重写 `packages/pyneedle-runtime/src/needle/operators/fs_operator.py`。
+2.  引入 `os.walk` 遍历逻辑。
+3.  实现前缀计算逻辑，正确处理 `__init__.json` 和目录层级。
+4.  在 `__init__` 阶段构建完整的扁平化键值索引。
 
 ### 基本原理
-我们正在完成从“对象+方法”模式 (`obj.get(key)`) 到“函数式算子”模式 (`func(key)`) 的迁移。
-新的 `stitcher_operator` 已经是一个符合 `OperatorProtocol` 的可调用对象（通过 `get_current_renderer` 动态获取管道），它是获取本地化字符串的唯一正确入口。
+为了兼容现有的、庞大的 JSON 资产结构，文件系统算子必须能够将物理的文件系统树（目录、文件）映射到逻辑的语义树（点分路径）。旧版的“扫描+扁平化”逻辑是处理这种映射的经过验证的标准做法。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/cli #concept/config #scope/core #ai/instruct #task/domain/refactor #task/object/operator #task/action/integrate #task/state/end
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/config #scope/core #ai/instruct #task/domain/runtime #task/object/fs-operator #task/action/enhance #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: CLI Main 适配
+#### Acts 1: 重写 FileSystemOperator
 
-修正入口文件，使用 `stitcher_operator` 替换 `stitcher_nexus`。
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
-~~~~~
-~~~~~python
-import typer
-
-from stitcher.common import bus, stitcher_nexus as nexus
-from needle.pointer import L
-from .rendering import CliRenderer
-~~~~~
-~~~~~python
-import typer
-
-from stitcher.common import bus, stitcher_operator as nexus
-from needle.pointer import L
-from .rendering import CliRenderer
-~~~~~
+我们将完全替换 `FileSystemOperator` 的实现，使其包含递归扫描逻辑。
 
 ~~~~~act
 patch_file
-packages/stitcher-cli/src/stitcher/cli/main.py
+packages/pyneedle-runtime/src/needle/operators/fs_operator.py
 ~~~~~
 ~~~~~python
-app = typer.Typer(
-    name="stitcher",
-    help=nexus.get(L.cli.app.description),
-    no_args_is_help=True,
-)
+from pathlib import Path
+from typing import Optional, Union, Dict, Any
+from needle.spec import OperatorProtocol, SemanticPointerProtocol
+from needle.operators.helpers.json_handler import JsonHandler
 
 
-@app.callback()
-def main(
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help=nexus.get(L.cli.option.verbose.help)
-    ),
-):
-    # The CLI is the composition root. It decides *which* renderer to use.
-    # We configure it here to capture the global verbose flag.
-    cli_renderer = CliRenderer(verbose=verbose)
-    bus.set_renderer(cli_renderer)
+class FileSystemOperator(OperatorProtocol):
+    """
+    An Executor Operator that loads resources from a specific directory on demand.
+    """
 
+    def __init__(self, root: Union[str, Path]):
+        self.root = Path(root)
+        self._handler = JsonHandler()
+        # Cache for loaded file contents: filename -> flat_dict
+        self._file_cache: Dict[str, Dict[str, Any]] = {}
 
-# Register commands
-app.command(name="check", help=nexus.get(L.cli.command.check.help))(check_command)
-app.command(name="pump", help=nexus.get(L.cli.command.pump.help))(pump_command)
-app.command(name="generate", help=nexus.get(L.cli.command.generate.help))(
-    generate_command
-)
-app.command(name="init", help=nexus.get(L.cli.command.init.help))(init_command)
-app.command(name="strip", help=nexus.get(L.cli.command.strip.help))(strip_command)
-app.command(name="inject", help=nexus.get(L.cli.command.inject.help))(inject_command)
+    def __call__(self, pointer: Union[str, SemanticPointerProtocol]) -> Optional[str]:
+        key = str(pointer)
+        if not key:
+            return None
+
+        parts = key.split(".")
+        filename = parts[0]
+        # The key to look up inside the file (rest of the pointer)
+        # If key is "app", inner_key is None (or we can decide behavior)
+        # Assuming standard behavior: L.app.title -> file: app.json, key: title
+        inner_key = ".".join(parts[1:]) if len(parts) > 1 else None
+
+        # 1. Ensure file is loaded
+        if filename not in self._file_cache:
+            file_path = self.root / f"{filename}.json"
+            if file_path.is_file():
+                # Load and flatten using existing handler logic
+                self._file_cache[filename] = self._handler.load(file_path)
+            else:
+                self._file_cache[filename] = {}
+
+        # 2. Retrieve value
+        data = self._file_cache[filename]
+        
+        # If no inner key, checking for existence of file/module itself?
+        # For now, we only support leaf retrieval inside files.
+        if inner_key:
+            val = data.get(inner_key)
+            return str(val) if val is not None else None
+        
+        # Accessing the file root directly (L.app) is not typically a string value,
+        # but could be supported if we want to return a sub-dict? 
+        # But OperatorProtocol usually implies retrieving a specific resource unit (str).
+        # Let's return None for now if it's not a leaf node string.
+        return None
 ~~~~~
 ~~~~~python
-app = typer.Typer(
-    name="stitcher",
-    help=nexus(L.cli.app.description),
-    no_args_is_help=True,
-)
+import os
+from pathlib import Path
+from typing import Optional, Union, Dict, Any, List
+from needle.spec import OperatorProtocol, SemanticPointerProtocol
+from needle.operators.helpers.json_handler import JsonHandler
 
 
-@app.callback()
-def main(
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help=nexus(L.cli.option.verbose.help)
-    ),
-):
-    # The CLI is the composition root. It decides *which* renderer to use.
-    # We configure it here to capture the global verbose flag.
-    cli_renderer = CliRenderer(verbose=verbose)
-    bus.set_renderer(cli_renderer)
+class FileSystemOperator(OperatorProtocol):
+    """
+    A scanning Executor Operator that recursively loads resources from a directory.
 
+    It mimics the logic of the legacy FileSystemLoader:
+    1. Scans the root directory recursively.
+    2. Handles nested directories and __init__.json files.
+    3. Flattens the entire structure into a single key-value map during initialization.
+    """
 
-# Register commands
-app.command(name="check", help=nexus(L.cli.command.check.help))(check_command)
-app.command(name="pump", help=nexus(L.cli.command.pump.help))(pump_command)
-app.command(name="generate", help=nexus(L.cli.command.generate.help))(
-    generate_command
-)
-app.command(name="init", help=nexus(L.cli.command.init.help))(init_command)
-app.command(name="strip", help=nexus(L.cli.command.strip.help))(strip_command)
-app.command(name="inject", help=nexus(L.cli.command.inject.help))(inject_command)
-~~~~~
+    def __init__(self, root: Union[str, Path]):
+        self.root = Path(root)
+        self._handler = JsonHandler()
+        # The flat map of all resources: "cli.command.check.help" -> "Verify..."
+        self._data: Dict[str, str] = self._scan_root(self.root)
 
-#### Acts 2: Pump Command 适配
+    def _scan_root(self, root_path: Path) -> Dict[str, str]:
+        if not root_path.exists():
+            return {}
 
-修正 `pump` 命令中的帮助文本获取方式。
+        data: Dict[str, str] = {}
+        for dirpath, _, filenames in os.walk(root_path):
+            for filename in sorted(filenames):
+                file_path = Path(dirpath) / filename
+                if self._handler.match(file_path):
+                    content = self._handler.load(file_path)
+                    prefix = self._calculate_prefix(file_path, root_path)
 
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/commands/pump.py
-~~~~~
-~~~~~python
-import typer
-from needle.pointer import L
-from stitcher.common import bus, stitcher_nexus as nexus
-from stitcher.cli.factories import make_app, make_interaction_handler
+                    for k, v in content.items():
+                        str_k = str(k)
+                        full_key = f"{prefix}.{str_k}" if prefix else str_k
+                        data[full_key] = str(v)
+        return data
 
+    def _calculate_prefix(self, file_path: Path, root_path: Path) -> str:
+        try:
+            rel_path = file_path.relative_to(root_path)
+        except ValueError:
+            return ""
 
-def pump_command(
-    strip: bool = typer.Option(
-        False, "--strip", help=nexus.get(L.cli.option.strip.help)
-    ),
-    force: bool = typer.Option(
-        False,
-        "--force",
-        help=nexus.get(L.cli.option.force.help),
-    ),
-    reconcile: bool = typer.Option(
-        False,
-        "--reconcile",
-        help=nexus.get(L.cli.option.reconcile.help),
-    ),
-~~~~~
-~~~~~python
-import typer
-from needle.pointer import L
-from stitcher.common import bus, stitcher_operator as nexus
-from stitcher.cli.factories import make_app, make_interaction_handler
+        # Remove suffix (e.g. .json)
+        parts = list(rel_path.with_suffix("").parts)
+        # Handle __init__ convention: remove it from prefix
+        if parts and parts[-1] == "__init__":
+            parts.pop()
+        return ".".join(parts)
 
-
-def pump_command(
-    strip: bool = typer.Option(
-        False, "--strip", help=nexus(L.cli.option.strip.help)
-    ),
-    force: bool = typer.Option(
-        False,
-        "--force",
-        help=nexus(L.cli.option.force.help),
-    ),
-    reconcile: bool = typer.Option(
-        False,
-        "--reconcile",
-        help=nexus(L.cli.option.reconcile.help),
-    ),
-~~~~~
-
-#### Acts 3: Factories 适配
-
-替换工厂中的导入，将 `stitcher_operator` 传递给下游。
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/factories.py
-~~~~~
-~~~~~python
-from stitcher.app import StitcherApp
-from stitcher.app.protocols import InteractionHandler
-from stitcher.common import stitcher_nexus as nexus
-from stitcher.adapter.python import (
-    PythonParser,
-~~~~~
-~~~~~python
-from stitcher.app import StitcherApp
-from stitcher.app.protocols import InteractionHandler
-from stitcher.common import stitcher_operator as nexus
-from stitcher.adapter.python import (
-    PythonParser,
-~~~~~
-
-#### Acts 4: Interactive Renderer 适配
-
-由于 `TyperInteractiveRenderer` 接收的是 `nexus` (现在是 operator)，需要修改其内部的 `.get()` 调用为直接调用 `{}`。
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/interactive.py
-~~~~~
-~~~~~python
-class TyperInteractiveRenderer:
-    def __init__(self, nexus):
-        self.nexus = nexus
-
-    def show_summary(self, count: int) -> None:
-        msg = self.nexus.get(L.interactive.summary).format(count=count)
-        typer.echo(msg)
-
-    def show_message(self, msg_id: SemanticPointer, color=None, **kwargs) -> None:
-        msg = self.nexus.get(msg_id).format(**kwargs)
-        typer.secho(msg, fg=color)
-
-    def prompt(
-        self,
-        context: InteractionContext,
-        current_idx: int,
-        total: int,
-        options: List[SemanticMenuOption],
-        default_action: Any,
-    ) -> Any:
-        # Header
-        header_fmt = self.nexus.get(L.interactive.header.title)
-        typer.echo("\n" + ("-" * 20))
-        typer.secho(
-            header_fmt.format(
-                current=current_idx + 1, total=total, path=context.file_path
-            ),
-            fg=typer.colors.CYAN,
-        )
-
-        symbol_fmt = self.nexus.get(L.interactive.header.symbol)
-        typer.secho("  " + symbol_fmt.format(fqn=context.fqn), bold=True)
-
-        # Reason
-        reason_map = {
-            ConflictType.SIGNATURE_DRIFT: L.interactive.reason.signature_drift,
-            ConflictType.CO_EVOLUTION: L.interactive.reason.co_evolution,
-            ConflictType.DOC_CONTENT_CONFLICT: L.interactive.reason.doc_content_conflict,
-        }
-        reason_l = reason_map.get(context.conflict_type)
-        if reason_l:
-            typer.secho("  " + self.nexus.get(reason_l), fg=typer.colors.YELLOW)
-
-        # View Diff
-        if context.signature_diff:
-            typer.echo("")
-            typer.secho("  [ SIGNATURE DIFF ]", bold=True)
-            for line in context.signature_diff.splitlines():
-                color = None
-                if line.startswith("+"):
-                    color = typer.colors.GREEN
-                elif line.startswith("-"):
-                    color = typer.colors.RED
-                typer.secho(f"  {line}", fg=color)
-
-        if context.doc_diff:
-            typer.echo("")
-            typer.secho("  [ DOCSTRING DIFF ]", bold=True)
-            for line in context.doc_diff.splitlines():
-                color = None
-                if line.startswith("+"):
-                    color = typer.colors.GREEN
-                elif line.startswith("-"):
-                    color = typer.colors.RED
-                typer.secho(f"  {line}", fg=color)
-
-        # Prompt
-        typer.echo("\n  " + self.nexus.get(L.interactive.prompt))
-
-        # Options
-        for opt in options:
-            label = self.nexus.get(opt.label_id)
-            desc = self.nexus.get(opt.desc_id)
-            is_default = opt.action == default_action
-            prefix = "> " if is_default else "  "
-            # Label format assumes "[K]Label" style roughly
-            typer.secho(f"  {prefix}{label:<25} - {desc}", bold=is_default)
-~~~~~
-~~~~~python
-class TyperInteractiveRenderer:
-    def __init__(self, operator):
-        self.operator = operator
-
-    def show_summary(self, count: int) -> None:
-        msg = self.operator(L.interactive.summary).format(count=count)
-        typer.echo(msg)
-
-    def show_message(self, msg_id: SemanticPointer, color=None, **kwargs) -> None:
-        msg = self.operator(msg_id).format(**kwargs)
-        typer.secho(msg, fg=color)
-
-    def prompt(
-        self,
-        context: InteractionContext,
-        current_idx: int,
-        total: int,
-        options: List[SemanticMenuOption],
-        default_action: Any,
-    ) -> Any:
-        # Header
-        header_fmt = self.operator(L.interactive.header.title)
-        typer.echo("\n" + ("-" * 20))
-        typer.secho(
-            header_fmt.format(
-                current=current_idx + 1, total=total, path=context.file_path
-            ),
-            fg=typer.colors.CYAN,
-        )
-
-        symbol_fmt = self.operator(L.interactive.header.symbol)
-        typer.secho("  " + symbol_fmt.format(fqn=context.fqn), bold=True)
-
-        # Reason
-        reason_map = {
-            ConflictType.SIGNATURE_DRIFT: L.interactive.reason.signature_drift,
-            ConflictType.CO_EVOLUTION: L.interactive.reason.co_evolution,
-            ConflictType.DOC_CONTENT_CONFLICT: L.interactive.reason.doc_content_conflict,
-        }
-        reason_l = reason_map.get(context.conflict_type)
-        if reason_l:
-            typer.secho("  " + self.operator(reason_l), fg=typer.colors.YELLOW)
-
-        # View Diff
-        if context.signature_diff:
-            typer.echo("")
-            typer.secho("  [ SIGNATURE DIFF ]", bold=True)
-            for line in context.signature_diff.splitlines():
-                color = None
-                if line.startswith("+"):
-                    color = typer.colors.GREEN
-                elif line.startswith("-"):
-                    color = typer.colors.RED
-                typer.secho(f"  {line}", fg=color)
-
-        if context.doc_diff:
-            typer.echo("")
-            typer.secho("  [ DOCSTRING DIFF ]", bold=True)
-            for line in context.doc_diff.splitlines():
-                color = None
-                if line.startswith("+"):
-                    color = typer.colors.GREEN
-                elif line.startswith("-"):
-                    color = typer.colors.RED
-                typer.secho(f"  {line}", fg=color)
-
-        # Prompt
-        typer.echo("\n  " + self.operator(L.interactive.prompt))
-
-        # Options
-        for opt in options:
-            label = self.operator(opt.label_id)
-            desc = self.operator(opt.desc_id)
-            is_default = opt.action == default_action
-            prefix = "> " if is_default else "  "
-            # Label format assumes "[K]Label" style roughly
-            typer.secho(f"  {prefix}{label:<25} - {desc}", bold=is_default)
-~~~~~
-
-#### Acts 5: 清理 Common 文档
-
-最后，移除 `stitcher-common` 中关于 `stitcher_nexus` 的文档注释，保持文档一致性。
-
-~~~~~act
-patch_file
-packages/stitcher-common/src/stitcher/common/__init__.stitcher.yaml
-~~~~~
-~~~~~yaml
-"bus": |-
-  The global singleton MessageBus instance.
-"stitcher_loader": |-
-  The global singleton FileSystemLoader instance for Stitcher assets.
-"stitcher_nexus": |-
-  The global singleton OverlayNexus instance for Stitcher.
-~~~~~
-~~~~~yaml
-"bus": |-
-  The global singleton MessageBus instance.
-"stitcher_operator": |-
-  The global singleton callable OverlayOperator instance for Stitcher.
+    def __call__(self, pointer: Union[str, SemanticPointerProtocol]) -> Optional[str]:
+        key = str(pointer)
+        return self._data.get(key)
 ~~~~~
 
 ### 下一步建议
-现在 CLI 的所有组件都已适配新的可调用 Operator 模式。请再次尝试运行 `stitcher --help` 和 `check` 相关的测试。如果一切顺利，我们不仅修复了错误，还成功完成了一次优雅的架构降维。
+现在 `FileSystemOperator` 已经具备了处理 `cli/command.json` 这种嵌套结构的能力。
+
+1.  请尝试运行 `stitcher --help`。你应该能看到来自 JSON 的英文描述（"Stitcher-Python: Bridging the gap..."）。
+2.  然后，尝试 `STITCHER_LANG=zh stitcher --help`，验证中文输出是否正常工作。
