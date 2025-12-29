@@ -761,33 +761,49 @@ class StitcherApp:
                     count=len(result["updated_keys"]),
                 )
 
-            # Update signatures if successful
-            computed_fingerprints = self.sig_manager.compute_fingerprints(module)
-            yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
-            all_fqns = set(computed_fingerprints.keys()) | set(yaml_hashes.keys())
+            # Update signatures based on hydration results
+            if result["updated_keys"] or result["reconciled_keys"]:
+                stored_hashes = self.sig_manager.load_composite_hashes(module)
+                new_hashes = copy.deepcopy(stored_hashes)
+                computed_fingerprints = self.sig_manager.compute_fingerprints(module)
+                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
+                    module
+                )
 
-            combined: Dict[str, Fingerprint] = {}
-            for fqn in all_fqns:
-                fp = computed_fingerprints.get(fqn, Fingerprint())
+                # For keys where code doc was authoritative (updated)
+                for fqn in result["updated_keys"]:
+                    fp = computed_fingerprints.get(fqn, Fingerprint())
+                    # Convert current to baseline for both code and doc
+                    if "current_code_structure_hash" in fp:
+                        fp["baseline_code_structure_hash"] = fp[
+                            "current_code_structure_hash"
+                        ]
+                        del fp["current_code_structure_hash"]
+                    if "current_code_signature_text" in fp:
+                        fp["baseline_code_signature_text"] = fp[
+                            "current_code_signature_text"
+                        ]
+                        del fp["current_code_signature_text"]
+                    if fqn in current_yaml_map:
+                        fp["baseline_yaml_content_hash"] = current_yaml_map[fqn]
+                    new_hashes[fqn] = fp
 
-                # Convert 'current' to 'baseline'
-                if "current_code_structure_hash" in fp:
-                    fp["baseline_code_structure_hash"] = fp[
-                        "current_code_structure_hash"
-                    ]
-                    del fp["current_code_structure_hash"]
+                # For keys where yaml doc was authoritative (reconciled)
+                for fqn in result["reconciled_keys"]:
+                    fp = new_hashes.get(fqn, Fingerprint())
+                    current_fp = computed_fingerprints.get(fqn, Fingerprint())
+                    # only update code baseline
+                    if "current_code_structure_hash" in current_fp:
+                        fp["baseline_code_structure_hash"] = current_fp[
+                            "current_code_structure_hash"
+                        ]
+                    if "current_code_signature_text" in current_fp:
+                        fp["baseline_code_signature_text"] = current_fp[
+                            "current_code_signature_text"
+                        ]
+                    new_hashes[fqn] = fp
 
-                if "current_code_signature_text" in fp:
-                    fp["baseline_code_signature_text"] = fp[
-                        "current_code_signature_text"
-                    ]
-                    del fp["current_code_signature_text"]
-
-                if fqn in yaml_hashes:
-                    fp["baseline_yaml_content_hash"] = yaml_hashes[fqn]
-                combined[fqn] = fp
-
-            self.sig_manager.save_composite_hashes(module, combined)
+                self.sig_manager.save_composite_hashes(module, new_hashes)
 
             # Collect candidates for stripping
             if strip:

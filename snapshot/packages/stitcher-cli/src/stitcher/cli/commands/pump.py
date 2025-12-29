@@ -32,7 +32,7 @@ def pump_command(
         auto_resolve_mode=(force or reconcile),
     )
 
-    app_instance = make_app(handler, parser_type="cst")
+    app_instance = make_app(handler)
 
     # 1. Run Pump
     result = app_instance.run_pump(strip=strip, force=force, reconcile=reconcile)

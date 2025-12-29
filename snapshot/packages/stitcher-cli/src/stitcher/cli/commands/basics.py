@@ -5,12 +5,12 @@ from stitcher.cli.factories import make_app
 
 
 def generate_command():
-    app_instance = make_app(parser_type="griffe")
+    app_instance = make_app()
     app_instance.run_from_config()
 
 
 def init_command():
-    app_instance = make_app(parser_type="cst")
+    app_instance = make_app()
     app_instance.run_init()
 
 
@@ -19,7 +19,7 @@ def strip_command():
         bus.warning(L.strip.run.aborted)
         raise typer.Abort()
 
-    app_instance = make_app(parser_type="cst")
+    app_instance = make_app()
     app_instance.run_strip()
 
 
@@ -28,5 +28,5 @@ def inject_command():
         bus.warning(L.inject.run.aborted)
         raise typer.Abort()
 
-    app_instance = make_app(parser_type="cst")
+    app_instance = make_app()
     app_instance.run_inject()
