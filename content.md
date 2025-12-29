@@ -1,76 +1,99 @@
-## [WIP] fix: 移除 OverlayNexus 并修复 SemanticPointerProtocol 导入
+You are absolutely right. The traceback and your `ripgrep` output clearly show the problem. The `NexusProtocol` has been purged from the `needle.spec` package, but the top-level `pyneedle` package, which serves as the public facade for the entire library, is still trying to import and re-export this ghost symbol.
 
-### 摘要头
-## [WIP] fix(runtime&common): 移除废弃的 OverlayNexus 并修正协议导入
+This is a direct and expected consequence of our ongoing "scorched earth" policy against the old Nexus architecture. We must now clean up these dangling references to finalize this stage of the refactoring.
+
+I will generate a plan to remove the obsolete `NexusProtocol` and `ResourceLoaderProtocol` from the public API of `pyneedle`.
+
+## [WIP] fix(pyneedle): Remove obsolete Nexus/Loader protocol exports from public API
+
+### 错误分析
+
+The `stitcher --help` command fails with an `ImportError` because `packages/pyneedle/src/needle/__init__.py` is attempting to import `NexusProtocol` from `needle.spec`. This protocol no longer exists, as it was a core part of the now-removed Nexus architecture. The `ResourceLoaderProtocol` is also part of this obsolete architecture and should be removed at the same time for consistency.
+
+This error is happening because the public API of the `pyneedle` package has not yet been updated to reflect the deep architectural changes from the Nexus model to the Operator model.
 
 ### 用户需求
-1.  **"焦土政策" (Scorched Earth Policy)**: 根据路线图，彻底移除对已删除的 `OverlayNexus` 的引用。
-2.  **降级替换**: 将原本的全局 `nexus` 对象降级为 `OverlayOperator`。
-3.  **修复导入**: 解决 `stitcher-common` 中 `SemanticPointerProtocol` 的导入路径错误（延续上一步未完成的修复）。
+
+Fix the `ImportError` by removing all references to the obsolete `NexusProtocol` and `ResourceLoaderProtocol` from the main `pyneedle` package's `__init__.py`, allowing the CLI to start.
 
 ### 评论
-这是一个涉及多个包的架构一致性修复。我们正在从“有状态的 Nexus 加载器”模型迁移到“函数式的 Operator 算子”模型。此时出现的 `ImportError` 均源于旧代码引用了已被移除或迁移的符号。
+
+This cleanup is a crucial final step in the refactoring process. It purifies the public API of the `pyneedle` library, ensuring it accurately reflects the new, simpler "Operator-only" model. This prevents future confusion for developers and other systems consuming the library and makes the architecture self-consistent.
 
 ### 目标
-1.  修改 `pyneedle-runtime/src/needle/runtime.py`: 将 `OverlayNexus` 替换为 `OverlayOperator`，并更新实例化参数。
-2.  修改 `stitcher-common/src/stitcher/common/__init__.py`: 修正 `SemanticPointerProtocol` 的导入源。
+
+Modify `packages/pyneedle/src/needle/__init__.py` to:
+1.  Stop importing `NexusProtocol` and `ResourceLoaderProtocol`.
+2.  Start importing the new `OperatorProtocol`.
+3.  Update the `__all__` list to reflect these changes.
 
 ### 基本原理
-1.  **Runtime 修复**: `OverlayNexus` 已从 `pyneedle-nexus` 包中移除。为了保持 `needle.runtime` 模块的导入兼容性（防止导出符号 `nexus` 消失导致更多错误），我们将其替换为新的 `OverlayOperator`。由于 `OverlayOperator` 接收 `operators` 而非 `loaders`，我们需要调整构造函数调用。
-2.  **Common 修复**: `SemanticPointerProtocol` 定义在 `needle.spec` 中，而非 `needle.pointer`。分离这两个导入符合新的包结构规范。
+
+As part of the migration to a functional Operator model, `NexusProtocol` and `ResourceLoaderProtocol` have been superseded by the unified `OperatorProtocol`. The fix requires updating the main package entry point to stop exporting the old protocols and start exporting the new one, bringing the public API in line with the implementation. I will use two precise `patch_file` operations to achieve this.
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/refactor #task/object/overlay-nexus #task/action/remove #task/state/continue
+
+#intent/fix #flow/ready #priority/critical #comp/build #concept/api #scope/core #ai/instruct #task/domain/refactor #task/object/overlay-nexus #task/action/remove #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 2: 在 runtime 中替换 OverlayNexus 为 OverlayOperator
+#### Acts 1: Update protocol imports in the main pyneedle package
 
-接着执行“焦土政策”，移除 `runtime.py` 对 `OverlayNexus` 的依赖，将其替换为新的 `OverlayOperator`。
-
-~~~~~act
-patch_file
-packages/pyneedle-runtime/src/needle/runtime.py
-~~~~~
-~~~~~python
-from pathlib import Path
-from typing import Optional
-from needle.pointer import L, SemanticPointer, PointerSet
-from needle.nexus import OverlayNexus
-
-
-def _find_project_root(start_dir: Optional[Path] = None) -> Path:
-~~~~~
-~~~~~python
-from pathlib import Path
-from typing import Optional
-from needle.pointer import L, SemanticPointer, PointerSet
-from needle.nexus import OverlayOperator
-
-
-def _find_project_root(start_dir: Optional[Path] = None) -> Path:
-~~~~~
+First, I'll fix the import statement itself, replacing the obsolete protocols with the new `OperatorProtocol`.
 
 ~~~~~act
 patch_file
-packages/pyneedle-runtime/src/needle/runtime.py
+packages/pyneedle/src/needle/__init__.py
 ~~~~~
 ~~~~~python
-# --- Global Singleton Instance ---
-# This is a generic, side-effect-free instance.
-# Applications should compose their own nexus with specific loaders.
-nexus = OverlayNexus(loaders=[])
-# ---------------------------------
+from needle.spec import (
+    NexusProtocol,
+    ResourceLoaderProtocol,
+    SemanticPointerProtocol,
+    PointerSetProtocol,
+)
 ~~~~~
 ~~~~~python
-# --- Global Singleton Instance ---
-# This is a generic, side-effect-free instance.
-# Applications should compose their own nexus with specific operators.
-nexus = OverlayOperator(operators=[])
-# ---------------------------------
+from needle.spec import (
+    OperatorProtocol,
+    SemanticPointerProtocol,
+    PointerSetProtocol,
+)
+~~~~~
+
+#### Acts 2: Update the `__all__` export list
+
+Next, I'll update the `__all__` list to remove the old protocol names and add the new one, ensuring the package's public API is correct.
+
+~~~~~act
+patch_file
+packages/pyneedle/src/needle/__init__.py
+~~~~~
+~~~~~python
+__all__ = [
+    "L",
+    "SemanticPointer",
+    "PointerSet",
+    "nexus",
+    "NexusProtocol",
+    "ResourceLoaderProtocol",
+    "SemanticPointerProtocol",
+    "PointerSetProtocol",
+]
+~~~~~
+~~~~~python
+__all__ = [
+    "L",
+    "SemanticPointer",
+    "PointerSet",
+    "nexus",
+    "OperatorProtocol",
+    "SemanticPointerProtocol",
+    "PointerSetProtocol",
+]
 ~~~~~
 
 ### 下一步建议
-执行此计划后，主要的 `ImportError` 应当消除。请再次运行测试。如果遇到关于 `I18NFactoryOperator` 或其他算子的新错误，我们将继续清理剩余的旧架构引用。
+With this, the `pyneedle` package itself should now be internally consistent. Please run `stitcher --help` again. It's possible we will now uncover an error in a downstream package like `stitcher-cli` that was explicitly importing `stitcher_nexus`. If so, we will address that next.

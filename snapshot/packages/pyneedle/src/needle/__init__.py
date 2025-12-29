@@ -6,8 +6,7 @@ __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 from needle.pointer import L, SemanticPointer, PointerSet
 from needle.runtime import nexus
 from needle.spec import (
-    NexusProtocol,
-    ResourceLoaderProtocol,
+    OperatorProtocol,
     SemanticPointerProtocol,
     PointerSetProtocol,
 )
@@ -17,8 +16,7 @@ __all__ = [
     "SemanticPointer",
     "PointerSet",
     "nexus",
-    "NexusProtocol",
-    "ResourceLoaderProtocol",
+    "OperatorProtocol",
     "SemanticPointerProtocol",
     "PointerSetProtocol",
 ]
