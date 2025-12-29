@@ -11,9 +11,6 @@
   "strip": {
     "help": "Remove docstrings from source code after pumping."
   },
-  "update_signatures": {
-    "help": "Accept signature changes and update the stored fingerprints."
-  },
   "verbose": {
     "help": "Enable debug logging."
   }

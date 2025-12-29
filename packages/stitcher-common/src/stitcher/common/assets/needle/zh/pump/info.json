@@ -1,3 +1,3 @@
 {
-  "reconciled": "ℹ️  因处于 --reconcile 模式，已忽略 {path} 中的 {count} 个冲突。"
+  "reconciled": "ℹ️  因处于 --reconcile 模式，已在 {path} 中忽略 {count} 个冲突（保留了现有的 YAML 内容）。"
 }

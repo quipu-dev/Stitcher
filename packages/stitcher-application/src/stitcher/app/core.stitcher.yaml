@@ -1,72 +1,66 @@
-FileCheckResult: |-
+"FileCheckResult": |-
   Data container representing the outcome of a consistency check for a single file.
-FileCheckResult.auto_reconciled_count: |-
+"FileCheckResult.auto_reconciled_count": |-
   The count of documentation improvements that were automatically reconciled.
-FileCheckResult.error_count: |-
+"FileCheckResult.error_count": |-
   Total number of critical issues (errors) discovered in the file.
-FileCheckResult.errors: |-
+"FileCheckResult.errors": |-
   A collection of errors keyed by their category (e.g., 'conflict', 'mismatch').
-FileCheckResult.infos: |-
+"FileCheckResult.infos": |-
   A collection of informational messages keyed by their category (e.g., 'doc_improvement').
-FileCheckResult.is_clean: |-
+"FileCheckResult.is_clean": |-
   Returns True if the file has no issues and no reconciliation was performed.
-FileCheckResult.path: |-
+"FileCheckResult.path": |-
   The relative path to the source file that was inspected.
-FileCheckResult.reconciled: |-
+"FileCheckResult.reconciled": |-
   The count of signature mismatches that were automatically updated during the check.
-FileCheckResult.reconciled_count: |-
+"FileCheckResult.reconciled_count": |-
   Total number of issues that were reconciled (interactively or automatically).
-FileCheckResult.warning_count: |-
+"FileCheckResult.warning_count": |-
   Total number of non-blocking issues (warnings) discovered in the file.
-FileCheckResult.warnings: |-
+"FileCheckResult.warnings": |-
   A collection of warnings keyed by their category (e.g., 'missing', 'untracked').
-PumpResult: |-
+"PumpResult": |-
   Data container for the result of a `run_pump` operation.
-PumpResult.redundant_files: |-
+"PumpResult.redundant_files": |-
   A list of files that now contain redundant docstrings after a successful pump.
-PumpResult.success: |-
+"PumpResult.success": |-
   Indicates whether the pump operation completed without unresolved conflicts.
-StitcherApp: |-
+"StitcherApp": |-
   The central orchestrator for all Stitcher operations.
 
   This class coordinates the scanner, document manager, signature manager, and
   stub generator to execute high-level commands like check, generate, and pump.
-StitcherApp.doc_manager: |-
+"StitcherApp.doc_manager": |-
   Service for managing documentation assets.
-StitcherApp.generator: |-
+"StitcherApp.generator": |-
   The stub generator instance.
-StitcherApp.interaction_handler: |-
+"StitcherApp.interaction_handler": |-
   The handler for user interactions during conflict resolution.
-StitcherApp.parser: |-
+"StitcherApp.parser": |-
   The language parser instance.
-StitcherApp.root_path: |-
+"StitcherApp.root_path": |-
   The root path of the project being processed.
-StitcherApp.sig_manager: |-
-  Service for managing code signatures.
-StitcherApp.stub_pkg_manager: |-
-  Service for managing PEP 561 stub packages.
-StitcherApp.transformer: |-
-  The language transformer instance.
-StitcherApp.run_check: |-
+"StitcherApp.run_check": |-
   Verify the structural and content consistency between source code and external YAML documentation.
 
   Args:
     force_relink: If True, automatically update the signature baseline for functions that have changed.
     reconcile: If True, automatically accept both signature and doc changes.
-StitcherApp.run_from_config: |-
+"StitcherApp.run_from_config": |-
   Execute the main stub generation workflow based on the configuration found in pyproject.toml.
 
   This includes scanning source files, processing plugins, and generating .pyi files.
-StitcherApp.run_init: |-
+"StitcherApp.run_init": |-
   Initialize Stitcher for a project by creating the first batch of .stitcher.yaml files.
 
   This command scans the codebase and extracts existing docstrings to seed the documentation store.
-StitcherApp.run_inject: |-
+"StitcherApp.run_inject": |-
   Inject documentation from .stitcher.yaml files back into the source code as docstrings.
 
   This operation modifies source files in-place and is intended for "injecting" from
   the Stitcher workflow back to standard Python development.
-StitcherApp.run_pump: |-
+"StitcherApp.run_pump": |-
   Extract new or modified docstrings from source code and update the .stitcher.yaml files.
 
   Args:
@@ -75,10 +69,16 @@ StitcherApp.run_pump: |-
     reconcile: If True, prefer existing YAML content and ignore source content in case of conflict.
   Returns:
     A PumpResult object indicating success and listing files with now-redundant docstrings.
-StitcherApp.run_strip: |-
+"StitcherApp.run_strip": |-
   Remove all docstrings from the source code files defined in the configuration or a specific list of files.
 
   This is a destructive operation used to enforce a "pure code" style where docs live strictly in YAML.
 
   Args:
     files: An optional list of specific files to strip. If None, uses config.
+"StitcherApp.sig_manager": |-
+  Service for managing code signatures.
+"StitcherApp.stub_pkg_manager": |-
+  Service for managing PEP 561 stub packages.
+"StitcherApp.transformer": |-
+  The language transformer instance.

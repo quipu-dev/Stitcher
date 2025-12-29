@@ -1,9 +1,7 @@
 {
-  "auto_reconciled": "自动更新了 '{path}' 中 {count} 个文档哈希。",
-  "co_evolution": "协同演进: '{key}' 代码和文档均已变更，意图不明确。",
-  "doc_updated": "文档更新: '{key}' 的文档已改进。",
-  "reconciled": "已调和 '{path}' 中 '{key}' 的变更。",
-  "relinked": "已重链接 '{path}' 中 '{key}' 的签名。",
-  "signature_drift": "签名漂移: '{key}' 代码已变更，文档可能已过时。",
-  "untracked_code": "未追踪代码: '{key}' 是新的公开 API 且无文档。"
+  "co_evolution": "   - [协同演进]  {key} (代码和文档均已变更，意图不明确)",
+  "doc_updated": "   - [文档更新]  {key} (文档已改进并自动调和)",
+  "reconciled": "   ✅ [已调和]    {key} (位于 {path})",
+  "relinked": "   ✅ [已重链接]  {key} (位于 {path})",
+  "signature_drift": "   - [签名漂移]  {key} (代码已变更，文档可能已过时)"
 }

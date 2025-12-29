@@ -2,10 +2,10 @@
   Data packet passed to the handler to request a user decision.
 "InteractionContext.conflict_type": |-
   The type of conflict detected.
-"InteractionContext.file_path": |-
-  The relative path to the file containing the conflict.
 "InteractionContext.doc_diff": |-
   The unified diff for a docstring content change.
+"InteractionContext.file_path": |-
+  The relative path to the file containing the conflict.
 "InteractionContext.fqn": |-
   The fully qualified name of the symbol with the conflict.
 "InteractionContext.signature_diff": |-

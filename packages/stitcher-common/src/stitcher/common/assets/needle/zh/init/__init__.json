@@ -1,3 +1,3 @@
 {
-  "no_docs_found": "🤔 在源文件中未找到文档字符串。未创建 .stitcher.yaml 文件。"
+  "no_docs_found": "🤔 在源文件中未找到任何文档字符串，因此未创建 .stitcher.yaml 文件。"
 }

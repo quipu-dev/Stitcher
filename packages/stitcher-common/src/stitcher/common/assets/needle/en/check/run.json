@@ -1,6 +1,6 @@
 {
-  "fail": "🚫 Check failed. Found errors in {count} files.",
-  "signatures_updated": "✅ {path}: Accepted {count} signature changes.",
-  "success": "\n\n✨ All checks passed. Documentation is in sync.",
-  "success_with_warnings": "⚠️  Check passed with warnings in {count} files."
+    "fail": "Check failed for {count} file(s).",
+    "reformatting": "Reformatting YAML and signature files for consistency...",
+    "success": "Check passed successfully.",
+    "success_with_warnings": "Check passed with {count} file(s) having warnings."
 }

@@ -1,16 +1,16 @@
-FINGERPRINT_KEY_PATTERN: |-
+"FINGERPRINT_KEY_PATTERN": |-
   The regular expression that all Fingerprint keys must match.
-Fingerprint: |-
+"Fingerprint": |-
   A dynamic, self-validating container for symbol fingerprints.
   It enforces that all keys adhere to the strict naming axiom.
-Fingerprint.from_dict: |-
+"Fingerprint.from_dict": |-
   Constructs a Fingerprint from a dictionary.
   Validates all keys immediately. Any invalid key raises InvalidFingerprintKeyError.
-Fingerprint.get: |-
+"Fingerprint.get": |-
   Gets a value for a key, validating the key's format.
-Fingerprint.items: |-
+"Fingerprint.items": |-
   Returns an iterator over the (key, value) pairs of the fingerprint.
-Fingerprint.to_dict: |-
+"Fingerprint.to_dict": |-
   Returns a copy of the internal hashes.
-InvalidFingerprintKeyError: |-
+"InvalidFingerprintKeyError": |-
   Raised when a key does not conform to the Fingerprint naming axiom.

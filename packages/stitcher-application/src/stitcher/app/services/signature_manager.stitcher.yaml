@@ -1,19 +1,22 @@
 "SignatureManager": |-
   Manages the persistence of composite hashes (signature and document).
-"SignatureManager.fingerprint_strategy": |-
-  The strategy used to compute fingerprints.
-"SignatureManager.root_path": |-
-  The root path of the project.
-"SignatureManager.sig_root": |-
-  The root directory for storing signature files.
 "SignatureManager._get_sig_path": |-
   Determines the storage path for a module's signatures.
   e.g. src/app.py -> .stitcher/signatures/src/app.json
 "SignatureManager.compute_fingerprints": |-
   Computes the complete fingerprints for all entities in the module
   using the injected strategy.
+"SignatureManager.fingerprint_strategy": |-
+  The strategy used to compute fingerprints.
 "SignatureManager.load_composite_hashes": |-
   Loads the composite hash map for a module.
+"SignatureManager.reformat_hashes_for_module": |-
+  Re-formats an existing signature file to enforce canonical styling.
+  Returns True if the file was reformatted, False otherwise.
+"SignatureManager.root_path": |-
+  The root path of the project.
 "SignatureManager.save_composite_hashes": |-
   Saves the composite hash map for a module.
   Expected format: { "FQN": { "baseline_code_structure_hash": "...", "baseline_yaml_content_hash": "..." } }
+"SignatureManager.sig_root": |-
+  The root directory for storing signature files.

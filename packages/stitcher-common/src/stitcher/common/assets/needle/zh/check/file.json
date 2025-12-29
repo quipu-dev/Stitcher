@@ -1,7 +1,7 @@
 {
   "fail": "❌ {path}: 发现 {count} 个错误。",
+  "warn": "⚠️  {path}: 发现 {count} 个警告。",
   "pass": "✅ {path}: 已同步。",
   "untracked": "⚠️  {path}: 未被追踪 (缺少 .stitcher.yaml 文件；请运行 `stitcher init` 或 `pump`)",
-  "untracked_with_details": "⚠️  {path}: 未被追踪，且有 {count} 个公开 API 需要文档:",
-  "warn": "⚠️  {path}: 发现 {count} 个警告。"
+  "untracked_with_details": "⚠️  {path}: 未被追踪，且有 {count} 个公开 API 需要文档:"
 }

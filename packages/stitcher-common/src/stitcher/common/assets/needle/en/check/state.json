@@ -1,9 +1,7 @@
 {
-  "auto_reconciled": "Automatically updated {count} documentation hash(es) in {path}",
-  "co_evolution": "Co-evolution: '{key}' both code and docs changed; intent unclear.",
-  "doc_updated": "Doc Updated: '{key}' documentation was improved.",
-  "reconciled": "Reconciled changes for '{key}' in {path}",
-  "relinked": "Re-linked signature for '{key}' in {path}",
-  "signature_drift": "Signature Drift: '{key}' code changed, docs may be stale.",
-  "untracked_code": "Untracked Code: '{key}' new public API without documentation."
+  "co_evolution": "   - [CO-EVOLUTION] {key} (both code and docs changed; intent unclear)",
+  "doc_updated": "   - [DOC UPDATED]  {key} (documentation was improved and auto-reconciled)",
+  "reconciled": "   ✅ [RECONCILED]  {key} in {path}",
+  "relinked": "   ✅ [RE-LINKED]   {key} in {path}",
+  "signature_drift": "   - [SIG DRIFT]   {key} (code changed, docs may be stale)"
 }
