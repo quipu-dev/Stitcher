@@ -4,8 +4,8 @@
     "baseline_code_structure_hash": "2f4a94d6ffeef80d3d85e7f1812a7cacc3e6bebbe430509a2b960e7a76554691"
   },
   "make_app": {
-    "baseline_code_signature_text": "def make_app(handler: Optional[InteractionHandler] = None) -> StitcherApp:",
-    "baseline_code_structure_hash": "60b4b9545d7848e87858a23ed1898379829d589f2a205b0899bb050f82d12782",
+    "baseline_code_signature_text": "def make_app(handler: Optional[InteractionHandler] = None, parser_type: str = \"cst\") -> StitcherApp:",
+    "baseline_code_structure_hash": "18b46e01fc44730c515792f8f6f2920757dd1025efa7eb12116864d440d82e0a",
     "baseline_yaml_content_hash": "1b212af51c64064b07c3ce68d79945b9b3dabc3a34fc1902bb7f77631acc121e"
   },
   "make_interaction_handler": {

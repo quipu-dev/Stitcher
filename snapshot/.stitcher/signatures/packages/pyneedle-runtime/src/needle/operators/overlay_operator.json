@@ -1,0 +1,15 @@
+{
+  "OverlayOperator": {
+    "baseline_yaml_content_hash": "2a0fa91d29f459031f6dec043c678f661e7dce4ff7a585ec964b44104e03c1c7"
+  },
+  "OverlayOperator.__call__": {
+    "baseline_code_signature_text": "def __call__(self, key: Union[str, SemanticPointerProtocol]) -> Any:",
+    "baseline_code_structure_hash": "c4bad9b93e0092ccefc49e0059e05bb4e11c65389b146fb989648fd2a4ab1c17",
+    "baseline_yaml_content_hash": "eb3ea019ee2f68ebb487ba7f6e14a542836b6bda9a45520245ba06efff25879b"
+  },
+  "OverlayOperator.__init__": {
+    "baseline_code_signature_text": "def __init__(self, operators: List[OperatorProtocol]):",
+    "baseline_code_structure_hash": "b31ecdaf387f76bc9010d3f3c7f405432e5e537a1733bace4ebd5878c058089f",
+    "baseline_yaml_content_hash": "0ab977891b65d44ad66d1d2fa25b14af130260527bb7cce07d12226828af8c76"
+  }
+}
