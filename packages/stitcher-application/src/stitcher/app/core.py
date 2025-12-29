@@ -448,12 +448,14 @@ class StitcherApp:
 
                     if action == ResolutionAction.RELINK:
                         if current_code_hash:
-                            fp["baseline_code_structure_hash"] = current_code_hash
+                            fp["baseline_code_structure_hash"] = str(current_code_hash)
                     elif action == ResolutionAction.RECONCILE:
                         if current_code_hash:
-                            fp["baseline_code_structure_hash"] = current_code_hash
+                            fp["baseline_code_structure_hash"] = str(current_code_hash)
                         if fqn in current_yaml_map:
-                            fp["baseline_yaml_content_hash"] = current_yaml_map[fqn]
+                            fp["baseline_yaml_content_hash"] = str(
+                                current_yaml_map[fqn]
+                            )
 
             if new_hashes != stored_hashes:
                 self.sig_manager.save_composite_hashes(module_def, new_hashes)
@@ -494,9 +496,13 @@ class StitcherApp:
 
                 for fqn in res.infos["doc_improvement"]:
                     if fqn in new_hashes:
-                        new_hashes[fqn]["baseline_yaml_content_hash"] = (
-                            current_yaml_map.get(fqn)
-                        )
+                        new_yaml_hash = current_yaml_map.get(fqn)
+                        if new_yaml_hash is not None:
+                            new_hashes[fqn]["baseline_yaml_content_hash"] = (
+                                new_yaml_hash
+                            )
+                        elif "baseline_yaml_content_hash" in new_hashes[fqn]:
+                            del new_hashes[fqn]["baseline_yaml_content_hash"]
 
                 if new_hashes != stored_hashes:
                     self.sig_manager.save_composite_hashes(module_def, new_hashes)

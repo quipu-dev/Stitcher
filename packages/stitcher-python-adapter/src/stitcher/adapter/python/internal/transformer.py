@@ -1,5 +1,5 @@
 import libcst as cst
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 from stitcher.common import format_docstring
 
 # Type alias for nodes that have a body attribute
@@ -158,8 +158,15 @@ class InjectorTransformer(cst.CSTTransformer):
     ) -> cst.ClassDef:
         fqn = ".".join(self.scope_stack)
         if fqn in self.docs:
-            updated_node = self._inject_into_body(
-                original_node, updated_node, self.docs[fqn], level=len(self.scope_stack)
+            # Explicit cast because _inject_into_body returns Union[..., ClassDef, ...]
+            updated_node = cast(
+                cst.ClassDef,
+                self._inject_into_body(
+                    original_node,
+                    updated_node,
+                    self.docs[fqn],
+                    level=len(self.scope_stack),
+                ),
             )
         self.scope_stack.pop()
         return updated_node
@@ -173,8 +180,15 @@ class InjectorTransformer(cst.CSTTransformer):
     ) -> cst.FunctionDef:
         fqn = ".".join(self.scope_stack)
         if fqn in self.docs:
-            updated_node = self._inject_into_body(
-                original_node, updated_node, self.docs[fqn], level=len(self.scope_stack)
+            # Explicit cast because _inject_into_body returns Union[..., FunctionDef]
+            updated_node = cast(
+                cst.FunctionDef,
+                self._inject_into_body(
+                    original_node,
+                    updated_node,
+                    self.docs[fqn],
+                    level=len(self.scope_stack),
+                ),
             )
         self.scope_stack.pop()
         return updated_node
