@@ -31,12 +31,15 @@ def test_pump_does_not_corrupt_code_signature_baseline(tmp_path, monkeypatch):
     with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
-    # 2. Act: Modify the code to introduce a signature drift AND a new docstring
+    # 2. Act: Modify the code to create a mixed state
+    # Use raw string or correct escaping to ensure valid Python source
     (project_root / "src/main.py").write_text(
-        'def func(a: str):\n    """New doc."""', encoding="utf-8"
+        'def func_clean():\n    """New clean doc."""\n'
+        'def func_conflict():\n    """New conflicting doc."""',
+        encoding="utf-8"
     )
 
-    # 3. Act: Run pump. This is the command with the potential side effect.
+    # 3. Act: Run pump. It should fail because of func_conflict.
     # On buggy code, this will overwrite the code signature baseline.
     # On fixed code, it will only update the doc hashes.
     with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
