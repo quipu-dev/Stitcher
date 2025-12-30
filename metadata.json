@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(app): 修复 pump 状态管理与反馈逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767061582.957872, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 重构 StitcherApp 以缩减体积并分离关注点", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767061840.6422803, "duration_ms": 0}}
