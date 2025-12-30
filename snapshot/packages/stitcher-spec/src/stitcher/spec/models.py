@@ -78,6 +78,25 @@ class ModuleDef:
             self.docstring or has_public_attributes or self.functions or self.classes
         )
 
+    def get_all_fqns(self) -> List[str]:
+        """返回模块中所有可文档化实体的 FQN 列表。"""
+        fqns = []
+        if self.docstring:
+            fqns.append("__doc__")
+
+        for attr in self.attributes:
+            fqns.append(attr.name)
+        for func in self.functions:
+            fqns.append(func.name)
+
+        for cls in self.classes:
+            fqns.append(cls.name)
+            for attr in cls.attributes:
+                fqns.append(f"{cls.name}.{attr.name}")
+            for method in cls.methods:
+                fqns.append(f"{cls.name}.{method.name}")
+        return sorted(fqns)
+
     def get_undocumented_public_keys(self) -> List[str]:
         keys = []
 

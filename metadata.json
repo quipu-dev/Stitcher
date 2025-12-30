@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(core): 为函数级剥离奠定 Spec 和 Transformer 基础", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767060924.6442158, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(app): 通过TDD实现执行计划生成器", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767061039.9006019, "duration_ms": 0}}

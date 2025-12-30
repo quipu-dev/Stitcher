@@ -15,6 +15,7 @@ from stitcher.spec import (
     ConflictType,
     ResolutionAction,
     Fingerprint,
+    FunctionExecutionPlan,
     LanguageParserProtocol,
     LanguageTransformerProtocol,
     StubGeneratorProtocol,
@@ -329,6 +330,46 @@ class StitcherApp:
                 lineterm="",
             )
         )
+
+    def _generate_execution_plan(
+        self,
+        module: ModuleDef,
+        decisions: Dict[str, ResolutionAction],
+        strip_requested: bool,
+    ) -> Dict[str, FunctionExecutionPlan]:
+        """根据用户决策和命令行标志，生成最终的函数级执行计划。"""
+        plan: Dict[str, FunctionExecutionPlan] = {}
+        source_docs = self.doc_manager.flatten_module_docs(module)
+
+        for fqn in module.get_all_fqns():
+            decision = decisions.get(fqn)
+            has_source_doc = fqn in source_docs
+            exec_plan = FunctionExecutionPlan(fqn=fqn)
+
+            if decision == ResolutionAction.SKIP:
+                # 用户明确跳过，不做任何事
+                pass
+            elif (
+                decision == ResolutionAction.HYDRATE_OVERWRITE
+                or (decision is None and has_source_doc)
+            ):
+                # 场景：代码优先，或无冲突且源码中有文档
+                exec_plan.hydrate_yaml = True
+                exec_plan.update_code_fingerprint = True
+                exec_plan.update_doc_fingerprint = True
+                if strip_requested:
+                    exec_plan.strip_source_docstring = True
+            elif decision == ResolutionAction.HYDRATE_KEEP_EXISTING:
+                # 场景：侧栏优先
+                exec_plan.hydrate_yaml = False
+                exec_plan.update_code_fingerprint = True
+                exec_plan.update_doc_fingerprint = False
+                if strip_requested:
+                    exec_plan.strip_source_docstring = True
+            
+            plan[fqn] = exec_plan
+            
+        return plan
 
     def _analyze_file(
         self, module: ModuleDef
