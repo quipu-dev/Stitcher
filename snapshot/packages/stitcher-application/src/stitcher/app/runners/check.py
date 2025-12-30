@@ -1,0 +1,334 @@
+import copy
+import difflib
+from pathlib import Path
+from typing import List
+from collections import defaultdict
+
+from stitcher.common import bus
+from needle.pointer import L
+from stitcher.config import load_config_from_path
+from stitcher.spec import (
+    ModuleDef,
+    ConflictType,
+    ResolutionAction,
+    Fingerprint,
+    LanguageParserProtocol,
+)
+from stitcher.app.services import (
+    DocumentManager,
+    SignatureManager,
+    ScannerService,
+)
+from stitcher.app.protocols import InteractionHandler, InteractionContext
+from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
+from stitcher.app.types import FileCheckResult
+
+
+class CheckRunner:
+    def __init__(
+        self,
+        root_path: Path,
+        scanner: ScannerService,
+        parser: LanguageParserProtocol,
+        doc_manager: DocumentManager,
+        sig_manager: SignatureManager,
+        interaction_handler: InteractionHandler | None,
+    ):
+        self.root_path = root_path
+        self.scanner = scanner
+        self.parser = parser
+        self.doc_manager = doc_manager
+        self.sig_manager = sig_manager
+        self.interaction_handler = interaction_handler
+
+    def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:
+        return "\n".join(
+            difflib.unified_diff(
+                a.splitlines(),
+                b.splitlines(),
+                fromfile=label_a,
+                tofile=label_b,
+                lineterm="",
+            )
+        )
+
+    def _analyze_file(
+        self, module: ModuleDef
+    ) -> tuple[FileCheckResult, list[InteractionContext]]:
+        result = FileCheckResult(path=module.file_path)
+        unresolved_conflicts: list[InteractionContext] = []
+
+        # Content checks (unchanged)
+        if (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists():
+            doc_issues = self.doc_manager.check_module(module)
+            result.warnings["missing"].extend(doc_issues["missing"])
+            result.warnings["redundant"].extend(doc_issues["redundant"])
+            result.errors["pending"].extend(doc_issues["pending"])
+            result.errors["conflict"].extend(doc_issues["conflict"])
+            result.errors["extra"].extend(doc_issues["extra"])
+
+        # State machine analysis
+        is_tracked = (
+            (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
+        )
+
+        computed_fingerprints = self.sig_manager.compute_fingerprints(module)
+        current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module)
+        stored_hashes_map = self.sig_manager.load_composite_hashes(module)
+
+        all_fqns = set(computed_fingerprints.keys()) | set(stored_hashes_map.keys())
+
+        for fqn in sorted(list(all_fqns)):
+            computed_fp = computed_fingerprints.get(fqn, Fingerprint())
+
+            code_hash = computed_fp.get("current_code_structure_hash")
+            current_sig_text = computed_fp.get("current_code_signature_text")
+            yaml_hash = current_yaml_map.get(fqn)
+
+            stored_fp = stored_hashes_map.get(fqn)
+            baseline_code_hash = (
+                stored_fp.get("baseline_code_structure_hash") if stored_fp else None
+            )
+            baseline_yaml_hash = (
+                stored_fp.get("baseline_yaml_content_hash") if stored_fp else None
+            )
+            baseline_sig_text = (
+                stored_fp.get("baseline_code_signature_text") if stored_fp else None
+            )
+
+            if not code_hash and baseline_code_hash:  # Extra
+                continue
+            if code_hash and not baseline_code_hash:  # New
+                continue
+
+            code_matches = code_hash == baseline_code_hash
+            yaml_matches = yaml_hash == baseline_yaml_hash
+
+            if code_matches and not yaml_matches:  # Doc improvement
+                result.infos["doc_improvement"].append(fqn)
+            elif not code_matches:
+                sig_diff = None
+                if baseline_sig_text and current_sig_text:
+                    sig_diff = self._generate_diff(
+                        baseline_sig_text,
+                        current_sig_text,
+                        "baseline",
+                        "current",
+                    )
+                elif current_sig_text:
+                    sig_diff = f"(No baseline signature stored)\n+++ current\n{current_sig_text}"
+
+                conflict_type = (
+                    ConflictType.SIGNATURE_DRIFT
+                    if yaml_matches
+                    else ConflictType.CO_EVOLUTION
+                )
+
+                unresolved_conflicts.append(
+                    InteractionContext(
+                        module.file_path, fqn, conflict_type, signature_diff=sig_diff
+                    )
+                )
+
+        if not is_tracked and module.is_documentable():
+            undocumented = module.get_undocumented_public_keys()
+            if undocumented:
+                result.warnings["untracked_detailed"].extend(undocumented)
+            else:
+                result.warnings["untracked"].append("all")
+
+        return result, unresolved_conflicts
+
+    def _apply_resolutions(
+        self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]
+    ):
+        for file_path, fqn_actions in resolutions.items():
+            module_def = ModuleDef(file_path=file_path)  # Minimal def for path logic
+            stored_hashes = self.sig_manager.load_composite_hashes(module_def)
+            new_hashes = copy.deepcopy(stored_hashes)
+
+            full_module_def = self.parser.parse(
+                (self.root_path / file_path).read_text("utf-8"), file_path
+            )
+            computed_fingerprints = self.sig_manager.compute_fingerprints(
+                full_module_def
+            )
+            current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
+                full_module_def
+            )
+
+            for fqn, action in fqn_actions:
+                if fqn in new_hashes:
+                    fp = new_hashes[fqn]
+                    current_fp = computed_fingerprints.get(fqn, Fingerprint())
+                    current_code_hash = current_fp.get("current_code_structure_hash")
+
+                    if action == ResolutionAction.RELINK:
+                        if current_code_hash:
+                            fp["baseline_code_structure_hash"] = str(current_code_hash)
+                    elif action == ResolutionAction.RECONCILE:
+                        if current_code_hash:
+                            fp["baseline_code_structure_hash"] = str(current_code_hash)
+                        if fqn in current_yaml_map:
+                            fp["baseline_yaml_content_hash"] = str(
+                                current_yaml_map[fqn]
+                            )
+
+            if new_hashes != stored_hashes:
+                self.sig_manager.save_composite_hashes(module_def, new_hashes)
+
+    def run(self, force_relink: bool = False, reconcile: bool = False) -> bool:
+        configs, _ = load_config_from_path(self.root_path)
+        all_results: list[FileCheckResult] = []
+        all_conflicts: list[InteractionContext] = []
+        all_modules: list[ModuleDef] = []
+
+        # 1. Analysis Phase
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
+            unique_files = self.scanner.get_files_from_config(config)
+            modules = self.scanner.scan_files(unique_files)
+            all_modules.extend(modules)
+            for module in modules:
+                result, conflicts = self._analyze_file(module)
+                all_results.append(result)
+                all_conflicts.extend(conflicts)
+
+        # 2. Execution Phase (Auto-reconciliation for doc improvements)
+        for res in all_results:
+            if res.infos["doc_improvement"]:
+                module_def = next(
+                    (m for m in all_modules if m.file_path == res.path), None
+                )
+                if not module_def:
+                    continue
+
+                stored_hashes = self.sig_manager.load_composite_hashes(module_def)
+                new_hashes = copy.deepcopy(stored_hashes)
+                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
+                    module_def
+                )
+
+                for fqn in res.infos["doc_improvement"]:
+                    if fqn in new_hashes:
+                        new_yaml_hash = current_yaml_map.get(fqn)
+                        if new_yaml_hash is not None:
+                            new_hashes[fqn]["baseline_yaml_content_hash"] = new_yaml_hash
+                        elif "baseline_yaml_content_hash" in new_hashes[fqn]:
+                            del new_hashes[fqn]["baseline_yaml_content_hash"]
+
+                if new_hashes != stored_hashes:
+                    self.sig_manager.save_composite_hashes(module_def, new_hashes)
+
+        # 3. Interactive Resolution Phase
+        if all_conflicts and self.interaction_handler:
+            chosen_actions = self.interaction_handler.process_interactive_session(
+                all_conflicts
+            )
+            resolutions_by_file = defaultdict(list)
+            reconciled_results = defaultdict(lambda: defaultdict(list))
+
+            for i, context in enumerate(all_conflicts):
+                action = chosen_actions[i]
+                if action == ResolutionAction.RELINK:
+                    resolutions_by_file[context.file_path].append((context.fqn, action))
+                    reconciled_results[context.file_path]["force_relink"].append(context.fqn)
+                elif action == ResolutionAction.RECONCILE:
+                    resolutions_by_file[context.file_path].append((context.fqn, action))
+                    reconciled_results[context.file_path]["reconcile"].append(context.fqn)
+                elif action == ResolutionAction.SKIP:
+                    for res in all_results:
+                        if res.path == context.file_path:
+                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
+                            res.errors[error_key].append(context.fqn)
+                            break
+                elif action == ResolutionAction.ABORT:
+                    bus.warning(L.strip.run.aborted)
+                    return False
+
+            self._apply_resolutions(dict(resolutions_by_file))
+
+            for res in all_results:
+                if res.path in reconciled_results:
+                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
+                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
+        else:
+            handler = NoOpInteractionHandler(force_relink, reconcile)
+            chosen_actions = handler.process_interactive_session(all_conflicts)
+            resolutions_by_file = defaultdict(list)
+            reconciled_results = defaultdict(lambda: defaultdict(list))
+            for i, context in enumerate(all_conflicts):
+                action = chosen_actions[i]
+                if action != ResolutionAction.SKIP:
+                    key = "force_relink" if action == ResolutionAction.RELINK else "reconcile"
+                    resolutions_by_file[context.file_path].append((context.fqn, action))
+                    reconciled_results[context.file_path][key].append(context.fqn)
+                else:
+                    for res in all_results:
+                        if res.path == context.file_path:
+                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
+                            res.errors[error_key].append(context.fqn)
+            self._apply_resolutions(dict(resolutions_by_file))
+            for res in all_results:
+                if res.path in reconciled_results:
+                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
+                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
+
+        # 4. Reformatting Phase
+        bus.info(L.check.run.reformatting)
+        for module in all_modules:
+            self.doc_manager.reformat_docs_for_module(module)
+            self.sig_manager.reformat_hashes_for_module(module)
+
+        # 5. Reporting Phase
+        global_failed_files = 0
+        global_warnings_files = 0
+        for res in all_results:
+            for key in sorted(res.infos["doc_improvement"]):
+                bus.info(L.check.state.doc_updated, key=key)
+            if res.is_clean:
+                continue
+            if res.reconciled_count > 0:
+                for key in res.reconciled.get("force_relink", []):
+                    bus.success(L.check.state.relinked, key=key, path=res.path)
+                for key in res.reconciled.get("reconcile", []):
+                    bus.success(L.check.state.reconciled, key=key, path=res.path)
+            if res.error_count > 0:
+                global_failed_files += 1
+                bus.error(L.check.file.fail, path=res.path, count=res.error_count)
+            elif res.warning_count > 0:
+                global_warnings_files += 1
+                bus.warning(L.check.file.warn, path=res.path, count=res.warning_count)
+            for key in sorted(res.errors["extra"]):
+                bus.error(L.check.issue.extra, key=key)
+            for key in sorted(res.errors["signature_drift"]):
+                bus.error(L.check.state.signature_drift, key=key)
+            for key in sorted(res.errors["co_evolution"]):
+                bus.error(L.check.state.co_evolution, key=key)
+            for key in sorted(res.errors["conflict"]):
+                bus.error(L.check.issue.conflict, key=key)
+            for key in sorted(res.errors["pending"]):
+                bus.error(L.check.issue.pending, key=key)
+            for key in sorted(res.warnings["missing"]):
+                bus.warning(L.check.issue.missing, key=key)
+            for key in sorted(res.warnings["redundant"]):
+                bus.warning(L.check.issue.redundant, key=key)
+            for key in sorted(res.warnings["untracked_key"]):
+                bus.warning(L.check.state.untracked_code, key=key)
+            if "untracked_detailed" in res.warnings:
+                keys = res.warnings["untracked_detailed"]
+                bus.warning(L.check.file.untracked_with_details, path=res.path, count=len(keys))
+                for key in sorted(keys):
+                    bus.warning(L.check.issue.untracked_missing_key, key=key)
+            elif "untracked" in res.warnings:
+                bus.warning(L.check.file.untracked, path=res.path)
+
+        if global_failed_files > 0:
+            bus.error(L.check.run.fail, count=global_failed_files)
+            return False
+        if global_warnings_files > 0:
+            bus.success(L.check.run.success_with_warnings, count=global_warnings_files)
+        else:
+            bus.success(L.check.run.success)
+        return True
