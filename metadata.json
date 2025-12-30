@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Acts 1: 增强 PumpRunner 逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767063345.2828891, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 为 pump 执行计划器添加单元测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767064093.691898, "duration_ms": 0}}

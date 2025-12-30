@@ -1,294 +1,160 @@
-#### Acts 1: 增强 PumpRunner 逻辑
+您的分析非常准确。这两个集成测试的失败，根源在于 `pump` 命令的核心逻辑已经演进。旧的测试用例是为文件级的原子操作设计的，而新的 `FunctionExecutionPlan` 机制引入了更精细的、函数级的指纹更新策略，这使得旧的测试前提失效了。
+
+-   `test_pump_does_not_corrupt_code_signature_baseline`：此测试断言 `pump` 不应更新代码指纹，但这与新真值表中“只要用户未跳过，就更新代码指紋以同步状态”的策略相悖。
+-   `test_pump_does_not_rewrite_synced_legacy_signatures`：此测试依赖于一个已被废弃的、不符合新 `Fingerprint` 校验公理的旧指纹格式，因此在当前代码下必然失败且已无修复价值。
+
+您的判断是正确的：我们应当用更精确的单元测试来取代这些过时的集成测试，直接验证 `_generate_execution_plan` 方法是否严格遵循您提供的真值表。幸运的是，`test_execution_planner.py` 文件已经为我们奠定了良好的基础。
+
+我将生成一个计划，首先创建这些新的单元测试，以遵循 TDD 的原则。删除旧的、损坏的测试文件将作为后续清理步骤。
+
+## [WIP] test: 为 pump 执行计划器添加单元测试
+
+### 用户需求
+两个 `pump` 命令相关的集成测试（`test_pump_regression.py` 和 `test_pump_state_integrity.py`）已过时并失败。需要根据新的 `FunctionExecutionPlan` 逻辑和提供的真值表来更新测试。新的测试应该是单元测试，并且遵循 TDD 流程。
+
+### 评论
+这是一个关键的改进。用针对核心逻辑（执行计划生成器）的单元测试来取代脆弱的、依赖文件 I/O 的集成测试，将大大提高测试套件的健壮性、执行速度和可维护性。这使得我们可以精确地验证业务规则（真值表），而无需关心外部状态。
+
+### 目标
+1.  创建一个新的单元测试文件 `test_execution_planner.py`。
+2.  在该文件中，为 `PumpRunner._generate_execution_plan` 方法添加一系列测试用例。
+3.  确保每个测试用例精确对应真值表中的一个场景，验证其输出的 `FunctionExecutionPlan` 的各个标志位（`hydrate_yaml`, `update_doc_fingerprint`, `strip_source_docstring`）是否正确。
+4.  （下一步）在这些新测试通过后，删除过时的集成测试文件。
+
+### 基本原理
+我们遵循测试驱动开发（TDD）的原则。当前 `pump` 的实现已经初步更新，但缺乏精确的测试覆盖。我们将首先编写一组完整的单元测试，来明确地定义和锁定 `_generate_execution_plan` 方法的行为。这些测试将成为该方法功能的“可执行规范”。一旦我们有了这套可靠的测试，我们就可以放心地移除那些因逻辑变更而失效的旧集成测试。
+
+### 标签
+#intent/tooling #flow/ready #priority/high #comp/tests #concept/executor #scope/dx #ai/instruct #task/domain/testing #task/object/pump-runner #task/action/refactor #task/state/begin
+
+---
+### Script
+
+#### Acts 1: 创建执行计划器的单元测试
+
+我们将创建一个新的测试文件，并添加一系列测试用例来覆盖真值表中的所有情况，从而精确地验证 `_generate_execution_plan` 方法的逻辑。
 
 ~~~~~act
 write_file
-packages/stitcher-application/src/stitcher/app/runners/pump.py
+packages/stitcher-application/tests/unit/test_execution_planner.py
 ~~~~~
 ~~~~~python
-import copy
-import difflib
-from pathlib import Path
-from typing import Dict, List
-from collections import defaultdict
-
-from stitcher.common import bus
-from needle.pointer import L
-from stitcher.config import load_config_from_path
+import pytest
+from unittest.mock import MagicMock
+from stitcher.app.runners import PumpRunner
+from stitcher.app.services import DocumentManager
 from stitcher.spec import (
     ModuleDef,
-    ConflictType,
+    FunctionDef,
     ResolutionAction,
-    Fingerprint,
-    FunctionExecutionPlan,
-    LanguageTransformerProtocol,
-    LanguageParserProtocol,
 )
-from stitcher.app.services import (
-    DocumentManager,
-    SignatureManager,
-    ScannerService,
-)
-from stitcher.app.protocols import InteractionHandler, InteractionContext
-from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
-from stitcher.app.types import PumpResult
 
 
-class PumpRunner:
-    def __init__(
-        self,
-        root_path: Path,
-        scanner: ScannerService,
-        parser: LanguageParserProtocol,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
-        transformer: LanguageTransformerProtocol,
-        interaction_handler: InteractionHandler | None,
-    ):
-        self.root_path = root_path
-        self.scanner = scanner
-        self.parser = parser
-        self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
-        self.transformer = transformer
-        self.interaction_handler = interaction_handler
+@pytest.fixture
+def sample_module() -> ModuleDef:
+    """一个包含两个函数用于测试的模块IR。"""
+    return ModuleDef(
+        file_path="src/main.py",
+        functions=[
+            FunctionDef(name="func_a", docstring="Source Doc A"),
+            FunctionDef(name="func_b", docstring="Source Doc B"),
+        ],
+    )
 
-    def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:
-        return "\n".join(
-            difflib.unified_diff(
-                a.splitlines(),
-                b.splitlines(),
-                fromfile=label_a,
-                tofile=label_b,
-                lineterm="",
-            )
-        )
+
+@pytest.fixture
+def runner(tmp_path) -> PumpRunner:
+    """一个用于调用内部方法的PumpRunner实例。"""
+    # _generate_execution_plan 仅依赖 doc_manager
+    doc_manager = DocumentManager(root_path=tmp_path)
+    return PumpRunner(
+        root_path=tmp_path,
+        scanner=MagicMock(),
+        parser=MagicMock(),
+        doc_manager=doc_manager,
+        sig_manager=MagicMock(),
+        transformer=MagicMock(),
+        interaction_handler=None,
+    )
+
+
+def test_plan_for_overwrite_with_strip(runner, sample_module):
+    """测试场景：代码优先 (`HYDRATE_OVERWRITE`) + 请求剥离 (`--strip`)"""
+    decisions = {"func_a": ResolutionAction.HYDRATE_OVERWRITE}
+    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
+
+    p_a = plan["func_a"]
+    assert p_a.hydrate_yaml is True
+    assert p_a.update_doc_fingerprint is True
+    assert p_a.strip_source_docstring is True
+
+
+def test_plan_for_overwrite_without_strip(runner, sample_module):
+    """测试场景：代码优先 (`HYDRATE_OVERWRITE`) + 不请求剥离"""
+    decisions = {"func_a": ResolutionAction.HYDRATE_OVERWRITE}
+    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=False)
+
+    p_a = plan["func_a"]
+    assert p_a.hydrate_yaml is True
+    assert p_a.update_doc_fingerprint is True
+    assert p_a.strip_source_docstring is False
+
+
+def test_plan_for_keep_existing_with_strip(runner, sample_module):
+    """测试场景：侧栏优先 (`HYDRATE_KEEP_EXISTING`) + 请求剥离 (`--strip`)"""
+    decisions = {"func_a": ResolutionAction.HYDRATE_KEEP_EXISTING}
+    # 根据真值表，当保留现有YAML时，不应该更新代码指纹，除非存在协同演进。
+    # 但`pump`的冲突检测只看文档内容，所以这里`update_code_fingerprint`应为False
+    # 修正：根据新规则，只要用户没有SKIP，代码指纹就应更新以反映当前状态。
+    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
+
+    p_a = plan["func_a"]
+    assert p_a.hydrate_yaml is False
+    assert p_a.update_doc_fingerprint is False
+    assert p_a.strip_source_docstring is True
+
+
+def test_plan_for_keep_existing_without_strip(runner, sample_module):
+    """测试场景：侧栏优先 (`HYDRATE_KEEP_EXISTING`) + 不请求剥离"""
+    decisions = {"func_a": ResolutionAction.HYDRATE_KEEP_EXISTING}
+    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=False)
+
+    p_a = plan["func_a"]
+    assert p_a.hydrate_yaml is False
+    assert p_a.update_doc_fingerprint is False
+    assert p_a.strip_source_docstring is False
+
+
+def test_plan_for_skip(runner, sample_module):
+    """测试场景：用户选择跳过 (`SKIP`)"""
+    decisions = {"func_a": ResolutionAction.SKIP}
+    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
+
+    p_a = plan["func_a"]
+    assert p_a.hydrate_yaml is False
+    assert p_a.update_doc_fingerprint is False
+    assert p_a.strip_source_docstring is False
+
+
+def test_plan_for_no_conflict(runner, sample_module):
+    """测试场景：无冲突的函数 (在decisions中不存在)"""
+    decisions = {"func_b": ResolutionAction.SKIP}  # func_a is no-conflict
+    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
+
+    # func_a 应该被正常处理
+    p_a = plan["func_a"]
+    assert p_a.hydrate_yaml is True
+    assert p_a.update_doc_fingerprint is True
+    assert p_a.strip_source_docstring is True
     
-    def _generate_execution_plan(
-        self,
-        module: ModuleDef,
-        decisions: Dict[str, ResolutionAction],
-        strip_requested: bool,
-    ) -> Dict[str, FunctionExecutionPlan]:
-        """根据用户决策和命令行标志，生成最终的函数级执行计划。"""
-        plan: Dict[str, FunctionExecutionPlan] = {}
-        source_docs = self.doc_manager.flatten_module_docs(module)
-
-        for fqn in module.get_all_fqns():
-            decision = decisions.get(fqn)
-            has_source_doc = fqn in source_docs
-            exec_plan = FunctionExecutionPlan(fqn=fqn)
-
-            if decision == ResolutionAction.SKIP:
-                pass  # All flags default to False
-            elif (
-                decision == ResolutionAction.HYDRATE_OVERWRITE
-                or (decision is None and has_source_doc)
-            ):
-                exec_plan.hydrate_yaml = True
-                exec_plan.update_doc_fingerprint = True
-                if strip_requested:
-                    exec_plan.strip_source_docstring = True
-            elif decision == ResolutionAction.HYDRATE_KEEP_EXISTING:
-                if strip_requested:
-                    exec_plan.strip_source_docstring = True
-
-            plan[fqn] = exec_plan
-
-        return plan
-
-    def run(
-        self, strip: bool = False, force: bool = False, reconcile: bool = False
-    ) -> PumpResult:
-        bus.info(L.pump.run.start)
-        configs, _ = load_config_from_path(self.root_path)
-
-        all_modules: List[ModuleDef] = []
-        all_conflicts: List[InteractionContext] = []
-
-        # --- Phase 1: Analysis ---
-        # Scan all files and identify conflicts WITHOUT applying changes
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-            unique_files = self.scanner.get_files_from_config(config)
-            modules = self.scanner.scan_files(unique_files)
-            if not modules: continue
-            all_modules.extend(modules)
-
-            for module in modules:
-                # IMPORTANT: dry_run=True, force=False, reconcile=False
-                # We want to see the RAW conflicts first so we can decide on them.
-                res = self.doc_manager.hydrate_module(module, force=False, reconcile=False, dry_run=True)
-                if not res["success"]:
-                    source_docs = self.doc_manager.flatten_module_docs(module)
-                    yaml_docs = self.doc_manager.load_docs_for_module(module)
-                    for key in res["conflicts"]:
-                        doc_diff = self._generate_diff(yaml_docs.get(key, ""), source_docs.get(key, ""), "yaml", "code")
-                        all_conflicts.append(InteractionContext(module.file_path, key, ConflictType.DOC_CONTENT_CONFLICT, doc_diff=doc_diff))
-
-        # --- Phase 2: Decision ---
-        # Solve conflicts via InteractionHandler (or NoOp defaults)
-        decisions: Dict[str, ResolutionAction] = {}
-        if all_conflicts:
-            handler = self.interaction_handler or NoOpInteractionHandler(hydrate_force=force, hydrate_reconcile=reconcile)
-            chosen_actions = handler.process_interactive_session(all_conflicts)
-
-            for i, context in enumerate(all_conflicts):
-                action = chosen_actions[i]
-                if action == ResolutionAction.ABORT:
-                    bus.error(L.pump.run.aborted)
-                    return PumpResult(success=False)
-                decisions[context.fqn] = action
-
-        # --- Phase 3 & 4: Planning & Execution ---
-        # Apply decisions, write files, and record stats
-        strip_jobs = defaultdict(list)
-        total_updated_keys = 0
-        total_reconciled_keys = 0
-        unresolved_conflicts_count = 0
-        
-        for module in all_modules:
-            file_plan = self._generate_execution_plan(module, decisions, strip)
-            
-            source_docs = self.doc_manager.flatten_module_docs(module)
-            current_yaml_docs = self.doc_manager.load_docs_for_module(module)
-            stored_hashes = self.sig_manager.load_composite_hashes(module)
-            
-            new_yaml_docs = current_yaml_docs.copy()
-            new_hashes = copy.deepcopy(stored_hashes)
-            
-            file_had_updates = False
-            file_has_errors = False # Check for atomic writes
-            updated_keys_in_file = []
-            reconciled_keys_in_file = []
-
-            for fqn, plan in file_plan.items():
-                if fqn in decisions and decisions[fqn] == ResolutionAction.SKIP:
-                    unresolved_conflicts_count += 1
-                    file_has_errors = True # Mark file as having issues, preventing partial save
-                    bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
-                    continue
-
-                if plan.hydrate_yaml:
-                    if fqn in source_docs and new_yaml_docs.get(fqn) != source_docs[fqn]:
-                        new_yaml_docs[fqn] = source_docs[fqn]
-                        updated_keys_in_file.append(fqn)
-                        file_had_updates = True
-
-                fp = new_hashes.get(fqn) or Fingerprint()
-                
-                if plan.update_doc_fingerprint:
-                    if fqn in source_docs:
-                        doc_hash = self.doc_manager.compute_yaml_content_hash(source_docs[fqn])
-                        fp["baseline_yaml_content_hash"] = doc_hash
-                        # If we have a new key (or recovering from invalid legacy), 
-                        # we should try to grab its code hash too if available
-                        if fqn not in stored_hashes:
-                             current_fp = self.sig_manager.compute_fingerprints(module).get(fqn, Fingerprint())
-                             if "current_code_structure_hash" in current_fp:
-                                 fp["baseline_code_structure_hash"] = current_fp["current_code_structure_hash"]
-                        new_hashes[fqn] = fp
-                        file_had_updates = True
-                
-                if fqn in decisions and decisions[fqn] == ResolutionAction.HYDRATE_KEEP_EXISTING:
-                    reconciled_keys_in_file.append(fqn)
-
-                if plan.strip_source_docstring:
-                    strip_jobs[module.file_path].append(fqn)
-
-            # Atomic save logic: Only save if there were updates AND no errors in this file.
-            # We also check if new_hashes != stored_hashes to support recovering legacy/corrupt signature files
-            # even if 'file_had_updates' (meaning doc updates) is False.
-            signatures_need_save = (new_hashes != stored_hashes)
-            
-            if not file_has_errors:
-                if file_had_updates:
-                    module_path = self.root_path / module.file_path
-                    doc_path = module_path.with_suffix(".stitcher.yaml")
-                    self.doc_manager.adapter.save(doc_path, new_yaml_docs)
-                
-                if file_had_updates or signatures_need_save:
-                    self.sig_manager.save_composite_hashes(module, new_hashes)
-                
-            if updated_keys_in_file:
-                total_updated_keys += len(updated_keys_in_file)
-                bus.success(L.pump.file.success, path=module.file_path, count=len(updated_keys_in_file))
-            
-            if reconciled_keys_in_file:
-                total_reconciled_keys += len(reconciled_keys_in_file)
-                bus.info(L.pump.info.reconciled, path=module.file_path, count=len(reconciled_keys_in_file))
-
-        # --- Phase 5: Stripping ---
-        if strip_jobs:
-            total_stripped_files = 0
-            for file_path, whitelist in strip_jobs.items():
-                source_path = self.root_path / file_path
-                if not whitelist: continue
-                try:
-                    original_content = source_path.read_text("utf-8")
-                    stripped_content = self.transformer.strip(original_content, whitelist=whitelist)
-                    if original_content != stripped_content:
-                        source_path.write_text(stripped_content, "utf-8")
-                        bus.success(L.strip.file.success, path=source_path.relative_to(self.root_path))
-                        total_stripped_files += 1
-                except Exception as e:
-                    bus.error(L.error.generic, error=e)
-            
-            if total_stripped_files > 0:
-                bus.success(L.strip.run.complete, count=total_stripped_files)
-        
-        # Phase 6: Ensure Signatures Integrity
-        # This is a safety sweep. In most cases, Phase 4 handles it via 'signatures_need_save'.
-        # But if files were skipped or other edge cases, we might want to check again? 
-        # Actually, Phase 4 covers the main "Update Logic". 
-        # Doing a reformat here might mask atomic failures if we aren't careful.
-        # Let's rely on Phase 4's explicit save logic for now to respect atomicity.
-        
-        # Final Reporting
-        if unresolved_conflicts_count > 0:
-            bus.error(L.pump.run.conflict, count=unresolved_conflicts_count)
-            return PumpResult(success=False)
-        
-        # We define activity as actual changes to data (updates or strips). 
-        # Reconciliation is a resolution state change but not a data "pump", so we respect 
-        # existing test expectations that reconciliation alone = "no changes" in terms of content output.
-        has_activity = (total_updated_keys > 0) or strip_jobs
-        
-        if not has_activity:
-            bus.info(L.pump.run.no_changes)
-        else:
-            bus.success(L.pump.run.complete, count=total_updated_keys)
-
-        return PumpResult(success=True, redundant_files=[])
+    # func_b 应该被跳过
+    p_b = plan["func_b"]
+    assert p_b.hydrate_yaml is False
+    assert p_b.update_doc_fingerprint is False
+    assert p_b.strip_source_docstring is False
 ~~~~~
 
-#### Acts 3: 修正 Baseline Corruption 测试设置
-
-为 `init` 步骤提供带有文档的代码，以确保 Signature 文件被正确创建。
-
-~~~~~act
-patch_file
-packages/stitcher-application/tests/integration/test_pump_state_integrity.py
-~~~~~
-~~~~~python
-    # 1. Arrange: Initialize a workspace to create a baseline.
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/main.py", "def func(a: int): ...")
-        .build()
-    )
-
-    # Use the LibCST parser for init, simulating the old state
-~~~~~
-~~~~~python
-    # 1. Arrange: Initialize a workspace to create a baseline.
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/main.py", 'def func(a: int):\n    """Initial doc."""')
-        .build()
-    )
-
-    # Use the LibCST parser for init, simulating the old state
-~~~~~
+### 下一步建议
+在这些新的单元测试通过后，我们就可以安全地生成下一个计划来删除那两个过时的集成测试文件：
+- `packages/stitcher-application/tests/integration/test_pump_regression.py`
+- `packages/stitcher-application/tests/integration/test_pump_state_integrity.py`

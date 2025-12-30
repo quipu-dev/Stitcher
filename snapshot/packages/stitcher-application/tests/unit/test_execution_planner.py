@@ -62,6 +62,9 @@ def test_plan_for_overwrite_without_strip(runner, sample_module):
 def test_plan_for_keep_existing_with_strip(runner, sample_module):
     """测试场景：侧栏优先 (`HYDRATE_KEEP_EXISTING`) + 请求剥离 (`--strip`)"""
     decisions = {"func_a": ResolutionAction.HYDRATE_KEEP_EXISTING}
+    # 根据真值表，当保留现有YAML时，不应该更新代码指纹，除非存在协同演进。
+    # 但`pump`的冲突检测只看文档内容，所以这里`update_code_fingerprint`应为False
+    # 修正：根据新规则，只要用户没有SKIP，代码指纹就应更新以反映当前状态。
     plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
 
     p_a = plan["func_a"]
@@ -106,4 +109,5 @@ def test_plan_for_no_conflict(runner, sample_module):
     # func_b 应该被跳过
     p_b = plan["func_b"]
     assert p_b.hydrate_yaml is False
+    assert p_b.update_doc_fingerprint is False
     assert p_b.strip_source_docstring is False
