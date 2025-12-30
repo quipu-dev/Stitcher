@@ -139,3 +139,14 @@ class Resolution:
 @dataclass
 class ResolutionPlan:
     resolutions: List[Resolution] = field(default_factory=list)
+
+
+@dataclass
+class FunctionExecutionPlan:
+    """定义对单个 FQN 的最终执行操作。"""
+
+    fqn: str
+    strip_source_docstring: bool = False
+    update_code_fingerprint: bool = False
+    update_doc_fingerprint: bool = False
+    hydrate_yaml: bool = False  # 标记是否需要将源码文档写入YAML

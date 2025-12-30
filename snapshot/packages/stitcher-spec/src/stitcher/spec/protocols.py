@@ -1,4 +1,4 @@
-from typing import Protocol, Dict, Union
+from typing import Protocol, Dict, Union, Optional, List
 from .models import ModuleDef, FunctionDef, ClassDef
 from .fingerprint import Fingerprint
 
@@ -8,7 +8,7 @@ class LanguageParserProtocol(Protocol):
 
 
 class LanguageTransformerProtocol(Protocol):
-    def strip(self, source_code: str) -> str: ...
+    def strip(self, source_code: str, whitelist: Optional[List[str]] = None) -> str: ...
 
     def inject(self, source_code: str, docs: Dict[str, str]) -> str: ...
 
