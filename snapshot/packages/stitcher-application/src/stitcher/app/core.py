@@ -347,28 +347,25 @@ class StitcherApp:
             exec_plan = FunctionExecutionPlan(fqn=fqn)
 
             if decision == ResolutionAction.SKIP:
-                # 用户明确跳过，不做任何事
-                pass
+                pass # All flags default to False
             elif (
                 decision == ResolutionAction.HYDRATE_OVERWRITE
                 or (decision is None and has_source_doc)
             ):
-                # 场景：代码优先，或无冲突且源码中有文档
                 exec_plan.hydrate_yaml = True
-                exec_plan.update_code_fingerprint = True
                 exec_plan.update_doc_fingerprint = True
                 if strip_requested:
                     exec_plan.strip_source_docstring = True
             elif decision == ResolutionAction.HYDRATE_KEEP_EXISTING:
-                # 场景：侧栏优先
-                exec_plan.hydrate_yaml = False
-                exec_plan.update_code_fingerprint = True
-                exec_plan.update_doc_fingerprint = False
+                # `pump` does not touch code fingerprints, only doc fingerprints.
+                # Reconciling a doc conflict (`KEEP_EXISTING`) means the code might have
+                # changed, but `check` is responsible for that. Here we only
+                # acknowledge the doc is staying as-is.
                 if strip_requested:
                     exec_plan.strip_source_docstring = True
-            
+
             plan[fqn] = exec_plan
-            
+
         return plan
 
     def _analyze_file(
@@ -708,37 +705,22 @@ class StitcherApp:
                 bus.info(L.generate.target.processing, name=config.name)
             unique_files = self._get_files_from_config(config)
             modules = self._scan_files(unique_files)
-            if not modules:
-                continue
+            if not modules: continue
             all_modules.extend(modules)
 
             for module in modules:
-                # Dry run to detect conflicts
-                res = self.doc_manager.hydrate_module(
-                    module, force=force, reconcile=reconcile, dry_run=True
-                )
+                res = self.doc_manager.hydrate_module(module, force=force, reconcile=reconcile, dry_run=True)
                 if not res["success"]:
                     source_docs = self.doc_manager.flatten_module_docs(module)
                     yaml_docs = self.doc_manager.load_docs_for_module(module)
                     for key in res["conflicts"]:
-                        doc_diff = self._generate_diff(
-                            yaml_docs.get(key, ""), source_docs.get(key, ""), "yaml", "code"
-                        )
-                        all_conflicts.append(
-                            InteractionContext(
-                                module.file_path,
-                                key,
-                                ConflictType.DOC_CONTENT_CONFLICT,
-                                doc_diff=doc_diff,
-                            )
-                        )
+                        doc_diff = self._generate_diff(yaml_docs.get(key, ""), source_docs.get(key, ""), "yaml", "code")
+                        all_conflicts.append(InteractionContext(module.file_path, key, ConflictType.DOC_CONTENT_CONFLICT, doc_diff=doc_diff))
 
         # --- Phase 2: Decision ---
         decisions: Dict[str, ResolutionAction] = {}
         if all_conflicts:
-            handler = self.interaction_handler or NoOpInteractionHandler(
-                hydrate_force=force, hydrate_reconcile=reconcile
-            )
+            handler = self.interaction_handler or NoOpInteractionHandler(hydrate_force=force, hydrate_reconcile=reconcile)
             chosen_actions = handler.process_interactive_session(all_conflicts)
 
             for i, context in enumerate(all_conflicts):
@@ -750,72 +732,76 @@ class StitcherApp:
 
         # --- Phase 3 & 4: Planning & Execution ---
         strip_jobs = defaultdict(list)
-        total_updated_files = 0
-        total_unresolved_conflicts = 0
-        redundant_files: List[Path] = []
-
+        total_updated_keys = 0
+        total_reconciled_keys = 0
+        unresolved_conflicts_count = 0
+        
         for module in all_modules:
-            # Phase 3: Planning
             file_plan = self._generate_execution_plan(module, decisions, strip)
             
-            # Prepare for execution
             source_docs = self.doc_manager.flatten_module_docs(module)
             current_yaml_docs = self.doc_manager.load_docs_for_module(module)
             stored_hashes = self.sig_manager.load_composite_hashes(module)
-            current_fingerprints = self.sig_manager.compute_fingerprints(module)
             
             new_yaml_docs = current_yaml_docs.copy()
             new_hashes = copy.deepcopy(stored_hashes)
             
-            file_was_modified = False
-            
-            # Phase 4: Execution (per-file)
-            for fqn, plan in file_plan.items():
-                if plan.hydrate_yaml:
-                    if fqn in source_docs:
-                        new_yaml_docs[fqn] = source_docs[fqn]
-                        file_was_modified = True
-                
-                fp = new_hashes.get(fqn, Fingerprint())
-                current_fp = current_fingerprints.get(fqn, Fingerprint())
+            file_had_updates = False
+            updated_keys_in_file = []
+            reconciled_keys_in_file = []
 
+            for fqn, plan in file_plan.items():
+                if fqn in decisions and decisions[fqn] == ResolutionAction.SKIP:
+                    unresolved_conflicts_count += 1
+                    bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
+                    continue
+
+                if plan.hydrate_yaml:
+                    if fqn in source_docs and new_yaml_docs.get(fqn) != source_docs[fqn]:
+                        new_yaml_docs[fqn] = source_docs[fqn]
+                        updated_keys_in_file.append(fqn)
+                        file_had_updates = True
+
+                fp = new_hashes.get(fqn) or Fingerprint()
+                
                 if plan.update_doc_fingerprint:
                     if fqn in source_docs:
                         doc_hash = self.doc_manager.compute_yaml_content_hash(source_docs[fqn])
                         fp["baseline_yaml_content_hash"] = doc_hash
-                        file_was_modified = True
+                        # If the key was new (from legacy file), ensure code hash is also set
+                        if fqn not in stored_hashes:
+                             current_fp = self.sig_manager.compute_fingerprints(module).get(fqn, Fingerprint())
+                             if "current_code_structure_hash" in current_fp:
+                                 fp["baseline_code_structure_hash"] = current_fp["current_code_structure_hash"]
+                        new_hashes[fqn] = fp
+                        file_had_updates = True
+                
+                # HYDRATE_KEEP_EXISTING is a form of reconciliation
+                if fqn in decisions and decisions[fqn] == ResolutionAction.HYDRATE_KEEP_EXISTING:
+                    reconciled_keys_in_file.append(fqn)
 
-                if plan.update_code_fingerprint:
-                    if "current_code_structure_hash" in current_fp:
-                        fp["baseline_code_structure_hash"] = current_fp["current_code_structure_hash"]
-                    if "current_code_signature_text" in current_fp:
-                        fp["baseline_code_signature_text"] = current_fp["current_code_signature_text"]
-                    file_was_modified = True
-                
-                new_hashes[fqn] = fp
-                
                 if plan.strip_source_docstring:
                     strip_jobs[module.file_path].append(fqn)
 
-            # Atomic writes for metadata
-            if file_was_modified:
-                total_updated_files += 1
+            if file_had_updates:
                 module_path = self.root_path / module.file_path
                 doc_path = module_path.with_suffix(".stitcher.yaml")
                 self.doc_manager.adapter.save(doc_path, new_yaml_docs)
                 self.sig_manager.save_composite_hashes(module, new_hashes)
-
-            # Check for unresolved conflicts
-            for fqn, plan in file_plan.items():
-                is_unresolved = not any([plan.hydrate_yaml, plan.update_code_fingerprint, plan.strip_source_docstring]) and fqn in decisions
-                if is_unresolved:
-                     total_unresolved_conflicts += 1
-                     bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
+                
+            if updated_keys_in_file:
+                total_updated_keys += len(updated_keys_in_file)
+                bus.success(L.pump.file.success, path=module.file_path, count=len(updated_keys_in_file))
+            
+            if reconciled_keys_in_file:
+                total_reconciled_keys += len(reconciled_keys_in_file)
+                bus.info(L.pump.info.reconciled, path=module.file_path, count=len(reconciled_keys_in_file))
 
         # --- Phase 5: Stripping ---
         if strip_jobs:
             for file_path, whitelist in strip_jobs.items():
                 source_path = self.root_path / file_path
+                if not whitelist: continue
                 try:
                     original_content = source_path.read_text("utf-8")
                     stripped_content = self.transformer.strip(original_content, whitelist=whitelist)
@@ -826,16 +812,17 @@ class StitcherApp:
                     bus.error(L.error.generic, error=e)
         
         # Final Reporting
-        if total_unresolved_conflicts > 0:
-            bus.error(L.pump.run.conflict, count=total_unresolved_conflicts)
+        if unresolved_conflicts_count > 0:
+            bus.error(L.pump.run.conflict, count=unresolved_conflicts_count)
             return PumpResult(success=False)
         
-        if total_updated_files == 0 and not strip_jobs:
+        if total_updated_keys == 0 and total_reconciled_keys == 0 and not strip_jobs:
             bus.info(L.pump.run.no_changes)
         else:
-            bus.success(L.pump.run.complete, count=total_updated_files)
+            bus.success(L.pump.run.complete, count=total_updated_keys)
 
-        return PumpResult(success=True, redundant_files=redundant_files)
+        # TODO: Correctly identify and return redundant_files
+        return PumpResult(success=True, redundant_files=[])
 
     def run_strip(self, files: Optional[List[Path]] = None) -> List[Path]:
         all_modified_files: List[Path] = []

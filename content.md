@@ -1,46 +1,35 @@
-好的，我们正式进入第三阶段。
-
-这是整个重构任务的高潮部分。我们将把前两个阶段构建的基础（新的 `spec` 和 `planner`）整合起来，对 `run_pump` 方法进行一次彻底的手术，用一个更清晰、更强大、更精确的函数级工作流来取代旧的逻辑。
-
----
-
-## [WIP] feat(app): 重构 run_pump 以实现函数级原子操作
+## [WIP] fix(app): 修复 pump 状态管理与反馈逻辑
 
 ### 用户需求
-重构 `run_pump` 方法，使其完全采用新的 `分析 -> 决策 -> 计划 -> 执行` 工作流。该方法必须能够基于 `FunctionExecutionPlan` 对 YAML 文档、签名指纹和源码剥离执行精确到函数的原子性操作。
+修复 `run_pump` 方法中的三个核心缺陷：
+1.  补全缺失的用户反馈消息 (`bus` calls)。
+2.  修正状态管理逻辑，确保 `pump` 不会错误地更新代码签名基线。
+3.  确保在存在未解决的冲突时，`pump` 命令能正确地报告失败。
 
 ### 评论
-这是将所有理论付诸实践的决定性一步。通过用一个清晰的、分阶段的流程替换掉原来耦合度很高的 `run_pump` 实现，我们不仅实现了功能上的飞跃（函数级操作），还极大地提升了代码的可读性、可维护性和性能。这将是 `stitcher` 核心逻辑的一次重要演进。
+这次修复是 TDD 流程的 "Refactor" 阶段。失败的测试为我们指明了代码中的逻辑漏洞。通过这次修复，`run_pump` 将变得不仅功能正确，而且在状态隔离和用户反馈方面更加健壮和可靠。
 
 ### 目标
-1.  完整地重写 `StitcherApp.run_pump` 的实现。
-2.  在新的实现中，集成对 `_generate_execution_plan` 的调用。
-3.  根据生成的执行计划，实现对 YAML 文档和签名哈希的 **函数级、原子性** 更新。
-4.  根据执行计划，收集需要被剥离的函数 `fqn`，并在所有文件更新后，**批量执行** 函数级的源码剥离操作。
-5.  确保最终的返回结果 `PumpResult` 和用户反馈（通过 `bus`）能准确反映函数级操作的结果。
+1.  **修正 Planner**: 修改 `_generate_execution_plan`，移除所有更新代码指纹 (`update_code_fingerprint`) 的逻辑。
+2.  **重写执行循环**: 在 `run_pump` 中，重构文件处理循环，使其：
+    *   在成功修改并保存文件后，能正确发出 `pump.file.success` 或 `pump.info.reconciled` 消息。
+    *   能准确追踪未被解决的冲突 (`SKIP` 决策)。
+    *   在循环结束后，根据是否存在未解决的冲突来决定最终的返回状态 (`PumpResult.success`) 和总结消息。
+3.  通过所有之前失败的 10 个测试用例。
 
 ### 基本原理
-我们将使用 `write_file` 对 `core.py` 进行整体更新，因为 `run_pump` 的逻辑变更范围太大，用 `patch_file` 难以维护且易出错。
-
-新的 `run_pump` 流程将严格分离关注点：
-1.  **分析与决策**: 收集所有冲突并从用户（或标志）那里获得决策，这部分与之前类似但更聚焦于产出“决策日志”。
-2.  **计划**: 将“决策日志”输入 `_generate_execution_plan`，为每个文件生成确定性的执行蓝图。
-3.  **执行**: 这是一个“哑”执行阶段，它只忠实地执行计划，分为两个子步骤：
-    *   **元数据更新**: 遍历计划，在内存中修改 `yaml` 和 `signatures`，然后一次性写回磁盘，确保文件级的原子性。
-    *   **源码更新**: 在所有元数据更新完毕后，再对需要修改的源码文件执行精确的 `strip` 操作。
-
-这种分离使得每一步的职责都非常单一，极大地降低了心智负担。
+我们将再次使用 `write_file` 来更新 `core.py`。新的实现将包含一个更简单的 `_generate_execution_plan`，它只关注文档相关的操作。`run_pump` 的主循环将更加清晰地追踪“已更新”、“已协调”和“已跳过”的 `fqn`，从而在循环结束后能够生成准确的报告和返回状态。
 
 ### 标签
-#intent/refine #intent/build #flow/ready #priority/high #comp/app #concept/state #scope/core #ai/instruct #task/domain/refactoring #task/object/granular-strip #task/action/implementation #task/state/end
+#intent/fix #flow/ready #priority/critical #comp/app #concept/state #scope/core #ai/instruct #task/domain/refactoring #task/object/granular-strip #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `StitcherApp.run_pump`
+#### Acts 1: 修正 `core.py` 的核心逻辑
 
-我们将使用 `write_file` 完整地替换 `core.py` 的内容。这包括了我们之前添加的 `_generate_execution_plan` 方法，以及全新的 `run_pump` 实现。
+这个 `write_file` 操作将一次性修复所有已知 bug。
 
 ~~~~~act
 write_file
@@ -396,28 +385,25 @@ class StitcherApp:
             exec_plan = FunctionExecutionPlan(fqn=fqn)
 
             if decision == ResolutionAction.SKIP:
-                # 用户明确跳过，不做任何事
-                pass
+                pass # All flags default to False
             elif (
                 decision == ResolutionAction.HYDRATE_OVERWRITE
                 or (decision is None and has_source_doc)
             ):
-                # 场景：代码优先，或无冲突且源码中有文档
                 exec_plan.hydrate_yaml = True
-                exec_plan.update_code_fingerprint = True
                 exec_plan.update_doc_fingerprint = True
                 if strip_requested:
                     exec_plan.strip_source_docstring = True
             elif decision == ResolutionAction.HYDRATE_KEEP_EXISTING:
-                # 场景：侧栏优先
-                exec_plan.hydrate_yaml = False
-                exec_plan.update_code_fingerprint = True
-                exec_plan.update_doc_fingerprint = False
+                # `pump` does not touch code fingerprints, only doc fingerprints.
+                # Reconciling a doc conflict (`KEEP_EXISTING`) means the code might have
+                # changed, but `check` is responsible for that. Here we only
+                # acknowledge the doc is staying as-is.
                 if strip_requested:
                     exec_plan.strip_source_docstring = True
-            
+
             plan[fqn] = exec_plan
-            
+
         return plan
 
     def _analyze_file(
@@ -757,37 +743,22 @@ class StitcherApp:
                 bus.info(L.generate.target.processing, name=config.name)
             unique_files = self._get_files_from_config(config)
             modules = self._scan_files(unique_files)
-            if not modules:
-                continue
+            if not modules: continue
             all_modules.extend(modules)
 
             for module in modules:
-                # Dry run to detect conflicts
-                res = self.doc_manager.hydrate_module(
-                    module, force=force, reconcile=reconcile, dry_run=True
-                )
+                res = self.doc_manager.hydrate_module(module, force=force, reconcile=reconcile, dry_run=True)
                 if not res["success"]:
                     source_docs = self.doc_manager.flatten_module_docs(module)
                     yaml_docs = self.doc_manager.load_docs_for_module(module)
                     for key in res["conflicts"]:
-                        doc_diff = self._generate_diff(
-                            yaml_docs.get(key, ""), source_docs.get(key, ""), "yaml", "code"
-                        )
-                        all_conflicts.append(
-                            InteractionContext(
-                                module.file_path,
-                                key,
-                                ConflictType.DOC_CONTENT_CONFLICT,
-                                doc_diff=doc_diff,
-                            )
-                        )
+                        doc_diff = self._generate_diff(yaml_docs.get(key, ""), source_docs.get(key, ""), "yaml", "code")
+                        all_conflicts.append(InteractionContext(module.file_path, key, ConflictType.DOC_CONTENT_CONFLICT, doc_diff=doc_diff))
 
         # --- Phase 2: Decision ---
         decisions: Dict[str, ResolutionAction] = {}
         if all_conflicts:
-            handler = self.interaction_handler or NoOpInteractionHandler(
-                hydrate_force=force, hydrate_reconcile=reconcile
-            )
+            handler = self.interaction_handler or NoOpInteractionHandler(hydrate_force=force, hydrate_reconcile=reconcile)
             chosen_actions = handler.process_interactive_session(all_conflicts)
 
             for i, context in enumerate(all_conflicts):
@@ -799,72 +770,76 @@ class StitcherApp:
 
         # --- Phase 3 & 4: Planning & Execution ---
         strip_jobs = defaultdict(list)
-        total_updated_files = 0
-        total_unresolved_conflicts = 0
-        redundant_files: List[Path] = []
-
+        total_updated_keys = 0
+        total_reconciled_keys = 0
+        unresolved_conflicts_count = 0
+        
         for module in all_modules:
-            # Phase 3: Planning
             file_plan = self._generate_execution_plan(module, decisions, strip)
             
-            # Prepare for execution
             source_docs = self.doc_manager.flatten_module_docs(module)
             current_yaml_docs = self.doc_manager.load_docs_for_module(module)
             stored_hashes = self.sig_manager.load_composite_hashes(module)
-            current_fingerprints = self.sig_manager.compute_fingerprints(module)
             
             new_yaml_docs = current_yaml_docs.copy()
             new_hashes = copy.deepcopy(stored_hashes)
             
-            file_was_modified = False
-            
-            # Phase 4: Execution (per-file)
-            for fqn, plan in file_plan.items():
-                if plan.hydrate_yaml:
-                    if fqn in source_docs:
-                        new_yaml_docs[fqn] = source_docs[fqn]
-                        file_was_modified = True
-                
-                fp = new_hashes.get(fqn, Fingerprint())
-                current_fp = current_fingerprints.get(fqn, Fingerprint())
+            file_had_updates = False
+            updated_keys_in_file = []
+            reconciled_keys_in_file = []
 
+            for fqn, plan in file_plan.items():
+                if fqn in decisions and decisions[fqn] == ResolutionAction.SKIP:
+                    unresolved_conflicts_count += 1
+                    bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
+                    continue
+
+                if plan.hydrate_yaml:
+                    if fqn in source_docs and new_yaml_docs.get(fqn) != source_docs[fqn]:
+                        new_yaml_docs[fqn] = source_docs[fqn]
+                        updated_keys_in_file.append(fqn)
+                        file_had_updates = True
+
+                fp = new_hashes.get(fqn) or Fingerprint()
+                
                 if plan.update_doc_fingerprint:
                     if fqn in source_docs:
                         doc_hash = self.doc_manager.compute_yaml_content_hash(source_docs[fqn])
                         fp["baseline_yaml_content_hash"] = doc_hash
-                        file_was_modified = True
+                        # If the key was new (from legacy file), ensure code hash is also set
+                        if fqn not in stored_hashes:
+                             current_fp = self.sig_manager.compute_fingerprints(module).get(fqn, Fingerprint())
+                             if "current_code_structure_hash" in current_fp:
+                                 fp["baseline_code_structure_hash"] = current_fp["current_code_structure_hash"]
+                        new_hashes[fqn] = fp
+                        file_had_updates = True
+                
+                # HYDRATE_KEEP_EXISTING is a form of reconciliation
+                if fqn in decisions and decisions[fqn] == ResolutionAction.HYDRATE_KEEP_EXISTING:
+                    reconciled_keys_in_file.append(fqn)
 
-                if plan.update_code_fingerprint:
-                    if "current_code_structure_hash" in current_fp:
-                        fp["baseline_code_structure_hash"] = current_fp["current_code_structure_hash"]
-                    if "current_code_signature_text" in current_fp:
-                        fp["baseline_code_signature_text"] = current_fp["current_code_signature_text"]
-                    file_was_modified = True
-                
-                new_hashes[fqn] = fp
-                
                 if plan.strip_source_docstring:
                     strip_jobs[module.file_path].append(fqn)
 
-            # Atomic writes for metadata
-            if file_was_modified:
-                total_updated_files += 1
+            if file_had_updates:
                 module_path = self.root_path / module.file_path
                 doc_path = module_path.with_suffix(".stitcher.yaml")
                 self.doc_manager.adapter.save(doc_path, new_yaml_docs)
                 self.sig_manager.save_composite_hashes(module, new_hashes)
-
-            # Check for unresolved conflicts
-            for fqn, plan in file_plan.items():
-                is_unresolved = not any([plan.hydrate_yaml, plan.update_code_fingerprint, plan.strip_source_docstring]) and fqn in decisions
-                if is_unresolved:
-                     total_unresolved_conflicts += 1
-                     bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
+                
+            if updated_keys_in_file:
+                total_updated_keys += len(updated_keys_in_file)
+                bus.success(L.pump.file.success, path=module.file_path, count=len(updated_keys_in_file))
+            
+            if reconciled_keys_in_file:
+                total_reconciled_keys += len(reconciled_keys_in_file)
+                bus.info(L.pump.info.reconciled, path=module.file_path, count=len(reconciled_keys_in_file))
 
         # --- Phase 5: Stripping ---
         if strip_jobs:
             for file_path, whitelist in strip_jobs.items():
                 source_path = self.root_path / file_path
+                if not whitelist: continue
                 try:
                     original_content = source_path.read_text("utf-8")
                     stripped_content = self.transformer.strip(original_content, whitelist=whitelist)
@@ -875,16 +850,17 @@ class StitcherApp:
                     bus.error(L.error.generic, error=e)
         
         # Final Reporting
-        if total_unresolved_conflicts > 0:
-            bus.error(L.pump.run.conflict, count=total_unresolved_conflicts)
+        if unresolved_conflicts_count > 0:
+            bus.error(L.pump.run.conflict, count=unresolved_conflicts_count)
             return PumpResult(success=False)
         
-        if total_updated_files == 0 and not strip_jobs:
+        if total_updated_keys == 0 and total_reconciled_keys == 0 and not strip_jobs:
             bus.info(L.pump.run.no_changes)
         else:
-            bus.success(L.pump.run.complete, count=total_updated_files)
+            bus.success(L.pump.run.complete, count=total_updated_keys)
 
-        return PumpResult(success=True, redundant_files=redundant_files)
+        # TODO: Correctly identify and return redundant_files
+        return PumpResult(success=True, redundant_files=[])
 
     def run_strip(self, files: Optional[List[Path]] = None) -> List[Path]:
         all_modified_files: List[Path] = []
@@ -947,10 +923,10 @@ class StitcherApp:
 
 ### 下一步建议
 
-我们已经成功地完成了整个重构的核心部分！`run_pump` 现在拥有了一个清晰、健壮且功能强大的函数级处理流程。
+我们已经部署了针对所有已知错误的修复程序。现在，是时候运行我们的测试套件了。
 
-接下来的最后一步，也是至关重要的一步，就是 **更新我们的集成测试**。
+`poetry run pytest`
 
-我们需要修改 `packages/stitcher-application/tests/integration/` 目录下的相关测试（特别是 `test_pump_command.py` 和 `test_pump_interactive_flow.py`），以验证新的函数级行为。例如，我们可以创建一个包含两个函数的测试文件，对其中一个函数选择“代码优先”，对另一个选择“跳过”，然后断言最终的 YAML、签名和源码文件都精确地反映了这些混合决策。
+理想情况下，所有测试现在都应该通过。如果仍然有失败的用例，它们的数量应该会大大减少，使我们能够更精确地定位任何剩余的细微问题。
 
-这将为我们的重构提供最终的信心，并确保未来不会出现回归。准备好后，我们就开始更新测试。
+执行测试，然后我们可以评估结果并进行最后的收尾工作。
