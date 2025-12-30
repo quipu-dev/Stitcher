@@ -5,11 +5,17 @@
   "InteractionContext.conflict_type": {
     "baseline_yaml_content_hash": "6e88011c2e5d9d14dde51d6b9535ef98d947444beda8c89170691bb4e4fc19db"
   },
+  "InteractionContext.doc_diff": {
+    "baseline_yaml_content_hash": "9c84077a1a030c590c2a512897b39d7b376a7bfdd106475e02608d0d6a9548c4"
+  },
   "InteractionContext.file_path": {
     "baseline_yaml_content_hash": "3d7f5d0eb55b94960ead23d87f137c723bf9645289759478eea8c39812d88161"
   },
   "InteractionContext.fqn": {
     "baseline_yaml_content_hash": "5d358ce30017f22be51051647c9a76f2ca22c4243336582327e77973e38684fc"
+  },
+  "InteractionContext.signature_diff": {
+    "baseline_yaml_content_hash": "fbcdd365c44df3e0aafe36bd45becbed357d9599463f7e1ec298a84059b7d086"
   },
   "InteractionHandler": {
     "baseline_yaml_content_hash": "dc0ed07c2d9e3b052f97003e1bf646a5cc66bc6cdd2edae8a0d943f2da531143"

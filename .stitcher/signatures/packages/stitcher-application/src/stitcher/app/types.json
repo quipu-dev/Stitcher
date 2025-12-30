@@ -1,0 +1,16 @@
+{
+  "FileCheckResult": {},
+  "FileCheckResult.auto_reconciled_count": {},
+  "FileCheckResult.error_count": {},
+  "FileCheckResult.errors": {},
+  "FileCheckResult.infos": {},
+  "FileCheckResult.is_clean": {},
+  "FileCheckResult.path": {},
+  "FileCheckResult.reconciled": {},
+  "FileCheckResult.reconciled_count": {},
+  "FileCheckResult.warning_count": {},
+  "FileCheckResult.warnings": {},
+  "PumpResult": {},
+  "PumpResult.redundant_files": {},
+  "PumpResult.success": {}
+}

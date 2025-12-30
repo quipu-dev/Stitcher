@@ -47,7 +47,7 @@ def test_pump_interactive_overwrite(conflicting_workspace, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump()
 
     # 3. Assert
@@ -74,7 +74,7 @@ def test_pump_interactive_reconcile(conflicting_workspace, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump()
 
     # 3. Assert
@@ -100,7 +100,7 @@ def test_pump_interactive_skip_leads_to_failure(conflicting_workspace, monkeypat
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump()
 
     # 3. Assert
@@ -124,7 +124,7 @@ def test_pump_interactive_abort_stops_process(conflicting_workspace, monkeypatch
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump()
 
     # 3. Assert

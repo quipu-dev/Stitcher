@@ -1,0 +1,24 @@
+{
+  "GenerateRunner": {},
+  "GenerateRunner.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, doc_manager: DocumentManager, stub_pkg_manager: StubPackageManager, generator: StubGeneratorProtocol):",
+    "baseline_code_structure_hash": "23bae91437202c37d683dc9f2367bacd3593f75a1d811e45a889e20932d0ba70"
+  },
+  "GenerateRunner._generate_stubs": {
+    "baseline_code_signature_text": "def _generate_stubs(self, modules: List[ModuleDef], config: StitcherConfig) -> List[Path]:",
+    "baseline_code_structure_hash": "eeaa608841470a18c3769a48fba7e2966099d1e8628734dde32c1ae287b01b5a"
+  },
+  "GenerateRunner._scaffold_stub_package": {
+    "baseline_code_signature_text": "def _scaffold_stub_package(self, config: StitcherConfig, stub_base_name: Optional[str]):",
+    "baseline_code_structure_hash": "05be66d7dc4212916206e8dfa6060849a28cba0069bc4854346d8d5de59a8e9e"
+  },
+  "GenerateRunner.doc_manager": {},
+  "GenerateRunner.generator": {},
+  "GenerateRunner.root_path": {},
+  "GenerateRunner.run": {
+    "baseline_code_signature_text": "def run(self) -> List[Path]:",
+    "baseline_code_structure_hash": "fb52c518ced5dce36777b9c36e0c8ccfdbd34c24c8a6d8493866d38bc9e729e7"
+  },
+  "GenerateRunner.scanner": {},
+  "GenerateRunner.stub_pkg_manager": {}
+}

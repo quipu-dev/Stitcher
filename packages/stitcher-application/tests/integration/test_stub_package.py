@@ -40,7 +40,7 @@ def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypa
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_from_config()
 
     # 3. Assert

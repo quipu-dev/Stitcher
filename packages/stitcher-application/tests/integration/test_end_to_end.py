@@ -20,12 +20,12 @@ def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
     app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         # Accessing internal methods directly for this specific test case
         # as per original test logic
         source_file = project_root / "greet.py"
-        module = app._scan_files([source_file])[0]
-        app._generate_stubs([module], StitcherConfig())
+        module = app.scanner.scan_files([source_file])[0]
+        app.generate_runner._generate_stubs([module], StitcherConfig())
 
     spy_bus.assert_id_called(L.generate.file.success, level="success")
 
@@ -62,7 +62,7 @@ def test_app_run_from_config_with_source_files(tmp_path, monkeypatch):
     app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_from_config()
 
     spy_bus.assert_id_called(L.generate.file.success, level="success")
@@ -111,7 +111,7 @@ stub_path = "typings/pkg_b"
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_from_config()
 
     # 3. Assert
@@ -166,7 +166,7 @@ def test_app_generates_stubs_for_plugins_and_sources(tmp_path, monkeypatch):
         spy_bus = SpyBus()
 
         # 2. Act
-        with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+        with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
             app.run_from_config()
 
         # 3. Assert

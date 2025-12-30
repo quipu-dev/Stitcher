@@ -6,13 +6,15 @@
   "reason": {
     "signature_drift": "Reason: Signature has changed, but docs have not (Signature Drift).",
     "co_evolution": "Reason: Both signature and docs have changed (Co-evolution).",
-    "doc_content_conflict": "Reason: Source code docstring differs from YAML docstring."
+    "doc_content_conflict": "Reason: Source code docstring differs from YAML docstring.",
+    "dangling_doc": "Reason: Documentation exists in YAML but not in code (Dangling Doc)."
   },
   "option": {
     "relink": { "label": "[F]orce-relink", "desc": "Force-relink new signature with old docs." },
     "reconcile": { "label": "[R]econcile", "desc": "Accept both changes as the new correct state." },
     "overwrite": { "label": "[F]orce overwrite", "desc": "Overwrite YAML with code docs (Code-first)." },
     "keep": { "label": "[R]econcile", "desc": "Keep existing YAML docs (YAML-first)." },
+    "purge": { "label": "[P]urge", "desc": "Delete this documentation entry from the YAML file." },
     "skip": { "label": "[S]kip", "desc": "Skip this conflict for now." },
     "abort": { "label": "[A]bort", "desc": "Abort the entire check process." },
     "undo": { "label": "[Z]Undo", "desc": "Go back to the previous conflict." }

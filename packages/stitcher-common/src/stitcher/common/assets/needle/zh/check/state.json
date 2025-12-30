@@ -1,6 +1,7 @@
 {
   "co_evolution": "   - [协同演进]  {key} (代码和文档均已变更，意图不明确)",
   "doc_updated": "   - [文档更新]  {key} (文档已改进并自动调和)",
+  "purged": "   ✅ [已清除]    {key} (位于 {path})",
   "reconciled": "   ✅ [已调和]    {key} (位于 {path})",
   "relinked": "   ✅ [已重链接]  {key} (位于 {path})",
   "signature_drift": "   - [签名漂移]  {key} (代码已变更，文档可能已过时)"

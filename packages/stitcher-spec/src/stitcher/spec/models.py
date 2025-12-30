@@ -78,6 +78,27 @@ class ModuleDef:
             self.docstring or has_public_attributes or self.functions or self.classes
         )
 
+    def get_all_fqns(self) -> List[str]:
+        """返回模块中所有可文档化实体的 FQN 列表。"""
+        fqns = []
+        if self.docstring:
+            # Consistent with how we might handle module doc in the future
+            # fqns.append("__doc__")
+            pass
+
+        for attr in self.attributes:
+            fqns.append(attr.name)
+        for func in self.functions:
+            fqns.append(func.name)
+
+        for cls in self.classes:
+            fqns.append(cls.name)
+            for attr in cls.attributes:
+                fqns.append(f"{cls.name}.{attr.name}")
+            for method in cls.methods:
+                fqns.append(f"{cls.name}.{method.name}")
+        return sorted(fqns)
+
     def get_undocumented_public_keys(self) -> List[str]:
         keys = []
 
@@ -116,6 +137,7 @@ class ConflictType(str, Enum):
     SIGNATURE_DRIFT = "SIGNATURE_DRIFT"
     CO_EVOLUTION = "CO_EVOLUTION"
     DOC_CONTENT_CONFLICT = "DOC_CONTENT_CONFLICT"
+    DANGLING_DOC = "DANGLING_DOC"
 
 
 class ResolutionAction(str, Enum):
@@ -125,6 +147,7 @@ class ResolutionAction(str, Enum):
     HYDRATE_KEEP_EXISTING = (
         "HYDRATE_KEEP_EXISTING"  # Equivalent to --reconcile (YAML wins)
     )
+    PURGE_DOC = "PURGE_DOC"
     SKIP = "SKIP"
     ABORT = "ABORT"
 
@@ -139,3 +162,14 @@ class Resolution:
 @dataclass
 class ResolutionPlan:
     resolutions: List[Resolution] = field(default_factory=list)
+
+
+@dataclass
+class FunctionExecutionPlan:
+    """定义对单个 FQN 的最终执行操作。"""
+
+    fqn: str
+    strip_source_docstring: bool = False
+    update_code_fingerprint: bool = False
+    update_doc_fingerprint: bool = False
+    hydrate_yaml: bool = False  # 标记是否需要将源码文档写入YAML

@@ -1,0 +1,15 @@
+{
+  "InitRunner": {},
+  "InitRunner.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, doc_manager: DocumentManager, sig_manager: SignatureManager):",
+    "baseline_code_structure_hash": "fa16c6d939f86026eb997ca80a3b45b65313d66c060f9fee651c7bd1e2be2734"
+  },
+  "InitRunner.doc_manager": {},
+  "InitRunner.root_path": {},
+  "InitRunner.run": {
+    "baseline_code_signature_text": "def run(self) -> List[Path]:",
+    "baseline_code_structure_hash": "fb52c518ced5dce36777b9c36e0c8ccfdbd34c24c8a6d8493866d38bc9e729e7"
+  },
+  "InitRunner.scanner": {},
+  "InitRunner.sig_manager": {}
+}

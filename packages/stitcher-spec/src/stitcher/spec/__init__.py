@@ -13,6 +13,7 @@ from .models import (
     ResolutionAction,
     Resolution,
     ResolutionPlan,
+    FunctionExecutionPlan,
 )
 from .fingerprint import Fingerprint, InvalidFingerprintKeyError
 from .protocols import (
@@ -40,4 +41,5 @@ __all__ = [
     "ResolutionAction",
     "Resolution",
     "ResolutionPlan",
+    "FunctionExecutionPlan",
 ]

@@ -28,7 +28,7 @@ def test_something():
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump()
 
     # 3. Assert

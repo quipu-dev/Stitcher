@@ -1,6 +1,7 @@
 {
   "co_evolution": "   - [CO-EVOLUTION] {key} (both code and docs changed; intent unclear)",
   "doc_updated": "   - [DOC UPDATED]  {key} (documentation was improved and auto-reconciled)",
+  "purged": "   ✅ [PURGED]      {key} in {path}",
   "reconciled": "   ✅ [RECONCILED]  {key} in {path}",
   "relinked": "   ✅ [RE-LINKED]   {key} in {path}",
   "signature_drift": "   - [SIG DRIFT]   {key} (code changed, docs may be stale)"

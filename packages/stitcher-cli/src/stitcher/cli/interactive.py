@@ -53,6 +53,7 @@ class TyperInteractiveRenderer:
             ConflictType.SIGNATURE_DRIFT: L.interactive.reason.signature_drift,
             ConflictType.CO_EVOLUTION: L.interactive.reason.co_evolution,
             ConflictType.DOC_CONTENT_CONFLICT: L.interactive.reason.doc_content_conflict,
+            ConflictType.DANGLING_DOC: L.interactive.reason.dangling_doc,
         }
         reason_l = reason_map.get(context.conflict_type)
         if reason_l:

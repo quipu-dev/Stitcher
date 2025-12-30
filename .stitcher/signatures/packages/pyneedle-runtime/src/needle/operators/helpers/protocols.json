@@ -1,4 +1,5 @@
 {
+  "FileHandlerProtocol": {},
   "FileHandlerProtocol.load": {
     "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "eabd26163ff572de5814f693e2b0ee951c1a9f1150be6aa50b3a914e0e8114bf"

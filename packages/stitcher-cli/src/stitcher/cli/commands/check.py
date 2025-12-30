@@ -30,7 +30,7 @@ def check_command(
         auto_resolve_mode=(force_relink or reconcile),
     )
 
-    app_instance = make_app(handler, parser_type="griffe")
+    app_instance = make_app(handler)
     success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
     if not success:
         raise typer.Exit(code=1)

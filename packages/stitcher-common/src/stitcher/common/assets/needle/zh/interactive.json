@@ -6,13 +6,15 @@
   "reason": {
     "signature_drift": "原因: 签名已变更，但文档未变 (签名漂移)。",
     "co_evolution": "原因: 签名和文档均已变更 (协同演进)。",
-    "doc_content_conflict": "原因: 源代码文档字符串与 YAML 文档字符串不一致。"
+    "doc_content_conflict": "原因: 源代码文档字符串与 YAML 文档字符串不一致。",
+    "dangling_doc": "原因: 文档存在于 YAML 但代码中不存在 (悬空文档)。"
   },
   "option": {
     "relink": { "label": "[F]强制重链 (Force-relink)", "desc": "强制将新签名关联到旧文档。" },
     "reconcile": { "label": "[R]调和 (Reconcile)", "desc": "接受双方变更作为新的正确状态。" },
     "overwrite": { "label": "[F]强制覆盖 (Force overwrite)", "desc": "使用代码文档覆盖 YAML (代码优先)。" },
     "keep": { "label": "[R]保留 (Reconcile)", "desc": "保留现有 YAML 文档 (YAML优先)。" },
+    "purge": { "label": "[P]清除 (Purge)", "desc": "从 YAML 文件中删除此文档条目。" },
     "skip": { "label": "[S]跳过 (Skip)", "desc": "暂不处理此冲突。" },
     "abort": { "label": "[A]中止 (Abort)", "desc": "中止整个检查过程。" },
     "undo": { "label": "[Z]撤销 (Undo)", "desc": "返回上一个冲突。" }

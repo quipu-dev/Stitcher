@@ -23,7 +23,7 @@ def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         created_files = app.run_init()
 
     # 3. Assert
@@ -52,7 +52,7 @@ def test_init_skips_files_without_docs(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         created_files = app.run_init()
 
     # 3. Assert

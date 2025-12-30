@@ -16,14 +16,28 @@
     "baseline_code_structure_hash": "13d2c1a6cdc73db8bb244b7cf63e98f29e356c222a38995f081daef34b798a40",
     "baseline_yaml_content_hash": "bd682ea8770888234231cb8fd5ebb7b327103578e4263b375104b89aeeff7c40"
   },
+  "SignatureManager.fingerprint_strategy": {
+    "baseline_yaml_content_hash": "414621d325ff585cf42097ea5e421955422e603c675f3e58fb8a0568fc426f87"
+  },
   "SignatureManager.load_composite_hashes": {
     "baseline_code_signature_text": "def load_composite_hashes(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
     "baseline_code_structure_hash": "88cd00d2adf0bca45c697e80267630aecc18c387c67701063560498e655d11f5",
     "baseline_yaml_content_hash": "4e3f2fd8ba10f2201a6214e9f3b8cca3ceedc0225867f28f8b645b86afc2f54a"
   },
+  "SignatureManager.reformat_hashes_for_module": {
+    "baseline_code_signature_text": "def reformat_hashes_for_module(self, module: ModuleDef) -> bool:",
+    "baseline_code_structure_hash": "d668742911e06fa0fe903f5c2345d9918af3a1171e5ed7fcd3a2e32ffe81e4b1",
+    "baseline_yaml_content_hash": "359c3cc6378482661900994c91bc7e8b8cd1b5ba5c1ac05707b07a3f2643b304"
+  },
+  "SignatureManager.root_path": {
+    "baseline_yaml_content_hash": "ae19ba5d58eb34b77c99f67a28ec6605bbb661b4d7092fa36d9d0c9fc6eb7e9a"
+  },
   "SignatureManager.save_composite_hashes": {
     "baseline_code_signature_text": "def save_composite_hashes(self, module: ModuleDef, hashes: Dict[str, Fingerprint]) -> None:",
     "baseline_code_structure_hash": "fca68e3422f35a2ad2f84b8066d951ef5852dbc2ae7b4f0a306783a30c2f320e",
     "baseline_yaml_content_hash": "30caad024d2d53643b9d324c6dfa4f47b456afcfcfb48d2c39f1ca64be4cb73d"
+  },
+  "SignatureManager.sig_root": {
+    "baseline_yaml_content_hash": "574ffaf700ee03558928b7f303151290a983743417f18cd31c95cf534a0d4433"
   }
 }

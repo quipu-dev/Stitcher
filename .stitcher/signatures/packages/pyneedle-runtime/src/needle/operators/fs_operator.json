@@ -16,8 +16,11 @@
     "baseline_code_signature_text": "def _calculate_prefix(self, file_path: Path, root_path: Path) -> str:",
     "baseline_code_structure_hash": "d7badc591d3cf412f01f14b0019ca6b3fcf57bbbc917c858b5d318b6c15b55e6"
   },
+  "FileSystemOperator._data": {},
+  "FileSystemOperator._handler": {},
   "FileSystemOperator._scan_root": {
     "baseline_code_signature_text": "def _scan_root(self, root_path: Path) -> Dict[str, str]:",
     "baseline_code_structure_hash": "fb9ef3c3c3741d0c06aee7dccb75e99081d27b2641f485ea82402fad884998c8"
-  }
+  },
+  "FileSystemOperator.root": {}
 }

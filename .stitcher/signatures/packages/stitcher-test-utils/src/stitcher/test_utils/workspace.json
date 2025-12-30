@@ -6,33 +6,36 @@
     "baseline_code_signature_text": "def __init__(self, root_path: Path):",
     "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
   },
+  "WorkspaceFactory._files_to_create": {},
+  "WorkspaceFactory._pyproject_data": {},
   "WorkspaceFactory.build": {
     "baseline_code_signature_text": "def build(self) -> Path:",
     "baseline_code_structure_hash": "a9df94cb7b5ea7954574279f0bd49648fc1c4c971164a3f9b4d556c547c8b9a3",
     "baseline_yaml_content_hash": "abcfe71efe81cf48f05e5b67f083d78ee3298cb510ca7ecce0510e83cf910741"
   },
+  "WorkspaceFactory.root_path": {},
   "WorkspaceFactory.with_config": {
-    "baseline_code_signature_text": "def with_config(self, stitcher_config: Dict[str, Any]) -> \"WorkspaceFactory\":",
+    "baseline_code_signature_text": "def with_config(self, stitcher_config: Dict[str, Any]) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "4dfcd1bda044801e995fc0decdacbc37847587e671d1f493e67a5d374174ae85",
     "baseline_yaml_content_hash": "4a40831ae9bdf543b924a5f194cf70a2c371fc3d88062a4801a9b2173e2b7583"
   },
   "WorkspaceFactory.with_docs": {
-    "baseline_code_signature_text": "def with_docs(self, path: str, data: Dict[str, Any]) -> \"WorkspaceFactory\":",
+    "baseline_code_signature_text": "def with_docs(self, path: str, data: Dict[str, Any]) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "58c1ea56d4f43400901310f9b889ed7258cf74cc5e642750f68616553033bee7",
     "baseline_yaml_content_hash": "27d7b33528b5b520600d417b10b0097b2d272175e7535c559fc90976f3e3dd4f"
   },
   "WorkspaceFactory.with_entry_points": {
-    "baseline_code_signature_text": "def with_entry_points(self, group: str, entry_points: Dict[str, str]) -> \"WorkspaceFactory\":",
+    "baseline_code_signature_text": "def with_entry_points(self, group: str, entry_points: Dict[str, str]) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "336255947c494c0df3d632565856e55bb46155863d3e8434c0317d23e0e86820",
     "baseline_yaml_content_hash": "9cc8e16edeb7737761cbc85a9154f8f73511771e6cf4ac381caebc1bd053de57"
   },
   "WorkspaceFactory.with_project_name": {
-    "baseline_code_signature_text": "def with_project_name(self, name: str) -> \"WorkspaceFactory\":",
+    "baseline_code_signature_text": "def with_project_name(self, name: str) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "92fba0e02d3135da5c0f12b66992e39c5dfebb23e95514c7c7092943d665da4e",
     "baseline_yaml_content_hash": "9fa315df537d97b00b006c2bec98627e0851c3b8f4485d47caca922d8b1d07c4"
   },
   "WorkspaceFactory.with_source": {
-    "baseline_code_signature_text": "def with_source(self, path: str, content: str) -> \"WorkspaceFactory\":",
+    "baseline_code_signature_text": "def with_source(self, path: str, content: str) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "4231b100542176367e7ccc6879eb0bbb2119ecb797141bd39a83766aedfde7b0",
     "baseline_yaml_content_hash": "207cbff581589c62a759786a59fa2c1d43b4d125ba5716697e38c157e3065f92"
   }

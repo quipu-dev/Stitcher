@@ -35,7 +35,7 @@ def test_private_members_allowed_in_yaml(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     # 3. Assert
@@ -78,7 +78,7 @@ def test_ghost_keys_trigger_extra_error(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     # 3. Assert
@@ -114,7 +114,7 @@ def test_public_missing_triggers_warning_only(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     # 3. Assert

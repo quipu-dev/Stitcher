@@ -2,7 +2,7 @@ import ast
 from pathlib import Path
 import re
 import griffe
-from typing import List, Optional, Set
+from typing import List, Optional, Set, cast, Any
 from stitcher.spec import (
     ModuleDef,
     LanguageParserProtocol,
@@ -126,8 +126,11 @@ class GriffePythonParser(LanguageParserProtocol):
 
         # 2. Visit with Griffe
         module_name = file_path.replace("/", ".").replace(".py", "") or "module"
+        # Explicit cast to Any to bypass Pyright check if filepath is strict Path
         path_obj = Path(file_path) if file_path else None
-        griffe_module = griffe.visit(module_name, filepath=path_obj, code=source_code)
+        griffe_module = griffe.visit(
+            module_name, filepath=cast(Any, path_obj), code=source_code
+        )
 
         # 3. Map to Stitcher IR
         module_def = self._map_module(griffe_module, file_path, imports)
@@ -148,11 +151,11 @@ class GriffePythonParser(LanguageParserProtocol):
             if member.is_alias:
                 continue
             if member.is_function:
-                functions.append(self._map_function(member))
+                functions.append(self._map_function(cast(griffe.Function, member)))
             elif member.is_class:
-                classes.append(self._map_class(member))
+                classes.append(self._map_class(cast(griffe.Class, member)))
             elif member.is_attribute:
-                attributes.append(self._map_attribute(member))
+                attributes.append(self._map_attribute(cast(griffe.Attribute, member)))
 
         docstring = gm.docstring.value if gm.docstring else None
 
@@ -170,9 +173,9 @@ class GriffePythonParser(LanguageParserProtocol):
         attributes = []
         for member in gc.members.values():
             if member.is_function:
-                methods.append(self._map_function(member))
+                methods.append(self._map_function(cast(griffe.Function, member)))
             elif member.is_attribute:
-                attributes.append(self._map_attribute(member))
+                attributes.append(self._map_attribute(cast(griffe.Attribute, member)))
         docstring = gc.docstring.value if gc.docstring else None
         bases = [str(b) for b in gc.bases]
         return ClassDef(

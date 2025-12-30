@@ -30,7 +30,7 @@ def test_check_reports_untracked_with_details(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_check()
 
     # 3. Assert
@@ -68,7 +68,7 @@ def test_check_reports_simple_untracked_if_all_docs_present(tmp_path, monkeypatc
     app = create_test_app(root_path=project_root)
     spy_bus = SpyBus()
 
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_check()
 
     # Assert the simple message was called
@@ -97,7 +97,7 @@ def test_check_is_silent_for_empty_untracked_file(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     # 3. Assert
@@ -130,7 +130,7 @@ def test_check_is_silent_for_boilerplate_untracked_file(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     # 3. Assert

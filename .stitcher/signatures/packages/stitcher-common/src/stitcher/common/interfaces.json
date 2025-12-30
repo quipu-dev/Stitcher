@@ -1,4 +1,7 @@
 {
+  "DocumentAdapter": {
+    "baseline_yaml_content_hash": "5a086ed7e2069a1800c0d961eeaeff5b7da613065736aed6bb4db87d5ea5242f"
+  },
   "DocumentAdapter.load": {
     "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, str]:",
     "baseline_code_structure_hash": "ef21d314c98812203d6777bd75855c109b1dadf617994d7a622ffcebd3b67de6",

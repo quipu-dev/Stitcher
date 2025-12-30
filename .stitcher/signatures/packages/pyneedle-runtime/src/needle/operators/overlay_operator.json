@@ -11,5 +11,6 @@
     "baseline_code_signature_text": "def __init__(self, operators: List[OperatorProtocol]):",
     "baseline_code_structure_hash": "b31ecdaf387f76bc9010d3f3c7f405432e5e537a1733bace4ebd5878c058089f",
     "baseline_yaml_content_hash": "0ab977891b65d44ad66d1d2fa25b14af130260527bb7cce07d12226828af8c76"
-  }
+  },
+  "OverlayOperator.operators": {}
 }

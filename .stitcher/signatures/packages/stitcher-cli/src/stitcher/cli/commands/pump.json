@@ -1,6 +1,6 @@
 {
   "pump_command": {
-    "baseline_code_signature_text": "def pump_command(strip: bool = typer.Option(False, \"--strip\", help=nexus(L.cli.option.strip.help)), force: bool = typer.Option(\n        False,\n        \"--force\",\n        help=nexus(L.cli.option.force.help),\n   ), reconcile: bool = typer.Option(\n        False,\n        \"--reconcile\",\n        help=nexus(L.cli.option.reconcile.help),\n   ), non_interactive: bool = typer.Option(\n        False,\n        \"--non-interactive\",\n        help=\"Force non-interactive mode, failing on unresolved conflicts.\",\n   )):",
+    "baseline_code_signature_text": "def pump_command(strip: bool = typer.Option(False, '--strip', help=(nexus(L.cli.option.strip.help))), force: bool = typer.Option(False, '--force', help=(nexus(L.cli.option.force.help))), reconcile: bool = typer.Option(False, '--reconcile', help=(nexus(L.cli.option.reconcile.help))), non_interactive: bool = typer.Option(False, '--non-interactive', help='Force non-interactive mode, failing on unresolved conflicts.')):",
     "baseline_code_structure_hash": "1760895321f5c2badd81a378158c9a94b4eeb8738953a0d0df189a26b8da2c5e",
     "baseline_yaml_content_hash": "be1526669e3efa3cd3761c5a755991449e51f64c5e493ca7ef7bafedd3e2e806"
   }

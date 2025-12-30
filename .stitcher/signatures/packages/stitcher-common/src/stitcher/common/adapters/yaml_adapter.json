@@ -1,4 +1,7 @@
 {
+  "YamlAdapter": {
+    "baseline_yaml_content_hash": "8f062ba6cc4aa1a10b219c01f06f346693197fb010bc0ec894470b705cde94bb"
+  },
   "YamlAdapter.load": {
     "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, str]:",
     "baseline_code_structure_hash": "ef21d314c98812203d6777bd75855c109b1dadf617994d7a622ffcebd3b67de6",

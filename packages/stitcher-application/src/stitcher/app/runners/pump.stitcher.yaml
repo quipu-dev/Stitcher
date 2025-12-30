@@ -1,0 +1,2 @@
+"PumpRunner._generate_execution_plan": |-
+  根据用户决策和命令行标志，生成最终的函数级执行计划。

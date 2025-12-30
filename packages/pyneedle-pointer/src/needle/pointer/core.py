@@ -38,9 +38,7 @@ class SemanticPointer(SemanticPointerProtocol):
         new_path = f"{self._path}.{suffix}" if self._path else suffix
         return SemanticPointer(new_path)
 
-    def __add__(
-        self, other: Union[str, "SemanticPointerProtocol"]
-    ) -> "SemanticPointer":
+    def __add__(self, other: Any) -> "SemanticPointer":
         return self._join(other)
 
     def __truediv__(

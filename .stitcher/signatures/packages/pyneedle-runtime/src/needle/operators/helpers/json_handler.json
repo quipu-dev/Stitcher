@@ -1,6 +1,7 @@
 {
+  "JsonHandler": {},
   "JsonHandler._flatten_dict": {
-    "baseline_code_signature_text": "def _flatten_dict(self, d: Dict[str, Any], parent_key: str = \"\") -> Dict[str, str]:",
+    "baseline_code_signature_text": "def _flatten_dict(self, d: Dict[str, Any], parent_key: str = '') -> Dict[str, str]:",
     "baseline_code_structure_hash": "e476297646cc158e5ddac4fc1921e2ceafd19b1bfd75bb6c54fcac4ad7cd6460"
   },
   "JsonHandler._inflate_dict": {

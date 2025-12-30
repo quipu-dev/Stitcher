@@ -33,7 +33,7 @@ def test_check_generates_signature_diff(tmp_path, monkeypatch):
 
     # Run init to save baseline signature and TEXT
     app_init = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app_init.run_init()
 
     # 2. Modify code to cause signature drift
@@ -43,7 +43,7 @@ def test_check_generates_signature_diff(tmp_path, monkeypatch):
     handler = CapturingHandler()
     app_check = create_test_app(root_path=project_root, interaction_handler=handler)
 
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app_check.run_check()
 
     # 4. Assert
@@ -78,7 +78,7 @@ def test_pump_generates_doc_diff(tmp_path, monkeypatch):
     handler = CapturingHandler()
     app_pump = create_test_app(root_path=project_root, interaction_handler=handler)
 
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app_pump.run_pump()
 
     # 3. Assert
