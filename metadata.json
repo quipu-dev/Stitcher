@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] chore: 移除过时的 pump 集成测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767064133.6712177, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "... (inside _generate_execution_plan)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767064418.381629, "duration_ms": 0}}
