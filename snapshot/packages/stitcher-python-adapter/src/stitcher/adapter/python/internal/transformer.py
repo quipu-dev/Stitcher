@@ -90,8 +90,10 @@ class StripperTransformer(cst.CSTTransformer):
         new_body = []
         if updated_node.body:
             first_stmt = updated_node.body[0]
-            should_strip_module_doc = self.whitelist is None or "__doc__" in self.whitelist # Or a more robust check
-            
+            should_strip_module_doc = (
+                self.whitelist is None or "__doc__" in self.whitelist
+            )  # Or a more robust check
+
             if (
                 isinstance(first_stmt, cst.SimpleStatementLine)
                 and len(first_stmt.body) == 1
@@ -101,7 +103,7 @@ class StripperTransformer(cst.CSTTransformer):
                 new_body.extend(updated_node.body[1:])
             else:
                 new_body.extend(updated_node.body)
-        
+
         return updated_node.with_changes(body=new_body)
 
 

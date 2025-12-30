@@ -25,12 +25,13 @@
     "baseline_code_signature_text": "def __setitem__(self, key: str, value: str) -> None:",
     "baseline_code_structure_hash": "05dd46af0ad71013a0c5de0940c77355776011cb8e4b5afedcc291c1f39494c7"
   },
+  "Fingerprint._hashes": {},
   "Fingerprint._validate_key": {
     "baseline_code_signature_text": "def _validate_key(key: str) -> None:",
     "baseline_code_structure_hash": "1254c78fd04ab928ca923d87f70922f7de1b181c67c4281ceb4cb5c2e61ea71a"
   },
   "Fingerprint.from_dict": {
-    "baseline_code_signature_text": "def from_dict(cls, data: Dict[str, Any]) -> \"Fingerprint\":",
+    "baseline_code_signature_text": "def from_dict(cls, data: Dict[str, Any]) -> Fingerprint:",
     "baseline_code_structure_hash": "8afd39a438fba5106e45074741439571a25fda296967e04cdc1d62e61922afe5",
     "baseline_yaml_content_hash": "e60affe8a4742ccdb9637619f4f2acd0830cdf30021b49c5691a7796bcd9722c"
   },

@@ -11,7 +11,7 @@
     "baseline_yaml_content_hash": "b6f0af339ba8423e0a07c96f30c47de7d9cbb55a371f6bf2fae7bc253904226d"
   },
   "PointerSetProtocol.__add__": {
-    "baseline_code_signature_text": "def __add__(self, other: Union[str, SemanticPointerProtocol]) -> \"PointerSetProtocol\":",
+    "baseline_code_signature_text": "def __add__(self, other: Union[str, SemanticPointerProtocol]) -> PointerSetProtocol:",
     "baseline_code_structure_hash": "ebedbffeea58403800036e1c95817a20664eb3fcde12caa6c75932fc5903343d",
     "baseline_yaml_content_hash": "4548d75cc729567e72db098c904039a2b3ea667d42cc057ee9274abfa4539bdf"
   },
@@ -21,17 +21,17 @@
     "baseline_yaml_content_hash": "e193ac98f1e84b79e181861125cb8d095d4eca7915e406824880c1a14ee1df63"
   },
   "PointerSetProtocol.__mul__": {
-    "baseline_code_signature_text": "def __mul__(self, other: Iterable[str]) -> \"PointerSetProtocol\":",
-    "baseline_code_structure_hash": "47644ebb815c3ae98e53319e18646243c7bb9d4ebbe487b4822f848e5dc908ec",
+    "baseline_code_signature_text": "def __mul__(self, other: Any) -> PointerSetProtocol:",
+    "baseline_code_structure_hash": "802c0ac625164baab81be31c4e37c3d523ab3b1e9abfc65adb8a14899bffc3ce",
     "baseline_yaml_content_hash": "b28d9b6d565cf52656f8809eae40e0efddc02ebd00abe76968c67b1d12df37d4"
   },
   "PointerSetProtocol.__or__": {
-    "baseline_code_signature_text": "def __or__(self, other: \"PointerSetProtocol\") -> \"PointerSetProtocol\":",
+    "baseline_code_signature_text": "def __or__(self, other: PointerSetProtocol) -> PointerSetProtocol:",
     "baseline_code_structure_hash": "9dfad11efae1e94994452e9eb360a45de4cdea25e9dcef120c3472429c90c5eb",
     "baseline_yaml_content_hash": "fb05ab0a94ef5925ca5d5d68a7005da0d316d4f4fcb94ef751c9b9600d1ba917"
   },
   "PointerSetProtocol.__truediv__": {
-    "baseline_code_signature_text": "def __truediv__(self, other: Union[str, SemanticPointerProtocol]) -> \"PointerSetProtocol\":",
+    "baseline_code_signature_text": "def __truediv__(self, other: Union[str, SemanticPointerProtocol]) -> PointerSetProtocol:",
     "baseline_code_structure_hash": "ed31760c74ba3e1680912f48511ea0f71a03210f2c0f66e02a477df04a20e5d9",
     "baseline_yaml_content_hash": "56333dd4fb587a9da49dad8c84b9a80bfa1aa081d27094464635803b0d206e30"
   },
@@ -39,8 +39,8 @@
     "baseline_yaml_content_hash": "fe18d37498b223e7d7233845204c765d67b3235a8196a6a9c7f1a86d85a3087f"
   },
   "SemanticPointerProtocol.__add__": {
-    "baseline_code_signature_text": "def __add__(self, other: Union[str, \"SemanticPointerProtocol\"]) -> T_Pointer:",
-    "baseline_code_structure_hash": "e13912b1e443a66e6bc082cd950161a713461fac8afb731d866ae3ea5c5b7955",
+    "baseline_code_signature_text": "def __add__(self, other: Any) -> T_Pointer:",
+    "baseline_code_structure_hash": "5e082dd115ab80a49f3ae09291dbb05b07a4039f3826abaf52ca2cb4f0b5f8db",
     "baseline_yaml_content_hash": "b206b78aee5731baa47c7b4aed9fe20687ce0daa3b51f271fed3d8a9e442685c"
   },
   "SemanticPointerProtocol.__eq__": {
@@ -59,8 +59,8 @@
     "baseline_yaml_content_hash": "166c252d32ecf599e6156dac440fa44cb3c3a0a8d469e30a3900feddb4782552"
   },
   "SemanticPointerProtocol.__mul__": {
-    "baseline_code_signature_text": "def __mul__(self, other: Iterable[str]) -> \"PointerSetProtocol\":",
-    "baseline_code_structure_hash": "47644ebb815c3ae98e53319e18646243c7bb9d4ebbe487b4822f848e5dc908ec",
+    "baseline_code_signature_text": "def __mul__(self, other: Any) -> PointerSetProtocol:",
+    "baseline_code_structure_hash": "802c0ac625164baab81be31c4e37c3d523ab3b1e9abfc65adb8a14899bffc3ce",
     "baseline_yaml_content_hash": "bfd3000116a50d80f20a5cb1ac4c0b6cfc3477269d3422797b9725d1579bc662"
   },
   "SemanticPointerProtocol.__str__": {
@@ -69,7 +69,7 @@
     "baseline_yaml_content_hash": "4c5f24f85e32ff0804877ec0c58637f987bd7fe712f9e020007d2ab52e705f81"
   },
   "SemanticPointerProtocol.__truediv__": {
-    "baseline_code_signature_text": "def __truediv__(self, other: Union[str, \"SemanticPointerProtocol\"]) -> T_Pointer:",
+    "baseline_code_signature_text": "def __truediv__(self, other: Union[str, SemanticPointerProtocol]) -> T_Pointer:",
     "baseline_code_structure_hash": "72a4f1268efd832ea151eb48daa4587512a48b83eafe79038c1447f16e1de37d",
     "baseline_yaml_content_hash": "e84d274a7b36a798faa41aa599c7d22608cf00b8fd28cc0c68a679f6346f29f8"
   },

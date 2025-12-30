@@ -1,0 +1,19 @@
+{
+  "TransformRunner": {},
+  "TransformRunner.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, doc_manager: DocumentManager, transformer: LanguageTransformerProtocol):",
+    "baseline_code_structure_hash": "e53d7571623762b36138adefa9ef3ca5f09ee2e98c54209bf8afdd656266ac65"
+  },
+  "TransformRunner.doc_manager": {},
+  "TransformRunner.root_path": {},
+  "TransformRunner.run_inject": {
+    "baseline_code_signature_text": "def run_inject(self) -> List[Path]:",
+    "baseline_code_structure_hash": "c3eccd0304a6e04a22b2ac1857ba9c4400031be4b1e2309ccc7a7d4160acfb02"
+  },
+  "TransformRunner.run_strip": {
+    "baseline_code_signature_text": "def run_strip(self, files: Optional[List[Path]] = None) -> List[Path]:",
+    "baseline_code_structure_hash": "bda2820f9698db31dce2dee53b15d50409bed5407bd167b2c7e252a2a1c35392"
+  },
+  "TransformRunner.scanner": {},
+  "TransformRunner.transformer": {}
+}

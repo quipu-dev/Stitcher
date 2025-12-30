@@ -1,7 +1,6 @@
 import copy
 import difflib
 from pathlib import Path
-from typing import List
 from collections import defaultdict
 
 from stitcher.common import bus
@@ -214,7 +213,9 @@ class CheckRunner:
                     if fqn in new_hashes:
                         new_yaml_hash = current_yaml_map.get(fqn)
                         if new_yaml_hash is not None:
-                            new_hashes[fqn]["baseline_yaml_content_hash"] = new_yaml_hash
+                            new_hashes[fqn]["baseline_yaml_content_hash"] = (
+                                new_yaml_hash
+                            )
                         elif "baseline_yaml_content_hash" in new_hashes[fqn]:
                             del new_hashes[fqn]["baseline_yaml_content_hash"]
 
@@ -233,14 +234,22 @@ class CheckRunner:
                 action = chosen_actions[i]
                 if action == ResolutionAction.RELINK:
                     resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path]["force_relink"].append(context.fqn)
+                    reconciled_results[context.file_path]["force_relink"].append(
+                        context.fqn
+                    )
                 elif action == ResolutionAction.RECONCILE:
                     resolutions_by_file[context.file_path].append((context.fqn, action))
-                    reconciled_results[context.file_path]["reconcile"].append(context.fqn)
+                    reconciled_results[context.file_path]["reconcile"].append(
+                        context.fqn
+                    )
                 elif action == ResolutionAction.SKIP:
                     for res in all_results:
                         if res.path == context.file_path:
-                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
+                            error_key = (
+                                "signature_drift"
+                                if context.conflict_type == ConflictType.SIGNATURE_DRIFT
+                                else "co_evolution"
+                            )
                             res.errors[error_key].append(context.fqn)
                             break
                 elif action == ResolutionAction.ABORT:
@@ -251,8 +260,12 @@ class CheckRunner:
 
             for res in all_results:
                 if res.path in reconciled_results:
-                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
-                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
+                    res.reconciled["force_relink"] = reconciled_results[res.path][
+                        "force_relink"
+                    ]
+                    res.reconciled["reconcile"] = reconciled_results[res.path][
+                        "reconcile"
+                    ]
         else:
             handler = NoOpInteractionHandler(force_relink, reconcile)
             chosen_actions = handler.process_interactive_session(all_conflicts)
@@ -261,19 +274,31 @@ class CheckRunner:
             for i, context in enumerate(all_conflicts):
                 action = chosen_actions[i]
                 if action != ResolutionAction.SKIP:
-                    key = "force_relink" if action == ResolutionAction.RELINK else "reconcile"
+                    key = (
+                        "force_relink"
+                        if action == ResolutionAction.RELINK
+                        else "reconcile"
+                    )
                     resolutions_by_file[context.file_path].append((context.fqn, action))
                     reconciled_results[context.file_path][key].append(context.fqn)
                 else:
                     for res in all_results:
                         if res.path == context.file_path:
-                            error_key = "signature_drift" if context.conflict_type == ConflictType.SIGNATURE_DRIFT else "co_evolution"
+                            error_key = (
+                                "signature_drift"
+                                if context.conflict_type == ConflictType.SIGNATURE_DRIFT
+                                else "co_evolution"
+                            )
                             res.errors[error_key].append(context.fqn)
             self._apply_resolutions(dict(resolutions_by_file))
             for res in all_results:
                 if res.path in reconciled_results:
-                    res.reconciled["force_relink"] = reconciled_results[res.path]["force_relink"]
-                    res.reconciled["reconcile"] = reconciled_results[res.path]["reconcile"]
+                    res.reconciled["force_relink"] = reconciled_results[res.path][
+                        "force_relink"
+                    ]
+                    res.reconciled["reconcile"] = reconciled_results[res.path][
+                        "reconcile"
+                    ]
 
         # 4. Reformatting Phase
         bus.info(L.check.run.reformatting)
@@ -318,7 +343,9 @@ class CheckRunner:
                 bus.warning(L.check.state.untracked_code, key=key)
             if "untracked_detailed" in res.warnings:
                 keys = res.warnings["untracked_detailed"]
-                bus.warning(L.check.file.untracked_with_details, path=res.path, count=len(keys))
+                bus.warning(
+                    L.check.file.untracked_with_details, path=res.path, count=len(keys)
+                )
                 for key in sorted(keys):
                     bus.warning(L.check.issue.untracked_missing_key, key=key)
             elif "untracked" in res.warnings:

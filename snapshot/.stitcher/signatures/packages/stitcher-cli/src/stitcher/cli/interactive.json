@@ -2,6 +2,18 @@
   "SemanticMenuOption": {
     "baseline_yaml_content_hash": "094bff150864625cab0566d91126a79165c98e1b19b54794bf90216c0abe867e"
   },
+  "SemanticMenuOption.action": {
+    "baseline_yaml_content_hash": "f4d407b2c9b300dfec448b949f13603d6754c551c715b481357f2f6fd5360a5c"
+  },
+  "SemanticMenuOption.desc_id": {
+    "baseline_yaml_content_hash": "8635f41b92b711261c5ed23a2aab8a5813b7b57a37a6a3c88e01aa5d4c22e9e4"
+  },
+  "SemanticMenuOption.key": {
+    "baseline_yaml_content_hash": "d542dd4f8e69801e9b279a196cf3f0f0f72aa8239a743f79a2e09a88b1ab7cc8"
+  },
+  "SemanticMenuOption.label_id": {
+    "baseline_yaml_content_hash": "ad6dd8e86cd2167dafea1d757136a8dc0beafdac02bc188570027ccf84544364"
+  },
   "TyperInteractiveRenderer": {
     "baseline_yaml_content_hash": "93692d06cf12324096fb552da6cdcef36aae854a944039ab6d3094420df3b6f6"
   },
@@ -9,13 +21,16 @@
     "baseline_code_signature_text": "def __init__(self, operator):",
     "baseline_code_structure_hash": "7ce9d0debd71b01d311ff177446a9d973e80bab2cd702699bcac2aaa964893d8"
   },
+  "TyperInteractiveRenderer.operator": {
+    "baseline_yaml_content_hash": "06a96b246034833bd666be99b488e9ebbdf5e9782697f3c60df7f9aee363a478"
+  },
   "TyperInteractiveRenderer.prompt": {
     "baseline_code_signature_text": "def prompt(self, context: InteractionContext, current_idx: int, total: int, options: List[SemanticMenuOption], default_action: Any) -> Any:",
     "baseline_code_structure_hash": "2990ad5409ad5bc65cb068eee5cd9c70a7a33d29688a37c26662f574c8ffd1ab",
     "baseline_yaml_content_hash": "55b396c0f723c37753d17a4bccf314a413696642047b91965242af01cbb01e9b"
   },
   "TyperInteractiveRenderer.show_message": {
-    "baseline_code_signature_text": "def show_message(self, msg_id: SemanticPointer, color = None, **kwargs) -> None:",
+    "baseline_code_signature_text": "def show_message(self, msg_id: SemanticPointer, color = None, **kwargs = {}) -> None:",
     "baseline_code_structure_hash": "70341b3f84b5bc6d5954a873baa283b28bd898a04c33eff43b85242587b1f8c8",
     "baseline_yaml_content_hash": "f996c6e62065381b5f996d890f752a637aeab9bef3b99278c1d8eaf1f679df82"
   },

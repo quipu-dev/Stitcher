@@ -107,6 +107,14 @@
   "FunctionDef.return_annotation": {
     "baseline_yaml_content_hash": "5ef37bea3eb55f1ef1cd6a6cb04534f8209ea090cd72a32529006ca3bcd5b916"
   },
+  "FunctionExecutionPlan": {
+    "baseline_yaml_content_hash": "0a0339697e4d0234483280607e5165d8b37a5c871a211f861e1e8058234a7ed0"
+  },
+  "FunctionExecutionPlan.fqn": {},
+  "FunctionExecutionPlan.hydrate_yaml": {},
+  "FunctionExecutionPlan.strip_source_docstring": {},
+  "FunctionExecutionPlan.update_code_fingerprint": {},
+  "FunctionExecutionPlan.update_doc_fingerprint": {},
   "ModuleDef": {
     "baseline_yaml_content_hash": "7b44cb86cdeed96153de0246a375ccb4eace928620bac59c14c99d3bcc5c0f7d"
   },
@@ -127,6 +135,11 @@
   },
   "ModuleDef.functions": {
     "baseline_yaml_content_hash": "e4c9900c6832a69fd54881207da0c083e0ff685ed37d839311a28d2024acb4c4"
+  },
+  "ModuleDef.get_all_fqns": {
+    "baseline_code_signature_text": "def get_all_fqns(self) -> List[str]:",
+    "baseline_code_structure_hash": "3913e29f0c174565e95c6a9a7dc0ec2a0a9cb7ad123bacd4e602c235025ff6d1",
+    "baseline_yaml_content_hash": "8bbaf6a0dd107660708523a0e0f8c4fb0465e5cba270dab276af8d6e4b310151"
   },
   "ModuleDef.get_undocumented_public_keys": {
     "baseline_code_signature_text": "def get_undocumented_public_keys(self) -> List[str]:",

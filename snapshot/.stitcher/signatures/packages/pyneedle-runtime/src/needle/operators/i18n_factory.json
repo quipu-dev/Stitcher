@@ -11,5 +11,6 @@
     "baseline_code_signature_text": "def __init__(self, assets_root: Union[str, Path]):",
     "baseline_code_structure_hash": "8f9fc74d038585ffd10ac7ef2746c50ed1d900bcef571916d7548ad16e0eecb8",
     "baseline_yaml_content_hash": "7032146d618fc45a99e2f8786f420005e344b9a4030fc6488d43a412630cb5ec"
-  }
+  },
+  "I18NFactoryOperator.assets_root": {}
 }

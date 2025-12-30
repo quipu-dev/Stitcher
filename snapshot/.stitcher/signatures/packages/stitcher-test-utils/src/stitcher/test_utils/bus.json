@@ -7,12 +7,13 @@
     "baseline_code_structure_hash": "c4bd9c9ec0f179608166809f641b3bd7cc5a38407df738140affd35448eacfad"
   },
   "SpyBus": {
-    "baseline_yaml_content_hash": "9712bad7601f0f71e4909ff18f4bbfe8426d881f75d6707281859fd20ee3c7dd"
+    "baseline_yaml_content_hash": "224acf2bccb0081bcf7889ed8cf35ae91333493fe3d01ec3f394d13af8cd5e69"
   },
   "SpyBus.__init__": {
     "baseline_code_signature_text": "def __init__(self):",
     "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
   },
+  "SpyBus._spy_renderer": {},
   "SpyBus.assert_id_called": {
     "baseline_code_signature_text": "def assert_id_called(self, msg_id: SemanticPointer, level: Optional[str] = None):",
     "baseline_code_structure_hash": "3c3f2d626f8e501cdedf3a4108e22355eccebadb272441ef6cc12e7a03711257",
@@ -24,9 +25,9 @@
     "baseline_yaml_content_hash": "0fefee42932fc552ab1192f60e062e2ab7311b88822ecec2b4a75f8160792959"
   },
   "SpyBus.patch": {
-    "baseline_code_signature_text": "def patch(self, monkeypatch: Any, target: str):",
-    "baseline_code_structure_hash": "7e98181062b97b4d8aaa029fe5dfe941ef3606edd5b25a85302df17f5e73d833",
-    "baseline_yaml_content_hash": "323bc7e08fdffaee396d8256f3728199deaeb7660dfef93a36185d49666c933b"
+    "baseline_code_signature_text": "def patch(self, monkeypatch: Any, target: str = 'stitcher.common.bus'):",
+    "baseline_code_structure_hash": "8465d9020a2f9c66dbdc4e9da0357cd816e0dd636d9419a544c4e6b6333185c0",
+    "baseline_yaml_content_hash": "70860b7c1c53aa5c5625ac96fcc9e6bc56f6b22e3af5c45f88a74719eff77950"
   },
   "SpyRenderer": {
     "baseline_yaml_content_hash": "9080916eac10c5f5a84436850d5ccf6f51a612746134c90f041cc11e89d1962b"
@@ -34,6 +35,9 @@
   "SpyRenderer.__init__": {
     "baseline_code_signature_text": "def __init__(self):",
     "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+  },
+  "SpyRenderer.messages": {
+    "baseline_yaml_content_hash": "104b9a15b29b18b8a9ee5de2d41c5a05b3a5ceca7e110f415ee9d479f12fbb7c"
   },
   "SpyRenderer.record": {
     "baseline_code_signature_text": "def record(self, level: str, msg_id: SemanticPointer, params: Dict[str, Any]):",

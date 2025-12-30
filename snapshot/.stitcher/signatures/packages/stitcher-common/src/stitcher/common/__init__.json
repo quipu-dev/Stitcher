@@ -1,8 +1,15 @@
 {
+  "__all__": {},
+  "__path__": {},
+  "_common_assets_root": {},
+  "_default_factory": {},
   "_detect_lang": {
     "baseline_code_signature_text": "def _detect_lang() -> str:",
     "baseline_code_structure_hash": "29d68989a36b5b512bdf941a43b9c622f7519b84013b58f5caa0735eb7219220"
   },
+  "_operator_cache": {},
+  "_project_root": {},
+  "_user_factory": {},
   "bus": {
     "baseline_yaml_content_hash": "9d8ffa4c49435c2db1936daf0af4c95dc2cac7f4e020f1ac2e82b5e4542cda3b"
   },

@@ -1,32 +1,20 @@
 {
-  "FileCheckResult": {
-    "baseline_yaml_content_hash": "c942c343734bbea9680a8611e65b4b70ab0ead076262442caaedf61b794ba1de"
-  },
-  "FileCheckResult.auto_reconciled_count": {
-    "baseline_yaml_content_hash": "36dd82b1df433b54951e5d55c1b5013843d64cefe9b7898b045801ffb73664e2"
-  },
+  "FileCheckResult": {},
+  "FileCheckResult.auto_reconciled_count": {},
   "FileCheckResult.error_count": {
     "baseline_code_signature_text": "def error_count(self) -> int:",
     "baseline_code_structure_hash": "30219f239eaeb9dc13488bc276ed11ec031d7b32b6f91125384a786c30e107cc",
     "baseline_yaml_content_hash": "be630a1ccfa7e75aabcf0c98ba0a306b157115ef6ae9a778d5f76dc3b6146e0e"
   },
-  "FileCheckResult.errors": {
-    "baseline_yaml_content_hash": "f24b1e68f251c83d82630549e82fec7859263d0ee137e27c67c48a3a75a3c262"
-  },
-  "FileCheckResult.infos": {
-    "baseline_yaml_content_hash": "d3498d5c63cb93206717b1f035063806f111ff7da06a400eea42c47ddd6ef09f"
-  },
+  "FileCheckResult.errors": {},
+  "FileCheckResult.infos": {},
   "FileCheckResult.is_clean": {
     "baseline_code_signature_text": "def is_clean(self) -> bool:",
     "baseline_code_structure_hash": "7854643ee354818d58824c41faf0d563e347c0320c299f0fc9d26a17430e2492",
     "baseline_yaml_content_hash": "2d1c227e491066f70231b6dbcbfe6bb5798726aa032767d6043d474241de6528"
   },
-  "FileCheckResult.path": {
-    "baseline_yaml_content_hash": "575c29e51af96bf288860fb0da725e192da6cf97ce60ece8889e0ae4df9e1f49"
-  },
-  "FileCheckResult.reconciled": {
-    "baseline_yaml_content_hash": "754ad6a507787d665272a8fe4525c37bd61c8599d8969e54604079c1b3424d19"
-  },
+  "FileCheckResult.path": {},
+  "FileCheckResult.reconciled": {},
   "FileCheckResult.reconciled_count": {
     "baseline_code_signature_text": "def reconciled_count(self) -> int:",
     "baseline_code_structure_hash": "b12338953fd7de35f28579324fb6415d37d81b4d4583bbd628d868dde4149325",
@@ -37,9 +25,7 @@
     "baseline_code_structure_hash": "3d88c9e03c32f49ff962be694c31e49542220a026d43f907574ac2d8f293789f",
     "baseline_yaml_content_hash": "d7f2634e2871aa3cb1129ae9711e63a42eab6cd69f513c3a9390d819dcd44e77"
   },
-  "FileCheckResult.warnings": {
-    "baseline_yaml_content_hash": "2ceea22d286f22daccf3682179b063e2a0c7fae75a7c4586020f349875dabe52"
-  },
+  "FileCheckResult.warnings": {},
   "PumpResult": {
     "baseline_yaml_content_hash": "5effea5a9812353c7c495546a50ec415d5bc7f503ad3ba9c7904bc7defa664b5"
   },
@@ -92,6 +78,13 @@
     "baseline_code_signature_text": "def _scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:",
     "baseline_code_structure_hash": "2c3c2fa02f6d713eb0d6adac2bc21c6dc9526c0c860efad5d0e9783ac655a7da"
   },
+  "StitcherApp.check_runner": {},
+  "StitcherApp.doc_manager": {
+    "baseline_yaml_content_hash": "eedb3a2e2e4147c6e1e0ce48d713c0afe012c7d053d33c1b6ecd8aeeb3017e2d"
+  },
+  "StitcherApp.generate_runner": {},
+  "StitcherApp.init_runner": {},
+  "StitcherApp.pump_runner": {},
   "StitcherApp.run_check": {
     "baseline_code_signature_text": "def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:",
     "baseline_code_structure_hash": "4cfe338208fefaf498e609a386a62469c06faddfb7d8cb43fbc915fd2d672ac8",
@@ -121,5 +114,13 @@
     "baseline_code_signature_text": "def run_strip(self, files: Optional[List[Path]] = None) -> List[Path]:",
     "baseline_code_structure_hash": "bda2820f9698db31dce2dee53b15d50409bed5407bd167b2c7e252a2a1c35392",
     "baseline_yaml_content_hash": "14c8ff8d578021db2d09829ff2f435a87bfae34896a5bb8340a117bf2baec81c"
-  }
+  },
+  "StitcherApp.scanner": {},
+  "StitcherApp.sig_manager": {
+    "baseline_yaml_content_hash": "3b8beb1534d8af06c7ef4b70705fcf132681c7c39ad3394085d84f05906b1f86"
+  },
+  "StitcherApp.stub_pkg_manager": {
+    "baseline_yaml_content_hash": "66a764e6bf4baed31dcffb65888c3cfd478d7df8971ee3920d1f517cbafd8949"
+  },
+  "StitcherApp.transform_runner": {}
 }

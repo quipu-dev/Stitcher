@@ -86,7 +86,7 @@ class StitcherApp:
     ) -> PumpResult:
         # Pass-through all options to the dedicated runner
         result = self.pump_runner.run(strip=strip, force=force, reconcile=reconcile)
-        
+
         # The secondary, interactive strip confirmation logic remains here for now,
         # as it's a cross-command concern (pump -> strip).
         # A more advanced implementation might use an event bus or a post-execution hook.
@@ -95,7 +95,8 @@ class StitcherApp:
             and result.redundant_files
             and not strip
         ):
-            import typer # Lazy import for CLI-specific interaction
+            import typer  # Lazy import for CLI-specific interaction
+
             typer.echo("")
             typer.secho(
                 f"Found {len(result.redundant_files)} file(s) with redundant docstrings in source code.",
@@ -105,7 +106,6 @@ class StitcherApp:
                 self.run_strip(files=result.redundant_files)
 
         return result
-
 
     def run_strip(self, files: Optional[List[Path]] = None) -> List[Path]:
         return self.transform_runner.run_strip(files=files)

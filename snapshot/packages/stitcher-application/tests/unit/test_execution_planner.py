@@ -40,7 +40,9 @@ def runner(tmp_path) -> PumpRunner:
 def test_plan_for_overwrite_with_strip(runner, sample_module):
     """测试场景：代码优先 (`HYDRATE_OVERWRITE`) + 请求剥离 (`--strip`)"""
     decisions = {"func_a": ResolutionAction.HYDRATE_OVERWRITE}
-    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
+    plan = runner._generate_execution_plan(
+        sample_module, decisions, strip_requested=True
+    )
 
     p_a = plan["func_a"]
     assert p_a.hydrate_yaml is True
@@ -52,7 +54,9 @@ def test_plan_for_overwrite_with_strip(runner, sample_module):
 def test_plan_for_overwrite_without_strip(runner, sample_module):
     """测试场景：代码优先 (`HYDRATE_OVERWRITE`) + 不请求剥离"""
     decisions = {"func_a": ResolutionAction.HYDRATE_OVERWRITE}
-    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=False)
+    plan = runner._generate_execution_plan(
+        sample_module, decisions, strip_requested=False
+    )
 
     p_a = plan["func_a"]
     assert p_a.hydrate_yaml is True
@@ -64,7 +68,9 @@ def test_plan_for_overwrite_without_strip(runner, sample_module):
 def test_plan_for_keep_existing_with_strip(runner, sample_module):
     """测试场景：侧栏优先 (`HYDRATE_KEEP_EXISTING`) + 请求剥离 (`--strip`)"""
     decisions = {"func_a": ResolutionAction.HYDRATE_KEEP_EXISTING}
-    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
+    plan = runner._generate_execution_plan(
+        sample_module, decisions, strip_requested=True
+    )
 
     p_a = plan["func_a"]
     assert p_a.hydrate_yaml is False
@@ -76,7 +82,9 @@ def test_plan_for_keep_existing_with_strip(runner, sample_module):
 def test_plan_for_keep_existing_without_strip(runner, sample_module):
     """测试场景：侧栏优先 (`HYDRATE_KEEP_EXISTING`) + 不请求剥离"""
     decisions = {"func_a": ResolutionAction.HYDRATE_KEEP_EXISTING}
-    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=False)
+    plan = runner._generate_execution_plan(
+        sample_module, decisions, strip_requested=False
+    )
 
     p_a = plan["func_a"]
     assert p_a.hydrate_yaml is False
@@ -88,7 +96,9 @@ def test_plan_for_keep_existing_without_strip(runner, sample_module):
 def test_plan_for_skip(runner, sample_module):
     """测试场景：用户选择跳过 (`SKIP`)"""
     decisions = {"func_a": ResolutionAction.SKIP}
-    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
+    plan = runner._generate_execution_plan(
+        sample_module, decisions, strip_requested=True
+    )
 
     p_a = plan["func_a"]
     assert p_a.hydrate_yaml is False
@@ -100,7 +110,9 @@ def test_plan_for_skip(runner, sample_module):
 def test_plan_for_no_conflict(runner, sample_module):
     """测试场景：无冲突的函数 (在decisions中不存在)"""
     decisions = {"func_b": ResolutionAction.SKIP}  # func_a is no-conflict
-    plan = runner._generate_execution_plan(sample_module, decisions, strip_requested=True)
+    plan = runner._generate_execution_plan(
+        sample_module, decisions, strip_requested=True
+    )
 
     # func_a 应该被正常处理
     p_a = plan["func_a"]
@@ -108,7 +120,7 @@ def test_plan_for_no_conflict(runner, sample_module):
     assert p_a.update_doc_fingerprint is True
     assert p_a.strip_source_docstring is True
     assert p_a.update_code_fingerprint is True
-    
+
     # func_b 应该被跳过
     p_b = plan["func_b"]
     assert p_b.hydrate_yaml is False

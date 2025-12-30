@@ -1,25 +1,3 @@
-"FileCheckResult": |-
-  Data container representing the outcome of a consistency check for a single file.
-"FileCheckResult.auto_reconciled_count": |-
-  The count of documentation improvements that were automatically reconciled.
-"FileCheckResult.error_count": |-
-  Total number of critical issues (errors) discovered in the file.
-"FileCheckResult.errors": |-
-  A collection of errors keyed by their category (e.g., 'conflict', 'mismatch').
-"FileCheckResult.infos": |-
-  A collection of informational messages keyed by their category (e.g., 'doc_improvement').
-"FileCheckResult.is_clean": |-
-  Returns True if the file has no issues and no reconciliation was performed.
-"FileCheckResult.path": |-
-  The relative path to the source file that was inspected.
-"FileCheckResult.reconciled": |-
-  The count of signature mismatches that were automatically updated during the check.
-"FileCheckResult.reconciled_count": |-
-  Total number of issues that were reconciled (interactively or automatically).
-"FileCheckResult.warning_count": |-
-  Total number of non-blocking issues (warnings) discovered in the file.
-"FileCheckResult.warnings": |-
-  A collection of warnings keyed by their category (e.g., 'missing', 'untracked').
 "PumpResult": |-
   Data container for the result of a `run_pump` operation.
 "PumpResult.redundant_files": |-

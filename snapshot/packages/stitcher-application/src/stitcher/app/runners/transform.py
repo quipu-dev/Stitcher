@@ -37,7 +37,9 @@ class TransformRunner:
             try:
                 original_content = file_path.read_text(encoding="utf-8")
                 # Call strip with whitelist=None for global stripping
-                stripped_content = self.transformer.strip(original_content, whitelist=None)
+                stripped_content = self.transformer.strip(
+                    original_content, whitelist=None
+                )
                 if original_content != stripped_content:
                     file_path.write_text(stripped_content, encoding="utf-8")
                     all_modified_files.append(file_path)

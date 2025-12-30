@@ -1,14 +1,22 @@
 "PatchedMessageBus": |-
   An override of MessageBus to intercept calls before rendering.
 "SpyBus": |-
-  A test utility to spy on messages sent via the global bus.
+  A Test Utility that spies on the global stitcher.common.bus singleton.
+
+  Instead of replacing the bus instance (which fails if modules have already
+  imported the instance via 'from stitcher.common import bus'),
+  this utility patches the instance methods directly.
 "SpyBus.assert_id_called": |-
   Asserts that a message with the given ID was sent.
 "SpyBus.get_messages": |-
   Returns all messages captured by the spy.
 "SpyBus.patch": |-
-  A context manager that patches a target module's `bus` instance
-  with this spy instance.
+  Patches the global bus to capture messages.
+
+  Args:
+      monkeypatch: The pytest monkeypatch fixture.
+      target: Kept for compatibility with existing tests, but functionally
+              we always patch the singleton instance found at stitcher.common.bus.
 "SpyRenderer": |-
   A renderer that captures structured message data.
 "SpyRenderer.messages": |-

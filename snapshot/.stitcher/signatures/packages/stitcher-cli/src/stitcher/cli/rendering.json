@@ -10,5 +10,8 @@
     "baseline_code_signature_text": "def render(self, message: str, level: str):",
     "baseline_code_structure_hash": "92afbd272a6d674fca2cfa99e3548adaa018e08a00636d1c63b6e112eba21442",
     "baseline_yaml_content_hash": "86bdf797311c9418039b74cb09c0232c4678d24e8e9e0761c91c9982f2346edc"
+  },
+  "CliRenderer.verbose": {
+    "baseline_yaml_content_hash": "336ebcdcedb0fe0d1aab3d423edfa41d1678808c65335e3556d7d0bc4fb0487e"
   }
 }

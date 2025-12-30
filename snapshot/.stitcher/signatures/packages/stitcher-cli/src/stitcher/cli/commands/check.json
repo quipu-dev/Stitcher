@@ -1,6 +1,6 @@
 {
   "check_command": {
-    "baseline_code_signature_text": "def check_command(force_relink: bool = typer.Option(\n        False,\n        \"--force-relink\",\n        help=\"[Non-interactive] For 'Signature Drift' errors, forces relinking.\",\n   ), reconcile: bool = typer.Option(\n        False,\n        \"--reconcile\",\n        help=\"[Non-interactive] For 'Co-evolution' errors, accepts both changes.\",\n   ), non_interactive: bool = typer.Option(\n        False,\n        \"--non-interactive\",\n        help=\"Force non-interactive mode, failing on unresolved conflicts.\",\n   )):",
+    "baseline_code_signature_text": "def check_command(force_relink: bool = typer.Option(False, '--force-relink', help=\"[Non-interactive] For 'Signature Drift' errors, forces relinking.\"), reconcile: bool = typer.Option(False, '--reconcile', help=\"[Non-interactive] For 'Co-evolution' errors, accepts both changes.\"), non_interactive: bool = typer.Option(False, '--non-interactive', help='Force non-interactive mode, failing on unresolved conflicts.')):",
     "baseline_code_structure_hash": "44575dfd42387b1e1321f090493a4c90ded44082b12dad93de636974c089376a",
     "baseline_yaml_content_hash": "94906b1fda366194217772c2bedb475e28f01da9625e1f4d1b2a6a01c9d64859"
   }

@@ -70,6 +70,8 @@
   The name of the function.
 "FunctionDef.return_annotation": |-
   The return type annotation of the function.
+"FunctionExecutionPlan": |-
+  定义对单个 FQN 的最终执行操作。
 "ModuleDef": |-
   Represents a parsed Python module (a single .py file).
 "ModuleDef.attributes": |-
@@ -84,6 +86,8 @@
   The relative path to the module file.
 "ModuleDef.functions": |-
   A list of functions defined at the module level.
+"ModuleDef.get_all_fqns": |-
+  返回模块中所有可文档化实体的 FQN 列表。
 "ModuleDef.get_undocumented_public_keys": |-
   Returns a list of public keys (FQNs) that do not have a docstring.
 "ModuleDef.imports": |-

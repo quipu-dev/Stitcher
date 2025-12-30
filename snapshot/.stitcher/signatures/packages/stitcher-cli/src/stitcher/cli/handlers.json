@@ -10,5 +10,8 @@
     "baseline_code_signature_text": "def process_interactive_session(self, contexts: List[InteractionContext]) -> List[ResolutionAction]:",
     "baseline_code_structure_hash": "72ab2928cd87e4ba0ccc8358dc09f0186a38a90654abd80ff66a8358659e5a1b",
     "baseline_yaml_content_hash": "8021e46a800e7ba05d78e2020df940946829bf0c14440a0cbcc780b44b846f63"
+  },
+  "TyperInteractionHandler.renderer": {
+    "baseline_yaml_content_hash": "ad1def1908ca2ce89f8f7c5e8731322ef08406ddacd8475bac716986388abff1"
   }
 }

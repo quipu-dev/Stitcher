@@ -22,12 +22,12 @@ class SpyRenderer(Renderer):
 class SpyBus:
     """
     A Test Utility that spies on the global stitcher.common.bus singleton.
-    
-    Instead of replacing the bus instance (which fails if modules have already 
-    imported the instance via 'from stitcher.common import bus'), 
+
+    Instead of replacing the bus instance (which fails if modules have already
+    imported the instance via 'from stitcher.common import bus'),
     this utility patches the instance methods directly.
     """
-    
+
     def __init__(self):
         self._spy_renderer = SpyRenderer()
 
@@ -35,29 +35,31 @@ class SpyBus:
     def patch(self, monkeypatch: Any, target: str = "stitcher.common.bus"):
         """
         Patches the global bus to capture messages.
-        
+
         Args:
             monkeypatch: The pytest monkeypatch fixture.
-            target: Kept for compatibility with existing tests, but functionally 
+            target: Kept for compatibility with existing tests, but functionally
                     we always patch the singleton instance found at stitcher.common.bus.
         """
         # The singleton instance we need to mutate
         real_bus = stitcher.common.bus
 
         # Define the interceptor hook
-        def intercept_render(level: str, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
+        def intercept_render(
+            level: str, msg_id: Union[str, SemanticPointer], **kwargs: Any
+        ) -> None:
             # 1. Capture the semantic pointer
             if isinstance(msg_id, SemanticPointer):
                 self._spy_renderer.record(level, msg_id, kwargs)
-            
+
             # 2. We deliberately DO NOT call the original _render logic here
-            # because we don't want tests spamming stdout, and we don't 
+            # because we don't want tests spamming stdout, and we don't
             # want to rely on the real renderer (CLI) being configured.
 
         # Apply In-Place Patches using monkeypatch (handles restoration automatically)
         # 1. Swap the _render method to intercept calls
         monkeypatch.setattr(real_bus, "_render", intercept_render)
-        
+
         # 2. Swap the _renderer to our spy (though intercept_render mostly handles logic,
         # setting this ensures internal checks for valid renderer pass if needed)
         monkeypatch.setattr(real_bus, "_renderer", self._spy_renderer)
@@ -71,7 +73,7 @@ class SpyBus:
         key = str(msg_id)
         found = False
         captured = self.get_messages()
-        
+
         for msg in captured:
             if msg["id"] == key and (level is None or msg["level"] == level):
                 found = True
@@ -81,6 +83,5 @@ class SpyBus:
             # Enhanced error message for debugging
             ids_seen = [m["id"] for m in captured]
             raise AssertionError(
-                f"Message with ID '{key}' was not sent.\n"
-                f"Captured IDs: {ids_seen}"
+                f"Message with ID '{key}' was not sent.\nCaptured IDs: {ids_seen}"
             )

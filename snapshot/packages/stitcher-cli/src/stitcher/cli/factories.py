@@ -6,7 +6,6 @@ from stitcher.app import StitcherApp
 from stitcher.app.protocols import InteractionHandler
 from stitcher.common import stitcher_operator as nexus
 from stitcher.adapter.python import (
-    PythonParser,
     GriffePythonParser,
     PythonTransformer,
     PythonStubGenerator,

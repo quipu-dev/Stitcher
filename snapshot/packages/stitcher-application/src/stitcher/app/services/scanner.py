@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 from collections import defaultdict
 
 from stitcher.common import bus
@@ -59,20 +59,20 @@ class ScannerService:
                 module_path_parts = parts[:-1]
                 func_file_name = parts[-1]
                 func_path = Path(*module_path_parts, f"{func_file_name}.py")
-                
+
                 # Ensure intermediate __init__.py exist in virtual structure
                 for i in range(1, len(module_path_parts) + 1):
                     init_path = Path(*parts[:i], "__init__.py")
                     if not virtual_modules[init_path].file_path:
                         virtual_modules[init_path].file_path = init_path.as_posix()
-                
+
                 if not virtual_modules[func_path].file_path:
                     virtual_modules[func_path].file_path = func_path.as_posix()
                 virtual_modules[func_path].functions.append(func_def)
             except InspectionError as e:
                 bus.error(L.error.plugin.inspection, error=e)
         return list(virtual_modules.values())
-    
+
     def derive_logical_path(self, file_path: str) -> Path:
         path_obj = Path(file_path)
         parts = path_obj.parts
