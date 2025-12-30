@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 提取 Check/Pump Runners 并重构 StitcherApp", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767062043.196435, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 修正因重构 StitcherApp 导致的测试失败", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767062253.659982, "duration_ms": 0}}

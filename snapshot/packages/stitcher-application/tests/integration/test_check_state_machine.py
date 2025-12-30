@@ -25,14 +25,14 @@ def test_state_synchronized(tmp_path, monkeypatch):
     )
     app = create_test_app(root_path=project_root)
 
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     # Remove docstring to achieve 'Synchronized' state without redundant warnings
     (project_root / "src/module.py").write_text("def func(a: int):\n    pass")
 
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     assert success is True
@@ -52,7 +52,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: int):\n    pass")
@@ -67,7 +67,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     assert success is True
@@ -97,13 +97,13 @@ def test_state_signature_drift_error(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
 
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     assert success is False
@@ -123,7 +123,7 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
@@ -131,7 +131,7 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check(force_relink=True)
 
     assert success is True
@@ -162,7 +162,7 @@ def test_state_co_evolution_error(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
@@ -173,7 +173,7 @@ def test_state_co_evolution_error(tmp_path, monkeypatch):
     )
 
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     assert success is False
@@ -193,7 +193,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
@@ -207,7 +207,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check(reconcile=True)
 
     assert success is True

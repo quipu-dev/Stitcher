@@ -68,7 +68,7 @@ def func():
     # 4. Run Check
     # This should detect the improvement and update the signature file
     spy = SpyBus()
-    with spy.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy.patch(monkeypatch, "stitcher.common.bus"):
         app.run_check()
 
     # 5. Assertions

@@ -28,7 +28,7 @@ def test_pump_does_not_corrupt_code_signature_baseline(tmp_path, monkeypatch):
     # NOTE: When running against the *fixed* codebase, this will use Griffe,
     # but the test logic remains valid as it's about state changes.
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     # 2. Act: Modify the code to introduce a signature drift AND a new docstring
@@ -39,13 +39,13 @@ def test_pump_does_not_corrupt_code_signature_baseline(tmp_path, monkeypatch):
     # 3. Act: Run pump. This is the command with the potential side effect.
     # On buggy code, this will overwrite the code signature baseline.
     # On fixed code, it will only update the doc hashes.
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         pump_result = app.run_pump()
         assert pump_result.success is True, "Pump command itself should succeed."
 
     # 4. Assert: Run check and verify that it STILL detects the original drift.
     spy_bus_check = SpyBus()
-    with spy_bus_check.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus_check.patch(monkeypatch, "stitcher.common.bus"):
         check_success = app.run_check()
 
     # On buggy code, `pump` resets the baseline, so `check` will pass (check_success=True).
@@ -81,7 +81,7 @@ def func_conflict(): ...
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     # Get initial state
@@ -99,7 +99,7 @@ def func_conflict(): ...
 
     # 3. Act: Run pump. It should fail because of func_conflict.
     spy_bus_pump = SpyBus()
-    with spy_bus_pump.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus_pump.patch(monkeypatch, "stitcher.common.bus"):
         # We run with force=False, reconcile=False to ensure conflict is detected
         pump_result = app.run_pump(force=False, reconcile=False)
 

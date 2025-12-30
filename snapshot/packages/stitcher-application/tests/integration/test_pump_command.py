@@ -18,7 +18,7 @@ def test_pump_adds_new_docs_to_yaml(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump()
 
     # Assert
@@ -48,7 +48,7 @@ def test_pump_fails_on_conflict(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump()
 
     # Assert
@@ -78,7 +78,7 @@ def test_pump_force_overwrites_conflict(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump(force=True)
 
     # Assert
@@ -107,7 +107,7 @@ def test_pump_with_strip_removes_source_doc(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump(strip=True)
 
     # Assert
@@ -136,7 +136,7 @@ def test_pump_reconcile_ignores_source_conflict(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump(reconcile=True)
 
     # Assert

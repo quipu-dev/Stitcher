@@ -48,7 +48,7 @@ def test_check_detects_matrix_states(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     # 3. Assert
@@ -95,7 +95,7 @@ def test_check_passes_when_synced(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # 2. Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     # 3. Assert

@@ -24,7 +24,7 @@ def test_strip_command_removes_docstrings(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_strip()
 
     # Assert
@@ -55,7 +55,7 @@ def test_inject_command_injects_docstrings(tmp_path, monkeypatch):
     spy_bus = SpyBus()
 
     # Act
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_inject()
 
     # Assert

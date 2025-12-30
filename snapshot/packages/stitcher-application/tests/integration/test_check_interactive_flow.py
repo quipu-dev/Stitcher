@@ -47,7 +47,7 @@ def func_b(x: int):
     )
 
     app_for_init = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app_for_init.run_init()
 
     # 2. Trigger Changes
@@ -69,7 +69,7 @@ def func_b(x: str): # int -> str
 
     # 4. Run Check
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     # 5. Assertions

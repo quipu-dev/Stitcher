@@ -23,7 +23,7 @@ def test_pump_does_not_rewrite_synced_legacy_signatures(tmp_path: Path, monkeypa
     )
 
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     # 2. Arrange: Manually convert the signature file to the legacy format.
@@ -53,7 +53,7 @@ def test_pump_does_not_rewrite_synced_legacy_signatures(tmp_path: Path, monkeypa
     # the strict Fingerprint validation should fail, treating the file as corrupted/empty.
     # Pump will then treat the code as "new" and regenerate the signatures with
     # correct keys ('baseline_code_structure_hash').
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = app.run_pump()
 
     # 4. Assert

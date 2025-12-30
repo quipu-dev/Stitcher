@@ -30,7 +30,7 @@ def test_check_detects_signature_change(tmp_path, monkeypatch):
     app = create_test_app(root_path=project_root)
 
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     _assert_no_errors(spy_bus)
@@ -44,7 +44,7 @@ def test_check_detects_signature_change(tmp_path, monkeypatch):
     (project_root / "src/processor.py").write_text(modified_code, encoding="utf-8")
 
     spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     assert success is False
@@ -64,16 +64,16 @@ def test_generate_does_not_update_signatures(tmp_path, monkeypatch):
     )
     app = create_test_app(root_path=project_root)
 
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/main.py").write_text("def func(a: str): ...")
 
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_from_config()
 
     spy_bus_check = SpyBus()
-    with spy_bus_check.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus_check.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
     assert not success, "Check passed, but it should have failed."
@@ -91,21 +91,21 @@ def test_check_with_force_relink_reconciles_changes(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.app.core.bus"):
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     # Modify: Change signature, remove doc to be clean
     (project_root / "src/main.py").write_text("def func(a: str):\n    ...")
 
     spy_bus_reconcile = SpyBus()
-    with spy_bus_reconcile.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus_reconcile.patch(monkeypatch, "stitcher.common.bus"):
         success_reconcile = app.run_check(force_relink=True)
 
     assert success_reconcile is True, "Check with --force-relink failed"
     spy_bus_reconcile.assert_id_called(L.check.state.relinked, level="success")
 
     spy_bus_verify = SpyBus()
-    with spy_bus_verify.patch(monkeypatch, "stitcher.app.core.bus"):
+    with spy_bus_verify.patch(monkeypatch, "stitcher.common.bus"):
         success_verify = app.run_check()
 
     assert success_verify is True, "Verification check failed after reconciliation"
