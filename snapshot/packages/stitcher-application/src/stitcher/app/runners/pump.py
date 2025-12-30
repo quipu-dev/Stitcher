@@ -98,46 +98,29 @@ class PumpRunner:
         all_modules: List[ModuleDef] = []
         all_conflicts: List[InteractionContext] = []
 
-        # --- Phase 5: Stripping ---
-        if strip_jobs:
-            total_stripped_files = 0
-            for file_path, whitelist in strip_jobs.items():
-                source_path = self.root_path / file_path
-                if not whitelist: continue
-                try:
-                    original_content = source_path.read_text("utf-8")
-                    stripped_content = self.transformer.strip(original_content, whitelist=whitelist)
-                    if original_content != stripped_content:
-                        source_path.write_text(stripped_content, "utf-8")
-                        bus.success(L.strip.file.success, path=source_path.relative_to(self.root_path))
-                        total_stripped_files += 1
-                except Exception as e:
-                    bus.error(L.error.generic, error=e)
-            
-            if total_stripped_files > 0:
-                bus.success(L.strip.run.complete, count=total_stripped_files)
-        
-        # Phase 6: Ensure Signatures Integrity (Auto-migration for legacy keys)
-        # Even if no docs were pumped, we ensure the signature files are in the latest format.
-        for module in all_modules:
-            self.sig_manager.reformat_hashes_for_module(module)
-        
-        # Final Reporting
-        if unresolved_conflicts_count > 0:
-            bus.error(L.pump.run.conflict, count=unresolved_conflicts_count)
-            return PumpResult(success=False)
-        
-        # If we have any successful operations (updates OR reconciliations OR strips), 
-        # we consider it a success/complete run. 'no_changes' is strictly for when NOTHING happened.
-        has_activity = (total_updated_keys > 0) or (total_reconciled_keys > 0) or strip_jobs
-        
-        if not has_activity:
-            bus.info(L.pump.run.no_changes)
-        else:
-            # We report the count of actual pumped keys as the primary metric
-            bus.success(L.pump.run.complete, count=total_updated_keys)
+        # --- Phase 1: Analysis ---
+        # Scan all files and identify conflicts WITHOUT applying changes
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
+            unique_files = self.scanner.get_files_from_config(config)
+            modules = self.scanner.scan_files(unique_files)
+            if not modules: continue
+            all_modules.extend(modules)
 
-        return PumpResult(success=True, redundant_files=[])
+            for module in modules:
+                # IMPORTANT: dry_run=True, force=False, reconcile=False
+                # We want to see the RAW conflicts first so we can decide on them.
+                res = self.doc_manager.hydrate_module(module, force=False, reconcile=False, dry_run=True)
+                if not res["success"]:
+                    source_docs = self.doc_manager.flatten_module_docs(module)
+                    yaml_docs = self.doc_manager.load_docs_for_module(module)
+                    for key in res["conflicts"]:
+                        doc_diff = self._generate_diff(yaml_docs.get(key, ""), source_docs.get(key, ""), "yaml", "code")
+                        all_conflicts.append(InteractionContext(module.file_path, key, ConflictType.DOC_CONTENT_CONFLICT, doc_diff=doc_diff))
+
+        # --- Phase 2: Decision ---
+        # Solve conflicts via InteractionHandler (or NoOp defaults)
         decisions: Dict[str, ResolutionAction] = {}
         if all_conflicts:
             handler = self.interaction_handler or NoOpInteractionHandler(hydrate_force=force, hydrate_reconcile=reconcile)
@@ -151,6 +134,7 @@ class PumpRunner:
                 decisions[context.fqn] = action
 
         # --- Phase 3 & 4: Planning & Execution ---
+        # Apply decisions, write files, and record stats
         strip_jobs = defaultdict(list)
         total_updated_keys = 0
         total_reconciled_keys = 0
@@ -188,6 +172,7 @@ class PumpRunner:
                     if fqn in source_docs:
                         doc_hash = self.doc_manager.compute_yaml_content_hash(source_docs[fqn])
                         fp["baseline_yaml_content_hash"] = doc_hash
+                        # If we have a new key, we should try to grab its code hash too if available
                         if fqn not in stored_hashes:
                              current_fp = self.sig_manager.compute_fingerprints(module).get(fqn, Fingerprint())
                              if "current_code_structure_hash" in current_fp:
@@ -217,6 +202,7 @@ class PumpRunner:
 
         # --- Phase 5: Stripping ---
         if strip_jobs:
+            total_stripped_files = 0
             for file_path, whitelist in strip_jobs.items():
                 source_path = self.root_path / file_path
                 if not whitelist: continue
@@ -226,15 +212,26 @@ class PumpRunner:
                     if original_content != stripped_content:
                         source_path.write_text(stripped_content, "utf-8")
                         bus.success(L.strip.file.success, path=source_path.relative_to(self.root_path))
+                        total_stripped_files += 1
                 except Exception as e:
                     bus.error(L.error.generic, error=e)
+            
+            if total_stripped_files > 0:
+                bus.success(L.strip.run.complete, count=total_stripped_files)
+        
+        # Phase 6: Ensure Signatures Integrity
+        # Refresh all signatures to latest format, even if no docs changed.
+        for module in all_modules:
+            self.sig_manager.reformat_hashes_for_module(module)
         
         # Final Reporting
         if unresolved_conflicts_count > 0:
             bus.error(L.pump.run.conflict, count=unresolved_conflicts_count)
             return PumpResult(success=False)
         
-        if total_updated_keys == 0 and total_reconciled_keys == 0 and not strip_jobs:
+        has_activity = (total_updated_keys > 0) or (total_reconciled_keys > 0) or strip_jobs
+        
+        if not has_activity:
             bus.info(L.pump.run.no_changes)
         else:
             bus.success(L.pump.run.complete, count=total_updated_keys)

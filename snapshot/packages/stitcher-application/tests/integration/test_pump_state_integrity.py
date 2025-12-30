@@ -96,8 +96,9 @@ def func_conflict(): ...
 
     # 2. Act: Modify the code to create a mixed state
     (project_root / "src/main.py").write_text(
-        'def func_clean():\\n    """New clean doc."""\\n'
-        'def func_conflict():\\n    """New conflicting doc."""'
+        'def func_clean():\n    """New clean doc."""\n'
+        'def func_conflict():\n    """New conflicting doc."""',
+        encoding="utf-8"
     )
 
     # 3. Act: Run pump. It should fail because of func_conflict.

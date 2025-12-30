@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(pump): 修复 Pump 逻辑流断裂与测试数据错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767062950.9804614, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(pump): 重构损坏的 PumpRunner 并修复测试数据", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767063083.4644468, "duration_ms": 0}}
