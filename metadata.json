@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修正 pump 的执行计划和指纹更新逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767064551.4931693, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(pump): Implement function-level execution planner", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767064626.8763828, "duration_ms": 0}}
