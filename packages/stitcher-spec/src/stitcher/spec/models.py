@@ -79,7 +79,6 @@ class ModuleDef:
         )
 
     def get_all_fqns(self) -> List[str]:
-        """返回模块中所有可文档化实体的 FQN 列表。"""
         fqns = []
         if self.docstring:
             # Consistent with how we might handle module doc in the future
@@ -166,8 +165,6 @@ class ResolutionPlan:
 
 @dataclass
 class FunctionExecutionPlan:
-    """定义对单个 FQN 的最终执行操作。"""
-
     fqn: str
     strip_source_docstring: bool = False
     update_code_fingerprint: bool = False
