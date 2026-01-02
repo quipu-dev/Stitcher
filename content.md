@@ -1,50 +1,44 @@
-好的，测试如预期失败，这确认了我们的诊断是正确的。现在是时候实施修复了。
-
-正如我们分析的那样，问题出在 `StripperTransformer` 的实现上，它只处理了容器（模块、类、函数）的文档字符串，而忽略了属性的。我将重写这个转换器，使其能够正确识别并移除所有类型的文档字符串。
-
-我将生成一个计划来更新 `transformer.py` 文件。
-
-## [WIP] fix: 实现对属性文档字符串的剥离功能
+## [WIP] fix(runtime): 修复 StripperTransformer 以支持基于白名单的剥离
 
 ### 错误分析
+在上一轮 `test_pump_command.py` 的测试失败中，系统抛出了 `AssertionError: Message with ID 'strip.file.success' was not sent`，并在捕获的日志中发现了 `error.generic`。
 
-测试失败确认了 `StripperTransformer` 的实现过于简单。它只检查并移除位于代码块（模块、类、函数）最开始位置的文档字符串。它完全没有处理那些在抽象语法树 (AST) 中紧跟在赋值语句（`Assign` 和 `AnnAssign` 节点）之后的文档字符串，而这正是 Python 中为变量和属性附加文档的语法形式。
+经过深入分析，这是因为我在重写 `StripperTransformer` 时，简单粗暴地移除了对 `whitelist` 参数的支持（如果传入非空白名单则抛出 `NotImplementedError`）。
+然而，`stitcher pump --strip` 命令的核心逻辑恰恰依赖于这个白名单机制——它只应该剥离那些已经被提取并存储在 YAML 文件中的文档字符串，以避免意外删除用户未提取的注释或文档。
+
+由于 `pump` 命令在遇到 `StripperTransformer` 抛出的 `NotImplementedError` 时捕获了异常并记录为 `error.generic`，导致预期的成功消息没有发出，从而使测试失败。
 
 ### 用户需求
-
-修复 `strip` 命令，使其能够正确地移除 dataclass 字段或模块/类级别变量的文档字符串。
+用户需要修复 `pump --strip` 导致的测试失败。这意味着 `StripperTransformer` 必须完整支持 `whitelist` 逻辑：
+1.  **全局剥离 (stitcher strip)**: 当 `whitelist` 为 `None` 时，剥离所有识别到的文档字符串。
+2.  **选择性剥离 (stitcher pump --strip)**: 当 `whitelist` 存在时，仅剥离 FQN (Fully Qualified Name) 存在于白名单中的文档字符串。
 
 ### 评论
-
-这个修复对于 `strip` 命令的可靠性至关重要。它确保了无论文档字符串附加到何种代码结构上，Stitcher 都能统一地管理它们，从而实现代码的彻底清理。这是一个核心功能的健壮性增强。
+这是一个典型的回归问题。在增强功能（支持属性文档剥离）的同时，我们无意中破坏了现有的契约（支持白名单）。这次修复必须同时满足这两个需求。我们需要在遍历 AST 时动态构建当前属性的 FQN，并与白名单进行比对。
 
 ### 目标
-
-修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/transformer.py` 文件中的 `StripperTransformer`，使其能够：
-1.  识别并移除模块、类和函数的文档字符串。
-2.  识别并移除紧跟在赋值语句后面的属性和变量的文档字符串。
+重新实现 `packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/transformer.py`。
+新实现将：
+1.  维护 `scope_stack` 以追踪当前的命名空间（类/函数）。
+2.  在 `_strip_docstrings_from_body` 中，不仅判断位置（首行或赋值后），还要计算目标实体的 FQN 并检查白名单。
+3.  正确处理 `Module`, `Class`, `Function` 以及 `Attribute`（包括赋值语句后的文档）的剥离逻辑。
 
 ### 基本原理
-
-我将用一个新的、更健壮的实现替换整个 `StripperTransformer` 类。
-
-新的核心逻辑位于一个名为 `_strip_docstrings_from_body` 的辅助方法中。这个方法会遍历一个代码块中的所有语句。当它遇到一个文档字符串时，它会检查其上下文：
-1.  如果该文档字符串是块中的**第一个**语句，它就会被视为主体（模块/类/函数）的文档字符串并被移除。
-2.  如果该文档字符串**紧跟在一个赋值语句之后**，它就会被视为属性的文档字符串并被移除。
-
-这个经过改进的、基于上下文的逻辑可以正确处理所有情况。由于改动幅度较大且涉及核心逻辑重构，我将使用 `write_file` 指令来确保文件的完整性和准确性。
+我们将使用 `write_file` 覆盖 `transformer.py`。
+核心算法改进如下：
+-   **FQN 构建**: 当在 `MyClass` 的方法 `my_func` 中遇到赋值 `x = 1` 后的文档字符串时，我们需要构建 FQN `MyClass.my_func.x`（尽管局部变量通常不被 Stitcher 提取，但在全局剥离模式下可能需要处理，或者在白名单模式下被安全忽略）。对于类属性 `y = 1`，FQN 为 `MyClass.y`。
+-   **白名单检查**:
+    -   容器（模块/类/函数）的文档字符串：在进入/离开节点时，检查容器本身的 FQN 是否在白名单中。
+    -   属性文档字符串：解析赋值语句左侧的名称，结合当前 Scope 构建 FQN，检查是否在白名单中。
 
 ### 标签
-
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/executor #scope/core #ai/instruct #task/domain/testing #task/object/attribute-stripping #task/action/implementation #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/executor #scope/core #ai/instruct #task/domain/testing #task/object/stripper-transformer #task/action/fix-regression #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重写 StripperTransformer 以支持属性文档字符串
-
-我们将使用 `write_file` 彻底更新 `transformer.py`，引入新的 `StripperTransformer` 实现，该实现能够正确处理所有类型的文档字符串。
+#### Acts 1: 修复 StripperTransformer 以支持白名单和属性剥离
 
 ~~~~~act
 write_file
@@ -61,20 +55,33 @@ HasBody = Union[cst.Module, cst.ClassDef, cst.FunctionDef]
 
 class StripperTransformer(cst.CSTTransformer):
     def __init__(self, whitelist: Optional[List[str]] = None):
-        # This implementation focuses on the global strip case (whitelist=None)
-        # which is the primary use case for `stitcher strip`. A full whitelist
-        # implementation would require more complex FQN tracking within the visitor.
-        if whitelist is not None:
-            raise NotImplementedError(
-                "Whitelist-based stripping is not supported by this transformer version."
-            )
+        self.whitelist = set(whitelist) if whitelist is not None else None
         self.scope_stack: List[str] = []
+
+    def _should_strip(self, fqn: str) -> bool:
+        if self.whitelist is None:
+            return True
+        return fqn in self.whitelist
 
     def _is_docstring(self, node: cst.BaseSmallStatement) -> bool:
         return isinstance(node, cst.Expr) and isinstance(node.value, cst.SimpleString)
 
+    def _get_assign_target_name(self, node: cst.BaseSmallStatement) -> Optional[str]:
+        """Extracts the target name from a simple assignment node."""
+        if isinstance(node, cst.Assign):
+            # Only handle simple assignment: x = ...
+            if len(node.targets) == 1 and isinstance(node.targets[0].target, cst.Name):
+                return node.targets[0].target.value
+        elif isinstance(node, cst.AnnAssign):
+            # Handle annotated assignment: x: int = ...
+            if isinstance(node.target, cst.Name):
+                return node.target.value
+        return None
+
     def _strip_docstrings_from_body(
-        self, body_nodes: Union[List[cst.BaseStatement], tuple[cst.BaseStatement, ...]]
+        self,
+        body_nodes: Union[List[cst.BaseStatement], tuple[cst.BaseStatement, ...]],
+        strip_container_doc: bool,
     ) -> List[cst.BaseStatement]:
         if not body_nodes:
             return []
@@ -85,31 +92,35 @@ class StripperTransformer(cst.CSTTransformer):
         while i < len(statements):
             current_stmt = statements[i]
 
+            is_simple_stmt = isinstance(current_stmt, cst.SimpleStatementLine)
             is_docstring = (
-                isinstance(current_stmt, cst.SimpleStatementLine)
+                is_simple_stmt
                 and len(current_stmt.body) == 1
                 and self._is_docstring(current_stmt.body[0])
             )
 
-            # Determine if we should strip this statement
             strip_it = False
+
             if is_docstring:
-                # Case 1: It's a module/class/function docstring. This means it's the
-                # first statement in the body.
+                # Case 1: Container (Module/Class/Function) docstring
+                # It must be the first statement.
                 if i == 0:
-                    strip_it = True
-                # Case 2: It's an attribute docstring. This means it is preceded by
-                # an assignment statement.
+                    if strip_container_doc:
+                        strip_it = True
+
+                # Case 2: Attribute/Variable docstring
+                # It must be preceded by an assignment.
                 elif i > 0:
                     prev_stmt = statements[i - 1]
-                    if (
-                        isinstance(prev_stmt, cst.SimpleStatementLine)
-                        and len(prev_stmt.body) == 1
-                        and isinstance(
-                            prev_stmt.body[0], (cst.Assign, cst.AnnAssign)
-                        )
-                    ):
-                        strip_it = True
+                    if isinstance(prev_stmt, cst.SimpleStatementLine) and len(prev_stmt.body) == 1:
+                        target_name = self._get_assign_target_name(prev_stmt.body[0])
+                        if target_name:
+                            # Construct FQN for the attribute
+                            # Current scope stack implies we are INSIDE the container.
+                            # e.g. ["MyClass"] -> MyClass.attr
+                            attr_fqn = ".".join(self.scope_stack + [target_name])
+                            if self._should_strip(attr_fqn):
+                                strip_it = True
 
             if not strip_it:
                 new_statements.append(current_stmt)
@@ -125,18 +136,26 @@ class StripperTransformer(cst.CSTTransformer):
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
     ) -> cst.ClassDef:
-        self.scope_stack.pop()
+        # We are still "inside" the class scope logically regarding the FQN,
+        # so we can use scope_stack to determine the Class's own FQN.
+        class_fqn = ".".join(self.scope_stack)
+        should_strip_class_doc = self._should_strip(class_fqn)
 
         body = updated_node.body
-        if not isinstance(body, cst.IndentedBlock):
-            return updated_node  # Not a block with a body to process
+        # Only process if it's an indented block
+        if isinstance(body, cst.IndentedBlock):
+            new_body_stmts = self._strip_docstrings_from_body(
+                body.body, strip_container_doc=should_strip_class_doc
+            )
+            if not new_body_stmts:
+                new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
+            
+            updated_node = updated_node.with_changes(
+                body=body.with_changes(body=tuple(new_body_stmts))
+            )
 
-        new_body_stmts = self._strip_docstrings_from_body(body.body)
-        if not new_body_stmts:
-            new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
-
-        new_body = body.with_changes(body=tuple(new_body_stmts))
-        return updated_node.with_changes(body=new_body)
+        self.scope_stack.pop()
+        return updated_node
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
         self.scope_stack.append(node.name.value)
@@ -145,27 +164,38 @@ class StripperTransformer(cst.CSTTransformer):
     def leave_FunctionDef(
         self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
     ) -> cst.FunctionDef:
-        self.scope_stack.pop()
+        func_fqn = ".".join(self.scope_stack)
+        should_strip_func_doc = self._should_strip(func_fqn)
 
         body = updated_node.body
-        if isinstance(body, cst.SimpleStatementSuite):
-            # Simple suites like "def f(): pass" have no docstrings to strip.
-            return updated_node
+        
+        # Simple suites like "def f(): pass" have no docstrings to strip (it's a Pass or Expr).
+        # We only care about IndentedBlock.
+        if isinstance(body, cst.IndentedBlock):
+            new_body_stmts = self._strip_docstrings_from_body(
+                body.body, strip_container_doc=should_strip_func_doc
+            )
+            if not new_body_stmts:
+                new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
 
-        if not isinstance(body, cst.IndentedBlock):
-            return updated_node
+            updated_node = updated_node.with_changes(
+                body=body.with_changes(body=tuple(new_body_stmts))
+            )
 
-        new_body_stmts = self._strip_docstrings_from_body(body.body)
-        if not new_body_stmts:
-            new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
-
-        new_body = body.with_changes(body=tuple(new_body_stmts))
-        return updated_node.with_changes(body=new_body)
+        self.scope_stack.pop()
+        return updated_node
 
     def leave_Module(
         self, original_node: cst.Module, updated_node: cst.Module
     ) -> cst.Module:
-        new_body_stmts = self._strip_docstrings_from_body(updated_node.body)
+        # For module, FQN is typically "__doc__" for the docstring itself in our convention,
+        # or we check if we should strip everything.
+        # Stitcher convention: module doc key is "__doc__".
+        should_strip_module_doc = self._should_strip("__doc__")
+
+        new_body_stmts = self._strip_docstrings_from_body(
+            updated_node.body, strip_container_doc=should_strip_module_doc
+        )
         return updated_node.with_changes(body=tuple(new_body_stmts))
 
 
@@ -319,11 +349,6 @@ def inject_docstrings(source_code: str, docs: Dict[str, str]) -> str:
 ~~~~~
 
 ### 下一步建议
-
-现在我们已经应用了修复程序，最关键的一步是重新运行完整的测试套件。
-
-这将验证：
-1.  我们新添加的测试 `test_strip_command_removes_attribute_docstrings` 现在是否**通过**。
-2.  我们是否没有因为这次修改而破坏任何现有功能（即**没有引入回归**）。
-
-如果所有测试都通过，我们就可以自信地认为这个 bug 已经被修复，并且可以准备提交这个完整的、经过验证的工作单元。
+运行测试以确认回归已修复。
+- 重点检查 `packages/stitcher-application/tests/integration/test_pump_command.py` (whitelist 模式)。
+- 再次检查 `packages/stitcher-application/tests/integration/test_lifecycle_commands.py` (全局模式)。

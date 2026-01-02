@@ -8,20 +8,33 @@ HasBody = Union[cst.Module, cst.ClassDef, cst.FunctionDef]
 
 class StripperTransformer(cst.CSTTransformer):
     def __init__(self, whitelist: Optional[List[str]] = None):
-        # This implementation focuses on the global strip case (whitelist=None)
-        # which is the primary use case for `stitcher strip`. A full whitelist
-        # implementation would require more complex FQN tracking within the visitor.
-        if whitelist is not None:
-            raise NotImplementedError(
-                "Whitelist-based stripping is not supported by this transformer version."
-            )
+        self.whitelist = set(whitelist) if whitelist is not None else None
         self.scope_stack: List[str] = []
+
+    def _should_strip(self, fqn: str) -> bool:
+        if self.whitelist is None:
+            return True
+        return fqn in self.whitelist
 
     def _is_docstring(self, node: cst.BaseSmallStatement) -> bool:
         return isinstance(node, cst.Expr) and isinstance(node.value, cst.SimpleString)
 
+    def _get_assign_target_name(self, node: cst.BaseSmallStatement) -> Optional[str]:
+        """Extracts the target name from a simple assignment node."""
+        if isinstance(node, cst.Assign):
+            # Only handle simple assignment: x = ...
+            if len(node.targets) == 1 and isinstance(node.targets[0].target, cst.Name):
+                return node.targets[0].target.value
+        elif isinstance(node, cst.AnnAssign):
+            # Handle annotated assignment: x: int = ...
+            if isinstance(node.target, cst.Name):
+                return node.target.value
+        return None
+
     def _strip_docstrings_from_body(
-        self, body_nodes: Union[List[cst.BaseStatement], tuple[cst.BaseStatement, ...]]
+        self,
+        body_nodes: Union[List[cst.BaseStatement], tuple[cst.BaseStatement, ...]],
+        strip_container_doc: bool,
     ) -> List[cst.BaseStatement]:
         if not body_nodes:
             return []
@@ -32,31 +45,35 @@ class StripperTransformer(cst.CSTTransformer):
         while i < len(statements):
             current_stmt = statements[i]
 
+            is_simple_stmt = isinstance(current_stmt, cst.SimpleStatementLine)
             is_docstring = (
-                isinstance(current_stmt, cst.SimpleStatementLine)
+                is_simple_stmt
                 and len(current_stmt.body) == 1
                 and self._is_docstring(current_stmt.body[0])
             )
 
-            # Determine if we should strip this statement
             strip_it = False
+
             if is_docstring:
-                # Case 1: It's a module/class/function docstring. This means it's the
-                # first statement in the body.
+                # Case 1: Container (Module/Class/Function) docstring
+                # It must be the first statement.
                 if i == 0:
-                    strip_it = True
-                # Case 2: It's an attribute docstring. This means it is preceded by
-                # an assignment statement.
+                    if strip_container_doc:
+                        strip_it = True
+
+                # Case 2: Attribute/Variable docstring
+                # It must be preceded by an assignment.
                 elif i > 0:
                     prev_stmt = statements[i - 1]
-                    if (
-                        isinstance(prev_stmt, cst.SimpleStatementLine)
-                        and len(prev_stmt.body) == 1
-                        and isinstance(
-                            prev_stmt.body[0], (cst.Assign, cst.AnnAssign)
-                        )
-                    ):
-                        strip_it = True
+                    if isinstance(prev_stmt, cst.SimpleStatementLine) and len(prev_stmt.body) == 1:
+                        target_name = self._get_assign_target_name(prev_stmt.body[0])
+                        if target_name:
+                            # Construct FQN for the attribute
+                            # Current scope stack implies we are INSIDE the container.
+                            # e.g. ["MyClass"] -> MyClass.attr
+                            attr_fqn = ".".join(self.scope_stack + [target_name])
+                            if self._should_strip(attr_fqn):
+                                strip_it = True
 
             if not strip_it:
                 new_statements.append(current_stmt)
@@ -72,18 +89,26 @@ class StripperTransformer(cst.CSTTransformer):
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
     ) -> cst.ClassDef:
-        self.scope_stack.pop()
+        # We are still "inside" the class scope logically regarding the FQN,
+        # so we can use scope_stack to determine the Class's own FQN.
+        class_fqn = ".".join(self.scope_stack)
+        should_strip_class_doc = self._should_strip(class_fqn)
 
         body = updated_node.body
-        if not isinstance(body, cst.IndentedBlock):
-            return updated_node  # Not a block with a body to process
+        # Only process if it's an indented block
+        if isinstance(body, cst.IndentedBlock):
+            new_body_stmts = self._strip_docstrings_from_body(
+                body.body, strip_container_doc=should_strip_class_doc
+            )
+            if not new_body_stmts:
+                new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
+            
+            updated_node = updated_node.with_changes(
+                body=body.with_changes(body=tuple(new_body_stmts))
+            )
 
-        new_body_stmts = self._strip_docstrings_from_body(body.body)
-        if not new_body_stmts:
-            new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
-
-        new_body = body.with_changes(body=tuple(new_body_stmts))
-        return updated_node.with_changes(body=new_body)
+        self.scope_stack.pop()
+        return updated_node
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
         self.scope_stack.append(node.name.value)
@@ -92,27 +117,38 @@ class StripperTransformer(cst.CSTTransformer):
     def leave_FunctionDef(
         self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
     ) -> cst.FunctionDef:
-        self.scope_stack.pop()
+        func_fqn = ".".join(self.scope_stack)
+        should_strip_func_doc = self._should_strip(func_fqn)
 
         body = updated_node.body
-        if isinstance(body, cst.SimpleStatementSuite):
-            # Simple suites like "def f(): pass" have no docstrings to strip.
-            return updated_node
+        
+        # Simple suites like "def f(): pass" have no docstrings to strip (it's a Pass or Expr).
+        # We only care about IndentedBlock.
+        if isinstance(body, cst.IndentedBlock):
+            new_body_stmts = self._strip_docstrings_from_body(
+                body.body, strip_container_doc=should_strip_func_doc
+            )
+            if not new_body_stmts:
+                new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
 
-        if not isinstance(body, cst.IndentedBlock):
-            return updated_node
+            updated_node = updated_node.with_changes(
+                body=body.with_changes(body=tuple(new_body_stmts))
+            )
 
-        new_body_stmts = self._strip_docstrings_from_body(body.body)
-        if not new_body_stmts:
-            new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
-
-        new_body = body.with_changes(body=tuple(new_body_stmts))
-        return updated_node.with_changes(body=new_body)
+        self.scope_stack.pop()
+        return updated_node
 
     def leave_Module(
         self, original_node: cst.Module, updated_node: cst.Module
     ) -> cst.Module:
-        new_body_stmts = self._strip_docstrings_from_body(updated_node.body)
+        # For module, FQN is typically "__doc__" for the docstring itself in our convention,
+        # or we check if we should strip everything.
+        # Stitcher convention: module doc key is "__doc__".
+        should_strip_module_doc = self._should_strip("__doc__")
+
+        new_body_stmts = self._strip_docstrings_from_body(
+            updated_node.body, strip_container_doc=should_strip_module_doc
+        )
         return updated_node.with_changes(body=tuple(new_body_stmts))
 
 
