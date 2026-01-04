@@ -225,7 +225,7 @@ def drift_workspace(tmp_path):
     factory = WorkspaceFactory(tmp_path)
     project_root = (
         factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/app.py", 'def func(a: int): ...')
+        .with_source("src/app.py", "def func(a: int): ...")
         .with_docs("src/app.stitcher.yaml", {"func": "Doc"})
         .build()
     )
@@ -284,7 +284,7 @@ def co_evolution_workspace(tmp_path):
     factory = WorkspaceFactory(tmp_path)
     project_root = (
         factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/app.py", 'def func(a: int): ...')
+        .with_source("src/app.py", "def func(a: int): ...")
         .with_docs("src/app.stitcher.yaml", {"func": "Old Doc"})
         .build()
     )

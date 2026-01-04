@@ -1,4 +1,3 @@
-import sys
 from typer.testing import CliRunner
 from stitcher.cli.main import app
 from stitcher.test_utils import WorkspaceFactory, SpyBus
@@ -36,11 +35,11 @@ def func():
     # to return a real handler. This ensures pump_command sees 'handler' as truthy.
     # We use a dummy renderer because we rely on CliRunner's input injection, not the renderer's prompt logic.
     dummy_handler = TyperInteractionHandler(renderer=MagicMock())
-    
+
     # We mock the factory function imported inside pump.py
     monkeypatch.setattr(
         "stitcher.cli.commands.pump.make_interaction_handler",
-        lambda **kwargs: dummy_handler
+        lambda **kwargs: dummy_handler,
     )
 
     # 2. Act
