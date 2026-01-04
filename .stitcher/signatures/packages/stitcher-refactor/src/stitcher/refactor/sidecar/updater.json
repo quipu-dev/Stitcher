@@ -1,0 +1,28 @@
+{
+  "DocUpdater": {},
+  "DocUpdater.dump": {
+    "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",
+    "baseline_code_structure_hash": "bf3c79fc5426bd31a175e5837167fc630501321737ae4e06135bb40ea9e742af"
+  },
+  "DocUpdater.load": {
+    "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "eabd26163ff572de5814f693e2b0ee951c1a9f1150be6aa50b3a914e0e8114bf"
+  },
+  "DocUpdater.rename_key": {
+    "baseline_code_signature_text": "def rename_key(self, data: Dict[str, Any], old_key: str, new_key: str) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "d26b2e159389ba3881e44a300acd071151de2e546892345d596199932ef1b760"
+  },
+  "SigUpdater": {},
+  "SigUpdater.dump": {
+    "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",
+    "baseline_code_structure_hash": "bf3c79fc5426bd31a175e5837167fc630501321737ae4e06135bb40ea9e742af"
+  },
+  "SigUpdater.load": {
+    "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "eabd26163ff572de5814f693e2b0ee951c1a9f1150be6aa50b3a914e0e8114bf"
+  },
+  "SigUpdater.rename_key": {
+    "baseline_code_signature_text": "def rename_key(self, data: Dict[str, Any], old_key: str, new_key: str) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "d26b2e159389ba3881e44a300acd071151de2e546892345d596199932ef1b760"
+  }
+}

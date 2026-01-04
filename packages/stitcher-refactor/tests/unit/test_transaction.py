@@ -44,7 +44,7 @@ def test_transaction_commit():
     # Verify Intent (Mock Calls)
     # 1. Verify Write
     mock_fs.write_text.assert_called_once_with(root / "test.py", "content")
-    
+
     # 2. Verify Move
     mock_fs.move.assert_called_once_with(root / "src.py", root / "dest.py")
 

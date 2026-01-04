@@ -1,0 +1,3 @@
+"AbstractOperation.analyze": |-
+  Analyzes the codebase and returns a list of file operations
+  without applying them.

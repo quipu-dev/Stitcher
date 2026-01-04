@@ -1,0 +1,17 @@
+{
+  "RenameSymbolOperation": {},
+  "RenameSymbolOperation.__init__": {
+    "baseline_code_signature_text": "def __init__(self, old_fqn: str, new_fqn: str):",
+    "baseline_code_structure_hash": "a45aa90d8e0c5c13ff71f39cdb7335d195c572e40a0eb4d7b45d71fcf4531748"
+  },
+  "RenameSymbolOperation._get_base_name": {
+    "baseline_code_signature_text": "def _get_base_name(self, fqn: str) -> str:",
+    "baseline_code_structure_hash": "2cd38e7c1a18039a42f460d36ca8f4aa70a3716cf653707aa0b0b8a98a22573d"
+  },
+  "RenameSymbolOperation.analyze": {
+    "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
+    "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1"
+  },
+  "RenameSymbolOperation.new_fqn": {},
+  "RenameSymbolOperation.old_fqn": {}
+}

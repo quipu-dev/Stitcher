@@ -5,7 +5,9 @@ import yaml
 
 
 class DocUpdater:
-    def rename_key(self, data: Dict[str, Any], old_key: str, new_key: str) -> Dict[str, Any]:
+    def rename_key(
+        self, data: Dict[str, Any], old_key: str, new_key: str
+    ) -> Dict[str, Any]:
         if old_key in data:
             # Preserve order if possible, but for simplicity, dict recreation is fine
             new_data = data.copy()
@@ -25,7 +27,9 @@ class DocUpdater:
 
 
 class SigUpdater:
-    def rename_key(self, data: Dict[str, Any], old_key: str, new_key: str) -> Dict[str, Any]:
+    def rename_key(
+        self, data: Dict[str, Any], old_key: str, new_key: str
+    ) -> Dict[str, Any]:
         if old_key in data:
             new_data = data.copy()
             new_data[new_key] = new_data.pop(old_key)

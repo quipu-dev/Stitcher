@@ -1,0 +1,86 @@
+{
+  "SemanticGraph": {},
+  "SemanticGraph.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path):",
+    "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+  },
+  "SemanticGraph._build_registry": {
+    "baseline_code_signature_text": "def _build_registry(self, module: griffe.Module):",
+    "baseline_code_structure_hash": "79b85f1a939b0b3111d1c3fc274695275a1b9d772a422e910d9a19d9035471de",
+    "baseline_yaml_content_hash": "3b22d32ef6308a04c808ebcc4cd95b63b15d1fa00c16bfd7d09c282e584105fc"
+  },
+  "SemanticGraph._griffe_loader": {},
+  "SemanticGraph._modules": {},
+  "SemanticGraph._scan_module_usages": {
+    "baseline_code_signature_text": "def _scan_module_usages(self, module: griffe.Module):",
+    "baseline_code_structure_hash": "76b35afeae83b88b22092c466eab3ca58250a9aee95de24c59f3819123a71952"
+  },
+  "SemanticGraph.get_module": {
+    "baseline_code_signature_text": "def get_module(self, package_name: str) -> Optional[griffe.Module]:",
+    "baseline_code_structure_hash": "7c7c46478e42f9acb9374bb4612a99c58463121f0329adc05887ba617de4cc67"
+  },
+  "SemanticGraph.iter_members": {
+    "baseline_code_signature_text": "def iter_members(self, package_name: str) -> List[SymbolNode]:",
+    "baseline_code_structure_hash": "36087388280955b4f0deca49ec8cae4e14e5978b4431bb2e67865bea169a2a56"
+  },
+  "SemanticGraph.load": {
+    "baseline_code_signature_text": "def load(self, package_name: str, submodules: bool = True) -> None:",
+    "baseline_code_structure_hash": "2260094850da912c9148938adc2adebb1ede5146cd6c17fe5faf2491f7c51609"
+  },
+  "SemanticGraph.registry": {},
+  "SemanticGraph.root_path": {},
+  "SymbolNode": {},
+  "SymbolNode.fqn": {},
+  "SymbolNode.kind": {},
+  "SymbolNode.path": {},
+  "UsageLocation": {
+    "baseline_yaml_content_hash": "33e1207a439a86c89e7386d8370a9d0f1fe4bdeb6a41046c0b27a4539b2c16df"
+  },
+  "UsageLocation.col_offset": {},
+  "UsageLocation.end_col_offset": {},
+  "UsageLocation.end_lineno": {},
+  "UsageLocation.file_path": {},
+  "UsageLocation.lineno": {},
+  "UsageLocation.range_tuple": {},
+  "UsageRegistry": {},
+  "UsageRegistry.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
+    "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+  },
+  "UsageRegistry._index": {},
+  "UsageRegistry.get_usages": {
+    "baseline_code_signature_text": "def get_usages(self, target_fqn: str) -> List[UsageLocation]:",
+    "baseline_code_structure_hash": "8d9cf5121b7f7836d779ac0f49bea25a8bd7e38d8ad447861c8d0f9686b140e8"
+  },
+  "UsageRegistry.register": {
+    "baseline_code_signature_text": "def register(self, target_fqn: str, location: UsageLocation):",
+    "baseline_code_structure_hash": "205b208dafd47aeb0946fd69a75d55b5e752676fdcd5d104eeff837e807159a5"
+  },
+  "_UsageVisitor": {
+    "baseline_yaml_content_hash": "d5f7f37fe082d3a66736ae2641fc6808a7d36a60814b8f1a084cfb963620d9eb"
+  },
+  "_UsageVisitor.METADATA_DEPENDENCIES": {},
+  "_UsageVisitor.__init__": {
+    "baseline_code_signature_text": "def __init__(self, file_path: Path, local_symbols: Dict[str, str], registry: UsageRegistry):",
+    "baseline_code_structure_hash": "cc70c64d9c10b8c10bdfe816d9c31416bfbffdf606ba4a8ec83567a3cb4c5090"
+  },
+  "_UsageVisitor._register_node": {
+    "baseline_code_signature_text": "def _register_node(self, node: cst.CSTNode, fqn: str):",
+    "baseline_code_structure_hash": "0f0b223b93cef53819bd8e0047be89653ebdfb846b9b47c1d20d085f56c3a6a2"
+  },
+  "_UsageVisitor.file_path": {},
+  "_UsageVisitor.local_symbols": {},
+  "_UsageVisitor.registry": {},
+  "_UsageVisitor.visit_Attribute": {
+    "baseline_code_signature_text": "def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:",
+    "baseline_code_structure_hash": "aefe42bae1b746e3a301105d2b20996b76525735046545bb7d54932158adf30a"
+  },
+  "_UsageVisitor.visit_ImportFrom": {
+    "baseline_code_signature_text": "def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:",
+    "baseline_code_structure_hash": "6411074316b481b3fc483e65c19181a4bc33ff0d73c600e6cab13dbac84c74eb"
+  },
+  "_UsageVisitor.visit_Name": {
+    "baseline_code_signature_text": "def visit_Name(self, node: cst.Name):",
+    "baseline_code_structure_hash": "cd22b676f96a3ec757b09d2c11277d6b56e755f04646f134ed579260699b2a96"
+  }
+}

@@ -80,7 +80,7 @@ class TransactionManager:
         for op in self._ops:
             op.execute(self.fs, self.root_path)
         self._ops.clear()
-    
+
     @property
     def pending_count(self) -> int:
         return len(self._ops)

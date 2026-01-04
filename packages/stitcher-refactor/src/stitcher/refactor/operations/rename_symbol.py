@@ -21,38 +21,40 @@ class RenameSymbolOperation(AbstractOperation):
 
     def analyze(self, ctx: RefactorContext) -> List[FileOp]:
         ops: List[FileOp] = []
-        
+
         old_name = self._get_base_name(self.old_fqn)
         new_name = self._get_base_name(self.new_fqn)
-        
+
         if old_name == new_name:
-            return [] # No change needed
+            return []  # No change needed
 
         rename_map = {old_name: new_name}
-        
+
         # 1. Find all usages
         usages = ctx.graph.registry.get_usages(self.old_fqn)
-        
+
         # 2. Group usages by file
         usages_by_file: Dict[Path, List[UsageLocation]] = defaultdict(list)
         for usage in usages:
             usages_by_file[usage.file_path].append(usage)
-            
+
         # 3. For each affected file, apply transformation
         for file_path, file_usages in usages_by_file.items():
             try:
                 # --- 1. Handle Code Renaming ---
                 original_source = file_path.read_text(encoding="utf-8")
-                
+
                 module = cst.parse_module(original_source)
                 wrapper = cst.MetadataWrapper(module)
-                
+
                 transformer = SymbolRenamerTransformer(rename_map, file_usages)
                 modified_module = wrapper.visit(transformer)
 
                 relative_path = file_path.relative_to(ctx.graph.root_path)
                 if modified_module.code != original_source:
-                    ops.append(WriteFileOp(path=relative_path, content=modified_module.code))
+                    ops.append(
+                        WriteFileOp(path=relative_path, content=modified_module.code)
+                    )
 
                 # --- 2. Handle Sidecar Renaming ---
                 doc_updater = DocUpdater()
@@ -62,23 +64,35 @@ class RenameSymbolOperation(AbstractOperation):
                 doc_path = file_path.with_suffix(".stitcher.yaml")
                 if doc_path.exists():
                     doc_data = doc_updater.load(doc_path)
-                    new_doc_data = doc_updater.rename_key(doc_data, self.old_fqn, self.new_fqn)
+                    new_doc_data = doc_updater.rename_key(
+                        doc_data, self.old_fqn, self.new_fqn
+                    )
                     if new_doc_data != doc_data:
-                        ops.append(WriteFileOp(
-                            path=doc_path.relative_to(ctx.graph.root_path),
-                            content=doc_updater.dump(new_doc_data)
-                        ))
+                        ops.append(
+                            WriteFileOp(
+                                path=doc_path.relative_to(ctx.graph.root_path),
+                                content=doc_updater.dump(new_doc_data),
+                            )
+                        )
 
                 # Signature file
-                sig_path = ctx.graph.root_path / ".stitcher/signatures" / relative_path.with_suffix(".json")
+                sig_path = (
+                    ctx.graph.root_path
+                    / ".stitcher/signatures"
+                    / relative_path.with_suffix(".json")
+                )
                 if sig_path.exists():
                     sig_data = sig_updater.load(sig_path)
-                    new_sig_data = sig_updater.rename_key(sig_data, self.old_fqn, self.new_fqn)
+                    new_sig_data = sig_updater.rename_key(
+                        sig_data, self.old_fqn, self.new_fqn
+                    )
                     if new_sig_data != sig_data:
-                        ops.append(WriteFileOp(
-                            path=sig_path.relative_to(ctx.graph.root_path),
-                            content=sig_updater.dump(new_sig_data)
-                        ))
+                        ops.append(
+                            WriteFileOp(
+                                path=sig_path.relative_to(ctx.graph.root_path),
+                                content=sig_updater.dump(new_sig_data),
+                            )
+                        )
 
             except Exception:
                 raise

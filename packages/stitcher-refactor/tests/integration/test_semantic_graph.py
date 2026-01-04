@@ -1,4 +1,3 @@
-from pathlib import Path
 from stitcher.refactor.engine.graph import SemanticGraph
 
 
@@ -7,13 +6,13 @@ def test_semantic_graph_load_package(tmp_path):
     pkg_dir = tmp_path / "mypkg"
     pkg_dir.mkdir()
     (pkg_dir / "__init__.py").write_text("x = 1", encoding="utf-8")
-    
+
     sub_dir = pkg_dir / "utils"
     sub_dir.mkdir()
     (sub_dir / "__init__.py").write_text("", encoding="utf-8")
     (sub_dir / "math.py").write_text(
-        "def add(a, b): return a + b\n\nclass Calculator:\n    def multiply(self, a, b): return a * b", 
-        encoding="utf-8"
+        "def add(a, b): return a + b\n\nclass Calculator:\n    def multiply(self, a, b): return a * b",
+        encoding="utf-8",
     )
 
     # 2. Execute: Load into SemanticGraph
@@ -40,7 +39,7 @@ def test_semantic_graph_load_package(tmp_path):
         "mypkg.utils.math.Calculator",
         "mypkg.utils.math.Calculator.multiply",
     }
-    
+
     # Check that all expected FQNs are present
     # Note: Griffe might return more stuff or handle things differently depending on version
     # but these core definitions should be there.

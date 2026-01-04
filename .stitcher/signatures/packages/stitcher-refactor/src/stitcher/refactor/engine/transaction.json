@@ -1,0 +1,91 @@
+{
+  "FileOp": {},
+  "FileOp.describe": {
+    "baseline_code_signature_text": "def describe(self) -> str:",
+    "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+  },
+  "FileOp.execute": {
+    "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+    "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+  },
+  "FileOp.path": {},
+  "FileSystemAdapter": {},
+  "FileSystemAdapter.exists": {
+    "baseline_code_signature_text": "def exists(self, path: Path) -> bool:",
+    "baseline_code_structure_hash": "6915af56c156cc519ca7892775ddf3382d311222ccf4c5cd53708b47f9d73b8f"
+  },
+  "FileSystemAdapter.move": {
+    "baseline_code_signature_text": "def move(self, src: Path, dest: Path) -> None:",
+    "baseline_code_structure_hash": "71e9c3b299b04bd83451fd5ff167377f71318e1af9f054f220c14fc6892a6e0c"
+  },
+  "FileSystemAdapter.read_text": {
+    "baseline_code_signature_text": "def read_text(self, path: Path) -> str:",
+    "baseline_code_structure_hash": "591cc75159dffa59d1866ae7b0ea00ee75d162006e7ed6c4957448be43cf8f96"
+  },
+  "FileSystemAdapter.write_text": {
+    "baseline_code_signature_text": "def write_text(self, path: Path, content: str) -> None:",
+    "baseline_code_structure_hash": "ba3d96911f7c8b9307afbd6478b9a4369320519af0de273184a4f968185e38a5"
+  },
+  "MoveFileOp": {},
+  "MoveFileOp.describe": {
+    "baseline_code_signature_text": "def describe(self) -> str:",
+    "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+  },
+  "MoveFileOp.dest": {},
+  "MoveFileOp.execute": {
+    "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+    "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+  },
+  "RealFileSystem": {},
+  "RealFileSystem.exists": {
+    "baseline_code_signature_text": "def exists(self, path: Path) -> bool:",
+    "baseline_code_structure_hash": "6915af56c156cc519ca7892775ddf3382d311222ccf4c5cd53708b47f9d73b8f"
+  },
+  "RealFileSystem.move": {
+    "baseline_code_signature_text": "def move(self, src: Path, dest: Path) -> None:",
+    "baseline_code_structure_hash": "71e9c3b299b04bd83451fd5ff167377f71318e1af9f054f220c14fc6892a6e0c"
+  },
+  "RealFileSystem.read_text": {
+    "baseline_code_signature_text": "def read_text(self, path: Path) -> str:",
+    "baseline_code_structure_hash": "591cc75159dffa59d1866ae7b0ea00ee75d162006e7ed6c4957448be43cf8f96"
+  },
+  "RealFileSystem.write_text": {
+    "baseline_code_signature_text": "def write_text(self, path: Path, content: str) -> None:",
+    "baseline_code_structure_hash": "ba3d96911f7c8b9307afbd6478b9a4369320519af0de273184a4f968185e38a5"
+  },
+  "TransactionManager": {},
+  "TransactionManager.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, fs: Optional[FileSystemAdapter] = None):",
+    "baseline_code_structure_hash": "1ca06774dfe8f0c1f31a5bf655e070c1b62e2ccf3327d326a21c39ae17c17875"
+  },
+  "TransactionManager._ops": {},
+  "TransactionManager.add_move": {
+    "baseline_code_signature_text": "def add_move(self, src: Union[str, Path], dest: Union[str, Path]) -> None:",
+    "baseline_code_structure_hash": "621f4daa79d67a601b7a866e10bcfc08e8c0877a57aa00f1cba3936c5183d482"
+  },
+  "TransactionManager.add_write": {
+    "baseline_code_signature_text": "def add_write(self, path: Union[str, Path], content: str) -> None:",
+    "baseline_code_structure_hash": "28a1f2ca1964c7c302d486c840c0da2b2e44936896df6528efd00467c8acad2c"
+  },
+  "TransactionManager.commit": {
+    "baseline_code_signature_text": "def commit(self) -> None:",
+    "baseline_code_structure_hash": "95e5246b1328e6191a7ccc1de1b30b6f1c46a216740933777a311550317b75f8"
+  },
+  "TransactionManager.fs": {},
+  "TransactionManager.pending_count": {},
+  "TransactionManager.preview": {
+    "baseline_code_signature_text": "def preview(self) -> List[str]:",
+    "baseline_code_structure_hash": "42d00325fcbfefbcf799ae9b6e99a8b3ec0774b5ebb718e9d247a8ef8f628ce7"
+  },
+  "TransactionManager.root_path": {},
+  "WriteFileOp": {},
+  "WriteFileOp.content": {},
+  "WriteFileOp.describe": {
+    "baseline_code_signature_text": "def describe(self) -> str:",
+    "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+  },
+  "WriteFileOp.execute": {
+    "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+    "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+  }
+}

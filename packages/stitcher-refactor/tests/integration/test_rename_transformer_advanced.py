@@ -1,8 +1,6 @@
-import libcst as cst
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
-from stitcher.refactor.operations.transforms.rename_transformer import SymbolRenamerTransformer
 
 
 def test_rename_symbol_via_attribute_access(tmp_path):
@@ -14,9 +12,7 @@ def test_rename_symbol_via_attribute_access(tmp_path):
 
     main_path = tmp_path / "main.py"
     main_path.write_text(
-        "import mypkg.core\n\n"
-        "h = mypkg.core.OldHelper()",
-        encoding="utf-8"
+        "import mypkg.core\n\nh = mypkg.core.OldHelper()", encoding="utf-8"
     )
 
     # 2. Analyze
@@ -32,18 +28,17 @@ def test_rename_symbol_via_attribute_access(tmp_path):
     ops = op.analyze(ctx)
 
     # 4. Apply (simulated via direct code modification for test simplicity)
-    assert len(ops) == 2 # Expect changes in core.py and main.py
-    
+    assert len(ops) == 2  # Expect changes in core.py and main.py
+
     write_ops = {op.path.name: op for op in ops}
-    
+
     # 5. Verify
     expected_core = "class NewHelper: pass"
-    expected_main = ("import mypkg.core\n\n"
-                     "h = mypkg.core.NewHelper()")
-    
+    expected_main = "import mypkg.core\n\nh = mypkg.core.NewHelper()"
+
     assert "core.py" in write_ops
     assert write_ops["core.py"].content == expected_core
-    
+
     assert "main.py" in write_ops
     assert write_ops["main.py"].content == expected_main
 
@@ -57,9 +52,7 @@ def test_rename_symbol_imported_with_alias(tmp_path):
 
     main_path = tmp_path / "main.py"
     main_path.write_text(
-        "from mypkg.core import OldHelper as OH\n\n"
-        "h = OH()",
-        encoding="utf-8"
+        "from mypkg.core import OldHelper as OH\n\nh = OH()", encoding="utf-8"
     )
 
     # 2. Analyze
@@ -71,18 +64,17 @@ def test_rename_symbol_imported_with_alias(tmp_path):
     # 3. Plan
     op = RenameSymbolOperation("mypkg.core.OldHelper", "mypkg.core.NewHelper")
     ops = op.analyze(ctx)
-    
+
     # 4. Verify
     assert len(ops) == 2
     write_ops = {op.path.name: op for op in ops}
 
     expected_core = "class NewHelper: pass"
     # CRITICAL: The alias 'OH' is preserved, only the source name 'OldHelper' changes.
-    expected_main = ("from mypkg.core import NewHelper as OH\n\n"
-                     "h = OH()")
-                     
+    expected_main = "from mypkg.core import NewHelper as OH\n\nh = OH()"
+
     assert "core.py" in write_ops
     assert write_ops["core.py"].content == expected_core
-    
+
     assert "main.py" in write_ops
     assert write_ops["main.py"].content == expected_main

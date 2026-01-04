@@ -11,18 +11,18 @@ def test_rename_symbol_analyze_orchestration():
     mock_registry = Mock(spec=UsageRegistry)
     mock_graph = Mock(spec=SemanticGraph)
     mock_graph.registry = mock_registry
-    
+
     # Let's use a real tmp_path for reading files to simplify mocking Path.read_text
     # We will create fake files that the operation can read.
-    tmp_path = Path("/tmp/fake_project") # conceptual
+    tmp_path = Path("/tmp/fake_project")  # conceptual
     mock_graph.root_path = tmp_path
 
     ctx = RefactorContext(graph=mock_graph)
-    
+
     # 2. Define Test Data
     old_fqn = "mypkg.core.OldHelper"
     new_fqn = "mypkg.core.NewHelper"
-    
+
     file_a_path = tmp_path / "mypkg" / "a.py"
     file_b_path = tmp_path / "mypkg" / "b.py"
 
@@ -31,15 +31,15 @@ def test_rename_symbol_analyze_orchestration():
 
     locations = [
         # Locations in a.py
-        UsageLocation(file_a_path, 1, 23, 1, 32), # from mypkg.core import OldHelper
+        UsageLocation(file_a_path, 1, 23, 1, 32),  # from mypkg.core import OldHelper
         UsageLocation(file_a_path, 3, 6, 3, 15),  # obj = OldHelper()
         # Locations in b.py
-        UsageLocation(file_b_path, 2, 27, 2, 36), # from mypkg.core import OldHelper
-        UsageLocation(file_b_path, 3, 11, 3, 20), # return OldHelper
+        UsageLocation(file_b_path, 2, 27, 2, 36),  # from mypkg.core import OldHelper
+        UsageLocation(file_b_path, 3, 11, 3, 20),  # return OldHelper
     ]
-    
+
     mock_registry.get_usages.return_value = locations
-    
+
     # Mock file system reads
     def mock_read_text(path, *args, **kwargs):
         if path == file_a_path:
@@ -51,6 +51,7 @@ def test_rename_symbol_analyze_orchestration():
     # Use monkeypatch to control Path.read_text
     # This is slightly more integration-y but tests the real interaction with LibCST better.
     from unittest.mock import patch
+
     with patch.object(Path, "read_text", side_effect=mock_read_text, autospec=True):
         # 3. Execute
         op = RenameSymbolOperation(old_fqn, new_fqn)
@@ -58,15 +59,17 @@ def test_rename_symbol_analyze_orchestration():
 
     # 4. Verify
     mock_registry.get_usages.assert_called_once_with(old_fqn)
-    
+
     assert len(file_ops) == 2
     assert all(isinstance(op, WriteFileOp) for op in file_ops)
-    
+
     op_a = next(op for op in file_ops if op.path == file_a_path.relative_to(tmp_path))
     op_b = next(op for op in file_ops if op.path == file_b_path.relative_to(tmp_path))
-    
+
     expected_code_a = "from mypkg.core import NewHelper\n\nobj = NewHelper()"
-    expected_code_b = "def func():\n    from mypkg.core import NewHelper\n    return NewHelper"
-    
+    expected_code_b = (
+        "def func():\n    from mypkg.core import NewHelper\n    return NewHelper"
+    )
+
     assert op_a.content == expected_code_a
     assert op_b.content == expected_code_b
