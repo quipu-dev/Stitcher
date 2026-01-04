@@ -6,3 +6,19 @@
 "_UsageVisitor": |-
   Scans a file's CST for Name nodes and resolves them using a local symbol table.
   Uses LibCST to ensure positions match the Transformer exactly.
+"_UsageVisitor._register_module_parts": |-
+  Recursively register parts of a dotted name (Attribute/Name) against the resolved FQN.
+  e.g., if node is `a.b.c` and absolute_module is `pkg.a.b.c`:
+  - Register `c` (Attribute) -> `pkg.a.b.c`
+  - Register `b` (Attribute) -> `pkg.a.b`
+  - Register `a` (Name) -> `pkg.a`
+
+  Wait, we only care about exact matches for RenameSymbolOperation.
+  RenameSymbolOperation("pkg.a", "pkg.new_a") will look for usage of "pkg.a".
+  So we should register `Name(a)` as usage of `pkg.a`.
+
+  However, get_absolute_module_from_package_for_import returns the FQN of the MODULE.
+  If import is `import a.b.c`, module FQN is `a.b.c`.
+  The node structure is Attr(Attr(Name(a), Name(b)), Name(c)).
+
+  If we want to support renaming `a.b` -> `a.new_b`, we need to register `Name(b)` as usage of `a.b`.

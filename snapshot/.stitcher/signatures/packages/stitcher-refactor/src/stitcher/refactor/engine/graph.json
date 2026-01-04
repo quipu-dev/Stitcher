@@ -61,19 +61,31 @@
   },
   "_UsageVisitor.METADATA_DEPENDENCIES": {},
   "_UsageVisitor.__init__": {
-    "baseline_code_signature_text": "def __init__(self, file_path: Path, local_symbols: Dict[str, str], registry: UsageRegistry):",
-    "baseline_code_structure_hash": "cc70c64d9c10b8c10bdfe816d9c31416bfbffdf606ba4a8ec83567a3cb4c5090"
+    "baseline_code_signature_text": "def __init__(self, file_path: Path, local_symbols: Dict[str, str], registry: UsageRegistry, current_module_fqn: Optional[str] = None, is_init_file: bool = False):",
+    "baseline_code_structure_hash": "923f1c13ae3ab20397a85e214952791123c28dd11b6793c30fd71acd9f332637"
+  },
+  "_UsageVisitor._register_module_parts": {
+    "baseline_code_signature_text": "def _register_module_parts(self, node: cst.CSTNode, absolute_module: str):",
+    "baseline_code_structure_hash": "658baac13d4cb1e42bf7ae6ff9cfb4d230643962469d6abd0d8430aec7f56c49",
+    "baseline_yaml_content_hash": "46144b6cae1c577db5023a10b9f47d891a9f940f1ec238cdecda47c6a9b03264"
   },
   "_UsageVisitor._register_node": {
     "baseline_code_signature_text": "def _register_node(self, node: cst.CSTNode, fqn: str):",
     "baseline_code_structure_hash": "0f0b223b93cef53819bd8e0047be89653ebdfb846b9b47c1d20d085f56c3a6a2"
   },
+  "_UsageVisitor.current_module_fqn": {},
+  "_UsageVisitor.current_package": {},
   "_UsageVisitor.file_path": {},
+  "_UsageVisitor.is_init_file": {},
   "_UsageVisitor.local_symbols": {},
   "_UsageVisitor.registry": {},
   "_UsageVisitor.visit_Attribute": {
     "baseline_code_signature_text": "def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:",
     "baseline_code_structure_hash": "aefe42bae1b746e3a301105d2b20996b76525735046545bb7d54932158adf30a"
+  },
+  "_UsageVisitor.visit_Import": {
+    "baseline_code_signature_text": "def visit_Import(self, node: cst.Import) -> Optional[bool]:",
+    "baseline_code_structure_hash": "2d7553aab8fd612b88dc9a8261b87debab996129ec0c68f7cb3a1c36a6a6ccc2"
   },
   "_UsageVisitor.visit_ImportFrom": {
     "baseline_code_signature_text": "def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:",

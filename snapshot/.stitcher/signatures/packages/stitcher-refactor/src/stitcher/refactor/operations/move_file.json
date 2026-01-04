@@ -1,0 +1,18 @@
+{
+  "MoveFileOperation": {},
+  "MoveFileOperation.__init__": {
+    "baseline_code_signature_text": "def __init__(self, src_path: Path, dest_path: Path):",
+    "baseline_code_structure_hash": "6ceac39a97025b347cb13f72c36d21d0fe4271fedccf3961981b3a514b453858"
+  },
+  "MoveFileOperation._path_to_fqn": {
+    "baseline_code_signature_text": "def _path_to_fqn(self, path: Path, root_path: Path) -> Optional[str]:",
+    "baseline_code_structure_hash": "8516ca8a857d42df5f997116f196cc23bde6c766c02dc875d1f3df0874664c8c",
+    "baseline_yaml_content_hash": "6f043b3bc4d1f22acc37ced8314ef62141024763e9cfe221efcbfff633cba3fa"
+  },
+  "MoveFileOperation.analyze": {
+    "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
+    "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1"
+  },
+  "MoveFileOperation.dest_path": {},
+  "MoveFileOperation.src_path": {}
+}

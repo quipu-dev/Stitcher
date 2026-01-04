@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import List, Optional
-import libcst as cst
 
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import FileOp, MoveFileOp, WriteFileOp
@@ -15,10 +14,6 @@ class MoveFileOperation(AbstractOperation):
         self.dest_path = dest_path
 
     def _path_to_fqn(self, path: Path, root_path: Path) -> Optional[str]:
-        """
-        Derive module FQN from file path relative to project root.
-        e.g. src/mypkg/mod.py -> mypkg.mod
-        """
         try:
             rel_path = path.relative_to(root_path)
         except ValueError:
@@ -26,26 +21,26 @@ class MoveFileOperation(AbstractOperation):
             return None
 
         parts = list(rel_path.parts)
-        
+
         # Heuristic: if 'src' is the first part, strip it (common layout)
         if parts and parts[0] == "src":
             parts = parts[1:]
-        
+
         if not parts:
             return None
-            
+
         # Strip .py suffix
         if parts[-1].endswith(".py"):
             parts[-1] = parts[-1][:-3]
         elif parts[-1].endswith(".pyi"):
             parts[-1] = parts[-1][:-4]
-            
+
         # Handle __init__
         if parts[-1] == "__init__":
             parts = parts[:-1]
-            
+
         if not parts:
-            # It was src/__init__.py? That maps to empty string? 
+            # It was src/__init__.py? That maps to empty string?
             # Or root package? Let's assume root.
             return ""
 

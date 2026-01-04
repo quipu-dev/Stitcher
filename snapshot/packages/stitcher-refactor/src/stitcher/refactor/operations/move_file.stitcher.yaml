@@ -1,0 +1,3 @@
+"MoveFileOperation._path_to_fqn": |-
+  Derive module FQN from file path relative to project root.
+  e.g. src/mypkg/mod.py -> mypkg.mod
