@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 消除 MoveDirectoryOperation 中的重复文件操作", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767534946.2936196, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(refactor): 实现了 MoveDirectoryOperation 以安全地移动目录", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767535006.0354536, "duration_ms": 0}}
