@@ -19,6 +19,7 @@ members = [
     "stitcher-config",
     "stitcher-python",
     "stitcher-python-adapter",
+    "stitcher-refactor",
     "stitcher-spec",
     "stitcher-test-utils",
 ]
@@ -741,6 +742,7 @@ dev = [
     { name = "ruff" },
     { name = "stitcher-application" },
     { name = "stitcher-cli" },
+    { name = "stitcher-refactor" },
     { name = "stitcher-test-utils" },
 ]
 
@@ -756,6 +758,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "stitcher-application", marker = "extra == 'dev'", editable = "packages/stitcher-application" },
     { name = "stitcher-cli", marker = "extra == 'dev'", editable = "packages/stitcher-cli" },
+    { name = "stitcher-refactor", marker = "extra == 'dev'", editable = "packages/stitcher-refactor" },
     { name = "stitcher-test-utils", marker = "extra == 'dev'", editable = "packages/stitcher-test-utils" },
 ]
 provides-extras = ["dev"]
@@ -775,6 +778,27 @@ dependencies = [
 requires-dist = [
     { name = "griffe" },
     { name = "libcst" },
+    { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-spec", editable = "packages/stitcher-spec" },
+]
+
+[[package]]
+name = "stitcher-refactor"
+version = "0.1.0"
+source = { editable = "packages/stitcher-refactor" }
+dependencies = [
+    { name = "griffe" },
+    { name = "libcst" },
+    { name = "stitcher-application" },
+    { name = "stitcher-common" },
+    { name = "stitcher-spec" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "griffe" },
+    { name = "libcst" },
+    { name = "stitcher-application", editable = "packages/stitcher-application" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
 ]
