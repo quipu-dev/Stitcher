@@ -1,4 +1,3 @@
-from pathlib import Path
 import yaml
 import json
 
@@ -45,9 +44,7 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
     sig_root = tmp_path / ".stitcher/signatures"
     utils_sig_path = sig_root / "mypkg/core/utils.json"
     utils_sig_path.parent.mkdir(parents=True)
-    utils_sig_path.write_text(
-        json.dumps({"mypkg.core.utils.Helper": {"hash": "123"}})
-    )
+    utils_sig_path.write_text(json.dumps({"mypkg.core.utils.Helper": {"hash": "123"}}))
 
     # 2. ANALYSIS
     services_dir = pkg_dir / "services"
@@ -86,9 +83,7 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
     assert (services_dir / "utils.stitcher.yaml").exists()
     new_sig_path = sig_root / "mypkg/services/utils.json"
     assert new_sig_path.exists()
-    new_yaml_data = yaml.safe_load(
-        (services_dir / "utils.stitcher.yaml").read_text()
-    )
+    new_yaml_data = yaml.safe_load((services_dir / "utils.stitcher.yaml").read_text())
     assert "mypkg.services.utils.Helper" in new_yaml_data
     new_sig_data = json.loads(new_sig_path.read_text())
     assert "mypkg.services.utils.Helper" in new_sig_data

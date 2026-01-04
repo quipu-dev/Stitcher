@@ -1,0 +1,16 @@
+{
+  "MoveDirectoryOperation": {
+    "baseline_yaml_content_hash": "6172506e80531470464c4cba619d5b4f70461811bd478af108e20b69f0a2e646"
+  },
+  "MoveDirectoryOperation.__init__": {
+    "baseline_code_signature_text": "def __init__(self, src_dir: Path, dest_dir: Path):",
+    "baseline_code_structure_hash": "e2b53fd555bb7146fd21de7a0c04128afb9b1a8ba7005dfd50c00d5b0ed495cc"
+  },
+  "MoveDirectoryOperation.analyze": {
+    "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
+    "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1",
+    "baseline_yaml_content_hash": "5d331e06e2f157e46f19e7ba07144d68954dcd77dc0174264b39db66c9771453"
+  },
+  "MoveDirectoryOperation.dest_dir": {},
+  "MoveDirectoryOperation.src_dir": {}
+}

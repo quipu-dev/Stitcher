@@ -1,4 +1,22 @@
 {
+  "DeleteDirectoryOp": {},
+  "DeleteDirectoryOp.describe": {
+    "baseline_code_signature_text": "def describe(self) -> str:",
+    "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+  },
+  "DeleteDirectoryOp.execute": {
+    "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+    "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+  },
+  "DeleteFileOp": {},
+  "DeleteFileOp.describe": {
+    "baseline_code_signature_text": "def describe(self) -> str:",
+    "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+  },
+  "DeleteFileOp.execute": {
+    "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+    "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+  },
   "FileOp": {},
   "FileOp.describe": {
     "baseline_code_signature_text": "def describe(self) -> str:",
@@ -21,6 +39,14 @@
   "FileSystemAdapter.read_text": {
     "baseline_code_signature_text": "def read_text(self, path: Path) -> str:",
     "baseline_code_structure_hash": "591cc75159dffa59d1866ae7b0ea00ee75d162006e7ed6c4957448be43cf8f96"
+  },
+  "FileSystemAdapter.remove": {
+    "baseline_code_signature_text": "def remove(self, path: Path) -> None:",
+    "baseline_code_structure_hash": "49255e103ece95aa5cae1fb6bd8ca4152fb4cca08f546f13e31b99d8b87cf01c"
+  },
+  "FileSystemAdapter.rmtree": {
+    "baseline_code_signature_text": "def rmtree(self, path: Path) -> None:",
+    "baseline_code_structure_hash": "603d7ce3ebc796ef372d7e0c997e27d3e5cbe9bbaaff2fcf9f151a52e2251dc9"
   },
   "FileSystemAdapter.write_text": {
     "baseline_code_signature_text": "def write_text(self, path: Path, content: str) -> None:",
@@ -49,6 +75,14 @@
     "baseline_code_signature_text": "def read_text(self, path: Path) -> str:",
     "baseline_code_structure_hash": "591cc75159dffa59d1866ae7b0ea00ee75d162006e7ed6c4957448be43cf8f96"
   },
+  "RealFileSystem.remove": {
+    "baseline_code_signature_text": "def remove(self, path: Path) -> None:",
+    "baseline_code_structure_hash": "49255e103ece95aa5cae1fb6bd8ca4152fb4cca08f546f13e31b99d8b87cf01c"
+  },
+  "RealFileSystem.rmtree": {
+    "baseline_code_signature_text": "def rmtree(self, path: Path) -> None:",
+    "baseline_code_structure_hash": "603d7ce3ebc796ef372d7e0c997e27d3e5cbe9bbaaff2fcf9f151a52e2251dc9"
+  },
   "RealFileSystem.write_text": {
     "baseline_code_signature_text": "def write_text(self, path: Path, content: str) -> None:",
     "baseline_code_structure_hash": "ba3d96911f7c8b9307afbd6478b9a4369320519af0de273184a4f968185e38a5"
@@ -59,6 +93,14 @@
     "baseline_code_structure_hash": "1ca06774dfe8f0c1f31a5bf655e070c1b62e2ccf3327d326a21c39ae17c17875"
   },
   "TransactionManager._ops": {},
+  "TransactionManager.add_delete_dir": {
+    "baseline_code_signature_text": "def add_delete_dir(self, path: Union[str, Path]) -> None:",
+    "baseline_code_structure_hash": "523cc3d99f7a5ba9724c9858450bd79f5d9f0b2d4fd4bcd8629082f3709df907"
+  },
+  "TransactionManager.add_delete_file": {
+    "baseline_code_signature_text": "def add_delete_file(self, path: Union[str, Path]) -> None:",
+    "baseline_code_structure_hash": "2d0f06efab2490fe5f8e4d15eb90592607e32be886898ca62a77574d2166ec2a"
+  },
   "TransactionManager.add_move": {
     "baseline_code_signature_text": "def add_move(self, src: Union[str, Path], dest: Union[str, Path]) -> None:",
     "baseline_code_structure_hash": "621f4daa79d67a601b7a866e10bcfc08e8c0877a57aa00f1cba3936c5183d482"
