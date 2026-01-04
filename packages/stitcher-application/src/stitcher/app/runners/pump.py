@@ -154,6 +154,7 @@ class PumpRunner:
         # --- Phase 3 & 4: Planning & Execution ---
         # Apply decisions, write files, and record stats
         strip_jobs = defaultdict(list)
+        redundant_files_list: List[Path] = []
         total_updated_keys = 0
         total_reconciled_keys = 0
         unresolved_conflicts_count = 0
@@ -173,6 +174,7 @@ class PumpRunner:
 
             file_had_updates = False
             file_has_errors = False  # Check for atomic writes
+            file_has_redundancy = False
             updated_keys_in_file = []
             reconciled_keys_in_file = []
 
@@ -229,6 +231,12 @@ class PumpRunner:
                 if plan.strip_source_docstring:
                     strip_jobs[module.file_path].append(fqn)
 
+                # Check for redundancy:
+                # If the doc exists in source and we are not stripping it in this run,
+                # it is potentially redundant because we have either updated or reconciled it in YAML.
+                if fqn in source_docs and not plan.strip_source_docstring:
+                    file_has_redundancy = True
+
             # Atomic save logic: Only save if there were updates AND no errors in this file.
             signatures_need_save = new_hashes != stored_hashes
 
@@ -240,6 +248,9 @@ class PumpRunner:
 
                 if signatures_need_save:
                     self.sig_manager.save_composite_hashes(module, new_hashes)
+
+                if file_has_redundancy:
+                    redundant_files_list.append(self.root_path / module.file_path)
 
             if updated_keys_in_file:
                 total_updated_keys += len(updated_keys_in_file)
@@ -304,4 +315,4 @@ class PumpRunner:
         else:
             bus.success(L.pump.run.complete, count=total_updated_keys)
 
-        return PumpResult(success=True, redundant_files=[])
+        return PumpResult(success=True, redundant_files=redundant_files_list)
