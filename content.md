@@ -1,187 +1,292 @@
 简要回答
-好的，进入阶段二。我们将首先实现基于 LibCST 的 `SymbolRenamerTransformer`，这是实现代码重构的核心“手术刀”。
+好的，我们采用 Griffe 的核心别名解析机制来实现 `UsageRegistry`。
 
-## [WIP] feat: 实现 SymbolRenamerTransformer 原型
+正如你所指出的，Griffe 的 `Alias` 对象已经完美封装了 Python 复杂的导入和名称解析逻辑（包括 `from ... import ... as ...`）。我们将利用这一点来构建“定义级”的引用图，并辅以轻量级的 AST 扫描来解决“函数体级”的引用，从而实现完整的 Find Usages 能力。
+
+## [WIP] feat: 基于 Griffe Alias 实现 UsageRegistry
 
 ### 用户需求
-根据阶段二规划，需要开发一个 LibCST Transformer，它能够接受 `UsageRegistry`（即一组精确的代码位置）和重命名映射，对 Python 源代码进行精确的、“定位打击”式的修改。
+利用 Griffe 成熟的别名解析（Alias Resolution）功能，实现 `UsageRegistry`，将代码中的引用位置（UsageLocation）与语义符号（FQN）关联起来。
 
 ### 评论
-这是实现“无魔法”重构的关键。通过将“分析（Analysis）”和“修改（Transformation）”解耦——Griffe 负责找到位置，LibCST 负责修改位置——我们避免了在 Transformer 内部进行脆弱的语义猜测。
+这是一个混合策略：
+1.  **跨文件解析 (Resolution)**: 完全信任 Griffe。Griffe 告诉我们当前模块中的符号 `X` 其实是指向 `pkg.module.Y` 的 `Alias`。
+2.  **函数体内定位 (Location)**: 由于 Griffe 不存储函数体内的 AST 节点位置，我们补充一个轻量级的 `ast.NodeVisitor`。当 Visitor 在函数体中遇到 `X` 时，它查询 Griffe 的解析结果，得知 `X -> pkg.module.Y`，从而将该位置注册为 `pkg.module.Y` 的一个 Usage。
 
 ### 目标
-1.  创建 `packages/stitcher-refactor/src/stitcher/refactor/operations/transforms` 目录。
-2.  实现 `SymbolRenamerTransformer` 类：
-    *   依赖 `libcst.metadata.PositionProvider` 获取节点位置。
-    *   接收一组目标 `UsageLocation`。
-    *   仅当节点位置与目标位置匹配时，才应用重命名。
-3.  编写单元测试，验证其能够根据位置信息重命名变量，而不误伤同名变量。
+1.  在 `graph.py` 中实现 `UsageRegistry` 类，用于存储 `FQN -> List[UsageLocation]` 的倒排索引。
+2.  在 `SemanticGraph` 中实现 `build_registry()`：
+    *   遍历 Griffe 的 Module 成员，建立本地符号表（Local Symbol Table）。
+    *   使用 `ast` 扫描源码，结合本地符号表，解析并记录所有 `Name` 节点的引用。
+3.  编写集成测试，验证重构引擎能够识别通过 `import as` 引入的符号在函数体内的引用。
 
 ### 基本原理
--   **位置驱动 (Location-Driven)**: Transformer 不关心“这个变量是不是叫 `foo`”，它只关心“这个节点是不是在第 10 行第 5 列”。这使得重构的准确性完全由上游的语义分析（Griffe）保证。
--   **LibCST Metadata**: 使用 `MetadataWrapper` 注入位置信息，这是进行精确代码定位的标准做法。
+-   **Griffe as Source of Truth**: Griffe 负责“通过导入路径找到真身”。
+-   **AST as Locator**: AST 负责“找到代码里哪里用到了这个名字”。
+-   **性能权衡**: 虽然需要再次 parse AST，但相比于自己实现一套完整的 Python 作用域和导入解析器，这是性价比最高的方案。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/runtime #task/domain/refactor #task/object/rename-transformer #task/action/implementation #task/state/continue
+#intent/build #flow/ready #priority/high #comp/runtime #task/domain/refactor #task/object/usage-registry #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建目录结构
-创建存放 LibCST 转换器的目录。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-mkdir -p packages/stitcher-refactor/src/stitcher/refactor/operations/transforms
-touch packages/stitcher-refactor/src/stitcher/refactor/operations/__init__.py
-touch packages/stitcher-refactor/src/stitcher/refactor/operations/transforms/__init__.py
-~~~~~
-
-#### Acts 2: 实现 SymbolRenamerTransformer
-实现转换器逻辑。为了 MVP，我们目前主要处理 `Name` 节点（变量、函数调用）的重命名。`Attribute` 和 `Import` 的处理逻辑将在后续迭代中完善。
+#### Acts 1: 更新 SemanticGraph 与 UsageRegistry
+我们将更新 `graph.py`，引入 `UsageRegistry` 并集成 AST 扫描逻辑。
 
 ~~~~~act
 write_file
-packages/stitcher-refactor/src/stitcher/refactor/operations/transforms/rename_transformer.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py
 ~~~~~
 ~~~~~python
-import libcst as cst
-from libcst.metadata import PositionProvider, CodeRange
-from typing import Dict, List, Tuple, Optional
-from stitcher.refactor.engine.graph import UsageLocation
-
-
-class SymbolRenamerTransformer(cst.CSTTransformer):
-    """
-    A LibCST transformer that renames symbols at specific locations.
-    It does NOT perform semantic analysis; it blindly trusts the provided locations.
-    """
-    METADATA_DEPENDENCIES = (PositionProvider,)
-
-    def __init__(self, rename_map: Dict[str, str], target_locations: List[UsageLocation]):
-        """
-        Args:
-            rename_map: Mapping from old_name to new_name.
-                        Note: For simple Name nodes, this is just the identifier.
-            target_locations: List of locations that MUST be renamed.
-        """
-        self.rename_map = rename_map
-        self._location_index = self._build_location_index(target_locations)
-
-    def _build_location_index(self, locations: List[UsageLocation]) -> Dict[Tuple[int, int], UsageLocation]:
-        """
-        Builds a lookup index (start_line, start_col) -> UsageLocation for O(1) access.
-        """
-        index = {}
-        for loc in locations:
-            # Griffe locations are usually 1-based for lines.
-            # LibCST CodeRange is also 1-based for lines, 0-based for columns.
-            # We assume UsageLocation stores data compatible with the parser we used (Griffe).
-            # We'll use (start_line, start_col) as a unique key for "Name" nodes.
-            key = (loc.lineno, loc.col_offset)
-            index[key] = loc
-        return index
-
-    def _is_target(self, node: cst.CSTNode) -> Optional[str]:
-        """
-        Checks if the current node matches a target location.
-        Returns the new name if it should be renamed, else None.
-        """
-        pos = self.get_metadata(PositionProvider, node)
-        # pos is a CodeRange object: start=(line, col), end=(line, col)
-        
-        # Check exact match on start position
-        # Note: We might need more fuzzy matching depending on how Griffe reports positions 
-        # vs LibCST. For now, we assume exact match on start.
-        key = (pos.start.line, pos.start.column)
-        
-        if key in self._location_index:
-            # Found a match! Now we need to determine the new name.
-            # In a real scenario, the UsageLocation might carry the specific transformation.
-            # For this MVP, we look up the node's current value in the map.
-            # But wait, rename_map is old->new. 
-            
-            # If the node is a Name, its value is the name.
-            if isinstance(node, cst.Name):
-                old_name = node.value
-                return self.rename_map.get(old_name)
-            
-        return None
-
-    def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.Name:
-        new_name = self._is_target(original_node)
-        if new_name:
-            return updated_node.with_changes(value=new_name)
-        return updated_node
-
-    # TODO: Add leave_Attribute, leave_ImportFrom, etc. in future iterations.
-~~~~~
-
-#### Acts 3: 编写单元测试
-验证转换器是否能精确重命名指定位置的变量，而忽略其他同名变量。
-
-~~~~~act
-write_file
-packages/stitcher-refactor/tests/unit/test_rename_transformer.py
-~~~~~
-~~~~~python
-import libcst as cst
+import ast
+from dataclasses import dataclass, field
 from pathlib import Path
-from stitcher.refactor.engine.graph import UsageLocation
-from stitcher.refactor.operations.transforms.rename_transformer import SymbolRenamerTransformer
+from typing import List, Dict, Optional, Set, DefaultDict
+from collections import defaultdict
+import griffe
 
 
-def test_rename_specific_occurrence():
-    # Source code with two 'foo' variables in different scopes/lines
-    source = """
-def func1():
-    foo = 1  # Target to rename
-    return foo
+@dataclass
+class UsageLocation:
+    """
+    Represents a specific usage of a symbol in the codebase.
+    """
+    file_path: Path
+    lineno: int
+    col_offset: int
+    end_lineno: int
+    end_col_offset: int
+    
+    @property
+    def range_tuple(self):
+        return (self.lineno, self.col_offset)
 
-def func2():
-    foo = 2  # Should NOT rename
-    return foo
-"""
-    
-    # Define locations. 
-    # LibCST positions:
-    # Line 3: "    foo = 1" -> foo starts at line 3, col 4
-    # Line 4: "    return foo" -> foo starts at line 4, col 11
-    
-    locations = [
-        UsageLocation(Path(""), lineno=3, col_offset=4, end_lineno=3, end_col_offset=7),
-        UsageLocation(Path(""), lineno=4, col_offset=11, end_lineno=4, end_col_offset=14),
-    ]
-    
-    rename_map = {"foo": "bar"}
-    
-    # Parse and Transform
-    module = cst.parse_module(source)
-    wrapper = cst.MetadataWrapper(module)
-    transformer = SymbolRenamerTransformer(rename_map, locations)
-    
-    modified_module = wrapper.visit(transformer)
-    modified_code = modified_module.code
 
-    expected_code = """
-def func1():
-    bar = 1  # Target to rename
-    return bar
+@dataclass
+class SymbolNode:
+    fqn: str
+    kind: str
+    path: Path
 
-def func2():
-    foo = 2  # Should NOT rename
-    return foo
-"""
+
+class UsageRegistry:
+    def __init__(self):
+        # Key: Target FQN (The "Real" Name, e.g., "pkg.mod.Class")
+        # Value: List of locations where this symbol is used/referenced
+        self._index: DefaultDict[str, List[UsageLocation]] = defaultdict(list)
+
+    def register(self, target_fqn: str, location: UsageLocation):
+        self._index[target_fqn].append(location)
+
+    def get_usages(self, target_fqn: str) -> List[UsageLocation]:
+        return self._index.get(target_fqn, [])
+
+
+class _UsageVisitor(ast.NodeVisitor):
+    """
+    Scans a file's AST for Name nodes and resolves them using a local symbol table.
+    """
+    def __init__(self, file_path: Path, local_symbols: Dict[str, str], registry: UsageRegistry):
+        self.file_path = file_path
+        self.local_symbols = local_symbols  # map: local_name -> target_fqn
+        self.registry = registry
+
+    def visit_Name(self, node: ast.Name):
+        # We only care about loading (reading) variables, not assigning them (defining)
+        # Although for rename, we usually want to rename definitions too.
+        # But definitions are handled by Griffe's iteration.
+        # Here we mostly care about references inside functions/methods.
+        # However, LibCST rename transformer will handle Name nodes regardless of ctx.
+        # So we should record all occurrences that resolve to the target.
+        
+        target_fqn = self.local_symbols.get(node.id)
+        if target_fqn:
+            loc = UsageLocation(
+                file_path=self.file_path,
+                lineno=node.lineno,
+                col_offset=node.col_offset,
+                end_lineno=node.end_lineno if hasattr(node, "end_lineno") else node.lineno,
+                end_col_offset=node.end_col_offset if hasattr(node, "end_col_offset") else node.col_offset + len(node.id)
+            )
+            self.registry.register(target_fqn, loc)
+
+
+class SemanticGraph:
+    def __init__(self, root_path: Path):
+        self.root_path = root_path
+        self._griffe_loader = griffe.GriffeLoader(search_paths=[self.root_path])
+        self._modules: Dict[str, griffe.Module] = {}
+        self.registry = UsageRegistry()
+
+    def load(self, package_name: str, submodules: bool = True) -> None:
+        # 1. Load with Griffe (resolves aliases)
+        module = self._griffe_loader.load(package_name, submodules=submodules)
+        self._modules[package_name] = module
+        
+        # 2. Resolve aliases to ensure we have full resolution
+        self._griffe_loader.resolve_aliases()
+
+        # 3. Build Usage Registry
+        self._build_registry(module)
+
+    def _build_registry(self, module: griffe.Module):
+        """
+        Walks the module tree, builds local symbol tables from Griffe Aliases,
+        and scans AST for usages.
+        """
+        # We need to process each file in the package
+        # Griffe stores the module structure. We can traverse it.
+        
+        # Collect all modules (files)
+        modules_to_scan = []
+        if module.filepath:
+            modules_to_scan.append(module)
+        
+        for member in module.members.values():
+            if isinstance(member, griffe.Module) and not member.is_alias:
+                # Recursively add submodules
+                # Note: This simple recursion might miss deeply nested ones if we don't walk properly
+                # But Griffe's structure is a tree.
+                # Let's use a helper walker if needed, or rely on Griffe's flatness if provided.
+                # Griffe doesn't have a flat list of all submodules directly accessible easily
+                # without walking.
+                self._build_registry(member)
+
+        # Process the current module
+        if module.filepath:
+            self._scan_module_usages(module)
+
+    def _scan_module_usages(self, module: griffe.Module):
+        # 1. Build Local Symbol Table (Name -> FQN)
+        # This maps names available in this module's scope to their absolute FQNs.
+        local_symbols: Dict[str, str] = {}
+        
+        for name, member in module.members.items():
+            # If it's an Alias (from import), member.target_path is the FQN.
+            if member.is_alias:
+                # Resolve the target path.
+                # Griffe's resolve_aliases() should have computed .target for us if possible,
+                # or at least .target_path is available.
+                try:
+                    target_fqn = member.target_path
+                    local_symbols[name] = target_fqn
+                except Exception:
+                    # If resolution failed or path unavailable
+                    pass
+            else:
+                # It's a definition (Class, Function) in this module.
+                # The name maps to the object's own path.
+                local_symbols[name] = member.path
+
+        # 2. Parse AST and scan
+        try:
+            source = module.filepath.read_text(encoding="utf-8")
+            tree = ast.parse(source)
+            visitor = _UsageVisitor(module.filepath, local_symbols, self.registry)
+            visitor.visit(tree)
+        except Exception:
+            # Handle syntax errors or IO errors gracefully
+            pass
+
+    def get_module(self, package_name: str) -> Optional[griffe.Module]:
+        return self._modules.get(package_name)
+
+    def iter_members(self, package_name: str) -> List[SymbolNode]:
+        # ... (Same as before) ...
+        # For brevity, we keep the previous implementation or re-implement if wiped.
+        # Re-implementing for safety since we are overwriting the file.
+        module = self.get_module(package_name)
+        if not module:
+            return []
+        nodes = []
+        def _collect(obj: griffe.Object):
+            path = obj.filepath if obj.filepath else Path("")
+            kind = "unknown"
+            if obj.is_module: kind = "module"
+            elif obj.is_class: kind = "class"
+            elif obj.is_function: kind = "function"
+            elif obj.is_attribute: kind = "attribute"
+            nodes.append(SymbolNode(fqn=obj.path, kind=kind, path=path))
+            if hasattr(obj, "members"):
+                for member in obj.members.values():
+                    if not member.is_alias:
+                        _collect(member)
+        _collect(module)
+        return nodes
+~~~~~
+
+#### Acts 2: 编写集成测试验证 UsageRegistry
+创建一个测试，模拟一个包含跨文件引用的场景，验证 `UsageRegistry` 是否能正确找到引用。
+
+~~~~~act
+write_file
+packages/stitcher-refactor/tests/integration/test_usage_registry.py
+~~~~~
+~~~~~python
+from pathlib import Path
+from stitcher.refactor.engine.graph import SemanticGraph, UsageLocation
+
+def test_usage_registry_resolution(tmp_path):
+    # Setup:
+    # mypkg/
+    #   __init__.py
+    #   core.py -> defines `Helper`
+    #   app.py  -> imports `Helper` as `H`, uses `H()`
     
-    assert modified_code == expected_code
+    pkg_dir = tmp_path / "mypkg"
+    pkg_dir.mkdir()
+    (pkg_dir / "__init__.py").write_text("", encoding="utf-8")
+    
+    # core.py
+    (pkg_dir / "core.py").write_text(
+        "class Helper:\n    pass", 
+        encoding="utf-8"
+    )
+    
+    # app.py
+    # We import Helper as H, then instantiate it.
+    # The registry should map the usage of 'H' in app.py to 'mypkg.core.Helper'
+    (pkg_dir / "app.py").write_text(
+        "from mypkg.core import Helper as H\n\ndef main():\n    obj = H()", 
+        encoding="utf-8"
+    )
+    
+    # Execute
+    graph = SemanticGraph(root_path=tmp_path)
+    graph.load("mypkg")
+    
+    # Verify
+    # We want to find usages of 'mypkg.core.Helper'
+    usages = graph.registry.get_usages("mypkg.core.Helper")
+    
+    # Debug info
+    print(f"Usages found: {usages}")
+    
+    # We expect usages in:
+    # 1. app.py (the import statement "Helper as H" - handled by Griffe Alias scan?)
+    #    Actually our _scan_module_usages scans Name nodes.
+    #    The import statement creates the alias 'H'.
+    #    The UsageVisitor sees 'H' in 'obj = H()' and resolves it to 'mypkg.core.Helper'.
+    
+    # Let's check if we caught the usage in `main`
+    app_usage = next((u for u in usages if u.file_path.name == "app.py" and u.lineno == 4), None)
+    
+    assert app_usage is not None, "Failed to find usage of H() in app.py"
+    assert app_usage.col_offset == 10  # "    obj = H()" -> H starts at index 10
+    
+    # Also, we implicitly registered the definition in core.py? 
+    # _scan_module_usages registers local definitions too.
+    # So 'class Helper' in core.py should also be a usage of 'mypkg.core.Helper' (definition is a usage)
+    core_usage = next((u for u in usages if u.file_path.name == "core.py"), None)
+    assert core_usage is not None
 ~~~~~
 
 ### 下一步建议
-实现并验证了 `SymbolRenamerTransformer` 后，我们将拥有修改代码的能力。
-接下来的步骤是：
-1.  **实现 `UsageRegistry` 和 Griffe 到 `UsageLocation` 的转换**：我们需要一个真实的方式从 Griffe 的分析结果中提取出 `UsageLocation` 列表，而不仅仅是手动构造它们。这将涉及到遍历 Griffe 的 AST 引用（Griffe 最近的版本开始支持引用解析，或者我们需要自己遍历 AST）。
-    *   *修正*: 考虑到 Griffe 的引用解析可能还在实验阶段，阶段二的路线图提到“构建 SemanticGraph... 建立 UsageRegistry”。我们可能需要自己写一个简单的 AST Visitor (使用 `ast` 或 `libcst`) 来扫描文件并构建这个 Registry，作为 `SemanticGraph` 的一部分。
-2.  **集成 `RenameSymbolOperation`**: 将 Graph 分析、Registry 查找和 Transformer 修改封装成一个完整的 Operation 类。
+有了 `UsageRegistry` 和 `SymbolRenamerTransformer`，我们现在拥有了完整的“搜索”和“替换”能力。
+下一步是将它们组合成 `RenameSymbolOperation` 类：
+1.  **输入**: 用户指定旧 FQN 和新 FQN。
+2.  **分析**: 使用 `SemanticGraph` 找到旧 FQN 的所有 Usages。
+3.  **转换**: 为每个涉及的文件生成 `SymbolRenamerTransformer`。
+4.  **执行**: 调用 `TransactionManager` 应用变更。
