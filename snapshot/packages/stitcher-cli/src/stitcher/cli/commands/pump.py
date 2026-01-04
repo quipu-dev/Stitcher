@@ -42,11 +42,7 @@ def pump_command(
     # 2. Interactive Strip Confirmation
     # Check if we have a handler (implies interactive mode) and redundant files exist
     # DEBUG PROBE
-    from needle.pointer import SemanticPointer
-    bus.debug(
-        SemanticPointer("debug.log.msg"),
-        msg=f"[DEBUG] Handler: {bool(handler)}, Redundant: {len(result.redundant_files)}, Strip: {strip}",
-    )
+    print(f"\n[DEBUG_PROBE] Handler: {bool(handler)} ({type(handler)}), Redundant: {len(result.redundant_files)}, Strip: {strip}")
 
     if handler and result.redundant_files and not strip:
         typer.echo("")
@@ -55,9 +51,9 @@ def pump_command(
             fg=typer.colors.YELLOW,
         )
         if typer.confirm("Do you want to strip them now?", default=True):
-            bus.debug(SemanticPointer("debug.log.msg"), msg="[DEBUG] User confirmed strip.")
+            print("[DEBUG_PROBE] User confirmed strip.")
             app_instance.run_strip(files=result.redundant_files)
         else:
-            bus.debug(SemanticPointer("debug.log.msg"), msg="[DEBUG] User denied strip.")
+            print("[DEBUG_PROBE] User denied strip.")
     else:
-        bus.debug(SemanticPointer("debug.log.msg"), msg="[DEBUG] Condition failed.")
+        print("[DEBUG_PROBE] Condition failed.")
