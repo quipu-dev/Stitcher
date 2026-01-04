@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test(refactor): 验证 Transformer 对 Attribute 和 ImportAlias 的处理能力", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767532422.9049547, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 重构 UsageRegistry 构建逻辑以完全依赖 Griffe 解析", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767532565.1377664, "duration_ms": 0}}
