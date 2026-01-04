@@ -250,7 +250,7 @@ class PumpRunner:
                     self.sig_manager.save_composite_hashes(module, new_hashes)
 
                 if file_has_redundancy:
-                    redundant_files_list.append(Path(module.file_path))
+                    redundant_files_list.append(self.root_path / module.file_path)
 
             if updated_keys_in_file:
                 total_updated_keys += len(updated_keys_in_file)

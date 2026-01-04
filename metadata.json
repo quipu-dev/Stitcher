@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(app): 修复 PumpRunner 不返回冗余文件列表的问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767527005.2676835, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 修正路径构造逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767527272.8540165, "duration_ms": 0}}
