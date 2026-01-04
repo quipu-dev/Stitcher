@@ -8,8 +8,6 @@ from stitcher.refactor.operations.move_file import MoveFileOperation
 
 
 class MoveDirectoryOperation(AbstractOperation):
-    """Orchestrates the move of an entire directory."""
-
     def __init__(self, src_dir: Path, dest_dir: Path):
         if not src_dir.is_dir():
             raise ValueError(f"Source path is not a directory: {src_dir}")
@@ -17,11 +15,6 @@ class MoveDirectoryOperation(AbstractOperation):
         self.dest_dir = dest_dir
 
     def analyze(self, ctx: RefactorContext) -> List[FileOp]:
-        """
-        Analyzes the directory move by planning moves for all contents,
-        ensuring each file is processed exactly once, and scheduling the
-        source directory for deletion.
-        """
         all_ops: List[FileOp] = []
         handled_paths: Set[Path] = set()
 
@@ -52,16 +45,14 @@ class MoveDirectoryOperation(AbstractOperation):
             # This item is a non-Python, non-sidecar file. Do a simple move.
             relative_path = src_item.relative_to(self.src_dir)
             dest_item = self.dest_dir / relative_path
-            
+
             rel_src_item = src_item.relative_to(ctx.graph.root_path)
             rel_dest_item = dest_item.relative_to(ctx.graph.root_path)
-            
+
             all_ops.append(MoveFileOp(rel_src_item, rel_dest_item))
             handled_paths.add(src_item)
 
         # Phase 3: Schedule the now-empty source directory for deletion
-        all_ops.append(
-            DeleteDirectoryOp(self.src_dir.relative_to(ctx.graph.root_path))
-        )
+        all_ops.append(DeleteDirectoryOp(self.src_dir.relative_to(ctx.graph.root_path)))
 
         return all_ops

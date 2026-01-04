@@ -1,0 +1,6 @@
+"MoveDirectoryOperation": |-
+  Orchestrates the move of an entire directory.
+"MoveDirectoryOperation.analyze": |-
+  Analyzes the directory move by planning moves for all contents,
+  ensuring each file is processed exactly once, and scheduling the
+  source directory for deletion.
