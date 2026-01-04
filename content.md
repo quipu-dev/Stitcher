@@ -1,129 +1,189 @@
-简要回答
-测试失败且**没有输出任何调试信息**，这意味着 `pump_command` 中的 **`if handler and result.redundant_files and not strip:` 条件块内的代码根本没有被执行**，甚至我们在 `if` 之前放的 `print` 也没有显示。
+## [WIP] fix(test): Mock handler 工厂以修复交互测试
 
-等等，如果连 `[DEBUG_PROBE]` 都没有显示，这说明 pytest 捕获了 stdout。我之前让你加上 `-s` 标志，但看起来你确实加了。
+好的，破案了。
 
-**可能性分析：**
+```
+[PROBE] Handler=None, Redundant=1, Strip=False
+[PROBE] Condition failed.
+```
 
-1.  **代码没有被正确加载/更新**：有时 `pyc` 缓存或者 pytest 的加载机制导致我们修改的代码没有生效。
-2.  **`spy_bus.patch` 的副作用**：我们在测试中使用了 `spy_bus.patch`。如果在 `pump_command` 内部引用 `bus` 时发生了异常（例如导入循环或其他问题），可能会导致执行中断，或者 `bus` 的 mock 干扰了某些东西。
-3.  **`Typer` 的 `callback` 机制**：`pump_command` 是通过 `app()` 调用的，Typer 可能会捕获异常或输出。
+问题出在 **`Handler=None`**。
 
-但最奇怪的是 `print` 没出来。通常 `-s` 会让所有 print 显形。
+在 `pump_command` 中，`handler` 为 `None`，导致 `if handler and ...` 条件直接失败，因此没有弹出提示。
 
-让我们换个思路：**不要依赖 print**。既然测试失败会显示 `Captured IDs`，我们利用这个机制。我们使用 `SpyBus` 来记录调试信息，这样即使 stdout 被吃掉了，我们也能在报错信息里看到。
+**为什么 Handler 是 None？**
 
-我将修改 `pump.py`，把 `print` 改回 `bus.debug`，但这次我会确保使用一个**独特的、肯定会被捕获的 ID**，比如 `debug.log.msg`，并把关键变量放在参数里。这样，当测试再次失败时，我们检查 `Captured IDs` 列表中的 `debug.log.msg` 的参数，就能知道发生了什么。
+在 `stitcher-cli/src/stitcher/cli/commands/pump.py` 中：
 
-**更正计划**：
-1. 修改 `pump.py`，使用 `bus.debug` 发送带有详细参数的消息。
-2. 修改 `test_pump_strip_interaction.py`，在断言失败前，手动从 `spy_bus` 获取并打印所有 `debug.log.msg` 的内容。这样我们就能在失败回溯中看到变量值。
+```python
+    # Use factory logic
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force or reconcile),
+    )
+```
 
-## [WIP] debug(cli): 使用 SpyBus 捕获调试信息以诊断状态
+调用了 `make_interaction_handler`。让我们看看 `packages/stitcher-cli/src/stitcher/cli/factories.py`：
+
+```python
+def make_interaction_handler(
+    non_interactive: bool = False,
+    auto_resolve_mode: bool = False,
+) -> Optional[InteractionHandler]:
+    if sys.stdin.isatty() and not non_interactive and not auto_resolve_mode:
+        renderer = TyperInteractiveRenderer(nexus)
+        return TyperInteractionHandler(renderer)
+    return None
+```
+
+我们在测试中通过 `monkeypatch.setattr(sys.stdin, "isatty", lambda: True)` 模拟了 `isatty`。照理说应该进入 `if` 分支并返回 Handler。
+
+**除非... `sys.stdin` 在测试运行时被其他东西（比如 pytest 的 capture 机制或者 CliRunner）替换了，导致 monkeypatch 没有生效到正确对象上？**
+
+`typer.testing.CliRunner` 会接管 stdin/stdout。当我们调用 `runner.invoke` 时，它可能会在内部替换 `sys.stdin`。
+
+**解决方案**：
+
+与其与 `sys.stdin` 斗争，不如我们在测试中直接 mock `make_interaction_handler` 工厂函数，强制它返回一个 Mock 对象或者真实的 Handler。这样我们就能绕过对 TTY 检测的依赖，直接控制测试条件。
+
+我将修改测试，mock `stitcher.cli.commands.pump.make_interaction_handler`，使其返回一个真实的 `TyperInteractionHandler` (或者一个 Mock)。这将确保 `handler` 不为 None。
+
 
 ### 用户需求
-使用 `SpyBus` 机制替代 `print` 来捕获 `pump_command` 中的运行时状态，以解决 stdout 被吞噬导致无法调试的问题。
+修复 `test_pump_prompts_for_strip_when_redundant` 测试中 `handler` 为 `None` 的问题，确保测试能够进入交互逻辑分支。
 
 ### 评论
-既然 `SpyBus` 已经成功工作（它捕获了 `pump.run.complete` 等消息），它是传输调试信息最可靠的通道。我们将把内部状态打包成 `debug.log.msg` 发送出去，然后在测试端解包查看。
+依赖 `sys.stdin.isatty` 在测试环境中是脆弱的，因为 pytest、CliRunner 和 monkeypatch 都在争夺对标准流的控制。最好的做法是直接 Mock 负责创建 Handler 的工厂函数，这是最明确的控制反转点。
 
 ### 目标
-1.  **修改 `pump.py`**: 恢复使用 `bus.debug`，并传入详细的 `msg` 参数。
-2.  **修改测试文件**: 在断言失败时，遍历并打印捕获到的所有 `debug` 消息的内容。
+1.  修改 `packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py`。
+2.  移除对 `sys.stdin.isatty` 的 monkeypatch。
+3.  添加一个新的 mock，拦截 `stitcher.cli.commands.pump.make_interaction_handler`。
+4.  让该 mock 返回一个真实的 `TyperInteractionHandler` 实例，确保 `pump_command` 认为它处于交互模式。
 
 ### 基本原理
-利用现有的、已验证的通信机制（SpyBus）来进行带内（In-band）调试，绕过不确定的 I/O 捕获问题。
+通过 Mock 工厂函数，我们直接告诉 `pump_command`：“现在是交互模式，这是你的 Handler”。这消除了环境配置（TTY 检测）的不确定性，让测试专注于验证命令本身的逻辑流程。
 
 ### 标签
-#intent/tooling #flow/draft #priority/high
-#comp/cli #comp/tests #scope/dx
+#intent/fix #flow/ready #priority/high
+#comp/tests #scope/dx
 #ai/instruct
-#task/domain/debugging #task/object/pump-command #task/action/instrument-code-bus
+#task/domain/testing #task/object/test-setup #task/action/mock-factory
 #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 在 pump.py 中使用 bus.debug
-
-~~~~~act
-patch_file
-packages/stitcher-cli/src/stitcher/cli/commands/pump.py
-~~~~~
-~~~~~python.old
-    # DEBUG PROBE
-    print(f"\n[DEBUG_PROBE] Handler: {bool(handler)} ({type(handler)}), Redundant: {len(result.redundant_files)}, Strip: {strip}")
-
-    if handler and result.redundant_files and not strip:
-        typer.echo("")
-        typer.secho(
-            f"Found {len(result.redundant_files)} file(s) with redundant docstrings in source code.",
-            fg=typer.colors.YELLOW,
-        )
-        if typer.confirm("Do you want to strip them now?", default=True):
-            print("[DEBUG_PROBE] User confirmed strip.")
-            app_instance.run_strip(files=result.redundant_files)
-        else:
-            print("[DEBUG_PROBE] User denied strip.")
-    else:
-        print("[DEBUG_PROBE] Condition failed.")
-~~~~~
-~~~~~python.new
-    # DEBUG PROBE
-    from needle.pointer import SemanticPointer
-    bus.debug(
-        SemanticPointer("debug.log.msg"),
-        msg=f"[PROBE] Handler={handler}, Redundant={len(result.redundant_files)}, Strip={strip}",
-    )
-
-    if handler and result.redundant_files and not strip:
-        typer.echo("")
-        typer.secho(
-            f"Found {len(result.redundant_files)} file(s) with redundant docstrings in source code.",
-            fg=typer.colors.YELLOW,
-        )
-        if typer.confirm("Do you want to strip them now?", default=True):
-            bus.debug(SemanticPointer("debug.log.msg"), msg="[PROBE] User confirmed strip.")
-            app_instance.run_strip(files=result.redundant_files)
-        else:
-            bus.debug(SemanticPointer("debug.log.msg"), msg="[PROBE] User denied strip.")
-    else:
-        bus.debug(SemanticPointer("debug.log.msg"), msg="[PROBE] Condition failed.")
-~~~~~
-
-#### Acts 2: 在测试中提取调试信息
+#### Acts 1: Mock make_interaction_handler
 
 ~~~~~act
 patch_file
 packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py
 ~~~~~
 ~~~~~python.old
-    # Critical Assertion:
-    # If the prompt appeared and worked, 'run_strip' should have been called,
-    # and it should have emitted a success message via the bus.
-    # If this fails, it means the CLI never prompted or never executed the strip.
-    spy_bus.assert_id_called(L.strip.run.complete, level="success")
+from typer.testing import CliRunner
+from stitcher.cli.main import app
+from stitcher.test_utils import WorkspaceFactory, SpyBus
+from needle.pointer import L
+
+
+def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch):
+    """
+    Verifies that when 'pump' extracts docstrings (making source docs redundant),
+    it prompts the user to strip them, and performs the strip if confirmed.
+    """
+    # 1. Arrange
+    factory = WorkspaceFactory(tmp_path)
+    # Create a file with a docstring that will be extracted
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source(
+            "src/main.py",
+            '''
+def func():
+    """This docstring should become redundant."""
+    pass
+''',
+        )
+        .build()
+    )
+
+    runner = CliRunner()
+    spy_bus = SpyBus()
+
+    # Mock isatty to True to force interactive mode (so handler is created)
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+
+    # 2. Act
+    # Run pump without --strip, but provide 'y' to the potential prompt
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        # We need to change cwd so the CLI picks up the pyproject.toml
+        monkeypatch.chdir(project_root)
+        result = runner.invoke(app, ["pump"], input="y\n")
 ~~~~~
 ~~~~~python.new
-    # Critical Assertion:
-    # If the prompt appeared and worked, 'run_strip' should have been called,
-    # and it should have emitted a success message via the bus.
-    # If this fails, it means the CLI never prompted or never executed the strip.
-    try:
-        spy_bus.assert_id_called(L.strip.run.complete, level="success")
-    except AssertionError:
-        # Extract debug info
-        debug_msgs = [m for m in spy_bus.get_messages() if m["id"] == "debug.log.msg"]
-        print("\n--- DEBUG INFO FROM BUS ---")
-        for m in debug_msgs:
-            print(m["params"]["msg"])
-        print("---------------------------")
-        raise
+from typer.testing import CliRunner
+from stitcher.cli.main import app
+from stitcher.test_utils import WorkspaceFactory, SpyBus
+from needle.pointer import L
+from unittest.mock import MagicMock
+from stitcher.cli.handlers import TyperInteractionHandler
+
+
+def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch):
+    """
+    Verifies that when 'pump' extracts docstrings (making source docs redundant),
+    it prompts the user to strip them, and performs the strip if confirmed.
+    """
+    # 1. Arrange
+    factory = WorkspaceFactory(tmp_path)
+    # Create a file with a docstring that will be extracted
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source(
+            "src/main.py",
+            '''
+def func():
+    """This docstring should become redundant."""
+    pass
+''',
+        )
+        .build()
+    )
+
+    runner = CliRunner()
+    spy_bus = SpyBus()
+
+    # FORCE INTERACTIVE MODE:
+    # Instead of fighting with sys.stdin.isatty(), we directly mock the factory
+    # to return a real handler. This ensures pump_command sees 'handler' as truthy.
+    # We use a dummy renderer because we rely on CliRunner's input injection, not the renderer's prompt logic.
+    dummy_handler = TyperInteractionHandler(renderer=MagicMock())
+    
+    # We mock the factory function imported inside pump.py
+    monkeypatch.setattr(
+        "stitcher.cli.commands.pump.make_interaction_handler",
+        lambda **kwargs: dummy_handler
+    )
+
+    # 2. Act
+    # Run pump without --strip, but provide 'y' to the potential prompt
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        # We need to change cwd so the CLI picks up the pyproject.toml
+        monkeypatch.chdir(project_root)
+        result = runner.invoke(app, ["pump"], input="y\n")
 ~~~~~
 
 ### 下一步建议
-运行测试：
-`pytest packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py -s`
+再次运行测试 `pytest packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py -s`。
 
-这次，当测试失败时，`try...except` 块会捕获异常，并从 Bus 中提取出我们刚刚植入的 `[PROBE]` 消息并打印出来，这将最终告诉我们哪个变量出了问题。
+这次：
+1.  `make_interaction_handler` 将返回我们的 `dummy_handler`。
+2.  `pump_command` 中的 `if handler ...` 判断将为 True。
+3.  `redundant_files` 已修复为非空。
+4.  `typer.confirm` 应该会读取我们注入的 `y\n`。
+5.  `run_strip` 应该被调用。
+6.  测试应该通过。
+
+如果通过，我们就可以清理掉 `pump.py` 中的调试代码了。

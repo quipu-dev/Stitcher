@@ -3,6 +3,8 @@ from typer.testing import CliRunner
 from stitcher.cli.main import app
 from stitcher.test_utils import WorkspaceFactory, SpyBus
 from needle.pointer import L
+from unittest.mock import MagicMock
+from stitcher.cli.handlers import TyperInteractionHandler
 
 
 def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch):
@@ -29,8 +31,17 @@ def func():
     runner = CliRunner()
     spy_bus = SpyBus()
 
-    # Mock isatty to True to force interactive mode (so handler is created)
-    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    # FORCE INTERACTIVE MODE:
+    # Instead of fighting with sys.stdin.isatty(), we directly mock the factory
+    # to return a real handler. This ensures pump_command sees 'handler' as truthy.
+    # We use a dummy renderer because we rely on CliRunner's input injection, not the renderer's prompt logic.
+    dummy_handler = TyperInteractionHandler(renderer=MagicMock())
+    
+    # We mock the factory function imported inside pump.py
+    monkeypatch.setattr(
+        "stitcher.cli.commands.pump.make_interaction_handler",
+        lambda **kwargs: dummy_handler
+    )
 
     # 2. Act
     # Run pump without --strip, but provide 'y' to the potential prompt
