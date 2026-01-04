@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(test): Mock handler 工厂以修复交互测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767528008.624421, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(cli): 移除 pump 命令和测试中的调试代码", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767528171.0181334, "duration_ms": 0}}

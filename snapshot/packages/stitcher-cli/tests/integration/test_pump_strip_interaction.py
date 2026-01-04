@@ -57,16 +57,7 @@ def func():
     # If the prompt appeared and worked, 'run_strip' should have been called,
     # and it should have emitted a success message via the bus.
     # If this fails, it means the CLI never prompted or never executed the strip.
-    try:
-        spy_bus.assert_id_called(L.strip.run.complete, level="success")
-    except AssertionError:
-        # Extract debug info
-        debug_msgs = [m for m in spy_bus.get_messages() if m["id"] == "debug.log.msg"]
-        print("\n--- DEBUG INFO FROM BUS ---")
-        for m in debug_msgs:
-            print(m["params"]["msg"])
-        print("---------------------------")
-        raise
+    spy_bus.assert_id_called(L.strip.run.complete, level="success")
 
     # Verify physical file content (docstring should be gone)
     content = (project_root / "src/main.py").read_text()
