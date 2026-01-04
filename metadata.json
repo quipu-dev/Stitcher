@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现 RenameSymbolOperation", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767531983.0340738, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正 RenameOperation 测试中对 Path.read_text 的 Mock", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767532041.0579195, "duration_ms": 0}}

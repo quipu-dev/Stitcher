@@ -41,17 +41,17 @@ def test_rename_symbol_analyze_orchestration():
     mock_registry.get_usages.return_value = locations
     
     # Mock file system reads
-    def mock_read_text(path, *args, **kwargs):
-        if path == file_a_path:
+    def mock_read_text(self, encoding=None):
+        if self == file_a_path:
             return source_a
-        if path == file_b_path:
+        if self == file_b_path:
             return source_b
-        raise FileNotFoundError(f"Mock read_text: {path}")
+        raise FileNotFoundError(f"Mock read_text: {self}")
 
     # Use monkeypatch to control Path.read_text
     # This is slightly more integration-y but tests the real interaction with LibCST better.
     from unittest.mock import patch
-    with patch.object(Path, "read_text", side_effect=mock_read_text):
+    with patch("pathlib.Path.read_text", side_effect=mock_read_text):
         # 3. Execute
         op = RenameSymbolOperation(old_fqn, new_fqn)
         file_ops = op.analyze(ctx)
