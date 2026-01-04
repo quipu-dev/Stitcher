@@ -62,7 +62,6 @@ class PumpRunner:
         decisions: Dict[str, ResolutionAction],
         strip_requested: bool,
     ) -> Dict[str, FunctionExecutionPlan]:
-        """根据用户决策和命令行标志，生成最终的函数级执行计划。"""
         plan: Dict[str, FunctionExecutionPlan] = {}
         source_docs = self.doc_manager.flatten_module_docs(module)
 

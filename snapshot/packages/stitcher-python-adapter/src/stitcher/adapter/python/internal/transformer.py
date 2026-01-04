@@ -65,7 +65,10 @@ class StripperTransformer(cst.CSTTransformer):
                 # It must be preceded by an assignment.
                 elif i > 0:
                     prev_stmt = statements[i - 1]
-                    if isinstance(prev_stmt, cst.SimpleStatementLine) and len(prev_stmt.body) == 1:
+                    if (
+                        isinstance(prev_stmt, cst.SimpleStatementLine)
+                        and len(prev_stmt.body) == 1
+                    ):
                         target_name = self._get_assign_target_name(prev_stmt.body[0])
                         if target_name:
                             # Construct FQN for the attribute
@@ -102,7 +105,7 @@ class StripperTransformer(cst.CSTTransformer):
             )
             if not new_body_stmts:
                 new_body_stmts = [cst.SimpleStatementLine(body=[cst.Pass()])]
-            
+
             updated_node = updated_node.with_changes(
                 body=body.with_changes(body=tuple(new_body_stmts))
             )
@@ -121,7 +124,7 @@ class StripperTransformer(cst.CSTTransformer):
         should_strip_func_doc = self._should_strip(func_fqn)
 
         body = updated_node.body
-        
+
         # Simple suites like "def f(): pass" have no docstrings to strip (it's a Pass or Expr).
         # We only care about IndentedBlock.
         if isinstance(body, cst.IndentedBlock):

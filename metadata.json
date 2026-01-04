@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix: 实现属性文档字符串剥离并修复白名单过滤逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767335736.1594, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M pump.py, M transformer.py, M models.py ... and 2 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767526277.7340283, "duration_ms": 0}}
