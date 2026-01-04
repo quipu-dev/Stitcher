@@ -1,103 +1,67 @@
-简要回答
-好的，我将创建一个集成测试来复现 `pump` 命令在存在冗余文档时未能正确提示用户进行 strip 操作的问题。
+我明白了，第一个测试因为测试代码本身的问题而失败了。`CliRunner.invoke` 并不接受 `cwd` 参数。
 
-经过代码审查，我发现了潜在的故障点：`PumpRunner.run` 方法似乎始终返回空的 `redundant_files` 列表，导致 CLI 层的交互逻辑 (`if result.redundant_files:`) 永远无法触发。
+我将修复这个测试，使用 `pytest` 的 `monkeypatch.chdir` 来正确地改变当前工作目录，这能确保 CLI 在正确的项目上下文中运行。
 
-我将编写一个测试，模拟一个应当产生冗余文档的场景，并断言 CLI 在用户确认后执行了 strip 操作。由于当前逻辑存在缺陷，预计此测试将失败（Red 阶段）。
+修复后，我们预计测试会再次失败，但会是因为我们最初预期的那个断言错误（即 `SpyBus` 没有捕获到 strip 成功的消息），这将确认我们的测试逻辑是正确的，并且成功地捕获了应用层的缺陷。
 
-## [WIP] test(cli): 添加 pump 命令交互式 strip 提示的集成测试
+## [WIP] fix(test): 使用 monkeypatch.chdir 修复 pump 交互测试的运行环境
+
+### 错误分析
+测试 `test_pump_prompts_for_strip_when_redundant` 失败，抛出 `TypeError: Context.__init__() got an unexpected keyword argument 'cwd'`。
+
+根本原因是 `typer.testing.CliRunner.invoke` 方法不支持 `cwd` 参数。我们的意图是让命令在临时创建的项目目录中执行，以便 `stitcher` 能够找到 `pyproject.toml`，但实现方式有误。
+
+正确的做法是使用 `pytest` 的 `monkeypatch` fixture 来临时改变当前工作目录 (`os.chdir`)，`monkeypatch` 会在测试结束后自动恢复原状，确保测试的隔离性。
 
 ### 用户需求
-验证 `stitcher pump` 命令在检测到源码中的文档字符串已成功提取到 YAML 后，能够在交互模式下提示用户将其从源码中剥离（Strip）。
+修复 `pump` 命令交互测试中的 `TypeError`，使其能够正确运行并验证核心业务逻辑。
 
 ### 评论
-这个测试不仅仅是为了覆盖率，它直接针对了一个隐蔽的逻辑缺陷。通过模拟 TTY 环境和用户输入，我们可以验证整个“检测冗余 -> 提示 -> 执行剥离”的链路是否通畅。使用 `SpyBus` 验证最终结果（`L.strip.run.complete`）比匹配脆弱的 stdout 字符串更符合我们的测试哲学。
+这是一个典型的测试环境设置错误。通过使用 `monkeypatch.chdir`，我们不仅修复了错误，还采用了更健壮、更符合 `pytest` 最佳实践的方式来管理测试的执行上下文，避免了对 `os` 模块的直接操作和手动状态恢复。
 
 ### 目标
-1.  创建 `packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py`。
-2.  编写测试 `test_pump_prompts_for_strip_when_redundant`。
-    *   **Arrange**: 创建包含 docstring 的源码文件。
-    *   **Act**: 在模拟 TTY 环境下运行 `pump` 命令（不带 `--strip`），并注入 `'y'` 作为确认输入。
-    *   **Assert**: 验证 `SpyBus` 是否收到了 `L.strip.run.complete` 消息（意味着 strip 逻辑被触发并执行了）。
+1.  修改 `packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py` 文件。
+2.  在调用 `runner.invoke` 之前，使用 `monkeypatch.chdir(project_root)` 设置正确的当前工作目录。
+3.  从 `runner.invoke` 调用中移除无效的 `cwd` 参数。
 
 ### 基本原理
-我们利用 `SpyBus` 验证“意图”而非“实现”。如果交互逻辑正常工作，用户确认后必然会触发 `run_strip`，进而产生 `strip.run.complete` 消息。如果 Bus 没有收到该消息，即证明交互逻辑未触发或执行失败，从而在不依赖具体 UI 文案的情况下精准捕获 Bug。
+我们将利用 `pytest` 的 `monkeypatch` fixture，它提供了一个安全、上下文管理的 `chdir` 方法。这确保了在执行 `runner.invoke(app, ["pump"], ...)` 时，程序的视角已经位于我们动态创建的 `project_root` 目录内，从而能够正确地发现配置文件和源文件，准确地模拟用户的真实使用场景。
 
 ### 标签
-#intent/tooling #flow/draft #priority/high
-#comp/cli #comp/tests #scope/core
+#intent/fix #flow/ready #priority/high
+#comp/tests #scope/dx
 #ai/instruct
-#task/domain/testing #task/object/pump-command #task/action/reproduce-bug
+#task/domain/testing #task/object/test-environment #task/action/bug-fix
 #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 创建复现测试
+#### Acts 1: 修复测试的执行上下文
 
 ~~~~~act
-write_file
+patch_file
 packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py
 ~~~~~
-~~~~~python
-import sys
-from typer.testing import CliRunner
-from stitcher.cli.main import app
-from stitcher.test_utils import WorkspaceFactory, SpyBus
-from needle.pointer import L
-
-
-def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch):
-    """
-    Verifies that when 'pump' extracts docstrings (making source docs redundant),
-    it prompts the user to strip them, and performs the strip if confirmed.
-    """
-    # 1. Arrange
-    factory = WorkspaceFactory(tmp_path)
-    # Create a file with a docstring that will be extracted
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source(
-            "src/main.py",
-            '''
-def func():
-    """This docstring should become redundant."""
-    pass
-''',
-        )
-        .build()
-    )
-
-    runner = CliRunner()
-    spy_bus = SpyBus()
-
-    # Mock isatty to True to force interactive mode (so handler is created)
-    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
-
+~~~~~python.old
     # 2. Act
     # Run pump without --strip, but provide 'y' to the potential prompt
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         # We need to change cwd so the CLI picks up the pyproject.toml
         result = runner.invoke(app, ["pump"], input="y\n", cwd=str(project_root))
-
-    # 3. Assert
-    assert result.exit_code == 0
-
-    # Critical Assertion:
-    # If the prompt appeared and worked, 'run_strip' should have been called,
-    # and it should have emitted a success message via the bus.
-    # If this fails, it means the CLI never prompted or never executed the strip.
-    spy_bus.assert_id_called(L.strip.run.complete, level="success")
-
-    # Verify physical file content (docstring should be gone)
-    content = (project_root / "src/main.py").read_text()
-    assert '"""' not in content
-    assert "pass" in content
+~~~~~
+~~~~~python.new
+    # 2. Act
+    # Run pump without --strip, but provide 'y' to the potential prompt
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        # We need to change cwd so the CLI picks up the pyproject.toml
+        monkeypatch.chdir(project_root)
+        result = runner.invoke(app, ["pump"], input="y\n")
 ~~~~~
 
 ### 下一步建议
+现在测试代码本身已经修复，请再次运行它：
+`pytest packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py`
 
-运行测试 `pytest packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py`。
-预计测试将失败，因为 `PumpRunner` 目前返回空的 `redundant_files`。
-确认失败后，我将生成修复计划，修正 `stitcher-application` 中的 `PumpRunner` 逻辑。
+这次，我们预期会看到一个不同的、与 `SpyBus` 相关的断言失败。这个失败将证明我们的测试现在能够正确地暴露应用层的逻辑问题，使我们进入 TDD 周期的下一个阶段：修复应用代码。

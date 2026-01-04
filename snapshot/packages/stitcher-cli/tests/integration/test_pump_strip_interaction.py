@@ -36,7 +36,8 @@ def func():
     # Run pump without --strip, but provide 'y' to the potential prompt
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         # We need to change cwd so the CLI picks up the pyproject.toml
-        result = runner.invoke(app, ["pump"], input="y\n", cwd=str(project_root))
+        monkeypatch.chdir(project_root)
+        result = runner.invoke(app, ["pump"], input="y\n")
 
     # 3. Assert
     assert result.exit_code == 0
