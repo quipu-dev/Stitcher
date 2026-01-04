@@ -1,4 +1,5 @@
 import libcst as cst
+from libcst import helpers
 from libcst.metadata import PositionProvider
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -55,21 +56,103 @@ class _UsageVisitor(cst.CSTVisitor):
         self.local_symbols = local_symbols  # map: local_name -> target_fqn
         self.registry = registry
 
+    def _register_node(self, node: cst.CSTNode, fqn: str):
+        pos = self.get_metadata(PositionProvider, node)
+        loc = UsageLocation(
+            file_path=self.file_path,
+            lineno=pos.start.line,
+            col_offset=pos.start.column,
+            end_lineno=pos.end.line,
+            end_col_offset=pos.end.column
+        )
+        self.registry.register(fqn, loc)
+
     def visit_Name(self, node: cst.Name):
         # In LibCST, Name nodes appear in definitions (ClassDef.name), 
         # references (a = 1), and aliases (import x as y).
         target_fqn = self.local_symbols.get(node.value)
         if target_fqn:
-            pos = self.get_metadata(PositionProvider, node)
-            # CodeRange is 1-based line, 0-based column.
-            loc = UsageLocation(
-                file_path=self.file_path,
-                lineno=pos.start.line,
-                col_offset=pos.start.column,
-                end_lineno=pos.end.line,
-                end_col_offset=pos.end.column
-            )
-            self.registry.register(target_fqn, loc)
+            self._register_node(node, target_fqn)
+
+    def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:
+        # Handle: from mypkg.core import OldHelper [as OH]
+        # We want to register the usage of 'OldHelper' (the name in the import list)
+        
+        # 1. Resolve the module part
+        if not node.module:
+            # Relative import without base? e.g. "from . import x"
+            # Griffe might resolve this via local context, but CST is purely syntactic.
+            # However, for simple absolute imports, we can extract the name.
+            # Handling relative imports properly requires knowing the current module's FQN.
+            # For MVP, we'll try to rely on simple resolution or skip relative if complex.
+            # But wait, local_symbols might have the module? No.
+            # Let's try to reconstruct absolute import if possible, or skip.
+            # For `from mypkg.core ...`
+            pass
+        
+        module_name = helpers.get_full_name_for_node(node.module) if node.module else None
+        
+        if module_name:
+            # If relative import (starts with .), we need context. 
+            # Assuming absolute for now or basic relative handling if we knew package structure.
+            # BUT, we can iterate imported names.
+            pass
+
+        # Strategy: We look at the names being imported.
+        for alias in node.names:
+            if isinstance(alias, cst.ImportAlias):
+                name_node = alias.name
+                imported_name = helpers.get_full_name_for_node(name_node)
+                
+                # Construct candidate FQN
+                # If module_name is "mypkg.core" and imported_name is "OldHelper" -> "mypkg.core.OldHelper"
+                # Note: This misses relative imports resolution (from . import X).
+                # To support relative imports properly, we'd need to know the current file's module FQN.
+                # Let's assume absolute imports for this test case first.
+                if module_name and imported_name:
+                    full_fqn = f"{module_name}.{imported_name}"
+                    self._register_node(name_node, full_fqn)
+
+        # We allow visiting children to handle AsName if it's a Name? 
+        # Actually visit_Name handles the alias target (as OH) if it's used later?
+        # No, visit_Name handles usages of OH.
+        # We just registered the Definition/Reference of OldHelper in the import statement.
+        return True
+
+    def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:
+        # Handle: mypkg.core.OldHelper
+        # This comes in as Attribute(value=..., attr=Name(OldHelper))
+        
+        # We try to resolve the full name of the expression
+        full_name = helpers.get_full_name_for_node(node)
+        if not full_name:
+            return True
+            
+        # full_name is e.g. "mypkg.core.OldHelper"
+        # We check if the 'base' of this chain matches a local symbol.
+        # e.g. split by dots. "mypkg" -> checks local_symbols.
+        
+        parts = full_name.split(".")
+        if not parts:
+            return True
+            
+        root_name = parts[0]
+        root_fqn = self.local_symbols.get(root_name)
+        
+        if root_fqn:
+            # Reconstruct the absolute FQN
+            # if root_name="mypkg" maps to "mypkg", then "mypkg.core.OldHelper" -> "mypkg.core.OldHelper"
+            # if root_name="m" maps to "mypkg", then "m.core.OldHelper" -> "mypkg.core.OldHelper"
+            
+            suffix = ".".join(parts[1:])
+            absolute_fqn = f"{root_fqn}.{suffix}" if suffix else root_fqn
+            
+            # We want to register the `attr` node (the last part) as a usage of this absolute FQN.
+            # because RenameTransformer targets the specific Name node.
+            # node.attr is the Name node for the last part.
+            self._register_node(node.attr, absolute_fqn)
+            
+        return True
 
 
 class SemanticGraph:
