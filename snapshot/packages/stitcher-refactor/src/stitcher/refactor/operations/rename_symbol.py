@@ -25,8 +25,11 @@ class RenameSymbolOperation(AbstractOperation):
         old_name = self._get_base_name(self.old_fqn)
         new_name = self._get_base_name(self.new_fqn)
 
-        if old_name == new_name:
-            return []  # No change needed
+        # Note: We do NOT return early if old_name == new_name.
+        # Even if the short name hasn't changed (e.g. during a file move),
+        # the FQN has changed, so we MUST update the Sidecar files.
+        # The code transformation step below checks for actual content changes
+        # before generating a WriteFileOp, so it's safe to proceed.
 
         rename_map = {old_name: new_name}
 

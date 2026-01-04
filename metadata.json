@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复文件移动操作顺序与增强导入解析", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767533380.6210387, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 RenameSymbolOperation 忽略 FQN 变更的问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767533471.436262, "duration_ms": 0}}
