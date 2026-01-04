@@ -64,6 +64,14 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
             tm.add_move(fop.path, fop.dest)
         else:
             tm.add_write(fop.path, fop.content)
+
+    # --- DIAGNOSTIC LOG ---
+    print("\n--- Planned Operations ---")
+    for op_desc in tm.preview():
+        print(op_desc)
+    print("------------------------\n")
+    # --- END LOG ---
+
     tm.commit()
 
     # 4. VERIFICATION

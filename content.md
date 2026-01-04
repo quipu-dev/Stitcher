@@ -1,141 +1,45 @@
-好的，我将立即开始实现 `MoveDirectoryOperation`。这是执行计划。
+你完全正确，测试失败了。直接修复是盲猜，不符合协议。我的首要任务是生成一个带有调试日志的计划，以精确地诊断问题所在。
 
-## [WIP] feat(refactor): 实现 MoveDirectoryOperation 以支持目录级重构
+## [WIP] fix(refactor): 为 MoveDirectoryOperation 测试添加诊断日志
+
+### 错误分析
+**观察到的失败**: `AssertionError: assert not core_dir.exists()` 在测试 `test_move_directory_updates_all_contents_and_references` 中失败。
+
+**直接原因**: 这意味着在测试执行 `tm.commit()` 之后，源目录 `/tmp/.../mypkg/core` 仍然存在于文件系统上。
+
+**核心假设**: 当前的 `MoveDirectoryOperation` 实现通过为每个文件创建 `MoveFileOperation` 来工作。这个过程会移动目录中的所有*文件*，但它**不会删除源目录本身**。`shutil.move`（由 `RealFileSystem` 在底层使用）在移动文件时，不会自动删除空的父目录。因此，测试断言源目录被删除是错误的，因为它与当前的实现逻辑不符。
+
+**诊断计划**: 我将在 `tm.commit()` 执行前插入日志，打印出 `TransactionManager` 计划执行的所有操作。这将明确地告诉我们，操作列表中是否包含了对源目录本身的删除或移动操作。我预期我们将只看到针对文件的操作，而没有针对目录的操作。
 
 ### 用户需求
-根据我们的讨论，需要实现 `MoveDirectoryOperation` 来支持对整个文件夹（及其包含的所有 Python 文件和 Sidecar 文件）的移动和重构操作。
+在不猜测失败原因的情况下，为失败的测试插入诊断性日志，以查明 `MoveDirectoryOperation` 的实际行为。
 
 ### 评论
-这是完成 `阶段三` 目标的关键一步，它将 `stitcher-refactor` 引擎从处理单个文件的能力提升到了处理整个包结构调整的能力。该功能构建在 `MoveFileOperation` 的坚实基础之上，是实现大规模、自动化架构演进的核心。
+这是一个标准的调试流程。通过检查 `analyze` 方法生成的“计划”，我们可以精确地验证我们的假设，即操作仅限于文件层面，从而为后续的修复（无论是修改实现还是修改测试）提供确凿的证据。
 
 ### 目标
-1.  创建新的操作类 `MoveDirectoryOperation`，使其能够编排对目录内所有文件的 `MoveFileOperation`。
-2.  为 `MoveDirectoryOperation` 编写一个全面的端到端集成测试，确保代码引用更新、Sidecar 文件移动和 Sidecar 内容更新三个方面都能正确工作。
+1.  修改测试文件 `test_move_directory_e2e.py`。
+2.  在 `tm.commit()` 之前，添加代码以打印出所有待处理的文件系统操作。
 
 ### 基本原理
-我们将遵循之前讨论的设计方案，创建一个专门的 `MoveDirectoryOperation` 类作为编排器。它将递归地扫描源目录中的所有 `.py` 文件，并为每个文件实例化和调用一个 `MoveFileOperation`。这种方法将目录遍历的逻辑与文件移动的复杂逻辑（FQN计算、代码转换、Sidecar更新）分离开来，最大限度地重用了现有代码，并遵循了单一职责原则。
+我们将使用 `patch_file` 操作，在 `op.analyze(ctx)` 调用之后和 `tm.commit()` 调用之前注入几行 `print` 语句。我们将利用 `TransactionManager` 的 `preview()` 方法，它能以人类可读的格式返回所有计划操作的描述。
 
 ### 标签
-#intent/build #flow/ready #priority/high #concept/executor #scope/core #ai/brainstorm #task/domain/refactoring #task/object/directory-move #task/action/implementation #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/tests #concept/executor #scope/dx #ai/instruct #task/domain/refactoring #task/object/directory-move #task/action/debug
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 `MoveDirectoryOperation` 实现文件
+#### Acts 1: 在测试中注入诊断日志
 
-我将创建 `move_directory.py` 文件，并添加 `MoveDirectoryOperation` 类。这个类将作为编排器，将目录移动任务分解为一系列针对单个文件的移动任务。
-
-~~~~~act
-write_file
-packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py
-~~~~~
-~~~~~python
-from pathlib import Path
-from typing import List
-
-from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import FileOp
-from stitcher.refactor.operations.base import AbstractOperation
-from stitcher.refactor.operations.move_file import MoveFileOperation
-
-
-class MoveDirectoryOperation(AbstractOperation):
-    """Orchestrates the move of an entire directory."""
-
-    def __init__(self, src_dir: Path, dest_dir: Path):
-        if not src_dir.is_dir():
-            raise ValueError(f"Source path is not a directory: {src_dir}")
-        self.src_dir = src_dir
-        self.dest_dir = dest_dir
-
-    def analyze(self, ctx: RefactorContext) -> List[FileOp]:
-        """
-        Analyzes the directory move by creating a MoveFileOperation for each file.
-        """
-        all_ops: List[FileOp] = []
-
-        # Find all Python files within the source directory
-        for src_file in self.src_dir.rglob("*.py"):
-            # Calculate the corresponding destination path for the file
-            relative_path = src_file.relative_to(self.src_dir)
-            dest_file = self.dest_dir / relative_path
-
-            # Delegate the complex analysis to the existing MoveFileOperation
-            file_mover = MoveFileOperation(src_file, dest_file)
-
-            # Analyze the individual file move and collect the resulting operations
-            file_specific_ops = file_mover.analyze(ctx)
-            all_ops.extend(file_specific_ops)
-
-        return all_ops
-~~~~~
-
-#### Acts 2: 添加端到端集成测试
-
-现在，我将创建一个新的测试文件来验证 `MoveDirectoryOperation` 的行为。这个测试将模拟一个真实的场景：移动一个包含 Python 模块的子目录，并验证外部对该模块的引用是否被正确更新，以及所有相关的 Sidecar 文件是否同步迁移和更新。
+我将修改测试文件，在提交事务之前打印出所有计划的操作。
 
 ~~~~~act
-write_file
+patch_file
 packages/stitcher-refactor/tests/integration/test_move_directory_e2e.py
 ~~~~~
-~~~~~python
-from pathlib import Path
-import yaml
-import json
-
-from stitcher.refactor.engine.graph import SemanticGraph
-from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import TransactionManager, MoveFileOp
-from stitcher.refactor.operations.move_directory import MoveDirectoryOperation
-
-
-def test_move_directory_updates_all_contents_and_references(tmp_path):
-    # 1. SETUP
-    # /
-    # ├── mypkg/
-    # │   ├── __init__.py
-    # │   └── core/
-    # │       ├── __init__.py
-    # │       └── utils.py  (defines Helper)
-    # └── app.py            (imports from mypkg.core.utils)
-
-    pkg_dir = tmp_path / "mypkg"
-    core_dir = pkg_dir / "core"
-    core_dir.mkdir(parents=True)
-
-    (pkg_dir / "__init__.py").touch()
-    (core_dir / "__init__.py").touch()
-    utils_py = core_dir / "utils.py"
-    utils_py.write_text("class Helper: pass", encoding="utf-8")
-
-    app_py = tmp_path / "app.py"
-    app_py.write_text(
-        "from mypkg.core.utils import Helper\n\n" "h = Helper()", encoding="utf-8"
-    )
-
-    # Sidecars for utils.py
-    utils_yaml = utils_py.with_suffix(".stitcher.yaml")
-    utils_yaml.write_text(
-        yaml.dump({"mypkg.core.utils.Helper": "Doc for Helper"})
-    )
-
-    sig_root = tmp_path / ".stitcher/signatures"
-    utils_sig_path = sig_root / "mypkg/core/utils.json"
-    utils_sig_path.parent.mkdir(parents=True)
-    utils_sig_path.write_text(
-        json.dumps({"mypkg.core.utils.Helper": {"hash": "123"}})
-    )
-
-    # 2. ANALYSIS
-    # We want to move `mypkg/core` -> `mypkg/services`
-    services_dir = pkg_dir / "services"
-
-    graph = SemanticGraph(root_path=tmp_path)
-    graph.load("mypkg")
-    graph.load("app")
-    ctx = RefactorContext(graph=graph)
-
+~~~~~python.old
     op = MoveDirectoryOperation(core_dir, services_dir)
     file_ops = op.analyze(ctx)
 
@@ -150,30 +54,54 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
 
     # 4. VERIFICATION
     # Directories and files moved?
-    assert not core_dir.exists()
-    assert services_dir.exists()
-    assert (services_dir / "utils.py").exists()
+~~~~~
+~~~~~python.new
+    op = MoveDirectoryOperation(core_dir, services_dir)
+    file_ops = op.analyze(ctx)
 
-    # Sidecars moved?
-    assert not utils_yaml.exists()
-    assert (services_dir / "utils.stitcher.yaml").exists()
-    assert not utils_sig_path.exists()
-    new_sig_path = sig_root / "mypkg/services/utils.json"
-    assert new_sig_path.exists()
+    # 3. EXECUTION
+    tm = TransactionManager(tmp_path)
+    for fop in file_ops:
+        if isinstance(fop, MoveFileOp):
+            tm.add_move(fop.path, fop.dest)
+        else:
+            tm.add_write(fop.path, fop.content)
 
-    # Code references updated in app.py?
-    updated_app_code = app_py.read_text(encoding="utf-8")
-    assert "from mypkg.services.utils import Helper" in updated_app_code
+    # --- DIAGNOSTIC LOG ---
+    print("\n--- Planned Operations ---")
+    for op_desc in tm.preview():
+        print(op_desc)
+    print("------------------------\n")
+    # --- END LOG ---
 
-    # Sidecar content updated?
-    new_yaml_data = yaml.safe_load(
-        (services_dir / "utils.stitcher.yaml").read_text()
-    )
-    assert "mypkg.services.utils.Helper" in new_yaml_data
+    tm.commit()
 
-    new_sig_data = json.loads(new_sig_path.read_text())
-    assert "mypkg.services.utils.Helper" in new_sig_data
+    # 4. VERIFICATION
+    # Directories and files moved?
 ~~~~~
 
 ### 下一步建议
-在执行此计划后，`stitcher-refactor` 引擎将具备处理大规模包结构调整的能力。下一步的关键是进入路线图的**第四阶段：迁移包系统与 CLI**。这将为我们刚刚实现的功能提供一个面向用户的、可编写脚本的接口（例如 `stitcher refactor apply <migration_script.py>`），从而使整个重构引擎变得真正可用。
+请执行此计划并重新运行测试。
+
+**预期输出**:
+你将在测试日志中看到类似下面的输出：
+
+```
+--- Planned Operations ---
+[WRITE] mypkg/core/utils.stitcher.yaml
+[WRITE] .stitcher/signatures/mypkg/core/utils.json
+[WRITE] app.py
+[MOVE] mypkg/core/utils.py -> mypkg/services/utils.py
+[MOVE] mypkg/core/utils.stitcher.yaml -> mypkg/services/utils.stitcher.yaml
+[MOVE] .stitcher/signatures/mypkg/core/utils.json -> .stitcher/signatures/mypkg/services/utils.json
+------------------------
+```
+
+**诊断结论**:
+正如你所看到的，这个列表包含了对文件内容的更新（`WRITE`）和对文件的移动（`MOVE`），但**完全没有针对 `mypkg/core` 目录本身的操作**。这将证实我们的假设。
+
+一旦确认，我们就有两个选择：
+1.  **修正测试**: 移除 `assert not core_dir.exists()`，因为实现本来就不会删除源目录。
+2.  **增强实现**: 增强 `MoveDirectoryOperation`，使其在移动完所有内容后，再添加一个 `DeleteDirectoryOp` 来清理空的源目录。这通常是更符合用户期望的行为。
+
+我建议选择**第二条路**，因为它提供了更完整的“移动”语义。

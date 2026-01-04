@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(refactor): 实现 MoveDirectoryOperation 以支持目录级重构", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767534279.4836776, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 为 MoveDirectoryOperation 测试添加诊断日志", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767534345.8892148, "duration_ms": 0}}
