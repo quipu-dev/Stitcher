@@ -1,40 +1,3 @@
-## [WIP] test: 添加各种干扰目录的过滤测试
-
-### 用户需求
-用户要求使用“正规军”的方法（robust method）来忽略非包目录，明确指出资源充足，不要走捷径。目前的 `Workspace` 过于宽泛，将 `*.egg-info` 等目录也识别为包，导致 Griffe 加载失败。我们需要通过测试确保 `Workspace` 能够正确过滤掉这些干扰项，同时保留合法的隐式命名空间包。
-
-### 评论
-使用 `str.isidentifier()` 是判定一个目录名是否能作为 Python 顶层包（Top-level Package）的最标准、最符合语言规范的方法。任何包含点（`.`）、连字符（`-`）或以数字开头的名称都无法作为顶层包被 `import`，因此也不应被 `Workspace` 发现。
-
-### 目标
-1.  创建 `packages/stitcher-refactor/tests/unit/refactor/test_workspace_filtering.py`。
-2.  模拟一个混乱的项目根目录，包含：
-    *   合法的包 (`valid_pkg`)
-    *   合法的隐式命名空间包 (`implicit_pkg`)
-    *   Metadata 目录 (`my_project.egg-info`)
-    *   连字符目录 (`invalid-pkg`)
-    *   以数字开头的文件 (`001_script.py`)
-    *   `__pycache__`
-    *   隐藏目录 (`.git`)
-3.  断言 `Workspace` 仅发现 `valid_pkg` 和 `implicit_pkg`（可能还有合法的模块文件，如果它们是有效标识符）。
-
-### 基本原理
-通过构建包含各类边缘情况的文件系统结构，我们可以验证过滤逻辑的严密性。只有符合 Python 标识符规范的目录才应被视为潜在的 PEP 420 包。
-
-### 标签
-#intent/tooling #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/workspace-filtering #task/action/reproduction #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建过滤逻辑测试
-
-~~~~~act
-write_file
-packages/stitcher-refactor/tests/unit/refactor/test_workspace_filtering.py
-~~~~~
-~~~~~python
 from stitcher.refactor.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
 from pathlib import Path
@@ -113,13 +76,3 @@ def test_workspace_filters_invalid_module_files(tmp_path: Path):
     assert "valid_module" in discovered
     assert "001_script" not in discovered
     assert "my-script" not in discovered
-~~~~~
-
-### 下一步建议
-运行测试以确认当前代码（过于宽泛的匹配）会失败：
-
-```bash
-pytest packages/stitcher-refactor/tests/unit/refactor/test_workspace_filtering.py
-```
-
-预期结果：`stitcher_python.egg-info` 等目录会被错误地发现，导致断言失败。然后我们将实现修复。
