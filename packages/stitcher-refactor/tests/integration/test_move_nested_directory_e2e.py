@@ -8,6 +8,8 @@ from stitcher.refactor.engine.transaction import (
     TransactionManager,
 )
 from stitcher.refactor.operations.move_directory import MoveDirectoryOperation
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.refactor.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
 
 
@@ -15,7 +17,8 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     # 1. ARRANGE: Create a complex, multi-level directory structure
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory.with_source("src/cascade/__init__.py", "")
+        factory.with_pyproject(".")
+        .with_source("src/cascade/__init__.py", "")
         .with_source("src/cascade/core/__init__.py", "")
         .with_source("src/cascade/core/adapters/__init__.py", "")
         .with_source("src/cascade/core/adapters/cache/__init__.py", "")
@@ -45,11 +48,15 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     app_py_path = project_root / "src/app.py"
 
     # 2. ACT
-    graph = SemanticGraph(root_path=project_root)
+    workspace = Workspace(root_path=project_root)
+    graph = SemanticGraph(workspace=workspace)
     # We load 'cascade' and 'app' to build the full semantic picture
     graph.load("cascade")
     graph.load("app")
-    ctx = RefactorContext(graph=graph)
+    sidecar_manager = SidecarManager(root_path=project_root)
+    ctx = RefactorContext(
+        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+    )
 
     op = MoveDirectoryOperation(src_dir_to_move, dest_dir)
     file_ops = op.analyze(ctx)

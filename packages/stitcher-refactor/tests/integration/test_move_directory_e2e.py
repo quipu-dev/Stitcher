@@ -9,6 +9,8 @@ from stitcher.refactor.engine.transaction import (
     DeleteDirectoryOp,
 )
 from stitcher.refactor.operations.move_directory import MoveDirectoryOperation
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.refactor.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
 
 
@@ -16,7 +18,8 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
     # 1. SETUP: Declaratively build the project
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory.with_source("mypkg/core/__init__.py", "")
+        factory.with_pyproject(".")
+        .with_source("mypkg/core/__init__.py", "")
         .with_source("mypkg/core/utils.py", "class Helper: pass")
         .with_raw_file("mypkg/core/config.txt", "setting=value")
         .with_raw_file("mypkg/core/.env", "SECRET=123")
@@ -45,10 +48,14 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
     sig_root = project_root / ".stitcher/signatures"
 
     # 2. ANALYSIS
-    graph = SemanticGraph(root_path=project_root)
+    workspace = Workspace(root_path=project_root)
+    graph = SemanticGraph(workspace=workspace)
     graph.load("mypkg")
     graph.load("app")
-    ctx = RefactorContext(graph=graph)
+    sidecar_manager = SidecarManager(root_path=project_root)
+    ctx = RefactorContext(
+        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+    )
 
     op = MoveDirectoryOperation(core_dir, services_dir)
     file_ops = op.analyze(ctx)

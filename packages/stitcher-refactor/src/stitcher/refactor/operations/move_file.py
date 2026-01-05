@@ -80,7 +80,7 @@ class MoveFileOperation(AbstractOperation):
 
             # 2. Update the content of the sidecar files associated with the moved module
             # YAML sidecar
-            yaml_src_path = self.src_path.with_suffix(".stitcher.yaml")
+            yaml_src_path = ctx.sidecar_manager.get_doc_path(self.src_path)
             if yaml_src_path.exists():
                 doc_updater = DocUpdater()
                 doc_data = doc_updater.load(yaml_src_path)
@@ -98,12 +98,7 @@ class MoveFileOperation(AbstractOperation):
                         )
                     )
             # Signature sidecar
-            rel_src_base = self.src_path.relative_to(ctx.graph.root_path)
-            sig_src_path = (
-                ctx.graph.root_path
-                / ".stitcher/signatures"
-                / rel_src_base.with_suffix(".json")
-            )
+            sig_src_path = ctx.sidecar_manager.get_signature_path(self.src_path)
             if sig_src_path.exists():
                 sig_updater = SigUpdater()
                 sig_data = sig_updater.load(sig_src_path)
@@ -122,26 +117,25 @@ class MoveFileOperation(AbstractOperation):
                     )
 
         # 3. Plan the physical moves
-        rel_src = self.src_path.relative_to(ctx.graph.root_path)
-        rel_dest = self.dest_path.relative_to(ctx.graph.root_path)
+        root = ctx.graph.root_path
+        rel_src = self.src_path.relative_to(root)
+        rel_dest = self.dest_path.relative_to(root)
         move_ops.append(MoveFileOp(rel_src, rel_dest))
 
         # Sidecar moves
-        yaml_src = self.src_path.with_suffix(".stitcher.yaml")
+        yaml_src = ctx.sidecar_manager.get_doc_path(self.src_path)
         if yaml_src.exists():
-            rel_yaml_src = yaml_src.relative_to(ctx.graph.root_path)
-            rel_yaml_dest = self.dest_path.with_suffix(".stitcher.yaml").relative_to(
-                ctx.graph.root_path
+            yaml_dest = ctx.sidecar_manager.get_doc_path(self.dest_path)
+            move_ops.append(
+                MoveFileOp(yaml_src.relative_to(root), yaml_dest.relative_to(root))
             )
-            move_ops.append(MoveFileOp(rel_yaml_src, rel_yaml_dest))
 
-        sig_root = ctx.graph.root_path / ".stitcher/signatures"
-        sig_src = sig_root / rel_src.with_suffix(".json")
+        sig_src = ctx.sidecar_manager.get_signature_path(self.src_path)
         if sig_src.exists():
-            rel_sig_src = sig_src.relative_to(ctx.graph.root_path)
-            rel_sig_dest = sig_root / rel_dest.with_suffix(".json")
-            rel_sig_dest = rel_sig_dest.relative_to(ctx.graph.root_path)
-            move_ops.append(MoveFileOp(rel_sig_src, rel_sig_dest))
+            sig_dest = ctx.sidecar_manager.get_signature_path(self.dest_path)
+            move_ops.append(
+                MoveFileOp(sig_src.relative_to(root), sig_dest.relative_to(root))
+            )
 
         # Return combined ops: content updates first, then moves
         return content_update_ops + rename_ops + move_ops

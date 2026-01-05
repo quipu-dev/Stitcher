@@ -55,7 +55,7 @@ class RenameSymbolOperation(AbstractOperation):
                 sig_updater = SigUpdater()
 
                 # Doc file
-                doc_path = file_path.with_suffix(".stitcher.yaml")
+                doc_path = ctx.sidecar_manager.get_doc_path(file_path)
                 if doc_path.exists():
                     doc_data = doc_updater.load(doc_path)
                     new_doc_data = doc_updater.rename_key(
@@ -70,11 +70,7 @@ class RenameSymbolOperation(AbstractOperation):
                         )
 
                 # Signature file
-                sig_path = (
-                    ctx.graph.root_path
-                    / ".stitcher/signatures"
-                    / relative_path.with_suffix(".json")
-                )
+                sig_path = ctx.sidecar_manager.get_signature_path(file_path)
                 if sig_path.exists():
                     sig_data = sig_updater.load(sig_path)
                     new_sig_data = sig_updater.rename_key(

@@ -30,6 +30,19 @@ class WorkspaceFactory:
         eps[group] = entry_points
         return self
 
+    def with_pyproject(self, path_prefix: str) -> "WorkspaceFactory":
+        """Creates a minimal pyproject.toml in a subdirectory."""
+        pkg_name = Path(path_prefix).name
+        pyproject_content = {"project": {"name": pkg_name, "version": "0.1.0"}}
+        self._files_to_create.append(
+            {
+                "path": str(Path(path_prefix) / "pyproject.toml"),
+                "content": pyproject_content,
+                "format": "toml",
+            }
+        )
+        return self
+
     def with_source(self, path: str, content: str) -> "WorkspaceFactory":
         self._files_to_create.append(
             {"path": path, "content": dedent(content), "format": "raw"}
@@ -47,15 +60,17 @@ class WorkspaceFactory:
         return self
 
     def build(self) -> Path:
-        # 1. Finalize pyproject.toml if data was added
+        # 1. Finalize pyproject.toml if data was added for the root project
         if self._pyproject_data:
-            self._files_to_create.append(
-                {
-                    "path": "pyproject.toml",
-                    "content": self._pyproject_data,
-                    "format": "toml",
-                }
-            )
+            # Check if a root pyproject.toml is already manually specified to avoid overwriting
+            if not any(f["path"] == "pyproject.toml" for f in self._files_to_create):
+                self._files_to_create.append(
+                    {
+                        "path": "pyproject.toml",
+                        "content": self._pyproject_data,
+                        "format": "toml",
+                    }
+                )
 
         # 2. Write all files
         for file_spec in self._files_to_create:

@@ -30,12 +30,10 @@ class MoveDirectoryOperation(AbstractOperation):
 
             # Mark the source file and its potential sidecars as handled
             handled_paths.add(src_file)
-            handled_paths.add(src_file.with_suffix(".stitcher.yaml"))
-            sig_rel_path = src_file.relative_to(ctx.graph.root_path).with_suffix(
-                ".json"
-            )
-            sig_abs_path = ctx.graph.root_path / ".stitcher/signatures" / sig_rel_path
-            handled_paths.add(sig_abs_path)
+            doc_path = ctx.sidecar_manager.get_doc_path(src_file)
+            handled_paths.add(doc_path)
+            sig_path = ctx.sidecar_manager.get_signature_path(src_file)
+            handled_paths.add(sig_path)
 
         # Phase 2: Process all remaining items (non-Python files)
         for src_item in self.src_dir.rglob("*"):

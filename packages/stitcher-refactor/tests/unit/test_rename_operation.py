@@ -4,6 +4,8 @@ from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.graph import SemanticGraph, UsageRegistry, UsageLocation
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.engine.transaction import WriteFileOp
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.refactor.workspace import Workspace
 
 
 def test_rename_symbol_analyze_orchestration():
@@ -17,7 +19,17 @@ def test_rename_symbol_analyze_orchestration():
     tmp_path = Path("/tmp/fake_project")  # conceptual
     mock_graph.root_path = tmp_path
 
-    ctx = RefactorContext(graph=mock_graph)
+    mock_workspace = Mock(spec=Workspace)
+    mock_sidecar_manager = Mock(spec=SidecarManager)
+    # Prevent sidecar logic from running in this unit test
+    mock_sidecar_manager.get_doc_path.return_value.exists.return_value = False
+    mock_sidecar_manager.get_signature_path.return_value.exists.return_value = False
+
+    ctx = RefactorContext(
+        graph=mock_graph,
+        workspace=mock_workspace,
+        sidecar_manager=mock_sidecar_manager,
+    )
 
     # 2. Define Test Data
     old_fqn = "mypkg.core.OldHelper"

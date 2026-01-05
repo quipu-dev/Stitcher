@@ -1,10 +1,6 @@
 import typer
 from pathlib import Path
 
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib
 
 from stitcher.common import bus, stitcher_operator as nexus
 from needle.pointer import L
@@ -15,6 +11,8 @@ from stitcher.refactor.engine import (
     TransactionManager,
 )
 from stitcher.refactor.migration import MigrationLoader, MigrationError
+from stitcher.refactor.workspace import Workspace
+from stitcher.refactor.sidecar.manager import SidecarManager
 
 
 def refactor_command(
@@ -41,23 +39,19 @@ def refactor_command(
     root_path = Path.cwd()
 
     try:
-        # 1. Load the complete semantic graph
+        # 1. Bootstrap services
         bus.info(L.refactor.run.loading_graph)
-        graph = SemanticGraph(root_path)
+        workspace = Workspace(root_path)
+        sidecar_manager = SidecarManager(root_path)
+        graph = SemanticGraph(workspace)
 
-        # Discover packages to load from the monorepo structure
-        packages_dir = root_path / "packages"
-        if packages_dir.is_dir():
-            for pkg_path in packages_dir.iterdir():
-                pyproject_path = pkg_path / "pyproject.toml"
-                if pyproject_path.exists():
-                    with pyproject_path.open("rb") as f:
-                        data = tomllib.load(f)
-                        pkg_name = data.get("project", {}).get("name")
-                        if pkg_name:
-                            graph.load(pkg_name)
+        # Load all packages discovered by the workspace
+        for pkg_name in workspace.import_to_source_dirs.keys():
+            graph.load(pkg_name)
 
-        ctx = RefactorContext(graph)
+        ctx = RefactorContext(
+            workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+        )
 
         # 2. Load and plan the migration
         bus.info(L.refactor.run.planning)

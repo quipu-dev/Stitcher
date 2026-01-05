@@ -3,6 +3,8 @@ from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import TransactionManager, MoveFileOp
 from stitcher.refactor.operations.move_file import MoveFileOperation
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.refactor.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
 
 
@@ -10,7 +12,8 @@ def test_move_file_flat_layout(tmp_path):
     # 1. Arrange: Declaratively build the project structure
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory.with_source("mypkg/__init__.py", "")
+        factory.with_pyproject(".")
+        .with_source("mypkg/__init__.py", "")
         .with_source("mypkg/old.py", "class A:\n    pass")
         .with_source(
             "mypkg/app.py",
@@ -43,9 +46,13 @@ def test_move_file_flat_layout(tmp_path):
     new_py = pkg_dir / "new.py"
 
     # 2. Analyze
-    graph = SemanticGraph(root_path=project_root)
+    workspace = Workspace(root_path=project_root)
+    graph = SemanticGraph(workspace=workspace)
     graph.load("mypkg")
-    ctx = RefactorContext(graph=graph)
+    sidecar_manager = SidecarManager(root_path=project_root)
+    ctx = RefactorContext(
+        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+    )
     op = MoveFileOperation(old_py, new_py)
     file_ops = op.analyze(ctx)
 

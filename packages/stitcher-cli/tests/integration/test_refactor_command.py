@@ -13,9 +13,9 @@ def test_refactor_apply_e2e(tmp_path, monkeypatch):
     # Project with a symbol to be renamed
     (
         factory.with_project_name("mypkg")
+        .with_source("src/mypkg/__init__.py", "")
         .with_source("src/mypkg/core.py", "class Old: pass")
         .with_source("src/mypkg/app.py", "from mypkg.core import Old")
-        .with_source("pyproject.toml", "[project]\nname='mypkg'")  # For discovery
     ).build()
     # Migration script
     migration_script_content = """
@@ -25,11 +25,6 @@ def upgrade(spec: MigrationSpec):
 """
     migration_script = tmp_path / "001_rename.py"
     migration_script.write_text(migration_script_content)
-
-    # We need a fake "packages" structure for discovery to work
-    (tmp_path / "packages").mkdir()
-    (tmp_path / "packages/pkg_a").mkdir()
-    (tmp_path / "pyproject.toml").rename(tmp_path / "packages/pkg_a/pyproject.toml")
 
     # 2. Act
     monkeypatch.chdir(tmp_path)
@@ -57,9 +52,9 @@ def test_refactor_apply_dry_run(tmp_path, monkeypatch):
     factory = WorkspaceFactory(tmp_path)
     (
         factory.with_project_name("mypkg")
+        .with_source("src/mypkg/__init__.py", "")
         .with_source("src/mypkg/core.py", "class Old: pass")
         .with_source("src/mypkg/app.py", "from mypkg.core import Old")
-        .with_source("pyproject.toml", "[project]\nname='mypkg'")
     ).build()
     migration_script_content = """
 from stitcher.refactor.migration import MigrationSpec, Rename
@@ -68,9 +63,6 @@ def upgrade(spec: MigrationSpec):
 """
     migration_script = tmp_path / "001_rename.py"
     migration_script.write_text(migration_script_content)
-    (tmp_path / "packages").mkdir()
-    (tmp_path / "packages/pkg_a").mkdir()
-    (tmp_path / "pyproject.toml").rename(tmp_path / "packages/pkg_a/pyproject.toml")
 
     # 2. Act
     monkeypatch.chdir(tmp_path)

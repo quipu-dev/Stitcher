@@ -1,4 +1,5 @@
 from stitcher.refactor.engine.graph import SemanticGraph
+from stitcher.refactor.workspace import Workspace
 
 
 def test_usage_registry_resolution(tmp_path):
@@ -7,6 +8,10 @@ def test_usage_registry_resolution(tmp_path):
     #   __init__.py
     #   core.py -> defines `Helper`
     #   app.py  -> imports `Helper` as `H`, uses `H()`
+
+    # For this simple test, we can just create a pyproject.toml at the root
+    # to make the workspace discover the package.
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='test-proj'")
 
     pkg_dir = tmp_path / "mypkg"
     pkg_dir.mkdir()
@@ -24,7 +29,8 @@ def test_usage_registry_resolution(tmp_path):
     )
 
     # Execute
-    graph = SemanticGraph(root_path=tmp_path)
+    workspace = Workspace(root_path=tmp_path)
+    graph = SemanticGraph(workspace=workspace)
     graph.load("mypkg")
 
     # Verify

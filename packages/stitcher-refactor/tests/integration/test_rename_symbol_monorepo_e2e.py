@@ -4,6 +4,8 @@ from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.transaction import TransactionManager
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.refactor.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
 
 
@@ -11,8 +13,11 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     # 1. ARRANGE: Build a monorepo with cross-package and test references
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory
+        factory.with_pyproject(
+            "."
+        )  # For top-level integration tests
         # --- Package A: Defines the symbol ---
+        .with_pyproject("packages/pkg_a")
         .with_source("packages/pkg_a/src/pkga_lib/__init__.py", "")
         .with_source("packages/pkg_a/src/pkga_lib/core.py", "class OldNameClass: pass")
         .with_docs(
@@ -28,12 +33,14 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
             "from pkga_lib.core import OldNameClass\n\ndef test_local():\n    assert OldNameClass is not None",
         )
         # --- Package B: Consumes the symbol ---
+        .with_pyproject("packages/pkg_b")
         .with_source("packages/pkg_b/src/pkgb_app/__init__.py", "")
         .with_source(
             "packages/pkg_b/src/pkgb_app/main.py",
             "from pkga_lib.core import OldNameClass\n\ninstance = OldNameClass()",
         )
         # --- Top-level integration test: Also consumes the symbol ---
+        .with_source("tests/integration/__init__.py", "")
         .with_source(
             "tests/integration/test_system.py",
             "from pkga_lib.core import OldNameClass\n\ndef test_system_integration():\n    assert OldNameClass",
@@ -52,12 +59,16 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     )
 
     # 2. ACT
-    graph = SemanticGraph(root_path=project_root)
+    workspace = Workspace(root_path=project_root)
+    graph = SemanticGraph(workspace=workspace)
     graph.load("pkga_lib")
     graph.load("pkgb_app")
     graph.load("test_core")
     graph.load("integration")
-    ctx = RefactorContext(graph=graph)
+    sidecar_manager = SidecarManager(root_path=project_root)
+    ctx = RefactorContext(
+        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+    )
 
     op = RenameSymbolOperation(
         "pkga_lib.core.OldNameClass", "pkga_lib.core.NewNameClass"

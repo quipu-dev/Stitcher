@@ -1,6 +1,8 @@
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.refactor.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
 
 
@@ -8,6 +10,7 @@ def test_rename_symbol_via_attribute_access(tmp_path):
     # 1. Setup
     project_root = (
         WorkspaceFactory(tmp_path)
+        .with_pyproject(".")
         .with_source("mypkg/__init__.py", "")
         .with_source("mypkg/core.py", "class OldHelper: pass")
         .with_source(
@@ -22,10 +25,14 @@ def test_rename_symbol_via_attribute_access(tmp_path):
     )
 
     # 2. Analyze
-    graph = SemanticGraph(root_path=project_root)
+    workspace = Workspace(root_path=project_root)
+    graph = SemanticGraph(workspace=workspace)
     graph.load("mypkg")
     graph.load("main")
-    ctx = RefactorContext(graph=graph)
+    sidecar_manager = SidecarManager(root_path=project_root)
+    ctx = RefactorContext(
+        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+    )
 
     # 3. Plan
     op = RenameSymbolOperation("mypkg.core.OldHelper", "mypkg.core.NewHelper")
@@ -44,6 +51,7 @@ def test_rename_symbol_imported_with_alias(tmp_path):
     # 1. Setup
     project_root = (
         WorkspaceFactory(tmp_path)
+        .with_pyproject(".")
         .with_source("mypkg/__init__.py", "")
         .with_source("mypkg/core.py", "class OldHelper: pass")
         .with_source(
@@ -58,10 +66,14 @@ def test_rename_symbol_imported_with_alias(tmp_path):
     )
 
     # 2. Analyze
-    graph = SemanticGraph(root_path=project_root)
+    workspace = Workspace(root_path=project_root)
+    graph = SemanticGraph(workspace=workspace)
     graph.load("mypkg")
     graph.load("main")
-    ctx = RefactorContext(graph=graph)
+    sidecar_manager = SidecarManager(root_path=project_root)
+    ctx = RefactorContext(
+        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+    )
 
     # 3. Plan
     op = RenameSymbolOperation("mypkg.core.OldHelper", "mypkg.core.NewHelper")
@@ -72,6 +84,6 @@ def test_rename_symbol_imported_with_alias(tmp_path):
     write_ops = {op.path.name: op for op in ops}
     expected_main = "from mypkg.core import NewHelper as OH\n\nh = OH()"
     assert "core.py" in write_ops
-    assert write_ops["core.py"].content == "class NewHelper: pass"
+    assert write_ops["core.py"].content.strip() == "class NewHelper: pass"
     assert "main.py" in write_ops
     assert write_ops["main.py"].content.strip() == expected_main.strip()

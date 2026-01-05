@@ -2,6 +2,8 @@ from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.transaction import TransactionManager, MoveFileOp
 from stitcher.refactor.operations.move_file import MoveFileOperation
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.refactor.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
 
 
@@ -9,8 +11,11 @@ def test_move_file_in_monorepo_updates_tests_and_cross_package_imports(tmp_path)
     # 1. ARRANGE: Build a comprehensive monorepo workspace with tests
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory
+        factory.with_pyproject(
+            "."
+        )  # For top-level tests discovery
         # --- Package A: The provider ---
+        .with_pyproject("packages/pkg_a")
         .with_source("packages/pkg_a/src/pkga_lib/__init__.py", "")
         .with_source("packages/pkg_a/src/pkga_lib/core.py", "class SharedClass: pass")
         .with_source(
@@ -18,6 +23,7 @@ def test_move_file_in_monorepo_updates_tests_and_cross_package_imports(tmp_path)
             "from pkga_lib.core import SharedClass\n\ndef test_shared():\n    assert SharedClass is not None",
         )
         # --- Package B: A consumer ---
+        .with_pyproject("packages/pkg_b")
         .with_source("packages/pkg_b/src/pkgb_app/__init__.py", "")
         .with_source(
             "packages/pkg_b/src/pkgb_app/main.py",
@@ -40,7 +46,8 @@ def test_move_file_in_monorepo_updates_tests_and_cross_package_imports(tmp_path)
     top_level_test_path = project_root / "tests/integration/test_full_system.py"
 
     # 2. ACT
-    graph = SemanticGraph(root_path=project_root)
+    workspace = Workspace(root_path=project_root)
+    graph = SemanticGraph(workspace=workspace)
     # Verify that all source and test roots were discovered
     assert project_root / "packages/pkg_a/src" in graph.search_paths
     assert project_root / "packages/pkg_a/tests" in graph.search_paths
@@ -54,7 +61,10 @@ def test_move_file_in_monorepo_updates_tests_and_cross_package_imports(tmp_path)
     # Also load the test module from pkg_a
     graph.load("test_core")
 
-    ctx = RefactorContext(graph=graph)
+    sidecar_manager = SidecarManager(root_path=project_root)
+    ctx = RefactorContext(
+        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+    )
     op = MoveFileOperation(src_path, dest_path)
     file_ops = op.analyze(ctx)
 
