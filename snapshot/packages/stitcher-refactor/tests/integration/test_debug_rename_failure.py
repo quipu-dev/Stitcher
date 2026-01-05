@@ -77,88 +77,75 @@ class MessageBus:
 # The global singleton is now created in stitcher.common.__init__
 """
 
+import yaml
+import json
+
+
 def test_debug_rename_failure_analysis(tmp_path):
     """
-    A diagnostic test to inspect why the class definition in bus.py is not being renamed.
+    A diagnostic test to inspect why the class definition in bus.py is not being renamed,
+    AND to verify that sidecar files are also not being updated.
     """
     # 1. ARRANGE
     factory = WorkspaceFactory(tmp_path)
+    old_fqn = "stitcher.common.messaging.bus.MessageBus"
+    new_fqn = "stitcher.common.messaging.bus.FeedbackBus"
+
     project_root = (
         factory.with_pyproject(".")
         .with_pyproject("packages/stitcher-common")
-        # Simulate the __init__.py that imports it
         .with_source(
             "packages/stitcher-common/src/stitcher/common/__init__.py",
-            "from .messaging.bus import MessageBus\n"
+            "from .messaging.bus import MessageBus\n",
         )
-        # Simulate the protocols.py needed for import resolution
         .with_source(
             "packages/stitcher-common/src/stitcher/common/messaging/protocols.py",
-            "class Renderer: pass"
+            "class Renderer: pass",
         )
-        # Add the missing __init__.py to make 'messaging' a valid package
         .with_source(
-            "packages/stitcher-common/src/stitcher/common/messaging/__init__.py",
-            ""
+            "packages/stitcher-common/src/stitcher/common/messaging/__init__.py", ""
         )
-        # Use REAL content for bus.py
         .with_source(
-            "packages/stitcher-common/src/stitcher/common/messaging/bus.py", 
-            BUS_PY_CONTENT
+            "packages/stitcher-common/src/stitcher/common/messaging/bus.py",
+            BUS_PY_CONTENT,
+        )
+        # ADD SIDECAR FILES
+        .with_docs(
+            "packages/stitcher-common/src/stitcher/common/messaging/bus.stitcher.yaml",
+            {
+                "MessageBus": "Docs for MessageBus.",
+                "MessageBus.info": "Docs for info method.",
+            },
+        )
+        .with_raw_file(
+            ".stitcher/signatures/packages/stitcher-common/src/stitcher/common/messaging/bus.json",
+            json.dumps({old_fqn: {"hash": "abc"}}),
         )
         .build()
     )
 
-    bus_path = project_root / "packages/stitcher-common/src/stitcher/common/messaging/bus.py"
-    target_fqn = "stitcher.common.messaging.bus.MessageBus"
-    new_fqn = "stitcher.common.messaging.bus.FeedbackBus"
+    bus_path = (
+        project_root
+        / "packages/stitcher-common/src/stitcher/common/messaging/bus.py"
+    )
+    bus_yaml_path = bus_path.with_suffix(".stitcher.yaml")
+    bus_sig_path = (
+        project_root
+        / ".stitcher/signatures/packages/stitcher-common/src/stitcher/common/messaging/bus.json"
+    )
 
     # 2. LOAD GRAPH
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace)
-    
-    print(f"\n[DEBUG] Loading 'stitcher' package...")
     graph.load("stitcher")
-    
-    # --- DIAGNOSTIC 1: Check if module loaded ---
-    module = graph.get_module("stitcher.common.messaging.bus")
-    if module:
-        print(f"[DEBUG] Module 'stitcher.common.messaging.bus' loaded successfully.")
-        print(f"[DEBUG] Module path: {module.path}")
-        print(f"[DEBUG] Module filepath: {module.filepath}")
-    else:
-        # Try finding it via parent
-        parent = graph.get_module("stitcher.common")
-        print(f"[DEBUG] Could not find 'stitcher.common.messaging.bus' directly.")
-        if parent:
-            print(f"[DEBUG] Found parent 'stitcher.common'. Members: {list(parent.members.keys())}")
-    
-    # --- DIAGNOSTIC 2: Check UsageRegistry ---
-    usages = graph.registry.get_usages(target_fqn)
-    print(f"[DEBUG] Found {len(usages)} usages for {target_fqn}")
-    
-    bus_file_usages = []
-    for u in usages:
-        print(f"  - [{u.ref_type.name}] {u.file_path}: {u.lineno}:{u.col_offset}")
-        # Check if this usage points to our bus.py file
-        # Note: u.file_path is absolute, bus_path is absolute
-        if u.file_path.resolve() == bus_path.resolve():
-            bus_file_usages.append(u)
-
-    print(f"[DEBUG] Usages inside bus.py: {len(bus_file_usages)}")
 
     # 3. EXECUTE REFACTOR
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
     )
-
-    op = RenameSymbolOperation(target_fqn, new_fqn)
+    op = RenameSymbolOperation(old_fqn, new_fqn)
     file_ops = op.analyze(ctx)
-
-    print(f"[DEBUG] Planner generated {len(file_ops)} operations.")
-    for fop in file_ops:
-        print(f"  - OP: {fop.describe()} on {fop.path}")
 
     tm = TransactionManager(project_root)
     for fop in file_ops:
@@ -166,11 +153,26 @@ def test_debug_rename_failure_analysis(tmp_path):
     tm.commit()
 
     # 4. FINAL ASSERTION
+    # Assert Python file content
     updated_content = bus_path.read_text()
-    if "class FeedbackBus:" not in updated_content:
-        pytest.fail(
-            "BUG REPRODUCED: 'class MessageBus' was NOT renamed to 'class FeedbackBus' inside bus.py.\n"
-            f"See stdout for debug info."
-        )
-    else:
-        print("[SUCCESS] Rename worked in test environment.")
+    assert (
+        "class FeedbackBus:" in updated_content
+    ), "BUG: Python code definition was not renamed."
+
+    # Assert YAML sidecar content
+    updated_yaml_data = yaml.safe_load(bus_yaml_path.read_text())
+    assert (
+        "FeedbackBus" in updated_yaml_data
+    ), "BUG: YAML doc key was not renamed."
+    assert "MessageBus" not in updated_yaml_data
+    assert (
+        "FeedbackBus.info" in updated_yaml_data
+    ), "BUG: YAML doc method key was not renamed."
+
+    # Assert Signature sidecar content
+    updated_sig_data = json.loads(bus_sig_path.read_text())
+    assert (
+        new_fqn in updated_sig_data
+    ), "BUG: Signature JSON FQN key was not renamed."
+    assert old_fqn not in updated_sig_data
+    assert updated_sig_data[new_fqn] == {"hash": "abc"}
