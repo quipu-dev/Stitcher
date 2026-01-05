@@ -1,4 +1,6 @@
 import libcst as cst
+from libcst.metadata import PositionProvider, QualifiedNameProvider
+
 from collections import defaultdict
 from typing import List, Dict
 from pathlib import Path
