@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复文件移动时的相对导入更新与包结构脚手架问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767613396.3803082, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正 ImportFrom 节点更新中的参数名错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767613437.6852612, "duration_ms": 0}}

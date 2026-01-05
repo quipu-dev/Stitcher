@@ -81,6 +81,6 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
             if new_fqn:
                 return updated_node.with_changes(
                     module=self._create_node_from_fqn(new_fqn),
-                    level=0  # Force absolute import
+                    relative=[]  # Force absolute import by removing dots
                 )
         return updated_node
