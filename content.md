@@ -1,187 +1,64 @@
-你说的完全正确！`stitcher refactor apply` 命令的帮助文本确实缺失了。这是因为在 Typer 中，子命令的帮助文本也需要显式地通过 `help` 参数传入。
+好的，重构工作已经全部完成。所有硬编码的 CLI 帮助文本和错误消息现在都已迁移到了 `needle` 的 `L` 指针系统中，并且补全了缺失的 `refactor apply` 命令描述。
 
-我将立即生成一个计划来修复这个问题，为 `refactor apply` 命令添加正确的帮助文本。
+我将生成一个 `[COMMIT]` 计划，将这些更改正式提交到 Git 仓库。
 
-## [WIP] fix: 为 `refactor apply` 命令添加缺失的帮助文本
-
-### 错误分析
-
-`stitcher refactor` 命令下的 `apply` 子命令缺少帮助文本。在 `packages/stitcher-cli/src/stitcher/cli/main.py` 中注册 `apply` 命令时，`typer.Typer.command()` 装饰器没有提供 `help` 参数，导致 `stitcher refactor --help` 输出中 `apply` 命令没有描述。
+## [COMMIT] refactor(cli): 将硬编码字符串迁移至 L 指针
 
 ### 用户需求
-
-为 `stitcher refactor apply` 命令添加描述性的帮助文本，使其在 CLI 中能够正确显示。
+用户要求对之前的重构和修复工作创建 Git 提交。
 
 ### 评论
-
-这是一个小的用户体验问题，但对于提高 CLI 的可发现性和可用性至关重要。统一所有 CLI 命令的帮助文本是 `L` 指针迁移目标的一部分。
+这是一个重要的清理工作，它实现了 UI 文案与业务逻辑的解耦，为项目的国际化（I18N）打下了坚实基础，并提升了代码的维护性。
 
 ### 目标
-
-1.  在 `needle` 的 JSON 资源文件中为 `refactor apply` 命令创建对应的 `L` 指针。
-2.  修改 `packages/stitcher-cli/src/stitcher/cli/main.py` 文件，为 `refactor_app.command(name="apply")` 添加 `help` 参数，并引用新的 `L` 指针。
+将所有涉及 `L` 指针迁移的资源文件更新和 Python 代码修改提交到仓库。
 
 ### 基本原理
-
-我将在 `L.cli.command` 下添加一个新的 `refactor_apply` 键，用于存储该命令的帮助文本。然后，我将通过 `patch_file` 操作修改 `main.py`，将该 `L` 指针集成到 Typer 命令的定义中。
+按照 ACA 协议和 Quipu 规范，将文件系统变更与 Git 提交操作在不同的计划中隔离执行。本次计划仅包含 `git_add` 和 `git_commit` 操作。
 
 ### 标签
-
-#intent/fix #flow/ready #priority/low #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/cli #task/object/help-text #task/action/refactor #task/state/continue
+#intent/refine #flow/ready #priority/medium #comp/cli #comp/docs #scope/dx #ai/instruct #task/domain/cli #task/object/localization #task/action/refactor #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 扩展 Needle 资源文件以包含 `refactor apply` 的帮助文本
+#### Acts 1: 提交重构变更
 
-我将更新 `command.json` 文件，添加 `refactor_apply` 命令的帮助文本。
+我将把所有修改过的资源文件和命令实现文件添加到暂存区，并创建一个详细的提交说明。
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-common/src/stitcher/common/assets/needle/en/error/cli.json
+packages/stitcher-common/src/stitcher/common/assets/needle/zh/error/cli.json
+packages/stitcher-common/src/stitcher/common/assets/needle/en/cli/option.json
+packages/stitcher-common/src/stitcher/common/assets/needle/zh/cli/option.json
 packages/stitcher-common/src/stitcher/common/assets/needle/en/cli/command.json
-~~~~~
-~~~~~json.old
-{
-  "check": {
-    "help": "Verify consistency between code and docs."
-  },
-  "generate": {
-    "help": "Generate .pyi stubs based on pyproject.toml config."
-  },
-  "init": {
-    "help": "Initialize Stitcher in the current project."
-  },
-  "inject": {
-    "help": "Inject docstrings from .stitcher.yaml files back into code."
-  },
-  "pump": {
-    "help": "Extract new docstrings from source code and merge them into .stitcher.yaml."
-  },
-  "strip": {
-    "help": "Remove docstrings from source files."
-  },
-  "refactor": {
-    "help": "Apply automated refactorings."
-  },
-  "not_implemented": "ℹ️  Command '{command}' is not yet implemented."
-}
-~~~~~
-~~~~~json.new
-{
-  "check": {
-    "help": "Verify consistency between code and docs."
-  },
-  "generate": {
-    "help": "Generate .pyi stubs based on pyproject.toml config."
-  },
-  "init": {
-    "help": "Initialize Stitcher in the current project."
-  },
-  "inject": {
-    "help": "Inject docstrings from .stitcher.yaml files back into code."
-  },
-  "pump": {
-    "help": "Extract new docstrings from source code and merge them into .stitcher.yaml."
-  },
-  "strip": {
-    "help": "Remove docstrings from source files."
-  },
-  "refactor": {
-    "help": "Apply automated refactorings."
-  },
-  "refactor_apply": {
-    "help": "Apply automated refactorings from a migration script."
-  },
-  "not_implemented": "ℹ️  Command '{command}' is not yet implemented."
-}
-~~~~~
-
-接下来是中文版。
-
-~~~~~act
-patch_file
 packages/stitcher-common/src/stitcher/common/assets/needle/zh/cli/command.json
-~~~~~
-~~~~~json.old
-{
-  "check": {
-    "help": "验证代码结构与文档的一致性。"
-  },
-  "generate": {
-    "help": "根据 pyproject.toml 配置生成 .pyi 存根文件。"
-  },
-  "init": {
-    "help": "在当前项目中初始化 Stitcher。"
-  },
-  "inject": {
-    "help": "将 .stitcher.yaml 中的文档重新注入源代码。"
-  },
-  "pump": {
-    "help": "从源代码提取新文档并合并至 .stitcher.yaml。"
-  },
-  "strip": {
-    "help": "从源代码中移除文档字符串。"
-  },
-  "refactor": {
-    "help": "应用自动化代码重构。"
-  },
-  "not_implemented": "ℹ️  命令 '{command}' 尚未实现。"
-}
-~~~~~
-~~~~~json.new
-{
-  "check": {
-    "help": "验证代码结构与文档的一致性。"
-  },
-  "generate": {
-    "help": "根据 pyproject.toml 配置生成 .pyi 存根文件。"
-  },
-  "init": {
-    "help": "在当前项目中初始化 Stitcher。"
-  },
-  "inject": {
-    "help": "将 .stitcher.yaml 中的文档重新注入源代码。"
-  },
-  "pump": {
-    "help": "从源代码提取新文档并合并至 .stitcher.yaml。"
-  },
-  "strip": {
-    "help": "从源代码中移除文档字符串。"
-  },
-  "refactor": {
-    "help": "应用自动化代码重构。"
-  },
-  "refactor_apply": {
-    "help": "从迁移脚本应用自动化代码重构。"
-  },
-  "not_implemented": "ℹ️  命令 '{command}' 尚未实现。"
-}
-~~~~~
-
-#### Acts 2: 更新 `main.py` 以引用 `refactor apply` 的帮助文本
-
-我将修改 `packages/stitcher-cli/src/stitcher/cli/main.py` 文件，为 `refactor_app.command(name="apply")` 添加 `help` 参数。
-
-~~~~~act
-patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/check.py
+packages/stitcher-cli/src/stitcher/cli/commands/pump.py
+packages/stitcher-cli/src/stitcher/cli/commands/refactor.py
 packages/stitcher-cli/src/stitcher/cli/main.py
 ~~~~~
-~~~~~python.old
-refactor_app = typer.Typer(
-    name="refactor", help=nexus(L.cli.command.refactor.help), no_args_is_help=True
-)
-refactor_app.command(name="apply")(refactor_command)
-app.add_typer(refactor_app)
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python.new
-refactor_app = typer.Typer(
-    name="refactor", help=nexus(L.cli.command.refactor.help), no_args_is_help=True
-)
-refactor_app.command(name="apply", help=nexus(L.cli.command.refactor_apply.help))(refactor_command)
-app.add_typer(refactor_app)
+~~~~~text
+refactor(cli): migrate hardcoded strings to L pointers
+
+Migrates all user-facing hardcoded strings in the CLI layer to the Needle 'L' pointer system.
+
+Key changes:
+- Created 'error/cli.json' for unified CLI error reporting (e.g., conflicting options).
+- Moved all 'typer.Option' and 'typer.Argument' help texts to 'cli/option.json'.
+- Integrated the 'nexus' (stitcher_operator) into CLI commands to resolve pointers.
+- Fixed missing help text for the 'stitcher refactor apply' command.
+- Provided full English and Chinese translations for the new keys.
+
+This decoupling ensures that all UI text is centralized in assets, facilitating localization and making integration tests more robust by asserting intent rather than literal strings.
 ~~~~~
 
 ### 下一步建议
-
-建议运行 `stitcher refactor --help` 确认 `apply` 命令现在正确显示其帮助文本。
+- **多语言测试**: 既然已经实现了 L 指针化，可以通过设置 `STITCHER_LANG=zh` 环境变量来验证 CLI 在中文环境下的表现。
+- **扩展覆盖范围**: 检查 `stitcher-application` 层中是否还有未捕获的硬编码日志或异常消息，并考虑将它们也迁移到 `needle` 系统中。

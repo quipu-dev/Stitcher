@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 为 `refactor apply` 命令添加缺失的帮助文本", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767594543.9016297, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(cli): 将硬编码字符串迁移至 L 指针", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767594600.102431, "duration_ms": 0}}
