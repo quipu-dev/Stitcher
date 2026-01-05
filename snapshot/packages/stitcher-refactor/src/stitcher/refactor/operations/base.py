@@ -66,8 +66,14 @@ class SidecarUpdateMixin:
                         is_short_name = True
 
             # Determine the effective module FQN for short-name restoration.
-            # If the module itself is being renamed, the new context is new_fqn.
-            effective_new_module = new_fqn if old_fqn == module_fqn else module_fqn
+            if module_fqn == old_fqn:
+                effective_new_module = new_fqn
+            elif module_fqn and module_fqn.startswith(old_fqn + "."):
+                # Module is inside the renamed namespace/directory
+                suffix = module_fqn[len(old_fqn) :]
+                effective_new_module = new_fqn + suffix
+            else:
+                effective_new_module = module_fqn
 
             new_key = key
             if key_fqn == old_fqn:
