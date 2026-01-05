@@ -41,29 +41,6 @@ class Workspace:
                 print(f"[DEBUG-WORKSPACE] ERROR processing {pyproject_path}: {e}")
                 log.warning(f"Could not process {pyproject_path}: {e}")
 
-    def _get_top_level_importables(self, src_path: Path) -> List[str]:
-        names: Set[str] = set()
-        if not src_path.is_dir():
-            return []
-            
-        print(f"[DEBUG-WORKSPACE] Scanning imports in: {src_path}")
-        for item in src_path.iterdir():
-            # Debug specific check for stitcher
-            if item.name == "stitcher":
-                is_dir = item.is_dir()
-                has_init = (item / "__init__.py").exists()
-                print(f"  [CHECK] stitcher: is_dir={is_dir}, has_init={has_init}")
-            
-            # A top-level package is a directory with an __init__.py
-            if item.is_dir() and (item / "__init__.py").exists():
-                names.add(item.name)
-            # A top-level module is a .py file (but not __init__.py itself)
-            elif (
-                item.is_file() and item.name.endswith(".py") and item.stem != "__init__"
-            ):
-                names.add(item.stem)
-        return list(names)
-
     def _find_code_dirs(self, pkg_root: Path) -> List[Path]:
         print(f"  [find_code_dirs] for pkg_root: {pkg_root}")
         dirs: Set[Path] = set()
