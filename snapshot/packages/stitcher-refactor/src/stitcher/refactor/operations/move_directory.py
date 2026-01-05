@@ -26,6 +26,7 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
         old_prefix = self._path_to_fqn(self.src_dir, ctx.graph.search_paths)
         new_prefix = self._path_to_fqn(self.dest_dir, ctx.graph.search_paths)
         if old_prefix and new_prefix and old_prefix != new_prefix:
+            # We explicitly check for truthiness above, so they are str here
             intents.append(RenameIntent(old_prefix, new_prefix))
             # Also handle all symbols inside the namespace
             # Note: This might be slightly redundant if the renamer can handle prefixes,
@@ -55,7 +56,7 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             item_module_fqn = self._path_to_fqn(src_item, ctx.graph.search_paths)
 
             doc_path = ctx.sidecar_manager.get_doc_path(src_item)
-            if doc_path.exists():
+            if doc_path.exists() and old_prefix and new_prefix:
                 processed_files.add(doc_path)
                 intents.append(
                     SidecarUpdateIntent(
@@ -69,7 +70,7 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
                 )
 
             sig_path = ctx.sidecar_manager.get_signature_path(src_item)
-            if sig_path.exists():
+            if sig_path.exists() and old_prefix and new_prefix:
                 processed_files.add(sig_path)
                 intents.append(
                     SidecarUpdateIntent(

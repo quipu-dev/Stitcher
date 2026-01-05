@@ -1,6 +1,6 @@
 import libcst as cst
-from libcst.metadata import PositionProvider
-from typing import Optional, Dict, Tuple
+from libcst.metadata import PositionProvider, CodeRange
+from typing import Optional, Dict, Tuple, cast
 
 from stitcher.refactor.engine.graph import ReferenceType, UsageLocation
 
@@ -26,7 +26,7 @@ class NamespaceRenamerTransformer(cst.CSTTransformer):
         return node
 
     def _get_import_path_fqn(self, node: cst.CSTNode) -> Optional[str]:
-        pos = self.get_metadata(PositionProvider, node)
+        pos = cast(CodeRange, self.get_metadata(PositionProvider, node))
         start = (pos.start.line, pos.start.column)
         if start in self.locations:
             loc = self.locations[start]

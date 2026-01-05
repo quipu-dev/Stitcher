@@ -3,6 +3,7 @@ from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import (
     TransactionManager,
     MoveFileOp,
+    WriteFileOp,
 )
 from stitcher.refactor.operations.move_file import MoveFileOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
@@ -55,7 +56,7 @@ def test_move_file_updates_relative_imports_and_scaffolds_init(tmp_path):
     for fop in file_ops:
         if isinstance(fop, MoveFileOp):
             tm.add_move(fop.path, fop.dest)
-        else:
+        elif isinstance(fop, WriteFileOp):
             tm.add_write(fop.path, fop.content)
     tm.commit()
 

@@ -151,7 +151,8 @@ def test_debug_rename_failure_analysis(tmp_path):
 
     tm = TransactionManager(project_root)
     for fop in file_ops:
-        tm.add_write(fop.path, fop.content)
+        if isinstance(fop, WriteFileOp):
+            tm.add_write(fop.path, fop.content)
     tm.commit()
 
     # 4. FINAL ASSERTION

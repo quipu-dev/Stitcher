@@ -1,6 +1,10 @@
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import TransactionManager, MoveFileOp
+from stitcher.refactor.engine.transaction import (
+    TransactionManager,
+    MoveFileOp,
+    WriteFileOp,
+)
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.refactor.workspace import Workspace
@@ -51,7 +55,7 @@ def test_rename_fails_to_update_definition_leading_to_import_error(tmp_path):
     for fop in file_ops:
         if isinstance(fop, MoveFileOp):
             tm.add_move(fop.path, fop.dest)
-        else:
+        elif isinstance(fop, WriteFileOp):
             tm.add_write(fop.path, fop.content)
     tm.commit()
 
@@ -110,7 +114,7 @@ def test_rename_operation_succeeds_in_renaming_symbol_definition(tmp_path):
     for fop in file_ops:
         if isinstance(fop, MoveFileOp):
             tm.add_move(fop.path, fop.dest)
-        else:
+        elif isinstance(fop, WriteFileOp):
             tm.add_write(fop.path, fop.content)
     tm.commit()
 

@@ -2,7 +2,11 @@ import json
 import yaml
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.graph import SemanticGraph
-from stitcher.refactor.engine.transaction import TransactionManager, MoveFileOp
+from stitcher.refactor.engine.transaction import (
+    TransactionManager,
+    MoveFileOp,
+    WriteFileOp,
+)
 from stitcher.refactor.operations.move_file import MoveFileOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.refactor.workspace import Workspace
@@ -76,7 +80,7 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     for fop in file_ops:
         if isinstance(fop, MoveFileOp):
             tm.add_move(fop.path, fop.dest)
-        else:
+        elif isinstance(fop, WriteFileOp):
             tm.add_write(fop.path, fop.content)
     tm.commit()
 

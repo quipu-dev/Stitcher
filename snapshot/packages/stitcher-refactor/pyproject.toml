@@ -13,6 +13,7 @@ dependencies = [
     "stitcher-application",
     "griffe",
     "libcst",
+    "tomli>=2.0.1; python_version < '3.11'",
 ]
 
 [tool.hatch.build.targets.wheel]

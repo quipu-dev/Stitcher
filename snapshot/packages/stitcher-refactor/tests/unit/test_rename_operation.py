@@ -116,10 +116,12 @@ def test_rename_symbol_analyze_orchestration():
     # We expect 2 code change ops + potentially sidecar ops
     # Since we mocked .exists() to False, we expect only the 2 code ops.
     assert len(file_ops) == 2
-    assert all(isinstance(op, WriteFileOp) for op in file_ops)
+    # Ensure type narrowing
+    write_ops = [op for op in file_ops if isinstance(op, WriteFileOp)]
+    assert len(write_ops) == 2
 
-    op_a = next(op for op in file_ops if op.path == file_a_path.relative_to(tmp_path))
-    op_b = next(op for op in file_ops if op.path == file_b_path.relative_to(tmp_path))
+    op_a = next(op for op in write_ops if op.path == file_a_path.relative_to(tmp_path))
+    op_b = next(op for op in write_ops if op.path == file_b_path.relative_to(tmp_path))
 
     expected_code_a = "from mypkg.core import NewHelper\n\nobj = NewHelper()"
     expected_code_b = (

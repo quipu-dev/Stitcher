@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M intent.py, M planner.py, M renamer.py ... and 13 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767617780.3884726, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 修复 pyright 类型错误和逻辑缺陷", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767618601.7084305, "duration_ms": 0}}

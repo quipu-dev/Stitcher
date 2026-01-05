@@ -74,6 +74,8 @@ def test_rebase_no_effect_if_write_first():
 
     assert rebased[0].path == Path("A")
     assert rebased[1].path == Path("A")
+    # Cast to access subtype attribute
+    assert isinstance(rebased[1], MoveFileOp)
     assert rebased[1].dest == Path("B")
 
 
