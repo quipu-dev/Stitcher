@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 为 Workspace 注入 Print 调试以诊断包发现问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767601890.7853873, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 增强 Workspace 调试探针以诊断 importables 扫描", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767601971.504881, "duration_ms": 0}}
