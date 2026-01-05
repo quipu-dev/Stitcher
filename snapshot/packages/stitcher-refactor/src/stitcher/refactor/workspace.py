@@ -19,8 +19,10 @@ class Workspace:
         self._discover_packages()
 
     def _discover_packages(self) -> None:
+        print(f"[DEBUG-WORKSPACE] scanning root: {self.root_path}")
         for pyproject_path in self.root_path.glob("**/pyproject.toml"):
             try:
+                # print(f"[DEBUG-WORKSPACE] Processing: {pyproject_path}")
                 with pyproject_path.open("rb") as f:
                     tomllib.load(f)
 
@@ -29,11 +31,14 @@ class Workspace:
 
                 for code_dir in code_dirs:
                     import_names = self._get_top_level_importables(code_dir)
+                    if "stitcher" in import_names:
+                         print(f"[DEBUG-WORKSPACE] Found 'stitcher' in {code_dir}")
                     for import_name in import_names:
                         # The directory to add to the search path is the code_dir itself
                         self.import_to_source_dirs[import_name].add(code_dir)
 
             except Exception as e:
+                print(f"[DEBUG-WORKSPACE] ERROR processing {pyproject_path}: {e}")
                 log.warning(f"Could not process {pyproject_path}: {e}")
 
     def _find_code_dirs(self, pkg_root: Path) -> List[Path]:

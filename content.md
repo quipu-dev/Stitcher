@@ -1,100 +1,88 @@
-## [WIP] test: 添加测试用例以复现重构时的包发现问题
+## [WIP] fix: 为 Workspace 注入 Print 调试以诊断包发现问题
+
+### 错误分析
+尽管我们创建的复现测试 `test_workspace_discovery_bug.py` 成功通过了，但 CLI 在实际运行中仍然无法发现 `stitcher` 包。这表明问题的根源不在于 `Workspace` 处理 Monorepo 结构的逻辑本身，而在于实际运行环境中的某些特定因素（如文件系统权限、未捕获的异常、或者 `glob` 的行为差异）。
+
+由于单元测试环境是合成的（Synthetic），它无法完全模拟实际环境的所有变量。为了即时诊断问题，我们需要在 `Workspace._discover_packages` 内部注入直接的 `print` 调试语句，绕过可能未配置输出的 `logging` 系统。
 
 ### 用户需求
-用户报告了一个严重的 Bug：在 Monorepo 环境下运行 `stitcher refactor` 时，工具似乎未能发现所有相关的包，导致重构操作遗漏了关键的符号引用。特别是核心的 `stitcher` 命名空间包没有出现在加载列表中。用户要求创建一个测试文件来复现并捕获这个错误，且明确禁止在此时修复代码。
+用户需要诊断为什么 `stitcher refactor` 在实际运行时找不到 `stitcher` 包。
 
 ### 评论
-该问题可能源于 `Workspace` 类在扫描和构建包映射时的逻辑缺陷，特别是在处理复杂的 Monorepo 结构（包含根目录 `pyproject.toml` 和子目录 `packages/*`）以及命名空间包（如 `src/stitcher`）时的边缘情况。
+这是一种“探针”式的调试方法。虽然在生产代码中插入 `print` 不优雅，但在复杂的环境问题诊断中，它是最直接、最诚实的方法。我们将在诊断完成后移除这些代码。
 
 ### 目标
-1.  在 `packages/stitcher-refactor/tests/unit/refactor/` 目录下创建一个新的测试文件 `test_workspace_discovery_bug.py`。
-2.  在测试中，使用 `WorkspaceFactory` 精确模拟用户的目录结构，包括：
-    *   根目录下的 `pyproject.toml` 和迁移脚本。
-    *   `packages/` 目录下的多个子包（`stitcher-cli`, `stitcher-common`）。
-    *   使用 `src/stitcher` 这种标准的命名空间包结构。
-3.  断言 `Workspace` 能够正确地将 `stitcher` 识别为一个顶层包，并包含来自所有子包的源目录。
+1.  修改 `packages/stitcher-refactor/src/stitcher/refactor/workspace.py`。
+2.  在 `_discover_packages` 方法中注入打印语句：
+    *   打印正在扫描的 `pyproject.toml` 路径。
+    *   打印在每个路径下发现的 `import_names`。
+    *   如果在处理某个 `pyproject.toml` 时发生异常，直接打印异常详情。
 
 ### 基本原理
-通过构建一个最小化的、但结构上等同于用户环境的复现案例，我们可以确定问题是否出在 `Workspace._discover_packages` 的发现逻辑上。如果测试失败（即 `stitcher` 未被发现或路径不全），则证实了 Bug 的位置。
+通过对比 `pyneedle`（被成功发现）和 `stitcher-common`（未被发现）在扫描过程中的日志差异，我们将能迅速定位问题所在。
 
 ### 标签
-#intent/tooling #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/workspace-discovery #task/action/reproduction #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/refactor #scope/core #ai/instruct #task/domain/diagnostics #task/object/workspace #task/action/instrument #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建复现测试文件
+#### Acts 1: 在 Workspace 中注入探针
 
 ~~~~~act
-write_file
-packages/stitcher-refactor/tests/unit/refactor/test_workspace_discovery_bug.py
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/workspace.py
 ~~~~~
-~~~~~python
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
+~~~~~python.old
+    def _discover_packages(self) -> None:
+        for pyproject_path in self.root_path.glob("**/pyproject.toml"):
+            try:
+                with pyproject_path.open("rb") as f:
+                    tomllib.load(f)
 
+                pkg_root = pyproject_path.parent
+                code_dirs = self._find_code_dirs(pkg_root)
 
-def test_workspace_discovery_with_root_config_and_namespace_packages(tmp_path):
-    """
-    Reproduction test for a bug where 'stitcher' namespace package is not discovered
-    when running in a monorepo structure with a root pyproject.toml and a migration script.
-    """
-    # 1. Arrange: Simulate the user's environment structure
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory
-        # Root level configuration and script
-        .with_pyproject(".")
-        .with_source("001_rename_message_bus.py", "pass")
-        
-        # Package 1: stitcher-common (contributes to stitcher namespace)
-        .with_pyproject("packages/stitcher-common")
-        .with_source(
-            "packages/stitcher-common/src/stitcher/__init__.py",
-            "__path__ = __import__('pkgutil').extend_path(__path__, __name__)"
-        )
-        .with_source("packages/stitcher-common/src/stitcher/common/__init__.py", "")
-        
-        # Package 2: stitcher-cli (contributes to stitcher namespace)
-        .with_pyproject("packages/stitcher-cli")
-        .with_source(
-            "packages/stitcher-cli/src/stitcher/__init__.py",
-            "__path__ = __import__('pkgutil').extend_path(__path__, __name__)"
-        )
-        .with_source("packages/stitcher-cli/src/stitcher/cli/__init__.py", "")
-        
-        # Another package: needle (should be discovered)
-        .with_pyproject("packages/pyneedle")
-        .with_source("packages/pyneedle/src/needle/__init__.py", "")
-        
-        .build()
-    )
+                for code_dir in code_dirs:
+                    import_names = self._get_top_level_importables(code_dir)
+                    for import_name in import_names:
+                        # The directory to add to the search path is the code_dir itself
+                        self.import_to_source_dirs[import_name].add(code_dir)
 
-    # 2. Act
-    workspace = Workspace(root_path=project_root)
-    discovered_packages = list(workspace.import_to_source_dirs.keys())
-    
-    # Debug output for analysis
-    print(f"Discovered packages: {discovered_packages}")
+            except Exception as e:
+                log.warning(f"Could not process {pyproject_path}: {e}")
+~~~~~
+~~~~~python.new
+    def _discover_packages(self) -> None:
+        print(f"[DEBUG-WORKSPACE] scanning root: {self.root_path}")
+        for pyproject_path in self.root_path.glob("**/pyproject.toml"):
+            try:
+                # print(f"[DEBUG-WORKSPACE] Processing: {pyproject_path}")
+                with pyproject_path.open("rb") as f:
+                    tomllib.load(f)
 
-    # 3. Assert
-    # The migration script might be discovered as a module (e.g. '001_rename_message_bus')
-    # But crucially, 'stitcher' MUST be present.
-    assert "stitcher" in workspace.import_to_source_dirs, \
-        f"'stitcher' package was not discovered. Found: {discovered_packages}"
+                pkg_root = pyproject_path.parent
+                code_dirs = self._find_code_dirs(pkg_root)
 
-    # Verify that 'stitcher' maps to multiple source directories (from common and cli)
-    stitcher_sources = workspace.import_to_source_dirs["stitcher"]
-    assert len(stitcher_sources) >= 2, \
-        f"Expected at least 2 source dirs for 'stitcher', found {len(stitcher_sources)}: {stitcher_sources}"
+                for code_dir in code_dirs:
+                    import_names = self._get_top_level_importables(code_dir)
+                    if "stitcher" in import_names:
+                         print(f"[DEBUG-WORKSPACE] Found 'stitcher' in {code_dir}")
+                    for import_name in import_names:
+                        # The directory to add to the search path is the code_dir itself
+                        self.import_to_source_dirs[import_name].add(code_dir)
+
+            except Exception as e:
+                print(f"[DEBUG-WORKSPACE] ERROR processing {pyproject_path}: {e}")
+                log.warning(f"Could not process {pyproject_path}: {e}")
 ~~~~~
 
 ### 下一步建议
-请运行这个新创建的测试：
+请再次运行 `refactor` 命令（带有 `-v`）：
 
 ```bash
-pytest packages/stitcher-refactor/tests/unit/refactor/test_workspace_discovery_bug.py
+stitcher -v refactor apply 001_rename_message_bus.py --yes
 ```
 
-根据测试结果（是通过还是失败），我们将决定下一步是修复 `Workspace` 类，还是继续排查其他组件（如 Griffe 加载器）。
+请仔细检查输出中以 `[DEBUG-WORKSPACE]` 开头的行，特别是关于 `packages/stitcher-common/pyproject.toml` 的处理情况。
