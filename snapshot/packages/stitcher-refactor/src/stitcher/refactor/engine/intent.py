@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ in annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -48,6 +48,12 @@ class DeleteFileIntent(FileSystemIntent):
 
 
 @dataclass(frozen=True)
+class DeleteDirectoryIntent(FileSystemIntent):
+    """Intent to delete an empty directory."""
+    path: Path
+
+
+@dataclass(frozen=True)
 class ScaffoldIntent(FileSystemIntent):
     """Intent to create a file, typically an empty __init__.py."""
 
@@ -61,6 +67,7 @@ class ScaffoldIntent(FileSystemIntent):
 @dataclass(frozen=True)
 class SidecarUpdateIntent(RefactorIntent):
     """
+
     Intent to update keys within a sidecar file due to a symbol rename.
     This is a high-level intent that will be processed by a dedicated aggregator.
     """
