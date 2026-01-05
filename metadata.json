@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 实现事务中的路径重定向以解决“僵尸文件”问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767615014.7294133, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 添加架构缺陷验证测试 (Zombie File Scenario)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767616150.1554, "duration_ms": 0}}

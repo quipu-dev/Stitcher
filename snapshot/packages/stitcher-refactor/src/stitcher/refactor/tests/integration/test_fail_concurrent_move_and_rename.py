@@ -1,49 +1,3 @@
-遵循 Quipu 协议，我为你设计了一个能够揭示当前架构核心缺陷的集成测试。
-
-这个测试场景被称为 **"僵尸文件与丢失的编辑 (The Zombie File & The Lost Edit)"**。它模拟了最致命的组合操作：**同时移动一个文件并重命名其中的符号**。
-
-我们将在 `packages/stitcher-refactor/src/stitcher/refactor/tests/integration/` 下创建一个名为 `test_fail_concurrent_move_and_rename.py` 的测试文件。
-
-**预期结果 (Fail)**：
-1.  **僵尸文件 (Zombie File)**: 旧文件路径（本应被删除）被“复活”了，因为重命名操作是基于旧路径生成的 `WriteFileOp`。
-2.  **内容丢失 (Lost Edit)**: 新文件路径（移动后的位置）虽然存在，但**没有**包含重命名后的代码，包含的是旧代码。
-
-此测试将无可辩驳地证明：当前的 `analyze()` 独立运行且缺乏中间状态合并的架构，在批量操作下是不可用的。
-
-## [WIP] test: 添加架构缺陷验证测试 (Zombie File Scenario)
-
-### 用户需求
-设计一个 "Smoking Gun" 测试，揭示当前 `stitcher-refactor` 架构在处理批量操作（如同时移动文件和修改内容）时的事务一致性缺陷。
-
-### 评论
-这个测试是架构重构（Planner 2.0）的基准。在重构完成前，此测试**必须失败**。在重构完成后，此测试将变绿。它是衡量重构是否成功的终极标准。
-
-### 目标
-1.  创建一个复现“移动 + 重命名”冲突的测试用例。
-2.  验证旧文件被错误地重建（Write覆盖了Delete/Move）。
-3.  验证新文件未包含代码修改。
-
-### 基本原理
-当前架构中，`MoveFileOperation` 和 `RenameSymbolOperation` 都是基于**初始状态**的 `Graph` 进行分析的。
-1.  `Move` 生成：`Move(src -> dest)`。
-2.  `Rename` 生成：`Write(src, new_content)`。
-3.  `TransactionManager` 执行顺序：先 Move，后 Write。
-4.  结果：`src` 被移到 `dest`，然后 `src` 又被 `Write` 操作重新创建。`dest` 是旧内容，`src` 是新内容。这是典型的数据一致性破坏。
-
-### 标签
-#intent/tooling #flow/draft #priority/critical #comp/tests #concept/state #scope/core #ai/instruct #task/domain/refactoring #task/object/planner #task/action/verify-failure #task/state/begin
-
----
-
-### Script
-
-#### Acts 1: 创建缺陷验证测试
-
-~~~~~act
-write_file
-packages/stitcher-refactor/src/stitcher/refactor/tests/integration/test_fail_concurrent_move_and_rename.py
-~~~~~
-~~~~~python
 import pytest
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
@@ -148,12 +102,3 @@ def test_smoking_gun_concurrent_move_and_rename(tmp_path):
     # THIS WILL FAIL in current architecture: src_path is resurrected by the Rename's WriteFileOp
     assert not src_path.exists(), \
         f"ZOMBIE FILE: Source file was resurrected!\nContent:\n{src_path.read_text()}"
-~~~~~
-
-### 下一步建议
-
-现在我们已经确立了“基准失败状态”，接下来的步骤是开始实现 `Planner 2.0` 的设计来让这个测试变绿。
-
-1.  **基础设施**: 定义 `RefactorIntent` 类结构。
-2.  **改造 Operation**: 让 `MoveFileOperation` 和 `RenameSymbolOperation` 实现 `collect_intents` 接口。
-3.  **核心逻辑**: 实现 `GlobalBatchRenamer` 和 `PathRebaser` 来消解冲突。
