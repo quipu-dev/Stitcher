@@ -1,7 +1,12 @@
 from unittest.mock import Mock
 from pathlib import Path
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.graph import SemanticGraph, UsageRegistry, UsageLocation
+from stitcher.refactor.engine.graph import (
+    SemanticGraph,
+    UsageRegistry,
+    UsageLocation,
+    SymbolNode,
+)
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.engine.transaction import WriteFileOp
 from stitcher.refactor.sidecar.manager import SidecarManager
@@ -14,16 +19,12 @@ def test_rename_symbol_analyze_orchestration():
     mock_graph = Mock(spec=SemanticGraph)
     mock_graph.registry = mock_registry
 
-    # Let's use a real tmp_path for reading files to simplify mocking Path.read_text
-    # We will create fake files that the operation can read.
     tmp_path = Path("/tmp/fake_project")  # conceptual
     mock_graph.root_path = tmp_path
-    # The refactored `analyze` method now depends on search_paths
     mock_graph.search_paths = [tmp_path]
 
     mock_workspace = Mock(spec=Workspace)
     mock_sidecar_manager = Mock(spec=SidecarManager)
-    # Prevent sidecar logic from running in this unit test
     mock_sidecar_manager.get_doc_path.return_value.exists.return_value = False
     mock_sidecar_manager.get_signature_path.return_value.exists.return_value = False
 
@@ -46,7 +47,6 @@ def test_rename_symbol_analyze_orchestration():
     from stitcher.refactor.engine.graph import ReferenceType
 
     locations = [
-        # Locations in a.py
         UsageLocation(
             file_a_path,
             1,
@@ -55,11 +55,10 @@ def test_rename_symbol_analyze_orchestration():
             32,
             ReferenceType.IMPORT_PATH,
             "mypkg.core.OldHelper",
-        ),  # from mypkg.core import OldHelper
+        ),
         UsageLocation(
             file_a_path, 3, 6, 3, 15, ReferenceType.SYMBOL, "mypkg.core.OldHelper"
-        ),  # obj = OldHelper()
-        # Locations in b.py
+        ),
         UsageLocation(
             file_b_path,
             2,
@@ -68,7 +67,7 @@ def test_rename_symbol_analyze_orchestration():
             36,
             ReferenceType.IMPORT_PATH,
             "mypkg.core.OldHelper",
-        ),  # from mypkg.core import OldHelper
+        ),
         UsageLocation(
             file_b_path,
             3,
@@ -77,10 +76,17 @@ def test_rename_symbol_analyze_orchestration():
             20,
             ReferenceType.SYMBOL,
             "mypkg.core.OldHelper",
-        ),  # return OldHelper
+        ),
     ]
 
     mock_registry.get_usages.return_value = locations
+
+    # Configure the mock graph for the _find_definition_node logic
+    mock_graph._modules = {"mypkg": Mock()}
+    mock_definition_node = Mock(spec=SymbolNode)
+    mock_definition_node.fqn = old_fqn
+    mock_definition_node.path = file_a_path  # Assume definition is in file_a
+    mock_graph.iter_members.return_value = [mock_definition_node]
 
     # Mock file system reads
     def mock_read_text(path, *args, **kwargs):
@@ -90,8 +96,6 @@ def test_rename_symbol_analyze_orchestration():
             return source_b
         raise FileNotFoundError(f"Mock read_text: {path}")
 
-    # Use monkeypatch to control Path.read_text
-    # This is slightly more integration-y but tests the real interaction with LibCST better.
     from unittest.mock import patch
 
     with patch.object(Path, "read_text", side_effect=mock_read_text, autospec=True):
@@ -102,6 +106,8 @@ def test_rename_symbol_analyze_orchestration():
     # 4. Verify
     mock_registry.get_usages.assert_called_once_with(old_fqn)
 
+    # We expect 2 code change ops + potentially sidecar ops
+    # Since we mocked .exists() to False, we expect only the 2 code ops.
     assert len(file_ops) == 2
     assert all(isinstance(op, WriteFileOp) for op in file_ops)
 

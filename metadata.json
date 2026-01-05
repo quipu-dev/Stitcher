@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] architect: 引入 SidecarUpdateMixin 以实现统一的元数据同步逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767606473.6275754, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 更新单元测试以适配 Refactor Operation 的重构", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767606554.6888373, "duration_ms": 0}}
