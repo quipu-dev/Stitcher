@@ -7,7 +7,7 @@ from stitcher.test_utils import WorkspaceFactory
 runner = CliRunner()
 
 
-def test_refactor_apply_e2e(tmp_path):
+def test_refactor_apply_e2e(tmp_path, monkeypatch):
     # 1. Arrange: Create a project and a migration script
     factory = WorkspaceFactory(tmp_path)
     # Project with a symbol to be renamed
@@ -33,6 +33,7 @@ def upgrade(spec: MigrationSpec):
     (tmp_path / "pyproject.toml").rename(tmp_path / "packages/pkg_a/pyproject.toml")
 
     # 2. Act
+    monkeypatch.chdir(tmp_path)
     result = runner.invoke(
         app,
         ["refactor", "apply", str(migration_script), "--yes"],
@@ -50,7 +51,7 @@ def upgrade(spec: MigrationSpec):
     assert "from mypkg.core import New" in app_py.read_text()
 
 
-def test_refactor_apply_dry_run(tmp_path):
+def test_refactor_apply_dry_run(tmp_path, monkeypatch):
     # 1. Arrange
     factory = WorkspaceFactory(tmp_path)
     (
@@ -71,6 +72,7 @@ def upgrade(spec: MigrationSpec):
     (tmp_path / "pyproject.toml").rename(tmp_path / "packages/pkg_a/pyproject.toml")
 
     # 2. Act
+    monkeypatch.chdir(tmp_path)
     result = runner.invoke(
         app,
         ["refactor", "apply", str(migration_script), "--dry-run"],
