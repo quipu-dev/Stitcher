@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(refactor): Make SemanticGraph src-layout aware to fix module resolution", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767590404.2456157, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 增强重构引擎以支持模块路径重命名", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767590944.182149, "duration_ms": 0}}
