@@ -1,66 +1,150 @@
-好的，测试全部通过。这标志着 `stitcher-refactor` 已经具备了处理复杂 monorepo 结构以及同步维护测试代码的能力，极大地提升了重构引擎的实用价值。
+好的，我们立即开始。
 
-我将生成一个 `[COMMIT]` 计划，将这些改进作为一个完整的逻辑单元提交到 Git 仓库。
+为了确保 `RenameSymbolOperation` 在 monorepo 环境下的健壮性，我将编写一个新的端到端测试。这个测试将模拟一个真实世界的场景：在一个包中重命名一个类，并验证所有依赖它的地方——包括另一个包中的业务代码、包自己的测试代码，以及项目顶层的集成测试——都被正确地自动更新。
 
-## [COMMIT] feat(refactor): 支持 Monorepo 架构并实现测试文件自动更新
+## [WIP] test(refactor): 为 RenameSymbolOperation 添加 Monorepo E2E 测试
 
 ### 用户需求
 
-增强重构引擎，使其能够自动识别 monorepo 结构（`packages/*/src`），并在执行文件移动等重构操作时，自动发现并同步更新所有相关引用，包括跨包的业务代码和各级测试文件。
+为 `RenameSymbolOperation` 编写一个全面的端到端测试，以确保当它在一个 monorepo 项目中执行时，能够正确地更新所有跨包的符号引用，包括源码和测试文件。
 
 ### 评论
 
-这是一个重大的架构增强。通过将重构的范围从单一包扩展到整个 monorepo，并从业务代码扩展到测试代码，我们确保了重构操作的原子性和完整性。这不仅减少了开发者的手动维护工作，也显著增强了其对工具的信任度。
+这是完成 monorepo 支持故事的关键一步。通过为 `RenameSymbolOperation` 添加专门的测试，我们验证了之前对 `SemanticGraph` 的增强是通用的，能够使所有依赖于它的重构算子都具备 monorepo 感知能力。这确保了整个重构套件在复杂项目结构中的行为一致性和可靠性。
 
 ### 目标
 
-1.  将 `SemanticGraph` 和 `MoveFileOperation` 的增强代码添加到 Git 暂存区。
-2.  将新创建的 monorepo 端到端测试用例添加到 Git 暂存区。
-3.  创建一个详细的 Git Commit，记录本次功能的演进。
+1.  创建一个新的集成测试文件 `test_rename_symbol_monorepo_e2e.py`。
+2.  在该文件中，使用 `WorkspaceFactory` 构建一个包含两个包（`pkg_a`, `pkg_b`）和顶层 `tests` 目录的 monorepo。
+3.  `pkg_a` 中定义一个名为 `OldNameClass` 的类，并为其创建相应的包内测试、sidecar 文档和签名文件。
+4.  `pkg_b` 和顶层 `tests` 中都导入并使用 `OldNameClass`。
+5.  执行 `RenameSymbolOperation` 将 `OldNameClass` 重命名为 `NewNameClass`。
+6.  断言所有引用点（`pkg_a` 的定义、`pkg_a` 的测试、`pkg_b` 的代码、顶层测试）以及 sidecar 文件中的键都已正确更新。
 
 ### 基本原理
 
-根据 `d3-constraint-quipu-plan-script-rules`，在代码修改并通过验证后，我们通过一个独立的 `[COMMIT]` 计划来持久化这些变更。这确保了代码库历史的整洁和可追溯性。
+这个端到端测试是对我们增强后的 `SemanticGraph` 的终极考验。`SemanticGraph` 现在能够扫描并加载整个 monorepo 的代码图谱（包括所有 `src` 和 `tests` 目录）。因此，当 `RenameSymbolOperation` 请求 `UsageRegistry` 提供 `OldNameClass` 的所有使用位置时，它应该能收到一个包含所有业务代码和测试代码中引用点的完整列表。
+
+`RenameSymbolOperation` 会为每个受影响的文件生成一个 `WriteFileOp`，其内容由 `SymbolRenamerTransformer` 修改。只要 `UsageRegistry` 的数据是完整和准确的，整个重构链条就能无缝工作。此测试将直接验证这个从图谱构建到代码转换的完整流程。
 
 ### 标签
 
-#intent/build #flow/done #priority/high #comp/engine #comp/tests #concept/state #scope/core #scope/dx #ai/delegate #task/domain/testing #task/object/monorepo-support #task/action/implementation #task/state/end #task/status/completed
+#intent/tooling #flow/ready #priority/high #comp/tests #concept/state #scope/dx #ai/instruct #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 提交 Monorepo 与测试支持的变更
+#### Acts 1: 创建 `RenameSymbolOperation` 的 Monorepo 测试用例
 
-我将把所有修改和新增的文件添加到 Git，并提交。
-
-~~~~~act
-git_add
-packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py
-packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py
-packages/stitcher-refactor/tests/integration/test_monorepo_refactor_e2e.py
-packages/stitcher-refactor/tests/integration/test_monorepo_refactor_with_tests_e2e.py
-~~~~~
+我将创建新的测试文件，并填充完整的测试逻辑。
 
 ~~~~~act
-git_commit
+write_file
+packages/stitcher-refactor/tests/integration/test_rename_symbol_monorepo_e2e.py
 ~~~~~
-~~~~~text
-feat(refactor): support monorepo and automatic test file updates
+~~~~~python
+import json
+import yaml
+from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.engine.graph import SemanticGraph
+from stitcher.refactor.engine.transaction import TransactionManager
+from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
+from stitcher.test_utils import WorkspaceFactory
 
-Enhanced the refactoring engine to handle complex project structures and ensure full-codebase consistency during transformations.
 
-Key changes:
-- Updated `SemanticGraph` to automatically discover and include source and test directories in monorepo structures (e.g., `packages/*/src`, `packages/*/tests`).
-- Improved `MoveFileOperation`'s FQN resolution to correctly map file paths to module names across multiple source roots.
-- Ensured that refactoring operations (like moving a file) now automatically find and update references within test files, whether they are package-local or top-level integration tests.
-- Added comprehensive E2E tests to verify cross-package and test-file reference updates in a monorepo environment.
+def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path):
+    # 1. ARRANGE: Build a monorepo with cross-package and test references
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory
+        # --- Package A: Defines the symbol ---
+        .with_source("packages/pkg_a/src/pkga_lib/__init__.py", "")
+        .with_source(
+            "packages/pkg_a/src/pkga_lib/core.py", "class OldNameClass: pass"
+        )
+        .with_docs(
+            "packages/pkg_a/src/pkga_lib/core.stitcher.yaml",
+            {"pkga_lib.core.OldNameClass": "Docs for the old class."},
+        )
+        .with_raw_file(
+            ".stitcher/signatures/packages/pkg_a/src/pkga_lib/core.json",
+            json.dumps({"pkga_lib.core.OldNameClass": {"hash": "abc"}}),
+        )
+        .with_source(
+            "packages/pkg_a/tests/test_core.py",
+            "from pkga_lib.core import OldNameClass\n\ndef test_local():\n    assert OldNameClass is not None",
+        )
+        # --- Package B: Consumes the symbol ---
+        .with_source("packages/pkg_b/src/pkgb_app/__init__.py", "")
+        .with_source(
+            "packages/pkg_b/src/pkgb_app/main.py",
+            "from pkga_lib.core import OldNameClass\n\ninstance = OldNameClass()",
+        )
+        # --- Top-level integration test: Also consumes the symbol ---
+        .with_source(
+            "tests/integration/test_system.py",
+            "from pkga_lib.core import OldNameClass\n\ndef test_system_integration():\n    assert OldNameClass",
+        )
+        .build()
+    )
 
-This change ensures that refactoring is a truly atomic and holistic operation, leaving the entire codebase in a consistent and green state.
+    # Define paths for verification
+    definition_path = project_root / "packages/pkg_a/src/pkga_lib/core.py"
+    pkg_a_test_path = project_root / "packages/pkg_a/tests/test_core.py"
+    pkg_b_main_path = project_root / "packages/pkg_b/src/pkgb_app/main.py"
+    top_level_test_path = project_root / "tests/integration/test_system.py"
+    doc_path = definition_path.with_suffix(".stitcher.yaml")
+    sig_path = (
+        project_root
+        / ".stitcher/signatures/packages/pkg_a/src/pkga_lib/core.json"
+    )
+
+    # 2. ACT
+    graph = SemanticGraph(root_path=project_root)
+    graph.load("pkga_lib")
+    graph.load("pkgb_app")
+    graph.load("test_core")
+    graph.load("integration")
+    ctx = RefactorContext(graph=graph)
+
+    op = RenameSymbolOperation("pkga_lib.core.OldNameClass", "pkga_lib.core.NewNameClass")
+    file_ops = op.analyze(ctx)
+
+    tm = TransactionManager(project_root)
+    for fop in file_ops:
+        tm.add_write(fop.path, fop.content)
+    tm.commit()
+
+    # 3. ASSERT
+    # --- Code Files ---
+    expected_import = "from pkga_lib.core import NewNameClass"
+    assert "class NewNameClass: pass" in definition_path.read_text()
+    assert expected_import in pkg_a_test_path.read_text()
+    assert expected_import in pkg_b_main_path.read_text()
+    assert expected_import in top_level_test_path.read_text()
+
+    # --- Sidecar Files ---
+    new_fqn = "pkga_lib.core.NewNameClass"
+    old_fqn = "pkga_lib.core.OldNameClass"
+
+    # YAML Doc file
+    doc_data = yaml.safe_load(doc_path.read_text())
+    assert new_fqn in doc_data
+    assert old_fqn not in doc_data
+    assert doc_data[new_fqn] == "Docs for the old class."
+
+    # JSON Signature file
+    sig_data = json.loads(sig_path.read_text())
+    assert new_fqn in sig_data
+    assert old_fqn not in sig_data
+    assert sig_data[new_fqn] == {"hash": "abc"}
 ~~~~~
 
 ### 下一步建议
 
-- **探索大规模重构性能**: 对于拥有数十个包的超大型 monorepo，可以评估 `griffe` 加载全量图谱的性能表现，必要时引入多进程或缓存机制。
-- **支持更多重构算子**: 现在的 monorepo 支持主要在 `MoveFileOperation` 中得到了验证，接下来可以为 `RenameSymbolOperation` 等其他算子编写类似的 monorepo 测试，确保一致性。
-- **重构自身的 L 对象**: 作为一个实战演练，可以使用 `stitcher-refactor` 来优化项目内部的命名空间或结构。
+我们已经为 `stitcher-refactor` 的核心算子（移动和重命名）建立了坚实的 monorepo 支持和测试保障。下一步可以专注于提升其健壮性和用户体验：
+
+-   **冲突检测**：在 `analyze` 阶段增加冲突检测逻辑。例如，如果重命名或移动的目标已经存在，应向用户报告错误，而不是静默覆盖。
+-   **交互式预览与确认**：在 `TransactionManager.commit()` 之前，实现一个交互式流程，向用户清晰地展示所有待执行的文件变更（diff 格式），并请求最终确认。
+-   **性能基准测试**：针对一个包含大量包和文件的真实大型 monorepo（或模拟的）运行重构操作，建立性能基准，以识别潜在的瓶颈。
