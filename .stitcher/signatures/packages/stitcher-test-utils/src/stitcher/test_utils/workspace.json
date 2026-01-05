@@ -34,6 +34,10 @@
     "baseline_code_structure_hash": "92fba0e02d3135da5c0f12b66992e39c5dfebb23e95514c7c7092943d665da4e",
     "baseline_yaml_content_hash": "9fa315df537d97b00b006c2bec98627e0851c3b8f4485d47caca922d8b1d07c4"
   },
+  "WorkspaceFactory.with_raw_file": {
+    "baseline_code_signature_text": "def with_raw_file(self, path: str, content: str) -> WorkspaceFactory:",
+    "baseline_code_structure_hash": "46b830f32b85583a3f74e61acba1d8c303ea8ab91a59194332ef791fb0b30e38"
+  },
   "WorkspaceFactory.with_source": {
     "baseline_code_signature_text": "def with_source(self, path: str, content: str) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "4231b100542176367e7ccc6879eb0bbb2119ecb797141bd39a83766aedfde7b0",

@@ -81,7 +81,9 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
 
     # B. Verify content of external references
     updated_app_code = app_py_path.read_text()
-    expected_import = "from cascade.runtime.adapters.cache.in_memory import InMemoryCache"
+    expected_import = (
+        "from cascade.runtime.adapters.cache.in_memory import InMemoryCache"
+    )
     assert expected_import in updated_app_code
 
     # C. Verify content of moved sidecar files (FQN update)

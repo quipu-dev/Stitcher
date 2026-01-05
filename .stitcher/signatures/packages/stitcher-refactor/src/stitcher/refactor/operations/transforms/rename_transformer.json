@@ -13,15 +13,23 @@
     "baseline_code_structure_hash": "04031f1bf0a3a5ad19d4d3b03c8a6b20fb05f9400065e9bf1bbc139271ec186a",
     "baseline_yaml_content_hash": "681bbfb2e2fbb5fa728779919affef647cae7cf22b371c2fda468f214dd72134"
   },
+  "SymbolRenamerTransformer._create_node_from_fqn": {
+    "baseline_code_signature_text": "def _create_node_from_fqn(self, fqn: str) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "201e0533220c702d4063c62258bfb4dbdd80bc5ff8e5781c16c91c331f05c9a7"
+  },
   "SymbolRenamerTransformer._is_target": {
     "baseline_code_signature_text": "def _is_target(self, node: cst.CSTNode) -> Optional[str]:",
     "baseline_code_structure_hash": "740ce980ed3bcf2a2428128eca5366b9f47ddb46621b83b29cd0a2228577b51c",
     "baseline_yaml_content_hash": "f40c19872a3c9cf88a89b469d9c5de9090fccbadb5526a957374ba4d148d6ff9"
   },
   "SymbolRenamerTransformer._location_index": {},
+  "SymbolRenamerTransformer.leave_Attribute": {
+    "baseline_code_signature_text": "def leave_Attribute(self, original_node: cst.Attribute, updated_node: cst.Attribute) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "a0c35a5060a2bf8004956dcf0f382747c7f681a914d629ea45eea47ef6c4f004"
+  },
   "SymbolRenamerTransformer.leave_Name": {
-    "baseline_code_signature_text": "def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.Name:",
-    "baseline_code_structure_hash": "3b19943850ea21141f95465c8f2c6f90e470b9af35b424f0255ed41e67167645"
+    "baseline_code_signature_text": "def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "359a7b7d03fd4c22322b79587ce2f48c68c764ee80795ad2766698ab49ff3fef"
   },
   "SymbolRenamerTransformer.rename_map": {}
 }

@@ -12,40 +12,45 @@ import json
 def test_rename_symbol_end_to_end(tmp_path):
     # 1. Setup: Use WorkspaceFactory to declaratively build the project
     factory = WorkspaceFactory(tmp_path)
-    project_root = factory.with_source(
-        "mypkg/core.py",
-        """
+    project_root = (
+        factory.with_source(
+            "mypkg/core.py",
+            """
         class OldHelper:
             pass
 
         def old_func():
             pass
         """,
-    ).with_source(
-        "mypkg/app.py",
-        """
+        )
+        .with_source(
+            "mypkg/app.py",
+            """
         from .core import OldHelper, old_func
 
         h = OldHelper()
         old_func()
         """,
-    ).with_source(
-        "mypkg/__init__.py", ""
-    ).with_docs(
-        "mypkg/core.stitcher.yaml",
-        {
-            "mypkg.core.OldHelper": "This is the old helper.",
-            "mypkg.core.old_func": "This is an old function.",
-        },
-    ).with_raw_file(
-        ".stitcher/signatures/mypkg/core.json",
-        json.dumps(
+        )
+        .with_source("mypkg/__init__.py", "")
+        .with_docs(
+            "mypkg/core.stitcher.yaml",
             {
-                "mypkg.core.OldHelper": {"baseline_code_structure_hash": "hash1"},
-                "mypkg.core.old_func": {"baseline_code_structure_hash": "hash2"},
-            }
-        ),
-    ).build()
+                "mypkg.core.OldHelper": "This is the old helper.",
+                "mypkg.core.old_func": "This is an old function.",
+            },
+        )
+        .with_raw_file(
+            ".stitcher/signatures/mypkg/core.json",
+            json.dumps(
+                {
+                    "mypkg.core.OldHelper": {"baseline_code_structure_hash": "hash1"},
+                    "mypkg.core.old_func": {"baseline_code_structure_hash": "hash2"},
+                }
+            ),
+        )
+        .build()
+    )
 
     core_path = project_root / "mypkg/core.py"
     app_path = project_root / "mypkg/app.py"

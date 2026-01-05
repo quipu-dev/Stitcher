@@ -1,4 +1,3 @@
-import yaml
 import json
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
