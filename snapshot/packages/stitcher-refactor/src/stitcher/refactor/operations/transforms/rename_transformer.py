@@ -1,5 +1,5 @@
 import libcst as cst
-from libcst.metadata import PositionProvider
+from libcst.metadata import PositionProvider, CodeRange
 from typing import Dict, List, Tuple, Optional
 from stitcher.refactor.engine.graph import UsageLocation
 
@@ -24,6 +24,8 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
 
     def _is_target(self, node: cst.CSTNode) -> Optional[str]:
         pos = self.get_metadata(PositionProvider, node)
+        if not isinstance(pos, CodeRange):
+            return None
         key = (pos.start.line, pos.start.column)
         loc = self._location_index.get(key)
         if loc:
@@ -45,6 +47,8 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
         new_fqn = self._is_target(original_node)
         if new_fqn:
             pos = self.get_metadata(PositionProvider, original_node)
+            if not isinstance(pos, CodeRange):
+                return updated_node
             key = (pos.start.line, pos.start.column)
             loc = self._location_index.get(key)
             if loc:

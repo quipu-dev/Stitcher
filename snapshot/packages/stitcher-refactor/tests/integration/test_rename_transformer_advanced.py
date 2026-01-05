@@ -41,11 +41,15 @@ def test_rename_symbol_via_attribute_access(tmp_path):
     op = RenameSymbolOperation("mypkg.core.OldHelper", "mypkg.core.NewHelper")
     spec = MigrationSpec().add(op)
     planner = Planner()
+    from stitcher.refactor.engine.transaction import WriteFileOp
+
     ops = planner.plan(spec, ctx)
 
     # 4. Verify (without committing, just check the planned ops)
     assert len(ops) == 2
-    write_ops = {op.path.name: op for op in ops}
+    write_ops = {
+        op.path.name: op for op in ops if isinstance(op, WriteFileOp)
+    }
     assert "core.py" in write_ops
     assert "main.py" in write_ops
     assert "class NewHelper: pass" in write_ops["core.py"].content

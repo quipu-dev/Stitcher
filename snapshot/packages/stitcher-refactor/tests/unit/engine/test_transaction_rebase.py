@@ -30,8 +30,9 @@ def test_rebase_write_after_move():
     assert rebased[0].dest == Path("B")
 
     assert isinstance(rebased[1], WriteFileOp)
-    assert rebased[1].path == Path("B")  # Rebased!
-    assert rebased[1].content == "new content"
+    write_op = rebased[1]
+    assert write_op.path == Path("B")  # Rebased!
+    assert write_op.content == "new content"
 
 
 def test_rebase_chain_moves():
@@ -73,8 +74,10 @@ def test_rebase_no_effect_if_write_first():
     rebased = tm._rebase_ops(tm._ops)
 
     assert rebased[0].path == Path("A")
-    assert rebased[1].path == Path("A")
-    assert rebased[1].dest == Path("B")
+    move_op = rebased[1]
+    assert isinstance(move_op, MoveFileOp)
+    assert move_op.path == Path("A")
+    assert move_op.dest == Path("B")
 
 
 def test_rebase_delete_after_move():

@@ -7,6 +7,7 @@ from stitcher.refactor.engine.transaction import (
     TransactionManager,
     MoveFileOp,
     DeleteDirectoryOp,
+    WriteFileOp,
 )
 from stitcher.refactor.operations.move_directory import MoveDirectoryOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
@@ -81,7 +82,7 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
             tm.add_move(fop.path, fop.dest)
         elif isinstance(fop, DeleteDirectoryOp):
             tm.add_delete_dir(fop.path)
-        else:
+        elif isinstance(fop, WriteFileOp):
             tm.add_write(fop.path, fop.content)
     tm.commit()
 

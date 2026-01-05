@@ -57,11 +57,12 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             doc_path = ctx.sidecar_manager.get_doc_path(src_item)
             if doc_path.exists():
                 processed_files.add(doc_path)
-                intents.append(
-                    SidecarUpdateIntent(
-                        doc_path, item_module_fqn, old_prefix, new_prefix
+                if old_prefix and new_prefix:
+                    intents.append(
+                        SidecarUpdateIntent(
+                            doc_path, item_module_fqn, old_prefix, new_prefix
+                        )
                     )
-                )
                 intents.append(
                     MoveFileIntent(
                         doc_path, ctx.sidecar_manager.get_doc_path(dest_item)
@@ -71,11 +72,12 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             sig_path = ctx.sidecar_manager.get_signature_path(src_item)
             if sig_path.exists():
                 processed_files.add(sig_path)
-                intents.append(
-                    SidecarUpdateIntent(
-                        sig_path, item_module_fqn, old_prefix, new_prefix
+                if old_prefix and new_prefix:
+                    intents.append(
+                        SidecarUpdateIntent(
+                            sig_path, item_module_fqn, old_prefix, new_prefix
+                        )
                     )
-                )
                 intents.append(
                     MoveFileIntent(
                         sig_path, ctx.sidecar_manager.get_signature_path(dest_item)

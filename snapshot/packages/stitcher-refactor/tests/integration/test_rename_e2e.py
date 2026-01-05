@@ -1,6 +1,6 @@
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import TransactionManager
+from stitcher.refactor.engine.transaction import TransactionManager, WriteFileOp
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.refactor.workspace import Workspace
@@ -85,7 +85,8 @@ def test_rename_symbol_end_to_end(tmp_path):
     for op in file_ops:
         # In a real app, we might add ops one by one. Here we add all.
         # This assumes analyze() returns WriteFileOp with correct content.
-        tm.add_write(op.path, op.content)
+        if isinstance(op, WriteFileOp):
+            tm.add_write(op.path, op.content)
 
     tm.commit()
 

@@ -1,6 +1,6 @@
 import libcst as cst
 from libcst import helpers
-from libcst.metadata import PositionProvider
+from libcst.metadata import PositionProvider, CodeRange
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -12,6 +12,7 @@ from libcst.helpers import (
     get_absolute_module_from_package_for_import,
     get_full_name_for_node,
 )
+from griffe.dataclasses import Alias, Object
 
 
 class ReferenceType(Enum):
@@ -82,6 +83,9 @@ class _UsageVisitor(cst.CSTVisitor):
 
     def _register_node(self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType):
         pos = self.get_metadata(PositionProvider, node)
+        if not isinstance(pos, CodeRange):
+            return
+
         loc = UsageLocation(
             file_path=self.file_path,
             lineno=pos.start.line,
@@ -126,6 +130,9 @@ class _UsageVisitor(cst.CSTVisitor):
         return True
 
     def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:
+        if isinstance(node.names, cst.ImportStar):
+            return True  # Skip wildcard imports for now
+
         absolute_module = None
         try:
             package_ctx = self.current_package if self.current_package else None
@@ -180,10 +187,12 @@ class SemanticGraph:
         self.registry = UsageRegistry()
 
     def load(self, package_name: str, submodules: bool = True) -> None:
-        module = self._griffe_loader.load(package_name, submodules=submodules)
-        self._modules[package_name] = module
+        loaded_obj = self._griffe_loader.load(package_name, submodules=submodules)
+        if not isinstance(loaded_obj, griffe.Module):
+            return  # Could be an alias to a module, or not found.
+        self._modules[package_name] = loaded_obj
         self._griffe_loader.resolve_aliases()
-        self._build_registry(module)
+        self._build_registry(loaded_obj)
 
     def _build_registry(
         self, module: griffe.Module, visited: Optional[Set[str]] = None
@@ -191,6 +200,7 @@ class SemanticGraph:
         if visited is None:
             visited = set()
 
+        # A module path is its FQN (e.g., 'my_package.my_module')
         if module.path in visited:
             return
         visited.add(module.path)
@@ -198,24 +208,34 @@ class SemanticGraph:
         for member in module.members.values():
             if isinstance(member, griffe.Module):
                 self._build_registry(member, visited)
-        if module.filepath:
-            self._scan_module_usages(module)
 
-    def _scan_module_usages(self, module: griffe.Module):
+        filepath = module.filepath
+        if isinstance(filepath, list):
+            if not filepath:
+                return
+            filepath = filepath[0]
+
+        if filepath:
+            self._scan_module_usages(module, filepath)
+
+    def _scan_module_usages(self, module: griffe.Module, filepath: Path):
         local_symbols: Dict[str, str] = {}
         for name, member in module.members.items():
             try:
-                target_fqn = member.target_path if member.is_alias else member.path
+                if isinstance(member, Alias):
+                    target_fqn = member.target.path
+                else:
+                    target_fqn = member.path
                 local_symbols[name] = target_fqn
             except Exception:
                 pass
 
         try:
-            source = module.filepath.read_text(encoding="utf-8")
+            source = filepath.read_text(encoding="utf-8")
             wrapper = cst.MetadataWrapper(cst.parse_module(source))
-            is_init = module.filepath.name == "__init__.py"
+            is_init = filepath.name == "__init__.py"
             visitor = _UsageVisitor(
-                module.filepath,
+                filepath,
                 local_symbols,
                 self.registry,
                 current_module_fqn=module.path,
@@ -234,8 +254,17 @@ class SemanticGraph:
             return []
         nodes = []
 
-        def _collect(obj: griffe.Object):
-            path = obj.filepath or Path("")
+        def _collect(obj: Object | Alias):
+            if isinstance(obj, Alias):
+                return  # We only care about concrete objects
+
+            path_or_list = obj.filepath
+            path = Path("")
+            if isinstance(path_or_list, Path):
+                path = path_or_list
+            elif isinstance(path_or_list, list) and path_or_list:
+                path = path_or_list[0]
+
             kind = "unknown"
             if obj.is_module:
                 kind = "module"
@@ -246,10 +275,10 @@ class SemanticGraph:
             elif obj.is_attribute:
                 kind = "attribute"
             nodes.append(SymbolNode(fqn=obj.path, kind=kind, path=path))
+
             if hasattr(obj, "members"):
                 for member in obj.members.values():
-                    if not member.is_alias:
-                        _collect(member)
+                    _collect(member)
 
         _collect(module)
         return nodes
