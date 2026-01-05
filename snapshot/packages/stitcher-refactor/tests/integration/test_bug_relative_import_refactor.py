@@ -1,10 +1,8 @@
-import pytest
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import (
     TransactionManager,
     MoveFileOp,
-    WriteFileOp,
 )
 from stitcher.refactor.operations.move_file import MoveFileOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
@@ -39,7 +37,7 @@ def test_move_file_updates_relative_imports_and_scaffolds_init(tmp_path):
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace)
     graph.load("mypkg")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
@@ -62,22 +60,25 @@ def test_move_file_updates_relative_imports_and_scaffolds_init(tmp_path):
     tm.commit()
 
     # 3. ASSERT
-    
+
     # Assertion 1: Check if __init__.py files were created (The "Scaffolding" Bug)
     # These assertions are expected to FAIL currently.
-    assert (project_root / "mypkg/services/__init__.py").exists(), \
+    assert (project_root / "mypkg/services/__init__.py").exists(), (
         "Failed to scaffold __init__.py for 'services' directory"
-    assert (project_root / "mypkg/services/deep/__init__.py").exists(), \
+    )
+    assert (project_root / "mypkg/services/deep/__init__.py").exists(), (
         "Failed to scaffold __init__.py for 'deep' directory"
+    )
 
     # Assertion 2: Check if relative import was updated (The "Relative Import" Bug)
     updated_usage = usage_path.read_text()
-    
+
     # We accept either a correct relative update or an absolute update
     is_relative_updated = "from .services.deep.core import MyClass" in updated_usage
-    is_absolute_updated = "from mypkg.services.deep.core import MyClass" in updated_usage
-    
+    is_absolute_updated = (
+        "from mypkg.services.deep.core import MyClass" in updated_usage
+    )
+
     assert is_relative_updated or is_absolute_updated, (
-        f"Relative import was not updated correctly.\n"
-        f"Content:\n{updated_usage}"
+        f"Relative import was not updated correctly.\nContent:\n{updated_usage}"
     )

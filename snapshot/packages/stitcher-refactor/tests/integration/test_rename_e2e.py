@@ -72,7 +72,7 @@ def test_rename_symbol_end_to_end(tmp_path):
     # 3. Planning Phase
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner
-    
+
     op = RenameSymbolOperation(
         old_fqn="mypkg.core.OldHelper", new_fqn="mypkg.core.NewHelper"
     )

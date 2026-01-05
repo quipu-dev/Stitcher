@@ -50,6 +50,7 @@ class DeleteFileIntent(FileSystemIntent):
 @dataclass(frozen=True)
 class DeleteDirectoryIntent(FileSystemIntent):
     """Intent to delete an empty directory."""
+
     path: Path
 
 

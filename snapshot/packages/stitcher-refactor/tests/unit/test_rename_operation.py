@@ -100,7 +100,7 @@ def test_rename_symbol_analyze_orchestration():
 
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner
-    
+
     with patch.object(Path, "read_text", side_effect=mock_read_text, autospec=True):
         # 3. Execute
         op = RenameSymbolOperation(old_fqn, new_fqn)

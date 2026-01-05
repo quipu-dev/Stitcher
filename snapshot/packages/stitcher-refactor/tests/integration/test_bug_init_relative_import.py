@@ -1,10 +1,8 @@
-import pytest
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import (
     TransactionManager,
     MoveFileOp,
-    WriteFileOp,
 )
 from stitcher.refactor.operations.move_file import MoveFileOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
@@ -14,7 +12,7 @@ from stitcher.test_utils import WorkspaceFactory
 
 def test_move_module_referenced_by_init_relative_import(tmp_path):
     """
-    Reproduces the bug where 'from .module import X' in __init__.py 
+    Reproduces the bug where 'from .module import X' in __init__.py
     is not updated when 'module.py' is moved.
     """
     # 1. ARRANGE
@@ -37,7 +35,7 @@ def test_move_module_referenced_by_init_relative_import(tmp_path):
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace)
     graph.load("mypkg")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
@@ -61,11 +59,12 @@ def test_move_module_referenced_by_init_relative_import(tmp_path):
 
     # 3. ASSERT
     updated_init = init_path.read_text()
-    
+
     # We expect the import to be updated to absolute path or correct relative path
     # Given our recent fix, it should be absolute: 'from mypkg.services.core import MyClass'
     print(f"DEBUG: Updated __init__.py content:\n{updated_init}")
-    
-    assert "from mypkg.services.core import MyClass" in updated_init or \
-           "from .services.core import MyClass" in updated_init, \
-           "Import in __init__.py was not updated!"
+
+    assert (
+        "from mypkg.services.core import MyClass" in updated_init
+        or "from .services.core import MyClass" in updated_init
+    ), "Import in __init__.py was not updated!"

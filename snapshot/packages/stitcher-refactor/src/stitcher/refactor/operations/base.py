@@ -3,7 +3,6 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import FileOp
 from stitcher.refactor.engine.intent import RefactorIntent
 
 

@@ -31,7 +31,6 @@ from stitcher.refactor.operations.base import SidecarUpdateMixin
 class Planner(SidecarUpdateMixin):
     def plan(self, spec: "MigrationSpec", ctx: RefactorContext) -> List[FileOp]:
         # Local import to break circular dependency
-        from stitcher.refactor.migration import MigrationSpec
 
         all_ops: List[FileOp] = []
 
@@ -41,7 +40,7 @@ class Planner(SidecarUpdateMixin):
             all_intents.extend(operation.collect_intents(ctx))
 
         # --- 2. Intent Aggregation & Processing ---
-        
+
         # Aggregate renames for batch processing
         rename_map: Dict[str, str] = {}
         for intent in all_intents:
@@ -54,9 +53,9 @@ class Planner(SidecarUpdateMixin):
         all_ops.extend(renamer.analyze())
 
         # Aggregate and process sidecar updates
-        sidecar_updates: DefaultDict[
-            Path, List[SidecarUpdateIntent]
-        ] = defaultdict(list)
+        sidecar_updates: DefaultDict[Path, List[SidecarUpdateIntent]] = defaultdict(
+            list
+        )
         for intent in all_intents:
             if isinstance(intent, SidecarUpdateIntent):
                 sidecar_updates[intent.sidecar_path].append(intent)
@@ -66,27 +65,48 @@ class Planner(SidecarUpdateMixin):
         for path, intents in sidecar_updates.items():
             # Load the sidecar file only once
             is_yaml = path.suffix == ".yaml"
-            data = yaml_adapter.load(path) if is_yaml else json.loads(path.read_text("utf-8"))
+            data = (
+                yaml_adapter.load(path)
+                if is_yaml
+                else json.loads(path.read_text("utf-8"))
+            )
 
             # Apply all intents for this file
             for intent in intents:
                 data = self._update_sidecar_data(
                     data, intent.module_fqn, intent.old_fqn, intent.new_fqn
                 )
-            
+
             # Dump the final state
-            content = yaml_adapter.dump(data) if is_yaml else json.dumps(data, indent=2, sort_keys=True)
+            content = (
+                yaml_adapter.dump(data)
+                if is_yaml
+                else json.dumps(data, indent=2, sort_keys=True)
+            )
             all_ops.append(WriteFileOp(path.relative_to(ctx.graph.root_path), content))
 
         # Process simple filesystem intents
         for intent in all_intents:
             if isinstance(intent, MoveFileIntent):
-                all_ops.append(MoveFileOp(intent.src_path.relative_to(ctx.graph.root_path), intent.dest_path.relative_to(ctx.graph.root_path)))
+                all_ops.append(
+                    MoveFileOp(
+                        intent.src_path.relative_to(ctx.graph.root_path),
+                        intent.dest_path.relative_to(ctx.graph.root_path),
+                    )
+                )
             elif isinstance(intent, DeleteFileIntent):
-                all_ops.append(DeleteFileOp(intent.path.relative_to(ctx.graph.root_path)))
+                all_ops.append(
+                    DeleteFileOp(intent.path.relative_to(ctx.graph.root_path))
+                )
             elif isinstance(intent, DeleteDirectoryIntent):
-                all_ops.append(DeleteDirectoryOp(intent.path.relative_to(ctx.graph.root_path)))
+                all_ops.append(
+                    DeleteDirectoryOp(intent.path.relative_to(ctx.graph.root_path))
+                )
             elif isinstance(intent, ScaffoldIntent):
-                all_ops.append(WriteFileOp(intent.path.relative_to(ctx.graph.root_path), intent.content))
-        
+                all_ops.append(
+                    WriteFileOp(
+                        intent.path.relative_to(ctx.graph.root_path), intent.content
+                    )
+                )
+
         return all_ops

@@ -39,7 +39,7 @@ def test_rename_fails_to_update_definition_leading_to_import_error(tmp_path):
 
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner
-    
+
     op = RenameSymbolOperation(
         "common.messaging.bus.MessageBus", "common.messaging.bus.FeedbackBus"
     )

@@ -127,44 +127,45 @@ class TransactionManager:
         # Map current_location -> known_location
         # But wait, we need to track the location of specific logical files.
         # Simple approach: Trace forward.
-        
+
         # Mapping from original_path (or transient path) to current_effective_path
         # No, that's not right.
         # We need to map: "If an op refers to path P, change it to P'"
-        
-        path_map = {} 
-        
+
+        path_map = {}
+
         for op in ops:
             # 1. Resolve current path based on history
             # We copy the op to avoid mutating the original input list objects if reused
             # (Though dataclasses are mutable, let's be safe)
             import copy
+
             new_op = copy.copy(op)
-            
+
             if new_op.path in path_map:
                 new_op.path = path_map[new_op.path]
-                
+
             # 2. Update map if this is a Move
             if isinstance(new_op, MoveFileOp):
                 # Now, anything pointing to new_op.path should now point to new_op.dest
                 # AND anything that mapped to new_op.path should now map to new_op.dest
-                
+
                 # Direct mapping:
                 # If subsequent op targets 'src', it should target 'dest'
                 src = new_op.path
                 dest = new_op.dest
-                
+
                 # Update forward lookup
                 path_map[src] = dest
-                
+
                 # Update existing transitive mappings
                 # e.g. A->B, now B->C. We need A->C.
                 for k, v in path_map.items():
                     if v == src:
                         path_map[k] = dest
-            
+
             rebased_ops.append(new_op)
-            
+
         return rebased_ops
 
     @property

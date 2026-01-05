@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List
 
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import FileOp
 from stitcher.refactor.operations.base import AbstractOperation, SidecarUpdateMixin
 from stitcher.refactor.engine.intent import (
     RefactorIntent,
@@ -33,10 +32,9 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             # but being explicit is safer for now.
             for member in ctx.graph.iter_members(old_prefix):
                 if member.fqn.startswith(old_prefix + "."):
-                    suffix = member.fqn[len(old_prefix):]
+                    suffix = member.fqn[len(old_prefix) :]
                     new_fqn = new_prefix + suffix
                     intents.append(RenameIntent(member.fqn, new_fqn))
-
 
         # 2. Declare physical file moves and sidecar updates for all files
         processed_files = set()
@@ -45,7 +43,7 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
         for src_item in all_files:
             if src_item.suffix != ".py":
                 continue
-            
+
             processed_files.add(src_item)
             relative_path = src_item.relative_to(self.src_dir)
             dest_item = self.dest_dir / relative_path
@@ -59,14 +57,30 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             doc_path = ctx.sidecar_manager.get_doc_path(src_item)
             if doc_path.exists():
                 processed_files.add(doc_path)
-                intents.append(SidecarUpdateIntent(doc_path, item_module_fqn, old_prefix, new_prefix))
-                intents.append(MoveFileIntent(doc_path, ctx.sidecar_manager.get_doc_path(dest_item)))
+                intents.append(
+                    SidecarUpdateIntent(
+                        doc_path, item_module_fqn, old_prefix, new_prefix
+                    )
+                )
+                intents.append(
+                    MoveFileIntent(
+                        doc_path, ctx.sidecar_manager.get_doc_path(dest_item)
+                    )
+                )
 
             sig_path = ctx.sidecar_manager.get_signature_path(src_item)
             if sig_path.exists():
                 processed_files.add(sig_path)
-                intents.append(SidecarUpdateIntent(sig_path, item_module_fqn, old_prefix, new_prefix))
-                intents.append(MoveFileIntent(sig_path, ctx.sidecar_manager.get_signature_path(dest_item)))
+                intents.append(
+                    SidecarUpdateIntent(
+                        sig_path, item_module_fqn, old_prefix, new_prefix
+                    )
+                )
+                intents.append(
+                    MoveFileIntent(
+                        sig_path, ctx.sidecar_manager.get_signature_path(dest_item)
+                    )
+                )
 
         # Process non-Python files
         for src_item in all_files:
@@ -84,7 +98,9 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
 
         return intents
 
-    def _scaffold_init_intents(self, directory_path: Path, ctx: RefactorContext) -> List[ScaffoldIntent]:
+    def _scaffold_init_intents(
+        self, directory_path: Path, ctx: RefactorContext
+    ) -> List[ScaffoldIntent]:
         intents: List[ScaffoldIntent] = []
         search_paths = ctx.graph.search_paths
 
@@ -93,16 +109,16 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             if directory_path.is_relative_to(sp):
                 if active_root is None or len(sp.parts) > len(active_root.parts):
                     active_root = sp
-        
+
         if not active_root:
             return []
-        
+
         current = directory_path
-        
+
         while current != active_root and current.is_relative_to(active_root):
             init_file = current / "__init__.py"
             if not init_file.exists():
-                 intents.append(ScaffoldIntent(path=init_file, content=""))
+                intents.append(ScaffoldIntent(path=init_file, content=""))
             current = current.parent
-            
+
         return intents
