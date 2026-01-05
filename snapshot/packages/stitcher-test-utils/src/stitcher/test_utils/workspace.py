@@ -40,6 +40,12 @@ class WorkspaceFactory:
         self._files_to_create.append({"path": path, "content": data, "format": "yaml"})
         return self
 
+    def with_raw_file(self, path: str, content: str) -> "WorkspaceFactory":
+        self._files_to_create.append(
+            {"path": path, "content": dedent(content), "format": "raw"}
+        )
+        return self
+
     def build(self) -> Path:
         # 1. Finalize pyproject.toml if data was added
         if self._pyproject_data:
