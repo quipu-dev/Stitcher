@@ -12,6 +12,7 @@ dependencies = [
     "stitcher-python-adapter",
     "pyneedle",
     "typer",
+    "tomli; python_version < '3.11'",
 ]
 
 [project.scripts]

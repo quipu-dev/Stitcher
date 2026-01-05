@@ -1,6 +1,10 @@
 import typer
-import tomli
 from pathlib import Path
+
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
 from stitcher.common import bus, stitcher_operator as nexus
 from needle.pointer import L
@@ -51,7 +55,7 @@ def refactor_command(
                 pyproject_path = pkg_path / "pyproject.toml"
                 if pyproject_path.exists():
                     with pyproject_path.open("rb") as f:
-                        data = tomli.load(f)
+                        data = tomllib.load(f)
                         pkg_name = data.get("project", {}).get("name")
                         if pkg_name:
                             graph.load(pkg_name)
