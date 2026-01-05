@@ -44,9 +44,14 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
     ) -> cst.BaseExpression:
         new_fqn = self._is_target(original_node)
         if new_fqn:
-            # For a Name node (definition or unqualified use), replace with the new short name.
-            new_short_name = new_fqn.split(".")[-1]
-            return updated_node.with_changes(value=new_short_name)
+            old_fqn = next(iter(self.rename_map.keys()))
+            old_short_name = old_fqn.split(".")[-1]
+
+            # Name Match Guard: Only rename if the node's text matches the old name.
+            if original_node.value == old_short_name:
+                new_short_name = new_fqn.split(".")[-1]
+                return updated_node.with_changes(value=new_short_name)
+
         return updated_node
 
     def leave_Attribute(
@@ -54,6 +59,13 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
     ) -> cst.BaseExpression:
         new_fqn = self._is_target(original_node)
         if new_fqn:
-            # For an Attribute node (qualified use), replace the entire chain.
-            return self._create_node_from_fqn(new_fqn)
+            from libcst import helpers
+
+            old_fqn = next(iter(self.rename_map.keys()))
+            node_textual_fqn = helpers.get_full_name_for_node(original_node)
+
+            # Name Match Guard: Only rename if the node's full text matches the old FQN.
+            if node_textual_fqn == old_fqn:
+                return self._create_node_from_fqn(new_fqn)
+
         return updated_node
