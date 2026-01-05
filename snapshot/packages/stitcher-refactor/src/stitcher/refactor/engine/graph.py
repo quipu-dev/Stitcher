@@ -1,3 +1,4 @@
+import sys
 import libcst as cst
 from libcst import helpers
 from libcst.metadata import PositionProvider
@@ -224,8 +225,17 @@ class SemanticGraph:
         self.registry = UsageRegistry()
 
     def load(self, package_name: str, submodules: bool = True) -> None:
-        # 1. Load with Griffe (resolves aliases)
-        module = self._griffe_loader.load(package_name, submodules=submodules)
+        # Temporarily modify sys.path to isolate griffe's discovery
+        original_sys_path = sys.path[:]
+        # sys.path requires strings, not Path objects
+        sys.path = [str(p) for p in self.search_paths]
+        try:
+            # 1. Load with Griffe (resolves aliases)
+            module = self._griffe_loader.load(package_name, submodules=submodules)
+        finally:
+            # Always restore the original sys.path
+            sys.path = original_sys_path
+
         self._modules[package_name] = module
 
         # 2. Resolve aliases to ensure we have full resolution

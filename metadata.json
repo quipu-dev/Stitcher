@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(refactor): Isolate analysis engine from global sys.path", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767593250.5903087, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 通过临时修改 sys.path 实现测试隔离", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767593343.0609782, "duration_ms": 0}}

@@ -1,31 +1,37 @@
-You are absolutely right to ask, "How did the test environment leak?" That is the core of the problem.
+好的，您是对的，我之前的修复是错误的。
 
-My previous fix addressed the file creation order, but now we're hitting a more subtle issue. The test runner (`pytest`) modifies `sys.path` to include all the packages from your development monorepo. When the `refactor` command runs our code analysis engine (`griffe`), the engine sees this global `sys.path` and attempts to scan your *entire* development workspace, not just the isolated temporary directory created for the test. This breaks test isolation and causes the `ModuleNotFoundError` when it tries to load a workspace package it doesn't fully understand.
+非常抱歉，我错误地认为 `GriffeLoader` 的构造函数接受一个 `sys_path` 参数，但实际上它的 API 并非如此，这导致了新的 `TypeError`。感谢您的指正。
 
-The solution is to explicitly tell our analysis engine to *only* look for code inside the test directory, effectively isolating it from the leaky environment.
+问题的根源仍然是测试环境的 `sys.path` 泄漏到了我们的分析引擎中。既然不能通过构造函数参数来隔离，我们就必须采用更标准的 Python 测试方法：**在分析期间，临时、安全地修改 `sys.path`**。
 
-## [WIP] fix(refactor): Isolate analysis engine from global sys.path
+我会生成一个新的计划，这次使用 `try...finally` 结构来确保 `sys.path` 只在分析代码时被修改，之后无论成功还是失败，都会被恢复原状。这才是解决这类问题的正确且健壮的方式。
+
+## [WIP] fix(refactor): 通过临时修改 sys.path 实现测试隔离
 
 ### 错误分析
 
-The integration tests for the `refactor` command are failing because the underlying analysis engine (`griffe`) is "leaking" out of the isolated test environment. It is inheriting the `sys.path` from the `pytest` runner, which includes all packages from the development monorepo. This causes it to try and analyze the entire development workspace instead of just the self-contained project within `tmp_path`, leading to a `ModuleNotFoundError` when it encounters a workspace package it cannot resolve. This breaks the fundamental principle of test isolation.
+我上一次的修复尝试向 `griffe.GriffeLoader` 传递一个 `sys_path` 关键字参数，但这导致了 `TypeError`，因为该类的构造函数不支持此参数。
+
+根本问题依然存在：`pytest` 运行器所设置的全局 `sys.path` 包含了整个开发工作区，这污染了 `griffe` 分析引擎的模块搜索路径，破坏了测试的隔离性。
 
 ### 用户需求
 
-The user needs to fix the new failures in `test_refactor_command.py` by preventing the test environment from leaking into the application code being tested.
+用户需要修复 `test_refactor_command.py` 中因 `TypeError` 导致的测试失败，并最终解决测试环境泄漏的根源问题。
 
 ### 评论
 
-This is a critical fix for test stability and correctness. By ensuring the code analysis engine is strictly confined to the test workspace, we make the tests more robust, deterministic, and independent of the environment in which they are run. This change enforces proper test isolation at the application level.
+这是一个更严谨、更符合 Python 测试实践的修复方案。通过在执行关键操作时临时修改全局状态（如 `sys.path`），并在操作结束后无论如何都恢复它，我们能确保测试的可靠性和隔离性，同时不会对测试运行器的其他部分产生副作用。
 
 ### 目标
 
-1.  Modify the `SemanticGraph` class within the `stitcher-refactor` package.
-2.  When initializing `griffe.GriffeLoader`, explicitly provide the `sys_path` argument, setting it to the same search paths derived from the test project's root. This will prevent `griffe` from using the global `sys.path`.
+1.  定位到 `stitcher-refactor` 包中的 `SemanticGraph.load` 方法。
+2.  在该方法内部，使用一个 `try...finally` 块来包裹 `self._griffe_loader.load(...)` 的调用。
+3.  在 `try` 块之前，将 `sys.path` 备份并替换为仅包含当前项目搜索路径 (`self.search_paths`) 的列表。
+4.  在 `finally` 块中，无论分析成功与否，都将 `sys.path` 恢复到其原始状态。
 
 ### 基本原理
 
-The `griffe.GriffeLoader` constructor accepts an optional `sys_path` argument. If not provided, it defaults to using the `sys.path` of the current process. By explicitly setting `sys_path=self.search_paths`, we constrain `griffe`'s module discovery mechanism to operate solely within the boundaries of the project being analyzed (in this case, the temporary test directory). This effectively seals the environment leak and restores proper test isolation.
+Python 的 `sys.path` 是一个可变的全局列表，模块导入机制会遍历它来查找模块。在测试中，最安全的隔离方法不是去寻找特定库的配置项，而是直接控制这个列表。通过 `original = sys.path[:]` 创建一个副本，然后在 `try` 块中用一个受控的列表替换 `sys.path`，可以强制所有导入操作都发生在这个受控的环境中。`finally` 块则保证了即使 `try` 块中发生异常，`sys.path = original` 依然会被执行，从而避免了对后续测试或其他操作的污染。
 
 ### 标签
 
@@ -35,36 +41,64 @@ The `griffe.GriffeLoader` constructor accepts an optional `sys_path` argument. I
 
 ### Script
 
-#### Acts 1: Constrain the analysis engine to the test workspace
+#### Acts 1: 实现安全的 sys.path 临时修改
 
-I will patch `stitcher-refactor/src/stitcher/refactor/engine/graph.py` to correctly configure the `griffe` loader, ensuring it operates only within the provided search paths.
+我将修改 `graph.py` 文件，首先在文件顶部导入 `sys` 模块，然后在 `load` 方法中实现 `try...finally` 逻辑来安全地隔离 `sys.path`。
 
 ~~~~~act
 patch_file
 packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py
 ~~~~~
 ~~~~~python.old
-        # Store unique, sorted paths for deterministic behavior
-        self.search_paths = sorted(list(set(search_paths)))
-
-        self._griffe_loader = griffe.GriffeLoader(search_paths=self.search_paths)
-        self._modules: Dict[str, griffe.Module] = {}
-        self.registry = UsageRegistry()
+import libcst as cst
+from libcst import helpers
+from libcst.metadata import PositionProvider
 ~~~~~
 ~~~~~python.new
-        # Store unique, sorted paths for deterministic behavior
-        self.search_paths = sorted(list(set(search_paths)))
+import sys
+import libcst as cst
+from libcst import helpers
+from libcst.metadata import PositionProvider
+~~~~~
 
-        self._griffe_loader = griffe.GriffeLoader(
-            search_paths=self.search_paths,
-            # Crucially, tell Griffe to ONLY look in our search paths
-            # and not leak into the test runner's global sys.path.
-            sys_path=self.search_paths,
-        )
-        self._modules: Dict[str, griffe.Module] = {}
-        self.registry = UsageRegistry()
+~~~~~act
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py
+~~~~~
+~~~~~python.old
+    def load(self, package_name: str, submodules: bool = True) -> None:
+        # 1. Load with Griffe (resolves aliases)
+        module = self._griffe_loader.load(package_name, submodules=submodules)
+        self._modules[package_name] = module
+
+        # 2. Resolve aliases to ensure we have full resolution
+        self._griffe_loader.resolve_aliases()
+
+        # 3. Build Usage Registry
+        self._build_registry(module)
+~~~~~
+~~~~~python.new
+    def load(self, package_name: str, submodules: bool = True) -> None:
+        # Temporarily modify sys.path to isolate griffe's discovery
+        original_sys_path = sys.path[:]
+        # sys.path requires strings, not Path objects
+        sys.path = [str(p) for p in self.search_paths]
+        try:
+            # 1. Load with Griffe (resolves aliases)
+            module = self._griffe_loader.load(package_name, submodules=submodules)
+        finally:
+            # Always restore the original sys.path
+            sys.path = original_sys_path
+
+        self._modules[package_name] = module
+
+        # 2. Resolve aliases to ensure we have full resolution
+        self._griffe_loader.resolve_aliases()
+
+        # 3. Build Usage Registry
+        self._build_registry(module)
 ~~~~~
 
 ### 下一步建议
 
-This change should fully resolve the test failures. Please run the test suite again. If it passes, we can proceed to create a `[COMMIT]` plan to finalize this fix.
+这次的修复方案更加稳妥。请再次运行测试。如果测试通过，我们就可以将这些修改固化为一个 `[COMMIT]` 计划了。
