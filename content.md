@@ -1,103 +1,95 @@
-You've correctly identified the bug. The `refactor apply` command's `try...except Exception` block is too broad, causing it to catch the `typer.Exit()` intended for a clean exit on `--dry-run` and then re-raising it as a generic error with exit code 1.
+明白了，文件修改和测试已成功通过。现在我们将所有变更整理成一个完整的逻辑提交单元。
 
-The correct approach for a successful exit in a Typer command function is to simply `return`. This signals a successful completion with exit code 0. I will generate a plan to replace the incorrect `raise typer.Exit()` calls with `return` for the successful "no-op" and "dry-run" paths.
+我将生成一个 `[COMMIT]` 计划，其中包含所有涉及文件系统的 `git add` 和 `git commit` 指令。
 
-## [WIP] fix: Correct exit code for successful refactor dry-run
-
-### 错误分析
-
-测试 `test_refactor_apply_dry_run` 失败的根本原因是 `refactor_command` 中的一个控制流缺陷。
-
-1.  **异常捕获过于宽泛**: 整个命令的主体逻辑被包裹在一个 `try...except Exception:`块中。
-2.  **不正确的成功退出**: 对于 `--dry-run` 成功或“无可执行操作”的场景，代码使用 `raise typer.Exit()` 来终止执行。
-3.  **冲突**: `typer.Exit()` 继承自 `SystemExit`，而 `SystemExit` 又继承自 `BaseException`，但它也会被 `except Exception:` 块捕获。
-4.  **结果**: 正常的 `typer.Exit()` 被异常处理块捕获，然后被当作一个未知错误重新抛出，并附带了 `code=1`，导致测试断言 `result.exit_code == 0` 失败。
+## [COMMIT] feat(refactor, cli): 完成 Migration Spec API 和 CLI 命令
 
 ### 用户需求
-
-用户需要修复 `test_refactor_apply_dry_run` 测试。这要求 `stitcher refactor apply --dry-run` 命令在成功预览变更后，必须以退出码 `0` 结束。
+完成 `stitcher-refactor` 阶段四的核心任务：
+1.  设计并实现 `MigrationSpec` API (Migration Pack 的核心容器)。
+2.  实现 `MigrationLoader` 和 `Planner`，形成“加载-规划”流水线。
+3.  创建 `stitcher refactor apply` CLI 命令，实现端到端的重构流程，包括：加载语义图谱、规划操作、预览和事务提交。
+4.  修复 Python 3.11+ 版本对 `tomli` 模块的依赖兼容性问题。
 
 ### 评论
-
-这是一个常见的编程错误，即使用异常处理来进行常规的控制流管理。在 `Typer` (以及 Click) 应用中，一个函数的正常返回 (`return`) 等同于成功的退出（`exit(0)`）。将表示成功的 `raise typer.Exit()` 修改为 `return` 可以使代码意图更清晰，并避免被宽泛的异常捕获块错误地处理。
+本次提交标志着 `stitcher-refactor` 引擎已具备用户可见且可执行的入口。`MigrationSpec` 提供了一个简洁的 API 供用户定义复杂的重构逻辑，而 `Planner` 和 `TransactionManager` 保证了操作的原子性和安全性。对 `tomli`/`tomllib` 的修复确保了跨 Python 版本的兼容性。
 
 ### 目标
-
-1.  定位到 `packages/stitcher-cli/src/stitcher/cli/commands/refactor.py` 文件中的 `refactor_command` 函数。
-2.  将处理“无操作”情况的 `raise typer.Exit()` 替换为 `return`。
-3.  将处理 `--dry-run` 成功的情况的 `raise typer.Exit()` 替换为 `return`。
+将 `stitcher-refactor` 的 Migration 系统和 `stitcher-cli` 的新命令代码提交到版本库，作为完整的、可交付的功能单元。
 
 ### 基本原理
-
-我们将修改控制流，以遵循 CLI 应用的最佳实践：仅对真正的错误情况使用异常和非零退出码。对于所有成功的执行路径，包括那些不执行任何操作的路径（如 dry-run），我们应该允许函数正常返回，`Typer` 会自动将其解释为 `exit(0)`。
+按照 `d3-constraint-quipu-plan-script-rules` 约束，此计划仅包含 `git` 操作，以固化已完成的文件变更。
 
 ### 标签
-
-#intent/fix #flow/ready #priority/high #comp/cli #concept/executor #scope/dx #ai/instruct #task/domain/cli #task/object/refactor-command #task/action/bug-fix #task/state/begin
+#intent/build #intent/fix #flow/ready #priority/high
+#comp/refactor #comp/cli #concept/engine #scope/api #scope/dx
+#ai/instruct
+#task/domain/refactoring #task/object/migration-spec #task/action/implementation
+#task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 修正 refactor 命令的成功退出逻辑
-
-我们将修改 `refactor.py`，将用于成功退出的 `raise typer.Exit()` 语句替换为 `return`，以防止它们被异常处理块错误捕获。
+#### Acts 1: 暂存所有已修改/新增的文件
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-cli/pyproject.toml
 packages/stitcher-cli/src/stitcher/cli/commands/refactor.py
+packages/stitcher-cli/src/stitcher/cli/main.py
+packages/stitcher-cli/tests/integration/test_refactor_command.py
+packages/stitcher-common/src/stitcher/common/assets/needle/en/cli/command.json
+packages/stitcher-common/src/stitcher/common/assets/needle/en/refactor/run.json
+packages/stitcher-common/src/stitcher/common/assets/needle/zh/cli/command.json
+packages/stitcher-common/src/stitcher/common/assets/needle/zh/refactor/run.json
+packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py
+packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py
+packages/stitcher-refactor/src/stitcher/refactor/migration/exceptions.py
+packages/stitcher-refactor/src/stitcher/refactor/migration/loader.py
+packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py
+packages/stitcher-refactor/tests/unit/engine/test_planner.py
+packages/stitcher-refactor/tests/unit/migration/__init__.py
+packages/stitcher-refactor/tests/unit/migration/test_loader.py
+packages/stitcher-refactor/tests/unit/migration/test_spec.py
 ~~~~~
-~~~~~python.old
-        if not file_ops:
-            bus.success(L.refactor.run.no_ops)
-            raise typer.Exit()
 
-        # 3. Preview and Confirm
-        tm = TransactionManager(root_path)
-        for op in file_ops:
-            # This logic needs to be smarter based on op type
-            if op.__class__.__name__ == "WriteFileOp":
-                tm.add_write(op.path, op.content)
-            elif op.__class__.__name__ == "MoveFileOp":
-                tm.add_move(op.path, op.dest)
-            elif op.__class__.__name__ == "DeleteFileOp":
-                tm.add_delete_file(op.path)
-            elif op.__class__.__name__ == "DeleteDirectoryOp":
-                tm.add_delete_dir(op.path)
+#### Acts 2: 创建提交
 
-        bus.warning(L.refactor.run.preview_header, count=tm.pending_count)
-        for desc in tm.preview():
-            typer.echo(f"  {desc}")
-
-        if dry_run:
-            raise typer.Exit()
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python.new
-        if not file_ops:
-            bus.success(L.refactor.run.no_ops)
-            return
+~~~~~text
+feat(refactor, cli): Implement Migration Spec API and CLI Command
 
-        # 3. Preview and Confirm
-        tm = TransactionManager(root_path)
-        for op in file_ops:
-            # This logic needs to be smarter based on op type
-            if op.__class__.__name__ == "WriteFileOp":
-                tm.add_write(op.path, op.content)
-            elif op.__class__.__name__ == "MoveFileOp":
-                tm.add_move(op.path, op.dest)
-            elif op.__class__.__name__ == "DeleteFileOp":
-                tm.add_delete_file(op.path)
-            elif op.__class__.__name__ == "DeleteDirectoryOp":
-                tm.add_delete_dir(op.path)
+This completes Phase 4 of the refactor engine implementation.
 
-        bus.warning(L.refactor.run.preview_header, count=tm.pending_count)
-        for desc in tm.preview():
-            typer.echo(f"  {desc}")
+Key changes:
+1.  **Migration Spec API**: Implements `MigrationSpec` to containerize refactor operations (`Rename`, `Move`, `MoveDir`).
+2.  **Pipeline**: Implements `MigrationLoader` (for parsing Python migration scripts) and `Planner` (for transforming high-level operations into low-level `FileOp` lists).
+3.  **CLI**: Adds the `stitcher refactor apply <script>` command, which orchestrates the entire process, including full semantic graph loading, planning, interactive preview, and transactional commit via `TransactionManager`.
+4.  **Fix**: Corrects the dependency issue in `stitcher-cli` by adopting the `tomllib` standard library import (with fallback to `tomli`) and explicitly declaring `tomli` as a conditional dependency in `pyproject.toml`.
 
-        if dry_run:
-            return
+This feature provides the first user-facing interface for the powerful transactional refactoring engine.
 ~~~~~
 
 ### 下一步建议
 
-我们已经应用了修复。现在，我建议运行整个测试套件，特别是 `test_refactor_command.py`，以验证修复是否解决了问题，并且没有引入新的回归。
+我们已经完成了“阶段四：迁移包系统与 CLI”的核心任务。
+
+现在，我们进入**“阶段五：实战演练 (Dogfooding)”**：使用我们刚刚构建的工具来重构 `stitcher` 项目自身。
+
+**宏观任务**: 整理 `pyneedle` 包中的 `L` 对象结构。
+
+我建议先从一个简单的、可见的重命名操作开始：
+
+**任务目标**: 将 `pyneedle-pointer/src/needle/pointer/core.py` 中的 `SemanticPointer` 类重命名为 `Pointer`。
+
+这需要：
+1.  创建一个迁移脚本。
+2.  运行 `stitcher refactor apply`。
+3.  验证 `pyneedle-pointer/src/needle/pointer/core.py` 中的定义被重命名。
+4.  验证所有引用它的文件（例如 `pyneedle-runtime` 和 `stitcher-common`）中的导入和用法被自动更新。
+
+请确认是否开始此实战演练。

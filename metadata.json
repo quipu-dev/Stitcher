@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: Correct exit code for successful refactor dry-run", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767593985.1030085, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(refactor, cli): 完成 Migration Spec API 和 CLI 命令", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767594057.6160178, "duration_ms": 0}}
