@@ -2,6 +2,7 @@ import libcst as cst
 from libcst import helpers
 from libcst.metadata import PositionProvider
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import List, Dict, Optional, DefaultDict
 from collections import defaultdict
@@ -13,6 +14,11 @@ from libcst.helpers import (
 )
 
 
+class ReferenceType(Enum):
+    SYMBOL = "symbol"
+    IMPORT_PATH = "import_path"
+
+
 @dataclass
 class UsageLocation:
     file_path: Path
@@ -20,6 +26,8 @@ class UsageLocation:
     col_offset: int
     end_lineno: int
     end_col_offset: int
+    ref_type: ReferenceType
+    target_node_fqn: str
 
     @property
     def range_tuple(self):
