@@ -178,30 +178,26 @@ class SemanticGraph:
         self._griffe_loader = griffe.GriffeLoader(search_paths=self.search_paths)
         self._modules: Dict[str, griffe.Module] = {}
         self.registry = UsageRegistry()
+        self._processed_files: Set[Path] = set()
 
     def load(self, package_name: str, submodules: bool = True) -> None:
         module = self._griffe_loader.load(package_name, submodules=submodules)
         self._modules[package_name] = module
         self._griffe_loader.resolve_aliases()
         self._build_registry(module)
+        self._scan_orphans(package_name)
 
-    def _build_registry(
-        self, module: griffe.Module, visited: Optional[Set[str]] = None
-    ):
-        if visited is None:
-            visited = set()
-
-        if module.path in visited:
-            return
-        visited.add(module.path)
-
+    def _build_registry(self, module: griffe.Module):
         for member in module.members.values():
-            if isinstance(member, griffe.Module):
-                self._build_registry(member, visited)
+            if isinstance(member, griffe.Module) and not member.is_alias:
+                self._build_registry(member)
         if module.filepath:
             self._scan_module_usages(module)
 
     def _scan_module_usages(self, module: griffe.Module):
+        if module.filepath in self._processed_files:
+            return
+        
         local_symbols: Dict[str, str] = {}
         for name, member in module.members.items():
             try:
@@ -209,21 +205,80 @@ class SemanticGraph:
                 local_symbols[name] = target_fqn
             except Exception:
                 pass
+        
+        self._scan_file(
+            module.filepath, 
+            module.path, 
+            module.filepath.name == "__init__.py", 
+            local_symbols
+        )
 
+    def _scan_file(
+        self, 
+        path: Path, 
+        fqn: str, 
+        is_init: bool, 
+        local_symbols: Optional[Dict[str, str]] = None
+    ):
         try:
-            source = module.filepath.read_text(encoding="utf-8")
+            self._processed_files.add(path)
+            source = path.read_text(encoding="utf-8")
             wrapper = cst.MetadataWrapper(cst.parse_module(source))
-            is_init = module.filepath.name == "__init__.py"
             visitor = _UsageVisitor(
-                module.filepath,
-                local_symbols,
+                path,
+                local_symbols or {},
                 self.registry,
-                current_module_fqn=module.path,
+                current_module_fqn=fqn,
                 is_init_file=is_init,
             )
             wrapper.visit(visitor)
         except Exception:
             pass
+
+    def _scan_orphans(self, package_name: str):
+        # Active scan for files missed by Griffe (e.g. inside directories missing __init__.py)
+        source_dirs = self.workspace.import_to_source_dirs.get(package_name, set())
+        
+        # Also check if package_name is actually a sub-package. 
+        # import_to_source_dirs only indexes top-level packages.
+        # If we loaded a sub-package, we might need to search in all source dirs.
+        # For simplicity/robustness, we search all known source dirs in the workspace
+        # that match the loaded package.
+        
+        target_roots = []
+        if package_name in self.workspace.import_to_source_dirs:
+            target_roots = self.workspace.import_to_source_dirs[package_name]
+        else:
+            # Fallback: search all roots, filter by package name prefix later?
+            # Or just rely on the fact that load() is usually called with top-level pkg.
+            # Let's start with the direct lookup.
+            pass
+
+        for root in target_roots:
+            for py_file in root.rglob("*.py"):
+                if py_file in self._processed_files:
+                    continue
+                
+                # Infer FQN
+                try:
+                    rel_path = py_file.relative_to(root)
+                    parts = list(rel_path.with_suffix("").parts)
+                    if parts[-1] == "__init__":
+                        parts.pop()
+                    
+                    inferred_fqn = ".".join(parts)
+                    
+                    # Only process if it matches the package we are loading
+                    # This prevents scanning unrelated files if multiple pkgs share a root (rare but possible)
+                    if inferred_fqn == package_name or inferred_fqn.startswith(package_name + "."):
+                         self._scan_file(
+                            py_file, 
+                            inferred_fqn, 
+                            py_file.name == "__init__.py", 
+                            local_symbols={} # No local symbols for orphans
+                        )
+                except ValueError:
+                    continue
 
     def get_module(self, package_name: str) -> Optional[griffe.Module]:
         return self._modules.get(package_name)

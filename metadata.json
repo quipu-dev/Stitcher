@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 SemanticGraph 忽略命名空间子模块导致重命名失效的问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767604538.2948802, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 增强 SemanticGraph 鲁棒性以支持扫描非规范包结构中的文件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767604999.639478, "duration_ms": 0}}
