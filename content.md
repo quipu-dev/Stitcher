@@ -1,65 +1,52 @@
 简要回答
-收到。测试失败确认了缺陷：当父目录（包）被重命名时，Sidecar 更新逻辑未能正确推导子模块的新 FQN，导致无法将符号的全限定名（FQN）还原为短名称。我将修复 `SidecarUpdateMixin` 中的这一逻辑。
+好的，既然测试已经通过，我将按照你的指示保留该测试文件作为防回归测试。现在我将生成一个 `[COMMIT]` 计划，将修复代码和新的集成测试一并提交。
 
-## [WIP] fix: 修复 Sidecar 在包重命名时无法保持短名称的问题
-
-### 错误分析
-当前 `_update_sidecar_data` 方法在计算 `effective_new_module`（用于判断是否可以使用短名称的上下文）时，过于简单：
-```python
-effective_new_module = new_fqn if old_fqn == module_fqn else module_fqn
-```
-它只处理了“模块本身被重命名”的情况。当发生“模块的父包被重命名”（如 `mypkg.section` -> `mypkg.moved`）时，`old_fqn` (`mypkg.section`) 是 `module_fqn` (`mypkg.section.core`) 的前缀。此时，代码错误地认为模块名没变，导致后续尝试用旧的模块名去匹配新的符号 FQN，匹配失败，最终回退到了全限定名。
+## [COMMIT] fix: 确保在命名空间重命名期间 Sidecar 键名保持为短名称
 
 ### 用户需求
-Sidecar 文件（`.stitcher.yaml`）中的键名应尽可能保持简洁的短名称格式（如 `MyClass`），而不是全限定名（如 `pkg.mod.MyClass`），即使在发生目录移动或重构后也应如此。
+在进行目录移动或包重构时，`.stitcher.yaml` 中的键名应当保持为相对于模块的短名称（Short Name），而非展开为全限定名（FQN）。
 
 ### 评论
-修复此问题对于保持文档的可读性至关重要，特别是对于大型项目，冗长的 FQN 会使 YAML 文件难以维护。
+保留复现测试作为回归测试是非常正确的做法。这确保了未来对重构引擎或 `SidecarUpdateMixin` 的任何修改都不会再次破坏 Sidecar 的可读性。
 
 ### 目标
-修改 `stitcher/refactor/operations/base.py` 中的 `_update_sidecar_data` 方法，使其能够正确处理前缀重命名的情况，从而计算出正确的 `effective_new_module`。
+1. 提交 `SidecarUpdateMixin` 的逻辑修复。
+2. 提交新增的集成测试 `test_repro_sidecar_fqn.py`。
 
 ### 基本原理
-我们将增强 `effective_new_module` 的计算逻辑：
-1.  **完全匹配**: 如果 `module_fqn == old_fqn`，则新模块名为 `new_fqn`。
-2.  **前缀匹配**: 如果 `module_fqn` 以 `old_fqn + "."` 开头，说明模块在被重命名的命名空间内。此时取后缀并拼接到 `new_fqn` 上。
-3.  **无匹配**: 其他情况，模块名保持不变。
+我们在 `SidecarUpdateMixin` 中增强了模块路径推导逻辑，使其能够识别父包的变更并同步更新模块的上下文路径。这使得在重写 Sidecar 键名时，能够正确匹配并剥离新的 FQN 前缀，从而恢复短名称。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/refactor #task/object/sidecar-updater #task/action/fix-bug #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #comp/tests #concept/state #scope/core #ai/instruct #task/domain/refactor #task/object/sidecar-updater #task/action/fix-bug #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 SidecarUpdateMixin 逻辑
+#### Acts 1: 提交变更
+
+我们将修复的代码和新的回归测试添加到 Git 暂存区并提交。
 
 ~~~~~act
-patch_file
+git_add
 packages/stitcher-refactor/src/stitcher/refactor/operations/base.py
+packages/stitcher-refactor/src/stitcher/refactor/tests/integration/test_repro_sidecar_fqn.py
 ~~~~~
-~~~~~python
-            # Determine the effective module FQN for short-name restoration.
-            # If the module itself is being renamed, the new context is new_fqn.
-            effective_new_module = new_fqn if old_fqn == module_fqn else module_fqn
 
-            new_key = key
-            if key_fqn == old_fqn:
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python
-            # Determine the effective module FQN for short-name restoration.
-            if module_fqn == old_fqn:
-                effective_new_module = new_fqn
-            elif module_fqn and module_fqn.startswith(old_fqn + "."):
-                # Module is inside the renamed namespace/directory
-                suffix = module_fqn[len(old_fqn) :]
-                effective_new_module = new_fqn + suffix
-            else:
-                effective_new_module = module_fqn
+~~~~~text
+fix(refactor): preserve short names in sidecar keys during namespace renames
 
-            new_key = key
-            if key_fqn == old_fqn:
+Previously, the SidecarUpdateMixin failed to correctly calculate the 'effective_new_module' path when a parent directory (package) was renamed. This resulted in the mixin being unable to strip the new FQN prefix from symbol keys in the sidecar YAML, causing them to be expanded to full FQNs, which reduced readability.
+
+Changes:
+- Enhanced `_update_sidecar_data` to handle prefix-based renames for modules.
+- Added an integration test 'test_repro_sidecar_fqn.py' to verify short name retention when moving directories.
+
+This fix ensures that sidecar documentation remains concise and follows the standard 'short-name' format expected by most Stitcher configurations.
 ~~~~~
 
 ### 下一步建议
-请再次运行刚才失败的测试 `packages/stitcher-refactor/src/stitcher/refactor/tests/integration/test_repro_sidecar_fqn.py`。预期它现在应该通过。如果通过，我们可以提交更改并删除该临时测试文件。
+我们已经解决了 Sidecar 键名 FQN 展开的问题。建议后续可以进一步审查 `RenameSymbolOperation` 在复杂嵌套类场景下的键名处理，确保其在各种深度重构下都能保持一致的简洁性。
