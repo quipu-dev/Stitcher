@@ -95,4 +95,33 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
                 MoveFileOp(sig_src.relative_to(root), sig_dest.relative_to(root))
             )
 
-        return content_update_ops + rename_ops + move_ops
+        # 4. Scaffold missing __init__.py files for the destination
+        # This ensures that moving a file to a new deep directory structure
+        # maintains a valid Python package hierarchy.
+        scaffold_ops = self._scaffold_init_files(self.dest_path, root)
+        
+        return content_update_ops + rename_ops + move_ops + scaffold_ops
+
+    def _scaffold_init_files(self, file_path: Path, root: Path) -> List[FileOp]:
+        ops: List[FileOp] = []
+        parent = file_path.parent
+        
+        # Traverse up until we hit the root
+        while parent != root and parent.is_relative_to(root):
+            init_file = parent / "__init__.py"
+            # We assume if it doesn't exist on disk, we need to create it.
+            # NOTE: In a complex transaction, another op might have created it,
+            # or it might be deleted. But adding a duplicate WriteFileOp for an empty
+            # __init__.py is generally safe or can be deduped by TransactionManager if needed.
+            # Here we just check physical existence.
+            if not init_file.exists():
+                ops.append(
+                    WriteFileOp(
+                        path=init_file.relative_to(root),
+                        content=""
+                    )
+                )
+            
+            parent = parent.parent
+            
+        return ops

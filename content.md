@@ -1,125 +1,176 @@
-# [WIP] test: 添加重现相对导入重构失败的集成测试
+# [WIP] fix: 修复文件移动时的相对导入更新与包结构脚手架问题
+
+### 错误分析
+在执行文件移动重构（特别是将文件移入新的深层目录）时，当前的实现存在两个严重缺陷：
+1.  **相对导入失效**: `SymbolRenamerTransformer` 仅对符号进行简单的名称替换。对于 `from .core import X` 这样的相对导入，当 `core.py` 移动到深层目录时，它无法将其更新为正确的路径（如 `from .services.core import X` 或绝对路径），导致导入断裂。
+2.  **缺失 `__init__.py`**: `MoveFileOperation` 不会自动为新创建的目标目录层级生成 `__init__.py` 文件。这使得 Python 无法将新目录识别为包，引发 `ModuleNotFoundError`。
 
 ### 用户需求
-创建一个集成测试，用于明确捕获（重现）Stitcher 在处理文件移动操作时的两个核心缺陷：
-1.  未能正确更新引用了被移动文件的**相对导入**语句（例如 `from .module import X`）。
-2.  未能自动在新的目标目录层级中创建缺失的 `__init__.py` 文件，导致生成的目录结构不是有效的 Python 包。
+1.  确保在文件移动后，所有引用该文件的相对导入语句都能被正确更新（建议转换为绝对导入以保证稳健性）。
+2.  确保文件移动操作会自动为所有新创建的父目录生成 `__init__.py` 文件，保证包结构的完整性。
 
 ### 评论
-这个测试是“冒烟枪”（smoking gun），它将在 CI 环境中失败，从而证实我们对问题的分析。通过断言**期望的正确行为**（导入路径被更新，`__init__.py` 被创建），我们可以将此测试作为后续修复工作的验收标准。
+这是一个对重构功能的关键修复，直接影响到大规模架构调整（如用户正在进行的 `cascade-runtime` 重组）的成功率。
 
 ### 目标
-在 `stitcher-refactor` 包中添加一个新的测试文件 `test_bug_relative_import_refactor.py`，模拟将一个被相对导入引用的文件移动到更深层目录的场景。
+1.  修改 `SymbolRenamerTransformer`，增加对 `ImportFrom` 节点的专门处理，将受影响的相对导入转换为绝对导入。
+2.  修改 `MoveFileOperation` 和 `MoveDirectoryOperation`，引入自动检测并创建缺失 `__init__.py` 的逻辑。
 
 ### 基本原理
-我们使用 `WorkspaceFactory` 构建一个最小化的复现环境。
-- **初始状态**: `mypkg/__init__.py` 通过 `from .core import A` 引用同级文件 `core.py`。
-- **动作**: 将 `core.py` 移动到 `mypkg/services/deep/core.py`。
-- **期望**:
-    1.  `mypkg/__init__.py` 应更新为 `from .services.deep.core import A` 或 `from mypkg.services.deep.core import A`。
-    2.  `mypkg/services/__init__.py` 和 `mypkg/services/deep/__init__.py` 应该被自动创建。
+1.  **相对导入转绝对**: 在 Transformer 的 `leave_ImportFrom` 阶段拦截。如果发现 `module` 部分指向了被重命名的符号（即被移动的文件），则忽略原有的相对路径层级 (`level`)，直接使用新的完全限定名 (FQN) 生成绝对导入路径。这比计算新的相对路径更简单且不易出错。
+2.  **自动脚手架**: 在 `MoveFileOperation.analyze` 的最后阶段，分析目标路径。向上遍历父目录，收集所有不存在 `__init__.py` 的目录，并为它们生成 `WriteFileOp`。为了避免重复，可以使用一个集合来跟踪已计划创建的文件。
 
 ### 标签
-#intent/test #flow/ready #priority/critical #comp/tests #concept/refactor #scope/core #ai/instruct #task/domain/refactoring #task/object/relative-import-fix #task/action/reproduce-bug #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/refactor #scope/core #ai/instruct #task/domain/refactoring #task/object/import-fix #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建复现测试
+#### Acts 1: 修复相对导入问题 (Transformer)
 
-我们将在 `stitcher-refactor` 的集成测试目录中创建一个名为 `test_bug_relative_import_refactor.py` 的文件。
+我们需要修改 `SymbolRenamerTransformer`，使其能够处理 `ImportFrom` 节点，并将相对导入“升级”为绝对导入。
 
 ~~~~~act
-write_file
-packages/stitcher-refactor/tests/integration/test_bug_relative_import_refactor.py
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/operations/transforms/rename_transformer.py
 ~~~~~
-~~~~~python
-import pytest
-from stitcher.refactor.engine.graph import SemanticGraph
-from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import (
-    TransactionManager,
-    MoveFileOp,
-    WriteFileOp,
-)
-from stitcher.refactor.operations.move_file import MoveFileOperation
-from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
+~~~~~python.old
+            # Name Match Guard: Only rename if the node's full text matches the old FQN.
+            if node_textual_fqn == old_fqn:
+                return self._create_node_from_fqn(new_fqn)
 
+        return updated_node
+~~~~~
+~~~~~python.new
+            # Name Match Guard: Only rename if the node's full text matches the old FQN.
+            if node_textual_fqn == old_fqn:
+                return self._create_node_from_fqn(new_fqn)
 
-def test_move_file_updates_relative_imports_and_scaffolds_init(tmp_path):
-    """
-    Reproduces the bug where:
-    1. Relative imports (e.g., 'from .core import A') break when the target is moved deeper.
-    2. Missing __init__.py files in new directories cause import errors.
-    """
-    # 1. ARRANGE
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_pyproject(".")
-        .with_source(
-            "mypkg/__init__.py",
-            "from .core import MyClass\n\ninstance = MyClass()",
-        )
-        .with_source("mypkg/core.py", "class MyClass: pass")
-        .build()
-    )
+        return updated_node
 
-    src_path = project_root / "mypkg/core.py"
-    # Move to a deeper, non-existent directory structure
-    dest_path = project_root / "mypkg/services/deep/core.py"
-    usage_path = project_root / "mypkg/__init__.py"
+    def leave_ImportFrom(
+        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
+    ) -> cst.ImportFrom:
+        # If the module part of the import matches a target, we rewrite the whole
+        # import to use the absolute FQN. This handles relative imports gracefully
+        # by converting them to absolute ones.
+        if original_node.module:
+            new_fqn = self._is_target(original_node.module)
+            if new_fqn:
+                return updated_node.with_changes(
+                    module=self._create_node_from_fqn(new_fqn),
+                    level=0  # Force absolute import
+                )
+        return updated_node
+~~~~~
 
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-    
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
+#### Acts 2: 实现自动脚手架逻辑 (MoveFile)
 
-    op = MoveFileOperation(src_path, dest_path)
-    file_ops = op.analyze(ctx)
+我们将修改 `MoveFileOperation`，使其在 `analyze` 返回前检查并补充 `__init__.py` 的创建操作。由于 `MoveDirectoryOperation` 逻辑较为独立，我们先在 `MoveFileOperation` 中直接修复，这是最常用的原子操作。
 
-    tm = TransactionManager(project_root)
-    for fop in file_ops:
-        if isinstance(fop, MoveFileOp):
-            tm.add_move(fop.path, fop.dest)
-        else:
-            tm.add_write(fop.path, fop.content)
-    tm.commit()
+~~~~~act
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py
+~~~~~
+~~~~~python.old
+        sig_src = ctx.sidecar_manager.get_signature_path(self.src_path)
+        if sig_src.exists():
+            sig_dest = ctx.sidecar_manager.get_signature_path(self.dest_path)
+            move_ops.append(
+                MoveFileOp(sig_src.relative_to(root), sig_dest.relative_to(root))
+            )
 
-    # 3. ASSERT
-    
-    # Assertion 1: Check if __init__.py files were created (The "Scaffolding" Bug)
-    # These assertions are expected to FAIL currently.
-    assert (project_root / "mypkg/services/__init__.py").exists(), \
-        "Failed to scaffold __init__.py for 'services' directory"
-    assert (project_root / "mypkg/services/deep/__init__.py").exists(), \
-        "Failed to scaffold __init__.py for 'deep' directory"
+        return content_update_ops + rename_ops + move_ops
+~~~~~
+~~~~~python.new
+        sig_src = ctx.sidecar_manager.get_signature_path(self.src_path)
+        if sig_src.exists():
+            sig_dest = ctx.sidecar_manager.get_signature_path(self.dest_path)
+            move_ops.append(
+                MoveFileOp(sig_src.relative_to(root), sig_dest.relative_to(root))
+            )
 
-    # Assertion 2: Check if relative import was updated (The "Relative Import" Bug)
-    updated_usage = usage_path.read_text()
-    
-    # We accept either a correct relative update or an absolute update
-    is_relative_updated = "from .services.deep.core import MyClass" in updated_usage
-    is_absolute_updated = "from mypkg.services.deep.core import MyClass" in updated_usage
-    
-    assert is_relative_updated or is_absolute_updated, (
-        f"Relative import was not updated correctly.\n"
-        f"Content:\n{updated_usage}"
-    )
+        # 4. Scaffold missing __init__.py files for the destination
+        # This ensures that moving a file to a new deep directory structure
+        # maintains a valid Python package hierarchy.
+        scaffold_ops = self._scaffold_init_files(self.dest_path, root)
+        
+        return content_update_ops + rename_ops + move_ops + scaffold_ops
+
+    def _scaffold_init_files(self, file_path: Path, root: Path) -> List[FileOp]:
+        ops: List[FileOp] = []
+        parent = file_path.parent
+        
+        # Traverse up until we hit the root
+        while parent != root and parent.is_relative_to(root):
+            init_file = parent / "__init__.py"
+            # We assume if it doesn't exist on disk, we need to create it.
+            # NOTE: In a complex transaction, another op might have created it,
+            # or it might be deleted. But adding a duplicate WriteFileOp for an empty
+            # __init__.py is generally safe or can be deduped by TransactionManager if needed.
+            # Here we just check physical existence.
+            if not init_file.exists():
+                ops.append(
+                    WriteFileOp(
+                        path=init_file.relative_to(root),
+                        content=""
+                    )
+                )
+            
+            parent = parent.parent
+            
+        return ops
+~~~~~
+
+#### Acts 3: 实现自动脚手架逻辑 (MoveDirectory)
+
+同样的逻辑也需要应用到 `MoveDirectoryOperation`。虽然 `MoveDirectoryOperation` 主要是移动现有目录，但如果目标是新的（例如重命名目录），目标路径的父级也可能需要 `__init__.py`。更重要的是，如果它在内部重构了结构，确保包完整性是必要的。
+
+不过，仔细看用户的 Case，使用的是 `MoveDir`。所以这里也必须加。
+
+~~~~~act
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py
+~~~~~
+~~~~~python.old
+        # 3. Schedule the now-empty source directory for deletion
+        all_ops.append(DeleteDirectoryOp(self.src_dir.relative_to(root)))
+
+        return all_ops
+~~~~~
+~~~~~python.new
+        # 3. Schedule the now-empty source directory for deletion
+        all_ops.append(DeleteDirectoryOp(self.src_dir.relative_to(root)))
+
+        # 4. Scaffold missing __init__.py files for the destination root
+        scaffold_ops = self._scaffold_init_files(self.dest_dir, root)
+
+        return all_ops + scaffold_ops
+
+    def _scaffold_init_files(self, directory_path: Path, root: Path) -> List[FileOp]:
+        # Logic duplicated from MoveFileOperation for now to avoid complex inheritance refactor
+        # Ideally this goes into a Mixin.
+        ops: List[FileOp] = []
+        
+        # We start checking from the directory itself (it should be a package)
+        # up to the root.
+        current = directory_path
+        
+        while current != root and current.is_relative_to(root):
+            init_file = current / "__init__.py"
+            if not init_file.exists():
+                 ops.append(
+                    WriteFileOp(
+                        path=init_file.relative_to(root),
+                        content=""
+                    )
+                )
+            current = current.parent
+            
+        return ops
 ~~~~~
 
 ### 下一步建议
 
-现在测试已经创建，你可以运行它来确认失败：
-`uv run pytest packages/stitcher-refactor/tests/integration/test_bug_relative_import_refactor.py`
-
-确认失败后，我们将开始着手修复：
-1.  修改 `MoveFileOperation` (或其基类) 以检测新创建的目录，并自动生成 `WriteFileOp` 来创建 `__init__.py`。
-2.  修改 `RenameSymbolOperation` 或相关的 Transformer 逻辑，使其能够计算相对路径的差异，正确重写 `ImportFrom` 语句。
+现在修复已经应用，应该重新运行之前失败的集成测试 `packages/stitcher-refactor/tests/integration/test_bug_relative_import_refactor.py` 来验证修复效果。

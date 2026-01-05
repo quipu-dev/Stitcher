@@ -120,4 +120,29 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
         # 3. Schedule the now-empty source directory for deletion
         all_ops.append(DeleteDirectoryOp(self.src_dir.relative_to(root)))
 
-        return all_ops
+        # 4. Scaffold missing __init__.py files for the destination root
+        scaffold_ops = self._scaffold_init_files(self.dest_dir, root)
+
+        return all_ops + scaffold_ops
+
+    def _scaffold_init_files(self, directory_path: Path, root: Path) -> List[FileOp]:
+        # Logic duplicated from MoveFileOperation for now to avoid complex inheritance refactor
+        # Ideally this goes into a Mixin.
+        ops: List[FileOp] = []
+        
+        # We start checking from the directory itself (it should be a package)
+        # up to the root.
+        current = directory_path
+        
+        while current != root and current.is_relative_to(root):
+            init_file = current / "__init__.py"
+            if not init_file.exists():
+                 ops.append(
+                    WriteFileOp(
+                        path=init_file.relative_to(root),
+                        content=""
+                    )
+                )
+            current = current.parent
+            
+        return ops

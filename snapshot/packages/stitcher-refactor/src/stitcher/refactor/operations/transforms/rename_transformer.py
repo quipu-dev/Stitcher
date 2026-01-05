@@ -69,3 +69,18 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
                 return self._create_node_from_fqn(new_fqn)
 
         return updated_node
+
+    def leave_ImportFrom(
+        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
+    ) -> cst.ImportFrom:
+        # If the module part of the import matches a target, we rewrite the whole
+        # import to use the absolute FQN. This handles relative imports gracefully
+        # by converting them to absolute ones.
+        if original_node.module:
+            new_fqn = self._is_target(original_node.module)
+            if new_fqn:
+                return updated_node.with_changes(
+                    module=self._create_node_from_fqn(new_fqn),
+                    level=0  # Force absolute import
+                )
+        return updated_node
