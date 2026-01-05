@@ -1,11 +1,12 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Dict, DefaultDict
+from typing import List, Dict, DefaultDict, TYPE_CHECKING
 
 from stitcher.common.adapters.yaml_adapter import YamlAdapter
 import json
 
-from stitcher.refactor.migration import MigrationSpec
+if TYPE_CHECKING:
+    from stitcher.refactor.migration import MigrationSpec
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import (
     FileOp,
@@ -28,7 +29,10 @@ from stitcher.refactor.operations.base import SidecarUpdateMixin
 
 
 class Planner(SidecarUpdateMixin):
-    def plan(self, spec: MigrationSpec, ctx: RefactorContext) -> List[FileOp]:
+    def plan(self, spec: "MigrationSpec", ctx: RefactorContext) -> List[FileOp]:
+        # Local import to break circular dependency
+        from stitcher.refactor.migration import MigrationSpec
+
         all_ops: List[FileOp] = []
 
         # --- 1. Intent Collection ---

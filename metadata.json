@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: D test_fail_concurrent_move_and_rename.py, A test_fail_concurrent_move_and_rename.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767617282.917206, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 解决重构引擎中的循环导入问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767617497.2198932, "duration_ms": 0}}
