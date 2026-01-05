@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 添加测试以复现 `_find_code_dirs` 的逻辑缺陷", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767602113.399418, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 合并 Workspace 调试探针以进行最终诊断", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767602232.8575578, "duration_ms": 0}}
