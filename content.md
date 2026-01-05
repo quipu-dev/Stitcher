@@ -1,73 +1,146 @@
-您完全正确，这个新的失败信息更加微妙，也更有价值。它表明我上一次的修复方向是正确的，但测试用例本身现在成了错误的规范。
+好的，我们现在开始执行路线图的**任务 1.2**。
 
-非常感谢您的耐心和精准的调试。
+这个计划将创建 `SidecarManager` 类，它将作为所有 Sidecar 文件路径解析的唯一事实来源，并为其配备单元测试以确保其正确性。
 
-## [WIP] fix: 修正扁平布局测试用例以匹配正确的源路径逻辑
+## [WIP] feat: 实现 SidecarManager 以解耦路径逻辑
 
-### 错误分析
+### 用户需求
 
-上一个修复是正确的：`Workspace` 类现在能够正确地将扁平布局的**容器目录**（例如 `.../pkg_b`）识别为源根目录。这对于 `griffe` 这样的工具是至关重要的，因为它需要在 `sys.path` 中找到这个容器目录，才能成功 `import pkgb_lib`。
+根据重构路线图，实施第一阶段的任务 1.2：
+1.  在 `stitcher.refactor.sidecar` 模块中创建一个新的 `SidecarManager` 类。
+2.  该类需要封装所有关于 `.stitcher.yaml` 和 `.stitcher/signatures/*.json` 文件位置和命名规则的知识。
+3.  为 `SidecarManager` 编写单元测试，验证其路径解析逻辑的准确性。
 
-然而，我忽略了更新测试用例以反映这个已修正的逻辑。当前的测试断言仍然错误地认为 `import_to_source_dirs` 应该将 `pkgb_lib` 映射到**包目录自身**（`.../pkg_b/pkgb_lib`），而不是它的容器。
+### 评论
 
-*   **`Workspace` 的行为 (正确)**: `workspace.import_to_source_dirs["pkgb_lib"]` 返回 `{PosixPath('.../pkg_b')}`。
-*   **测试的断言 (错误)**: `assert ... == {PosixPath('.../pkg_b/pkgb_lib')}`。
-
-因此，失败是必然的，但这次问题出在测试，而非实现。
+这是向“不要重复自己”（DRY）原则迈出的关键一步。通过将所有 Sidecar 文件的定位逻辑集中到一个服务类中，我们极大地简化了各个重构操作（`*Operation`）类的实现。它们不再需要关心文件系统的具体布局。这使得整个重构引擎的架构更加清晰、更易于维护。未来任何对 Sidecar 存储策略的调整，都只需要修改 `SidecarManager` 这一个地方。
 
 ### 目标
 
-修正 `test_workspace_flat_layout` 测试用例，使其断言与 `Workspace` 类现在正确的行为保持一致。
+1.  **创建 `SidecarManager` 类**: 在 `packages/stitcher-refactor/src/stitcher/refactor/sidecar/manager.py` 文件中实现 `SidecarManager`。它将包含 `__init__`、`get_doc_path` 和 `get_signature_path` 三个核心方法。
+2.  **编写单元测试**: 在 `packages/stitcher-refactor/tests/unit/sidecar/test_manager.py` 文件中为 `SidecarManager` 编写测试用例，确保对于给定的源文件路径，它能准确返回对应的文档和签名文件的绝对路径。
 
 ### 基本原理
 
-`Workspace` 的核心职责是为后续的语义分析工具提供一个准确的 `search_paths` 列表。对于扁平布局，正确的 `search_path` 是包的父目录，这样顶级包才能被发现。我们的实现现在遵循了这一原则。因此，我们必须修正测试，使其验证这一正确行为，而不是验证一个错误的设计。
+`SidecarManager` 的实现将直接遵循我们在重构方案中定义的设计。它在初始化时接收项目根目录的路径。
+*   `get_doc_path` 方法将简单地使用 `.with_suffix(".stitcher.yaml")` 来定位文档文件。
+*   `get_signature_path` 方法将封装更复杂的逻辑：首先计算源文件相对于项目根目录的路径，然后将其与 `.stitcher/signatures` 基础路径结合，最后附加 `.json` 后缀。
 
-我们将更新测试用例，断言 `import_to_source_dirs["pkgb_lib"]` 应该等于 `pkg_b` 的父目录，并且 `get_search_paths()` 也应该返回这个父目录。
+测试将使用 `pytest` 的 `tmp_path` 来创建一个虚拟的项目根目录，然后在其中定义一个源文件。我们将断言 `SidecarManager` 实例返回的路径与我们手动计算出的预期路径完全一致。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/critical #comp/refactor #comp/test-utils #scope/core #ai/instruct #task/domain/refactor-engine #task/object/workspace-discovery #task/action/bug-fix #task/state/continue
+#intent/build #flow/ready #priority/high #comp/refactor #concept/state #scope/core #ai/instruct #task/domain/refactor-engine #task/object/sidecar-manager #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修正 `test_workspace_flat_layout` 测试用例
+#### Acts 1: 实现 `SidecarManager` 类
 
-我们将更新 `test_workspace.py` 中的扁平布局测试，使其断言正确的源目录路径。
+我们首先创建 `SidecarManager` 的实现文件，它将包含所有 Sidecar 路径的解析逻辑。
 
 ~~~~~act
-patch_file
-packages/stitcher-refactor/tests/unit/refactor/test_workspace.py
+write_file
+packages/stitcher-refactor/src/stitcher/refactor/sidecar/manager.py
 ~~~~~
-~~~~~python.old
-    project_root = factory.build()
-    pkg_b_lib_dir = project_root / "pkg_b" / "pkgb_lib"
+~~~~~python
+from pathlib import Path
+
+
+class SidecarManager:
+    def __init__(self, root_path: Path):
+        self.root_path = root_path.resolve()
+        self.sig_root = self.root_path / ".stitcher" / "signatures"
+
+    def get_doc_path(self, source_file_path: Path) -> Path:
+        """Returns the absolute path to the doc sidecar for a source file."""
+        return source_file_path.resolve().with_suffix(".stitcher.yaml")
+
+    def get_signature_path(self, source_file_path: Path) -> Path:
+        """Returns the absolute path to the signature sidecar for a source file."""
+        resolved_source = source_file_path.resolve()
+        # This encapsulates the complex relative path logic
+        try:
+            relative_source_path = resolved_source.relative_to(self.root_path)
+            return self.sig_root / relative_source_path.with_suffix(".json")
+        except ValueError:
+            # This can happen if source_file_path is not within root_path.
+            # While unlikely in normal operation, it's safer to handle.
+            # We'll re-raise a more informative error.
+            raise ValueError(
+                f"Source file {resolved_source} is not within the project root {self.root_path}"
+            )
+~~~~~
+
+#### Acts 2: 为 `SidecarManager` 添加单元测试
+
+现在，我们为 `SidecarManager` 创建单元测试，以验证其路径计算的准确性。
+
+~~~~~act
+write_file
+packages/stitcher-refactor/tests/unit/sidecar/test_manager.py
+~~~~~
+~~~~~python
+from pathlib import Path
+import pytest
+from stitcher.refactor.sidecar.manager import SidecarManager
+
+
+@pytest.fixture
+def project_structure(tmp_path: Path):
+    """Creates a dummy project structure."""
+    root = tmp_path
+    src_file = root / "src" / "mypkg" / "module.py"
+    src_file.parent.mkdir(parents=True, exist_ok=True)
+    src_file.touch()
+    return root, src_file
+
+
+def test_sidecar_manager_get_doc_path(project_structure):
+    # ARRANGE
+    root, src_file = project_structure
+    manager = SidecarManager(root)
+    expected_doc_path = root / "src" / "mypkg" / "module.stitcher.yaml"
 
     # ACT
-    workspace = Workspace(project_root)
+    actual_doc_path = manager.get_doc_path(src_file)
 
     # ASSERT
-    # For flat layout, the source dir is the package dir itself
-    assert workspace.import_to_source_dirs["pkgb_lib"] == {pkg_b_lib_dir}
-    assert workspace.get_search_paths() == [pkg_b_lib_dir]
-~~~~~
-~~~~~python.new
-    project_root = factory.build()
-    pkg_b_root = project_root / "pkg_b"
+    assert actual_doc_path == expected_doc_path
+
+
+def test_sidecar_manager_get_signature_path(project_structure):
+    # ARRANGE
+    root, src_file = project_structure
+    manager = SidecarManager(root)
+    expected_sig_path = (
+        root / ".stitcher" / "signatures" / "src" / "mypkg" / "module.json"
+    )
 
     # ACT
-    workspace = Workspace(project_root)
+    actual_sig_path = manager.get_signature_path(src_file)
 
     # ASSERT
-    # For flat layout, the source dir is the directory containing the package
-    assert workspace.import_to_source_dirs["pkgb_lib"] == {pkg_b_root}
-    assert workspace.get_search_paths() == [pkg_b_root]
+    assert actual_sig_path == expected_sig_path
+
+
+def test_sidecar_manager_handles_files_outside_root_gracefully(tmp_path):
+    # ARRANGE
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    outside_file = tmp_path / "outside.py"
+    outside_file.touch()
+
+    manager = SidecarManager(project_root)
+
+    # ACT & ASSERT
+    with pytest.raises(ValueError, match="is not within the project root"):
+        manager.get_signature_path(outside_file)
 ~~~~~
 
 ### 下一步建议
 
-这次修复了测试用例的逻辑，现在所有的测试都应该能够成功通过了。
+我们已经成功完成了**任务 1.2**，并为重构引擎奠定了坚实的基础。`Workspace` 和 `SidecarManager` 这两个核心抽象现在已经准备就绪。
 
-一旦您确认，我们将正式完成**任务 1.1**，并可以安全地进入路线图的下一个阶段：**任务 1.2: 实现 `SidecarManager` 类**。
+下一步，我们将进入路线图的**阶段二：集成与重构**。我们将首先从 **任务 2.1** 开始，演进 `RefactorContext`，使其成为持有这些新服务的中央枢纽。如果您同意，我将开始准备该计划。
