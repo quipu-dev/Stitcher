@@ -1,14 +1,13 @@
-import libcst as cst
-from collections import defaultdict
-from typing import List, Dict
-from pathlib import Path
+from typing import List
 
 from .base import AbstractOperation, SidecarUpdateMixin
-from .transforms.rename_transformer import SymbolRenamerTransformer
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import FileOp, WriteFileOp
-from stitcher.refactor.engine.graph import UsageLocation, SymbolNode
-from stitcher.refactor.sidecar.updater import DocUpdater, SigUpdater
+from stitcher.refactor.engine.graph import SymbolNode
+from stitcher.refactor.engine.intent import (
+    RefactorIntent,
+    RenameIntent,
+    SidecarUpdateIntent,
+)
 
 
 class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
@@ -24,34 +23,15 @@ class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
                     return member
         raise ValueError(f"Could not find definition for symbol: {self.old_fqn}")
 
-    def analyze(self, ctx: RefactorContext) -> List[FileOp]:
-        ops: List[FileOp] = []
-        rename_map = {self.old_fqn: self.new_fqn}
+    def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
+        intents: List[RefactorIntent] = []
 
-        # 1. Find all usages and group by file for code transformation
-        usages = ctx.graph.registry.get_usages(self.old_fqn)
-        usages_by_file: Dict[Path, List[UsageLocation]] = defaultdict(list)
-        for usage in usages:
-            usages_by_file[usage.file_path].append(usage)
+        # 1. Declare the core intent: rename the symbol everywhere.
+        # The Planner will be responsible for finding usages and transforming code.
+        intents.append(RenameIntent(old_fqn=self.old_fqn, new_fqn=self.new_fqn))
 
-        # 2. For each affected file, apply code transformation
-        for file_path, file_usages in usages_by_file.items():
-            try:
-                original_source = file_path.read_text(encoding="utf-8")
-                module = cst.parse_module(original_source)
-                wrapper = cst.MetadataWrapper(module)
-                transformer = SymbolRenamerTransformer(rename_map, file_usages)
-                modified_module = wrapper.visit(transformer)
-
-                if modified_module.code != original_source:
-                    relative_path = file_path.relative_to(ctx.graph.root_path)
-                    ops.append(
-                        WriteFileOp(path=relative_path, content=modified_module.code)
-                    )
-            except Exception:
-                raise
-
-        # 3. Find the definition file and update its sidecars
+        # 2. Declare intents to update sidecar files.
+        # The Planner will aggregate these and perform the file modifications.
         try:
             definition_node = self._find_definition_node(ctx)
             if definition_node and definition_node.path:
@@ -60,40 +40,31 @@ class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
                     definition_file_path, ctx.graph.search_paths
                 )
 
-                doc_updater = DocUpdater()
-                sig_updater = SigUpdater()
-
-                # Doc file
+                # Doc file intent
                 doc_path = ctx.sidecar_manager.get_doc_path(definition_file_path)
                 if doc_path.exists():
-                    doc_data = doc_updater.load(doc_path)
-                    new_doc_data = self._update_sidecar_data(
-                        doc_data, module_fqn, self.old_fqn, self.new_fqn
-                    )
-                    if new_doc_data != doc_data:
-                        ops.append(
-                            WriteFileOp(
-                                path=doc_path.relative_to(ctx.graph.root_path),
-                                content=doc_updater.dump(new_doc_data),
-                            )
+                    intents.append(
+                        SidecarUpdateIntent(
+                            sidecar_path=doc_path,
+                            module_fqn=module_fqn,
+                            old_fqn=self.old_fqn,
+                            new_fqn=self.new_fqn,
                         )
+                    )
 
-                # Signature file
+                # Signature file intent
                 sig_path = ctx.sidecar_manager.get_signature_path(definition_file_path)
                 if sig_path.exists():
-                    sig_data = sig_updater.load(sig_path)
-                    new_sig_data = self._update_sidecar_data(
-                        sig_data, module_fqn, self.old_fqn, self.new_fqn
-                    )
-                    if new_sig_data != sig_data:
-                        ops.append(
-                            WriteFileOp(
-                                path=sig_path.relative_to(ctx.graph.root_path),
-                                content=sig_updater.dump(new_sig_data),
-                            )
+                    intents.append(
+                        SidecarUpdateIntent(
+                            sidecar_path=sig_path,
+                            module_fqn=module_fqn,
+                            old_fqn=self.old_fqn,
+                            new_fqn=self.new_fqn,
                         )
+                    )
         except ValueError:
-            # Symbol not found, might be a module rename. This is handled by MoveFileOperation.
+            # Symbol not found, might be a module rename. The Planner will handle this.
             pass
 
-        return ops
+        return intents
