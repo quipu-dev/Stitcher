@@ -1,74 +1,75 @@
-好的，收到了新的测试失败信息。我们修复上一个 bug 时，引入了对 `ctx.graph.search_paths` 的依赖，但这破坏了单元测试中 `SemanticGraph` 的 mock 对象，因为它没有配置这个属性。
+太棒了。既然所有测试都已通过，这表明我们成功地捕获并修复了 `RenameSymbolOperation` 中的严重一致性漏洞。
 
-我将立即修复这个单元测试。
+我将生成一个 `[COMMIT]` 计划，将这些高质量的变更正式纳入代码库。
 
-## [WIP] fix(refactor): 修复单元测试中 SemanticGraph 的 Mock
+## [COMMIT] fix(refactor): 确保在符号重命名时同步更新 Sidecar 文件
 
 ### 错误分析
 
-`AttributeError: Mock object has no attribute 'search_paths'`
-这个错误发生在 `packages/stitcher-refactor/tests/unit/test_rename_operation.py` 中。
+在之前的实现中，`RenameSymbolOperation` 存在严重的功能缺失：它仅通过 LibCST 转换了 Python 源代码，却完全忽略了与其关联的资产文件（Sidecar）。
 
-在之前的修复中，我为 `RenameSymbolOperation` 添加了 `_path_to_fqn` 方法，这个方法需要从 `ctx.graph.search_paths` 获取项目的源文件搜索路径，以便将文件路径解析为模块 FQN。
-
-然而，`test_rename_symbol_analyze_orchestration` 这个单元测试使用的是一个 `Mock(spec=SemanticGraph)` 对象。这个 mock 对象并没有被配置 `search_paths` 属性。因此，当 `analyze` 方法尝试访问 `ctx.graph.search_paths` 时，mock 对象按预期抛出了 `AttributeError`。
+1.  **资产遗留**：重命名类或函数后，`.stitcher.yaml` 和 `.stitcher/signatures/` 中的文档与签名仍保留旧的 FQN 键。这导致 `stitcher check` 报错，指出存在“悬空文档”（Dangling Docs）。
+2.  **上下文缺失**：原有的逻辑尝试进行简单的键名替换，但由于它不了解当前文件在项目中的模块路径（FQN Context），无法正确处理 `.stitcher.yaml` 中常见的短键名（Short Names）。
+3.  **级联失效**：重命名类时，其子成员（如 `Class.method`）的文档键未能联动更新。
 
 ### 用户需求
 
-修复 `test_rename_symbol_analyze_orchestration` 单元测试，使其通过。
+修复重构引擎的重命名逻辑，确保其遵循“原子性”原则，即在修改代码的同时，必须同步且智能地更新所有相关的元数据文件。
 
 ### 评论
 
-这是一个典型的 TDD（测试驱动开发）流程中会遇到的问题。当被测试单元的依赖发生变化时，相关的 mock 也必须同步更新。这次失败恰好验证了我们的重构确实引入了新的依赖，修复这个测试将使我们的测试套件重新稳固。
+这是一个关键的修复，它将重构操作从简单的“代码替换”提升到了“架构一致性维护”的高度。通过引入模块感知和键名解析逻辑，我们为后续更复杂的跨包重构奠定了坚实的基础。
 
 ### 目标
 
-1.  定位到 `packages/stitcher-refactor/tests/unit/test_rename_operation.py` 中的 `test_rename_symbol_analyze_orchestration` 函数。
-2.  在 `mock_graph` 对象的初始化部分，为其添加 `search_paths` 属性，并赋予一个合理的值（例如，测试中使用的 `tmp_path`）。
+1.  将经过验证的测试用例（包含 Sidecar 检查）提交至 `test_debug_rename_failure.py`。
+2.  将修复后的 `RenameSymbolOperation` 提交，使其具备智能更新 Sidecar 文件的能力。
+3.  更新单元测试中的 Mock 配置，以匹配新的依赖关系。
 
 ### 基本原理
 
-我将通过 `patch_file` 指令，为 `mock_graph` 对象添加一行配置 `mock_graph.search_paths = [tmp_path]`。这会满足 `analyze` 方法对该属性的依赖，使单元测试能够顺利执行，同时确保 `_path_to_fqn` 方法在测试环境中能正确地将文件路径解析为模块 FQN。
+核心修复在于 `RenameSymbolOperation` 获得了“空间意识”：它现在能通过 `search_paths` 确定任何文件的模块归属。利用这一上下文，它能将 Sidecar 中的任何键（无论是短名还是 FQN）映射到全局语义空间进行比对和更新，从而解决了键名歧义和级联更新的问题。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/tests #scope/dx #ai/instruct #task/domain/refactoring #task/object/rename-operation #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #comp/tests #concept/state #scope/core #ai/instruct #task/domain/refactoring #task/object/rename-operation #task/action/bug-fix #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 更新单元测试 Mock 配置
+#### Acts 1: 提交重命名一致性修复
 
-此操作将为 `mock_graph` 对象添加 `search_paths` 属性，以修复因依赖变更导致的测试失败。
+我们将所有修改过的文件添加到暂存区，并创建一个详细的提交记录。
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-refactor/src/stitcher/refactor/operations/rename_symbol.py
+packages/stitcher-refactor/tests/integration/test_debug_rename_failure.py
 packages/stitcher-refactor/tests/unit/test_rename_operation.py
 ~~~~~
-~~~~~python.old
-    mock_graph.registry = mock_registry
 
-    # Let's use a real tmp_path for reading files to simplify mocking Path.read_text
-    # We will create fake files that the operation can read.
-    tmp_path = Path("/tmp/fake_project")  # conceptual
-    mock_graph.root_path = tmp_path
-
-    mock_workspace = Mock(spec=Workspace)
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python.new
-    mock_graph.registry = mock_registry
+~~~~~text
+fix(refactor): ensure sidecar files are updated during symbol rename
 
-    # Let's use a real tmp_path for reading files to simplify mocking Path.read_text
-    # We will create fake files that the operation can read.
-    tmp_path = Path("/tmp/fake_project")  # conceptual
-    mock_graph.root_path = tmp_path
-    # The refactored `analyze` method now depends on search_paths
-    mock_graph.search_paths = [tmp_path]
+This commit fixes a critical bug where RenameSymbolOperation only updated Python source code but left .stitcher.yaml and signature JSON files in an inconsistent state.
 
-    mock_workspace = Mock(spec=Workspace)
+Changes:
+- Enhanced RenameSymbolOperation to be module-aware by implementing _path_to_fqn.
+- Implemented intelligent sidecar key updating that handles:
+    1. Short-name keys relative to the current module.
+    2. Cascaded renames for class members (e.g., renaming Class to NewClass now correctly renames Class.method to NewClass.method in docs).
+    3. FQN keys in signature files.
+- Updated integration tests to explicitly verify doc and signature consistency after a rename.
+- Adjusted unit test mocks to provide necessary search_paths dependency.
+
+This ensures that refactoring operations maintain complete architectural consistency across the entire project asset tree.
 ~~~~~
 
 ### 下一步建议
 
-在应用此修复后，所有测试（包括单元测试和我们之前修复的集成测试）都应该能够通过。这将标志着 `RenameSymbolOperation` 的 sidecar 更新功能已经基本完成。下一步可以考虑将这些更改提交，并正式结束这个 bug 修复任务。
+- **功能扩展**：当前的 Sidecar 更新逻辑已经非常健壮。下一步可以考虑将这一逻辑抽象为通用的 `SidecarUpdater` 混合类，以便 `MoveFileOperation` 等其他重构操作也能复用。
+- **性能评估**：对于超大型项目，频繁解析 FQN 可能会有开销。如果后续遇到性能瓶颈，可以考虑在 `RefactorContext` 中引入文件路径到 FQN 的缓存机制。
