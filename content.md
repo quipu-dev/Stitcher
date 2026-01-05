@@ -1,287 +1,352 @@
-好的，我们立即开始第二阶段：**重写 `_UsageVisitor`**。
+好的，我们进入第三和第四阶段。这两个阶段紧密相连，我们将一次性完成，从根本上解决命名空间重构的问题。
 
-这是整个重构的核心，我们将用清晰的、基于语义的逻辑替换掉原来脆弱的实现。我将生成一个计划，使用 `write_file` 彻底重写 `graph.py` 中的 `_UsageVisitor`，使其能够正确地区分符号引用和导入路径，并使用我们在第一阶段引入的 `ReferenceType` 来标记它们。
+我将生成一个计划，引入一个全新的、专门用于处理导入路径重构的 `RenameNamespaceOperation` 及其配套的 `Transformer`。然后，我将重构 `MoveDirectoryOperation`，使其调用这个新的、强大的操作，而不是依赖于旧的、不完善的 `MoveFileOperation` 委托。
 
-## [WIP] refactor(engine): 重写 _UsageVisitor 以实现语义化导入解析
+## [WIP] feat(refactor): 引入 RenameNamespaceOperation 以支持目录移动
 
 ### 用户需求
-根据战略分析的第二阶段计划，需要彻底重写 `_UsageVisitor`，使其能够准确地将 `import` 语句中的模块路径作为一个整体进行注册，并使用 `ReferenceType` 枚举来明确区分不同类型的代码引用，为后续的命名空间重构操作提供可靠的数据基础。
+根据战略分析的第三和第四阶段，需要创建一套新的、基于前缀匹配的命名空间重构机制 (`RenameNamespaceOperation` 和 `Transformer`)，并将其集成到 `MoveDirectoryOperation` 中，以正确处理因目录移动而引发的跨文件 `import` 语句更新。
 
 ### 评论
-这次重写是解决问题的关键。我们正在从“试图猜测导入路径的结构”转向“明确地将其识别为一个语义单元”。这消除了之前实现中的所有歧义，使得代码分析的结果变得精确且可预测。这是一个从“凑合能用”到“架构正确”的飞跃。
+这是本次重构的点睛之笔。我们正在从“移动文件，然后试图修复引用”的被动模式，转向“识别出一次命名空间变更，然后主动重写整个代码库以适应它”的主动模式。这是一个根本性的转变，它将 `stitcher-refactor` 从一个脆弱的脚本工具提升为一个具备架构感知能力的引擎。
 
 ### 目标
-1.  **重写 `_UsageVisitor`**: 替换 `packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py` 中的 `_UsageVisitor` 类。
-2.  **更新注册逻辑**: 修改 `_register_node` 方法以接受并存储 `ref_type` 和 `target_node_fqn`。
-3.  **实现语义化导入处理**:
-    *   在 `visit_Import` 和 `visit_ImportFrom` 中，将整个模块路径节点注册为单一的 `UsageLocation`，类型为 `ReferenceType.IMPORT_PATH`。
-    *   在 `visit_Name` 和 `visit_Attribute`（用于非导入上下文的符号引用）中，注册用法时使用 `ReferenceType.SYMBOL`。
-4.  **移除过时代码**: 彻底删除不再需要的 `_register_module_parts` 方法。
+1.  **创建 `NamespaceRenamerTransformer`**: 在 `operations/transforms/` 目录下创建一个新文件，实现一个能够对 `IMPORT_PATH` 类型的引用执行前缀替换的 LibCST Transformer。
+2.  **创建 `RenameNamespaceOperation`**: 在 `operations/` 目录下创建一个新文件，实现一个新的 `AbstractOperation`，它使用 `NamespaceRenamerTransformer` 来执行命名空间重构。
+3.  **重构 `MoveDirectoryOperation`**:
+    *   移除其内部对 `MoveFileOperation.analyze()` 的循环调用，因为这套旧逻辑无法处理命名空间问题。
+    *   添加逻辑来计算源目录和目标目录所对应的 FQN 前缀。
+    *   在 `analyze` 方法中，生成并执行一个新的 `RenameNamespaceOperation` 来处理所有跨文件的导入语句更新。
+    *   保留并优化处理物理文件（Python 文件、Sidecar 文件、其他文件）移动的逻辑。
 
 ### 基本原理
-新的 `_UsageVisitor` 将遵循一个简单的原则：**节点类型决定引用类型**。
--   当访问 `Import` 或 `ImportFrom` 节点时，我们知道其子节点代表的是**模块路径**。我们使用 LibCST 的辅助函数来解析这个路径的完整 FQN，然后将该节点和 FQN 作为一个 `IMPORT_PATH` 类型的引用进行注册。
--   当访问代码主体中的 `Name` 或 `Attribute` 节点时，我们知道它们代表的是**符号**（变量、类、函数等）。我们通过本地符号表解析其 FQN，然后将其注册为 `SYMBOL` 类型的引用。
-这种清晰的分离使得后续的 `Transformer` 可以轻松地选择合适的策略来处理不同类型的引用。
+`MoveDirectoryOperation` 将被提升为真正的“指挥官”。当它被调用时，它会首先识别出核心的语义变更：“命名空间 `A.B` 变成了 `X.Y`”。然后，它会实例化一个 `RenameNamespaceOperation` 并命令它：“去吧，扫描整个项目，把所有对 `A.B` 前缀的导入都改成 `X.Y`”。这个专门的 `Operation` 会使用 `NamespaceRenamerTransformer`，这个`Transformer` 只关心 `IMPORT_PATH` 类型的引用，并对它们进行高效、准确的前缀替换。
+
+在解决了最复杂的跨文件引用问题之后，`MoveDirectoryOperation` 会继续处理剩下的“体力活”：生成一系列简单的 `MoveFileOp` 和 `WriteFileOp` 来移动物理文件并更新 Sidecar 文件内的 FQN key。这种职责分离使得整个流程清晰、健壮且可维护。
 
 ### 标签
-#intent/refine #flow/ready #priority/critical #comp/engine #concept/parser #scope/core #ai/instruct #task/domain/refactor #task/object/refactor-engine #task/action/architectural-redesign #task/state/continue
+#intent/build #flow/ready #priority/critical #comp/engine #concept/executor #scope/core #ai/instruct #task/domain/refactor #task/object/refactor-engine #task/action/architectural-redesign #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重写 `graph.py` 以实现新的 `_UsageVisitor`
-由于 `_UsageVisitor` 的逻辑被完全重构，涉及多个方法的修改和删除，使用 `write_file` 是最清晰和安全的选择。
+#### Acts 1: 创建 NamespaceRenamerTransformer
+这是我们新的重构武器。它只关心一件事：高效地替换导入路径的前缀。
 
 ~~~~~act
 write_file
-packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py
+packages/stitcher-refactor/src/stitcher/refactor/operations/transforms/rename_namespace_transformer.py
 ~~~~~
 ~~~~~python
 import libcst as cst
-from libcst import helpers
-from libcst.metadata import PositionProvider
-from dataclasses import dataclass
-from enum import Enum
-from pathlib import Path
-from typing import List, Dict, Optional, DefaultDict
+from libcst.metadata import PositionProvider, QualifiedNameProvider
+from typing import Optional
+
+from stitcher.refactor.engine.graph import ReferenceType
+
+
+class NamespaceRenamerTransformer(cst.CSTTransformer):
+    METADATA_DEPENDENCIES = (PositionProvider, QualifiedNameProvider)
+
+    def __init__(self, old_prefix: str, new_prefix: str):
+        self.old_prefix = old_prefix
+        self.new_prefix = new_prefix
+
+    def _create_node_from_fqn(self, fqn: str) -> cst.BaseExpression:
+        parts = fqn.split(".")
+        node = cst.Name(value=parts[0])
+        for part in parts[1:]:
+            node = cst.Attribute(value=node, attr=cst.Name(value=part))
+        return node
+
+    def _get_import_path_fqn(self, node: cst.CSTNode) -> Optional[str]:
+        q_names = self.get_metadata(QualifiedNameProvider, node)
+        for q_name in q_names:
+            if q_name.source.ref_type == ReferenceType.IMPORT_PATH:
+                return q_name.name
+        return None
+
+    def leave_Attribute(
+        self, original_node: cst.Attribute, updated_node: cst.Attribute
+    ) -> cst.BaseExpression:
+        import_path_fqn = self._get_import_path_fqn(original_node)
+        if import_path_fqn and import_path_fqn.startswith(self.old_prefix):
+            suffix = import_path_fqn[len(self.old_prefix) :]
+            new_fqn = self.new_prefix + suffix
+            return self._create_node_from_fqn(new_fqn)
+        return updated_node
+
+    def leave_Name(
+        self, original_node: cst.Name, updated_node: cst.Name
+    ) -> cst.BaseExpression:
+        import_path_fqn = self._get_import_path_fqn(original_node)
+        if import_path_fqn and import_path_fqn.startswith(self.old_prefix):
+            suffix = import_path_fqn[len(self.old_prefix) :]
+            new_fqn = self.new_prefix + suffix
+            return self._create_node_from_fqn(new_fqn)
+        return updated_node
+~~~~~
+
+#### Acts 2: 创建 RenameNamespaceOperation
+这个 Operation 负责编排 `NamespaceRenamerTransformer`。
+
+~~~~~act
+write_file
+packages/stitcher-refactor/src/stitcher/refactor/operations/rename_namespace.py
+~~~~~
+~~~~~python
+import libcst as cst
 from collections import defaultdict
-import griffe
-from stitcher.refactor.workspace import Workspace
-from libcst.helpers import (
-    get_absolute_module_from_package_for_import,
-    get_full_name_for_node,
-)
+from typing import List, Dict
+from pathlib import Path
+
+from .base import AbstractOperation
+from .transforms.rename_namespace_transformer import NamespaceRenamerTransformer
+from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.engine.transaction import FileOp, WriteFileOp
+from stitcher.refactor.engine.graph import UsageLocation, ReferenceType
 
 
-class ReferenceType(Enum):
-    SYMBOL = "symbol"
-    IMPORT_PATH = "import_path"
+class RenameNamespaceOperation(AbstractOperation):
+    def __init__(self, old_prefix: str, new_prefix: str):
+        self.old_prefix = old_prefix
+        self.new_prefix = new_prefix
 
+    def analyze(self, ctx: RefactorContext) -> List[FileOp]:
+        ops: List[FileOp] = []
 
-@dataclass
-class UsageLocation:
-    file_path: Path
-    lineno: int
-    col_offset: int
-    end_lineno: int
-    end_col_offset: int
-    ref_type: ReferenceType
-    target_node_fqn: str
+        usages = ctx.graph.registry.get_usages(self.old_prefix)
+        import_usages = [
+            u for u in usages if u.ref_type == ReferenceType.IMPORT_PATH
+        ]
 
-    @property
-    def range_tuple(self):
-        return (self.lineno, self.col_offset)
+        usages_by_file: Dict[Path, List[UsageLocation]] = defaultdict(list)
+        for usage in import_usages:
+            usages_by_file[usage.file_path].append(usage)
 
-
-@dataclass
-class SymbolNode:
-    fqn: str
-    kind: str
-    path: Path
-
-
-class UsageRegistry:
-    def __init__(self):
-        # Key: Target FQN (The "Real" Name, e.g., "pkg.mod.Class")
-        # Value: List of locations where this symbol is used/referenced
-        self._index: DefaultDict[str, List[UsageLocation]] = defaultdict(list)
-
-    def register(self, target_fqn: str, location: UsageLocation):
-        self._index[target_fqn].append(location)
-
-    def get_usages(self, target_fqn: str) -> List[UsageLocation]:
-        return self._index.get(target_fqn, [])
-
-
-class _UsageVisitor(cst.CSTVisitor):
-    METADATA_DEPENDENCIES = (PositionProvider,)
-
-    def __init__(
-        self,
-        file_path: Path,
-        local_symbols: Dict[str, str],
-        registry: UsageRegistry,
-        current_module_fqn: Optional[str] = None,
-        is_init_file: bool = False,
-    ):
-        self.file_path = file_path
-        self.local_symbols = local_symbols
-        self.registry = registry
-        self.current_module_fqn = current_module_fqn
-        self.is_init_file = is_init_file
-
-        self.current_package = None
-        if current_module_fqn:
-            if is_init_file:
-                self.current_package = current_module_fqn
-            elif "." in current_module_fqn:
-                self.current_package = current_module_fqn.rsplit(".", 1)[0]
-            else:
-                self.current_package = ""
-
-    def _register_node(
-        self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType
-    ):
-        pos = self.get_metadata(PositionProvider, node)
-        loc = UsageLocation(
-            file_path=self.file_path,
-            lineno=pos.start.line,
-            col_offset=pos.start.column,
-            end_lineno=pos.end.line,
-            end_col_offset=pos.end.column,
-            ref_type=ref_type,
-            target_node_fqn=fqn,
-        )
-        self.registry.register(fqn, loc)
-        # Also register against prefixes for namespace refactoring
-        if ref_type == ReferenceType.IMPORT_PATH:
-            parts = fqn.split(".")
-            for i in range(1, len(parts)):
-                prefix_fqn = ".".join(parts[:i])
-                self.registry.register(prefix_fqn, loc)
-
-    def visit_Name(self, node: cst.Name):
-        target_fqn = self.local_symbols.get(node.value)
-        if target_fqn:
-            self._register_node(node, target_fqn, ReferenceType.SYMBOL)
-
-    def visit_Import(self, node: cst.Import) -> Optional[bool]:
-        for alias in node.names:
-            absolute_module = get_full_name_for_node(alias.name)
-            if absolute_module:
-                self._register_node(
-                    alias.name, absolute_module, ReferenceType.IMPORT_PATH
-                )
-        return True
-
-    def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:
-        absolute_module = None
-        try:
-            package_ctx = self.current_package if self.current_package else None
-            absolute_module = get_absolute_module_from_package_for_import(
-                package_ctx, node
-            )
-        except Exception:
-            pass
-
-        if absolute_module:
-            if node.module:
-                self._register_node(
-                    node.module, absolute_module, ReferenceType.IMPORT_PATH
-                )
-
-            for alias in node.names:
-                if isinstance(alias, cst.ImportAlias):
-                    name_node = alias.name
-                    imported_name = get_full_name_for_node(name_node)
-                    if imported_name:
-                        full_fqn = f"{absolute_module}.{imported_name}"
-                        self._register_node(name_node, full_fqn, ReferenceType.SYMBOL)
-        return True
-
-    def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:
-        full_name = helpers.get_full_name_for_node(node)
-        if not full_name:
-            return True
-
-        parts = full_name.split(".")
-        if not parts:
-            return True
-
-        root_name = parts[0]
-        root_fqn = self.local_symbols.get(root_name)
-
-        if root_fqn:
-            suffix = ".".join(parts[1:])
-            absolute_fqn = f"{root_fqn}.{suffix}" if suffix else root_fqn
-            self._register_node(node, absolute_fqn, ReferenceType.SYMBOL)
-
-        return True
-
-
-class SemanticGraph:
-    def __init__(self, workspace: Workspace):
-        self.workspace = workspace
-        self.root_path = workspace.root_path
-        self.search_paths = self.workspace.get_search_paths()
-        self._griffe_loader = griffe.GriffeLoader(search_paths=self.search_paths)
-        self._modules: Dict[str, griffe.Module] = {}
-        self.registry = UsageRegistry()
-
-    def load(self, package_name: str, submodules: bool = True) -> None:
-        module = self._griffe_loader.load(package_name, submodules=submodules)
-        self._modules[package_name] = module
-        self._griffe_loader.resolve_aliases()
-        self._build_registry(module)
-
-    def _build_registry(self, module: griffe.Module):
-        for member in module.members.values():
-            if isinstance(member, griffe.Module) and not member.is_alias:
-                self._build_registry(member)
-        if module.filepath:
-            self._scan_module_usages(module)
-
-    def _scan_module_usages(self, module: griffe.Module):
-        local_symbols: Dict[str, str] = {}
-        for name, member in module.members.items():
+        for file_path, _ in usages_by_file.items():
             try:
-                target_fqn = member.target_path if member.is_alias else member.path
-                local_symbols[name] = target_fqn
+                original_source = file_path.read_text(encoding="utf-8")
+                module = cst.parse_module(original_source)
+
+                # We need to provide QualifiedName metadata for the transformer
+                # It relies on the UsageLocations we stored earlier.
+                locations = {
+                    (u.lineno, u.col_offset): u for u in ctx.graph.registry._index.get(u.target_node_fqn, [])
+                }
+
+                class UsageBasedQualifiedNameProvider(cst.metadata.BaseMetadataProvider):
+                    def __init__(self, usages):
+                        super().__init__()
+                        self.usages = usages
+
+                    def on_visit(self, node: cst.CSTNode) -> bool:
+                        pos = (node.start_pos.line, node.start_pos.column)
+                        if pos in self.usages:
+                            usage = self.usages[pos]
+                            self.set_metadata(node, [cst.metadata.QualifiedName(name=usage.target_node_fqn, source=usage)])
+                        return True
+
+                wrapper = cst.MetadataWrapper(
+                    module,
+                    cache={
+                        QualifiedNameProvider: {
+                            pos: [
+                                cst.metadata.QualifiedName(name=u.target_node_fqn, source=u)
+                            ] for pos, u in locations.items()
+                        }
+                    },
+                )
+
+                transformer = NamespaceRenamerTransformer(
+                    self.old_prefix, self.new_prefix
+                )
+                modified_module = wrapper.visit(transformer)
+
+                relative_path = file_path.relative_to(ctx.graph.root_path)
+                if modified_module.code != original_source:
+                    ops.append(
+                        WriteFileOp(path=relative_path, content=modified_module.code)
+                    )
             except Exception:
-                pass
+                # In a real app, log this error
+                raise
 
-        try:
-            source = module.filepath.read_text(encoding="utf-8")
-            wrapper = cst.MetadataWrapper(cst.parse_module(source))
-            is_init = module.filepath.name == "__init__.py"
-            visitor = _UsageVisitor(
-                module.filepath,
-                local_symbols,
-                self.registry,
-                current_module_fqn=module.path,
-                is_init_file=is_init,
+        return ops
+~~~~~
+
+#### Acts 3: 重构 MoveDirectoryOperation
+现在，我们将把新的 `RenameNamespaceOperation` 集成到 `MoveDirectoryOperation` 中，并重构其 `analyze` 方法。
+
+~~~~~act
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py
+~~~~~
+~~~~~python.old
+from pathlib import Path
+from typing import List, Set
+
+from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.engine.transaction import FileOp, MoveFileOp, DeleteDirectoryOp
+from stitcher.refactor.operations.base import AbstractOperation
+from stitcher.refactor.operations.move_file import MoveFileOperation
+
+
+class MoveDirectoryOperation(AbstractOperation):
+    def __init__(self, src_dir: Path, dest_dir: Path):
+        if not src_dir.is_dir():
+            raise ValueError(f"Source path is not a directory: {src_dir}")
+        self.src_dir = src_dir
+        self.dest_dir = dest_dir
+
+    def analyze(self, ctx: RefactorContext) -> List[FileOp]:
+        all_ops: List[FileOp] = []
+        handled_paths: Set[Path] = set()
+
+        # Phase 1: Smart-process all Python files and their sidecars
+        for src_file in self.src_dir.rglob("*.py"):
+            relative_path = src_file.relative_to(self.src_dir)
+            dest_file = self.dest_dir / relative_path
+
+            # Delegate to the smart MoveFileOperation
+            file_mover = MoveFileOperation(src_file, dest_file)
+            file_specific_ops = file_mover.analyze(ctx)
+            all_ops.extend(file_specific_ops)
+
+            # Mark the source file and its potential sidecars as handled
+            handled_paths.add(src_file)
+            doc_path = ctx.sidecar_manager.get_doc_path(src_file)
+            handled_paths.add(doc_path)
+            sig_path = ctx.sidecar_manager.get_signature_path(src_file)
+            handled_paths.add(sig_path)
+
+        # Phase 2: Process all remaining items (non-Python files)
+        for src_item in self.src_dir.rglob("*"):
+            if src_item in handled_paths or not src_item.is_file():
+                continue
+
+            # This item is a non-Python, non-sidecar file. Do a simple move.
+            relative_path = src_item.relative_to(self.src_dir)
+            dest_item = self.dest_dir / relative_path
+
+            rel_src_item = src_item.relative_to(ctx.graph.root_path)
+            rel_dest_item = dest_item.relative_to(ctx.graph.root_path)
+
+            all_ops.append(MoveFileOp(rel_src_item, rel_dest_item))
+            handled_paths.add(src_item)
+
+        # Phase 3: Schedule the now-empty source directory for deletion
+        all_ops.append(DeleteDirectoryOp(self.src_dir.relative_to(ctx.graph.root_path)))
+
+        return all_ops
+~~~~~
+~~~~~python.new
+from pathlib import Path
+from typing import List, Optional
+
+from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.engine.transaction import (
+    FileOp,
+    MoveFileOp,
+    DeleteDirectoryOp,
+    WriteFileOp,
+)
+from stitcher.refactor.operations.base import AbstractOperation
+from stitcher.refactor.operations.rename_namespace import RenameNamespaceOperation
+from stitcher.refactor.sidecar.updater import DocUpdater, SigUpdater
+
+
+class MoveDirectoryOperation(AbstractOperation):
+    def __init__(self, src_dir: Path, dest_dir: Path):
+        if not src_dir.is_dir():
+            raise ValueError(f"Source path is not a directory: {src_dir}")
+        self.src_dir = src_dir
+        self.dest_dir = dest_dir
+
+    def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:
+        base_path = None
+        for sp in sorted(search_paths, key=lambda p: len(p.parts), reverse=True):
+            try:
+                path.relative_to(sp)
+                base_path = sp
+                break
+            except ValueError:
+                continue
+        if base_path is None:
+            return None
+        rel_path = path.relative_to(base_path)
+        return ".".join(rel_path.parts)
+
+    def analyze(self, ctx: RefactorContext) -> List[FileOp]:
+        all_ops: List[FileOp] = []
+        root = ctx.graph.root_path
+
+        # 1. Plan the namespace refactoring
+        old_prefix = self._path_to_fqn(self.src_dir, ctx.graph.search_paths)
+        new_prefix = self._path_to_fqn(self.dest_dir, ctx.graph.search_paths)
+        if old_prefix and new_prefix and old_prefix != new_prefix:
+            namespace_op = RenameNamespaceOperation(old_prefix, new_prefix)
+            all_ops.extend(namespace_op.analyze(ctx))
+
+        # 2. Plan physical file moves and sidecar updates
+        doc_updater = DocUpdater()
+        sig_updater = SigUpdater()
+
+        for src_item in self.src_dir.rglob("*"):
+            if not src_item.is_file():
+                continue
+
+            relative_path = src_item.relative_to(self.src_dir)
+            dest_item = self.dest_dir / relative_path
+
+            # Plan the move for the item itself
+            all_ops.append(
+                MoveFileOp(src_item.relative_to(root), dest_item.relative_to(root))
             )
-            wrapper.visit(visitor)
-        except Exception:
-            pass
 
-    def get_module(self, package_name: str) -> Optional[griffe.Module]:
-        return self._modules.get(package_name)
+            # If it's a Python file, update its associated sidecars
+            if src_item.suffix == ".py":
+                # Doc sidecar
+                doc_path = ctx.sidecar_manager.get_doc_path(src_item)
+                if doc_path.exists():
+                    doc_data = doc_updater.load(doc_path)
+                    updated_data = {
+                        key.replace(old_prefix, new_prefix, 1): value
+                        for key, value in doc_data.items()
+                    }
+                    if updated_data != doc_data:
+                        # Write updated content before moving
+                        all_ops.append(
+                            WriteFileOp(
+                                path=doc_path.relative_to(root),
+                                content=doc_updater.dump(updated_data),
+                            )
+                        )
 
-    def iter_members(self, package_name: str) -> List[SymbolNode]:
-        module = self.get_module(package_name)
-        if not module:
-            return []
-        nodes = []
+                # Signature sidecar
+                sig_path = ctx.sidecar_manager.get_signature_path(src_item)
+                if sig_path.exists():
+                    sig_data = sig_updater.load(sig_path)
+                    updated_data = {
+                        key.replace(old_prefix, new_prefix, 1): value
+                        for key, value in sig_data.items()
+                    }
+                    if updated_data != sig_data:
+                        all_ops.append(
+                            WriteFileOp(
+                                path=sig_path.relative_to(root),
+                                content=sig_updater.dump(updated_data),
+                            )
+                        )
 
-        def _collect(obj: griffe.Object):
-            path = obj.filepath or Path("")
-            kind = "unknown"
-            if obj.is_module:
-                kind = "module"
-            elif obj.is_class:
-                kind = "class"
-            elif obj.is_function:
-                kind = "function"
-            elif obj.is_attribute:
-                kind = "attribute"
-            nodes.append(SymbolNode(fqn=obj.path, kind=kind, path=path))
-            if hasattr(obj, "members"):
-                for member in obj.members.values():
-                    if not member.is_alias:
-                        _collect(member)
+        # 3. Schedule the now-empty source directory for deletion
+        all_ops.append(DeleteDirectoryOp(self.src_dir.relative_to(root)))
 
-        _collect(module)
-        return nodes
+        return all_ops
 ~~~~~
 
 ### 下一步建议
-我们已经成功完成了第二阶段，现在 `UsageRegistry` 中包含了带有明确类型（`IMPORT_PATH` 或 `SYMBOL`）的引用信息，并且我们还为 `IMPORT_PATH` 注册了其所有的前缀。这是解决问题的关键一步。
+我们已经完成了这次大规模的架构重构。`MoveDirectoryOperation` 现在拥有了自己专属的、基于命名空间前缀匹配的重构逻辑，与符号重命名完全解耦。
 
-接下来，我们将进入**第三阶段**和**第四阶段**，它们是紧密耦合的：
-1.  **创建新的 `RenameNamespaceOperation` 和 `NamespaceRenamerTransformer`**：它们将专门利用 `IMPORT_PATH` 类型的引用和前缀匹配逻辑来重构导入语句。
-2.  **修改 `MoveDirectoryOperation`**: 使其在分析阶段自动生成这个新的 `RenameNamespaceOperation`。
-
-如果你准备好了，请指示开始下一阶段的工作。
+现在，最关键的一步是验证我们的成果。请指示运行 `stitcher-refactor` 的完整测试套件，特别是 `test_move_directory_monorepo_e2e.py`。如果一切按计划进行，这个之前一直失败的测试现在应该能够顺利通过。

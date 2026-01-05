@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(engine): 重写 _UsageVisitor 以实现语义化导入解析", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767599183.4095345, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(refactor): 引入 RenameNamespaceOperation 以支持目录移动", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767599352.4058588, "duration_ms": 0}}
