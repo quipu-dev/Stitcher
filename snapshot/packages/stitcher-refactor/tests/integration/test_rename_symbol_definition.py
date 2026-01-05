@@ -1,61 +1,3 @@
-好的，我明白了。这是一个非常典型的、也是非常危险的重构失败场景：重构工具只修改了符号的**用法**，却没有修改它的**定义**，导致整个代码库处于损坏状态。
-
-你的分析是正确的。`stitcher.common.__init__.py` 文件中的导入语句被错误地修改了，而 `stitcher.common.messaging.bus.py` 中 `MessageBus` 类的定义却被遗漏了。
-
-我将为你创建一个新的集成测试，专门用于捕获这种“定义与用法”不一致的重构失败模式。此测试现在会失败，从而将此 bug 锁定，为后续修复提供一个明确的验证靶标。
-
-## [WIP] test: 增加捕获不完整重构失败场景的集成测试
-
-### 错误分析
-
-根本原因在于重构引擎在执行 `RenameSymbolOperation` 时存在缺陷。它成功地将 `stitcher.common.messaging.bus.MessageBus` 在 `stitcher.common.__init__.py` 中的**导入用法**识别并重命名为了 `FeedbackBus`。然而，它未能将 `stitcher.common.messaging.bus.py` 文件中 `MessageBus` 的**类定义本身**也识别为重构目标。
-
-这导致了代码状态不一致：`__init__.py` 尝试从 `bus.py` 导入一个不存在的名称 (`FeedbackBus`)，从而在下游任何依赖 `stitcher.common` 的模块（例如 `stitcher-test-utils`）中引发 `ImportError`。
-
-### 用户需求
-
-用户需要一个自动化测试用例，该用例能够稳定地复现上述重构失败场景。这个测试必须：
-1.  在当前损坏的代码状态下运行失败。
-2.  在未来的修复完成后能够成功通过。
-3.  作为一道防线，防止此类问题再次发生。
-4.  根据指令，此计划**禁止**修复底层代码。
-
-### 评论
-
-这是一个至关重要的测试。它直接关系到重构引擎的核心可靠性。如果一个重构工具不能保证原子性和完整性，那么它带来的风险可能比手动重构还要大。这个测试将成为确保引擎健壮性的关键部分。
-
-### 目标
-
-1.  在 `packages/stitcher-refactor/tests/integration/` 目录下创建一个新的测试文件。
-2.  在该文件中，编写一个集成测试，使用 `WorkspaceFactory` 精确模拟出问题的项目结构：
-    *   一个定义了 `MessageBus` 类的模块。
-    *   一个从该模块导入 `MessageBus` 的包 `__init__.py` 文件。
-3.  测试将以编程方式执行 `RenameSymbolOperation`，将 `MessageBus` 重命名为 `FeedbackBus`。
-4.  测试的核心断言将验证重构后的文件状态：
-    *   **断言 `__init__.py` 的内容被修改**（证明“用法”被重命名）。
-    *   **断言定义 `MessageBus` 的模块文件内容未被修改**（证明“定义”被遗漏）。
-
-### 基本原理
-
-我们将创建一个高度隔离的集成测试。通过 `WorkspaceFactory` 在临时目录中构建一个微缩版的项目，我们可以完全控制输入，并精确地检查输出（即修改后的文件内容），而不会影响真实的项目文件。这种方法比尝试在测试中捕获 `ImportError` 更直接、更可靠，因为它直接验证了导致错误的根本原因——文件内容的不一致性。
-
-### 标签
-
-#intent/tooling #flow/ready #priority/critical #comp/tests #comp/refactor #concept/state #scope/dx #ai/instruct #task/domain/testing #task/object/refactor-engine #task/action/bug-repro-test #task/state/begin
-
----
-
-### Script
-
-#### Acts 1: 创建复现问题的集成测试文件
-
-我将创建一个新的测试文件 `test_rename_incomplete_refactor.py`。这个测试会构建一个与问题场景一致的最小复现环境，执行有问题的重构操作，并断言重构是不完整的，从而捕获这个 Bug。
-
-~~~~~act
-write_file
-packages/stitcher-refactor/tests/integration/test_rename_incomplete_refactor.py
-~~~~~
-~~~~~python
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import TransactionManager, MoveFileOp
@@ -168,17 +110,3 @@ def test_rename_operation_succeeds_in_renaming_symbol_definition(tmp_path):
     definition_code = definition_file.read_text()
     assert "class NewName: pass" in definition_code
     assert "class OldName: pass" not in definition_code
-
-~~~~~
-~~~~~act
-move_file
-packages/stitcher-refactor/tests/integration/test_rename_incomplete_refactor.py
-packages/stitcher-refactor/tests/integration/test_rename_symbol_definition.py
-~~~~~
-
-### 下一步建议
-
-现在我们已经有了一个能够稳定复现问题的测试用例。下一步的核心工作就是：
-1.  运行 `pytest packages/stitcher-refactor/` 并确认新增的测试如预期一样失败。
-2.  深入调试 `RenameSymbolOperation` 和 `SemanticGraph` 的内部逻辑，找出为什么类的定义节点没有被正确识别和转换。
-3.  修复该逻辑，并再次运行测试，确保所有相关测试都能通过。
