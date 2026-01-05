@@ -1,4 +1,7 @@
 {
+  "ReferenceType": {},
+  "ReferenceType.IMPORT_PATH": {},
+  "ReferenceType.SYMBOL": {},
   "SemanticGraph": {},
   "SemanticGraph.__init__": {
     "baseline_code_signature_text": "def __init__(self, workspace: Workspace):",
@@ -44,6 +47,8 @@
   "UsageLocation.file_path": {},
   "UsageLocation.lineno": {},
   "UsageLocation.range_tuple": {},
+  "UsageLocation.ref_type": {},
+  "UsageLocation.target_node_fqn": {},
   "UsageRegistry": {},
   "UsageRegistry.__init__": {
     "baseline_code_signature_text": "def __init__(self):",
@@ -72,8 +77,8 @@
     "baseline_yaml_content_hash": "46144b6cae1c577db5023a10b9f47d891a9f940f1ec238cdecda47c6a9b03264"
   },
   "_UsageVisitor._register_node": {
-    "baseline_code_signature_text": "def _register_node(self, node: cst.CSTNode, fqn: str):",
-    "baseline_code_structure_hash": "0f0b223b93cef53819bd8e0047be89653ebdfb846b9b47c1d20d085f56c3a6a2"
+    "baseline_code_signature_text": "def _register_node(self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType):",
+    "baseline_code_structure_hash": "abf738b190d9ece13c1b60031acf1cf961a182f223400f30ef8767d05aa9e362"
   },
   "_UsageVisitor.current_module_fqn": {},
   "_UsageVisitor.current_package": {},

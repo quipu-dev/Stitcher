@@ -6,6 +6,10 @@
     "baseline_code_signature_text": "def __init__(self, src_dir: Path, dest_dir: Path):",
     "baseline_code_structure_hash": "e2b53fd555bb7146fd21de7a0c04128afb9b1a8ba7005dfd50c00d5b0ed495cc"
   },
+  "MoveDirectoryOperation._path_to_fqn": {
+    "baseline_code_signature_text": "def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:",
+    "baseline_code_structure_hash": "9d8e022c26c3b25ea32b82b16b0cf737974daed449b0ad2bee3dcdcedc3c9988"
+  },
   "MoveDirectoryOperation.analyze": {
     "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
     "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1",
