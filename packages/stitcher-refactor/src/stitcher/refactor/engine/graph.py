@@ -4,7 +4,7 @@ from libcst.metadata import PositionProvider
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Dict, Optional, DefaultDict
+from typing import List, Dict, Optional, DefaultDict, Set
 from collections import defaultdict
 import griffe
 from stitcher.refactor.workspace import Workspace
@@ -104,6 +104,18 @@ class _UsageVisitor(cst.CSTVisitor):
         if target_fqn:
             self._register_node(node, target_fqn, ReferenceType.SYMBOL)
 
+    def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
+        if self.current_module_fqn:
+            class_fqn = f"{self.current_module_fqn}.{node.name.value}"
+            self._register_node(node.name, class_fqn, ReferenceType.SYMBOL)
+        return True
+
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
+        if self.current_module_fqn:
+            func_fqn = f"{self.current_module_fqn}.{node.name.value}"
+            self._register_node(node.name, func_fqn, ReferenceType.SYMBOL)
+        return True
+
     def visit_Import(self, node: cst.Import) -> Optional[bool]:
         for alias in node.names:
             absolute_module = get_full_name_for_node(alias.name)
@@ -173,10 +185,19 @@ class SemanticGraph:
         self._griffe_loader.resolve_aliases()
         self._build_registry(module)
 
-    def _build_registry(self, module: griffe.Module):
+    def _build_registry(
+        self, module: griffe.Module, visited: Optional[Set[str]] = None
+    ):
+        if visited is None:
+            visited = set()
+
+        if module.path in visited:
+            return
+        visited.add(module.path)
+
         for member in module.members.values():
-            if isinstance(member, griffe.Module) and not member.is_alias:
-                self._build_registry(member)
+            if isinstance(member, griffe.Module):
+                self._build_registry(member, visited)
         if module.filepath:
             self._scan_module_usages(module)
 
