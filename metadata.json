@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M main.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767594763.8851511, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(refactor): 实现 Workspace 类以进行健壮的包发现", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767596003.2587566, "duration_ms": 0}}
