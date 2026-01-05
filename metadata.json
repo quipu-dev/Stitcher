@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M workspace.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767602445.1081338, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(refactor): Correctly discover PEP 420 namespace packages", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767602447.2941475, "duration_ms": 0}}
