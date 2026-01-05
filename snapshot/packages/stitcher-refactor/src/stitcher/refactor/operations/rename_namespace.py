@@ -34,37 +34,16 @@ class RenameNamespaceOperation(AbstractOperation):
                 original_source = file_path.read_text(encoding="utf-8")
                 module = cst.parse_module(original_source)
 
-                # We need to provide QualifiedName metadata for the transformer
-                # It relies on the UsageLocations we stored earlier.
+                # Build locations map for the transformer
                 locations = {
                     (u.lineno, u.col_offset): u for u in file_usages
                 }
 
-                class UsageBasedQualifiedNameProvider(cst.metadata.BaseMetadataProvider):
-                    def __init__(self, usages):
-                        super().__init__()
-                        self.usages = usages
-
-                    def on_visit(self, node: cst.CSTNode) -> bool:
-                        pos = (node.start_pos.line, node.start_pos.column)
-                        if pos in self.usages:
-                            usage = self.usages[pos]
-                            self.set_metadata(node, [cst.metadata.QualifiedName(name=usage.target_node_fqn, source=usage)])
-                        return True
-
-                wrapper = cst.MetadataWrapper(
-                    module,
-                    cache={
-                        QualifiedNameProvider: {
-                            pos: [
-                                cst.metadata.QualifiedName(name=u.target_node_fqn, source=u)
-                            ] for pos, u in locations.items()
-                        }
-                    },
-                )
+                # Use standard MetadataWrapper
+                wrapper = cst.MetadataWrapper(module)
 
                 transformer = NamespaceRenamerTransformer(
-                    self.old_prefix, self.new_prefix
+                    self.old_prefix, self.new_prefix, locations
                 )
                 modified_module = wrapper.visit(transformer)
 

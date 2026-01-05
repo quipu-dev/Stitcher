@@ -1,16 +1,22 @@
 import libcst as cst
-from libcst.metadata import PositionProvider, QualifiedNameProvider
-from typing import Optional
+from libcst.metadata import PositionProvider
+from typing import Optional, Dict, Tuple
 
-from stitcher.refactor.engine.graph import ReferenceType
+from stitcher.refactor.engine.graph import ReferenceType, UsageLocation
 
 
 class NamespaceRenamerTransformer(cst.CSTTransformer):
-    METADATA_DEPENDENCIES = (PositionProvider, QualifiedNameProvider)
+    METADATA_DEPENDENCIES = (PositionProvider,)
 
-    def __init__(self, old_prefix: str, new_prefix: str):
+    def __init__(
+        self,
+        old_prefix: str,
+        new_prefix: str,
+        locations: Dict[Tuple[int, int], UsageLocation],
+    ):
         self.old_prefix = old_prefix
         self.new_prefix = new_prefix
+        self.locations = locations
 
     def _create_node_from_fqn(self, fqn: str) -> cst.BaseExpression:
         parts = fqn.split(".")
@@ -20,10 +26,12 @@ class NamespaceRenamerTransformer(cst.CSTTransformer):
         return node
 
     def _get_import_path_fqn(self, node: cst.CSTNode) -> Optional[str]:
-        q_names = self.get_metadata(QualifiedNameProvider, node)
-        for q_name in q_names:
-            if q_name.source.ref_type == ReferenceType.IMPORT_PATH:
-                return q_name.name
+        pos = self.get_metadata(PositionProvider, node)
+        start = (pos.start.line, pos.start.column)
+        if start in self.locations:
+            loc = self.locations[start]
+            if loc.ref_type == ReferenceType.IMPORT_PATH:
+                return loc.target_node_fqn
         return None
 
     def leave_Attribute(
