@@ -42,11 +42,17 @@ def refactor_command(
         # 1. Bootstrap services
         bus.info(L.refactor.run.loading_graph)
         workspace = Workspace(root_path)
+        bus.debug(
+            L.debug.log.refactor_workspace_paths, paths=workspace.get_search_paths()
+        )
         sidecar_manager = SidecarManager(root_path)
         graph = SemanticGraph(workspace)
 
         # Load all packages discovered by the workspace
-        for pkg_name in workspace.import_to_source_dirs.keys():
+        pkg_names = list(workspace.import_to_source_dirs.keys())
+        bus.debug(L.debug.log.refactor_discovered_packages, packages=pkg_names)
+        for pkg_name in pkg_names:
+            bus.debug(L.debug.log.refactor_loading_package, package=pkg_name)
             graph.load(pkg_name)
 
         ctx = RefactorContext(
@@ -58,8 +64,23 @@ def refactor_command(
         loader = MigrationLoader()
         spec = loader.load_from_path(migration_script)
 
+        # --- DEBUG ---
+        for op in spec.operations:
+            if op.__class__.__name__ == "RenameSymbolOperation":
+                target_fqn = op.old_fqn
+                usages = graph.registry.get_usages(target_fqn)
+                bus.debug(
+                    L.debug.log.refactor_symbol_usage_count,
+                    count=len(usages),
+                    fqn=target_fqn,
+                )
+        # --- END DEBUG ---
+
         planner = Planner()
         file_ops = planner.plan(spec, ctx)
+        bus.debug(
+            L.debug.log.refactor_planned_ops_count, count=len(file_ops)
+        )
 
         if not file_ops:
             bus.success(L.refactor.run.no_ops)

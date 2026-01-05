@@ -2,5 +2,10 @@
   "msg": "🔍 {msg}",
   "scan_path": "🔍 扫描路径: {path}",
   "file_found": "🔍 发现文件: {path}",
-  "file_ignored": "🔍 忽略文件: {path} ({reason})"
+  "file_ignored": "🔍 忽略文件: {path} ({reason})",
+  "refactor_workspace_paths": "🔍 工作区搜索路径: {paths}",
+  "refactor_discovered_packages": "🔍 发现待加载的包: {packages}",
+  "refactor_loading_package": "🔍 正在加载 '{package}' 到语义图谱...",
+  "refactor_symbol_usage_count": "🔍 发现 '{fqn}' 的 {count} 处用法",
+  "refactor_planned_ops_count": "🔍 计划器生成了 {count} 个文件操作。"
 }

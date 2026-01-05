@@ -2,5 +2,10 @@
   "msg": "🔍 {msg}",
   "scan_path": "🔍 Scanning path: {path}",
   "file_found": "🔍 Found file: {path}",
-  "file_ignored": "🔍 Ignored file: {path} ({reason})"
+  "file_ignored": "🔍 Ignored file: {path} ({reason})",
+  "refactor_workspace_paths": "🔍 Workspace search paths: {paths}",
+  "refactor_discovered_packages": "🔍 Discovered packages to load: {packages}",
+  "refactor_loading_package": "🔍 Loading package '{package}' into graph...",
+  "refactor_symbol_usage_count": "🔍 Found {count} usages for '{fqn}'",
+  "refactor_planned_ops_count": "🔍 Planner generated {count} file operations."
 }
