@@ -24,15 +24,15 @@ def test_workspace_flat_layout(tmp_path):
         "pkg_b/pkgb_lib/__init__.py", ""
     )
     project_root = factory.build()
-    pkg_b_lib_dir = project_root / "pkg_b" / "pkgb_lib"
+    pkg_b_root = project_root / "pkg_b"
 
     # ACT
     workspace = Workspace(project_root)
 
     # ASSERT
-    # For flat layout, the source dir is the package dir itself
-    assert workspace.import_to_source_dirs["pkgb_lib"] == {pkg_b_lib_dir}
-    assert workspace.get_search_paths() == [pkg_b_lib_dir]
+    # For flat layout, the source dir is the directory containing the package
+    assert workspace.import_to_source_dirs["pkgb_lib"] == {pkg_b_root}
+    assert workspace.get_search_paths() == [pkg_b_root]
 
 
 def test_workspace_namespace_package(tmp_path):

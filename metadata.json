@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Workspace 在扁平布局下的包发现逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767596272.1709437, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正扁平布局测试用例以匹配正确的源路径逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767596323.0056312, "duration_ms": 0}}
