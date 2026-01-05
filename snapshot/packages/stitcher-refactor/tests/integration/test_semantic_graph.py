@@ -1,8 +1,10 @@
 from stitcher.refactor.engine.graph import SemanticGraph
+from stitcher.refactor.workspace import Workspace
 
 
 def test_semantic_graph_load_package(tmp_path):
-    # 1. Setup: Create a dummy python package
+    # 1. Setup: Create a dummy python package and a pyproject.toml
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='test-proj'")
     pkg_dir = tmp_path / "mypkg"
     pkg_dir.mkdir()
     (pkg_dir / "__init__.py").write_text("x = 1", encoding="utf-8")
@@ -16,9 +18,8 @@ def test_semantic_graph_load_package(tmp_path):
     )
 
     # 2. Execute: Load into SemanticGraph
-    # Note: We need to add tmp_path to sys.path or let Griffe know where to look.
-    # SemanticGraph init takes search_paths.
-    graph = SemanticGraph(root_path=tmp_path)
+    workspace = Workspace(root_path=tmp_path)
+    graph = SemanticGraph(workspace=workspace)
     graph.load("mypkg")
 
     # 3. Verify: Check if modules are loaded

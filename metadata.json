@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 演进 RefactorContext 以注入 Workspace 和 SidecarManager", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767596438.5531974, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 通过 Workspace 解耦 SemanticGraph 的路径发现", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767596654.0572178, "duration_ms": 0}}
