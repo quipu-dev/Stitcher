@@ -13,9 +13,7 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     # 1. ARRANGE: Build a monorepo with cross-package and test references
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory.with_pyproject(
-            "."
-        )  # For top-level integration tests
+        factory.with_pyproject(".")  # For top-level integration tests
         # --- Package A: Defines the symbol ---
         .with_pyproject("packages/pkg_a")
         .with_source("packages/pkg_a/src/pkga_lib/__init__.py", "")

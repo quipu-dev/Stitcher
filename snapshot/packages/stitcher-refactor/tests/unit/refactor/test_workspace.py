@@ -4,8 +4,10 @@ from stitcher.test_utils import WorkspaceFactory
 
 def test_workspace_standard_src_layout(tmp_path):
     # ARRANGE
-    factory = WorkspaceFactory(tmp_path).with_pyproject("pkg_a").with_source(
-        "pkg_a/src/pkga_lib/__init__.py", ""
+    factory = (
+        WorkspaceFactory(tmp_path)
+        .with_pyproject("pkg_a")
+        .with_source("pkg_a/src/pkga_lib/__init__.py", "")
     )
     project_root = factory.build()
     pkg_a_src = project_root / "pkg_a" / "src"
@@ -20,8 +22,10 @@ def test_workspace_standard_src_layout(tmp_path):
 
 def test_workspace_flat_layout(tmp_path):
     # ARRANGE
-    factory = WorkspaceFactory(tmp_path).with_pyproject("pkg_b").with_source(
-        "pkg_b/pkgb_lib/__init__.py", ""
+    factory = (
+        WorkspaceFactory(tmp_path)
+        .with_pyproject("pkg_b")
+        .with_source("pkg_b/pkgb_lib/__init__.py", "")
     )
     project_root = factory.build()
     pkg_b_root = project_root / "pkg_b"

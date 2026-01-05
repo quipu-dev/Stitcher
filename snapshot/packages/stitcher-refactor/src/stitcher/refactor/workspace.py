@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Set
 
 try:
     import tomllib
@@ -19,7 +19,6 @@ class Workspace:
         self._discover_packages()
 
     def _discover_packages(self) -> None:
-        """Scans for all pyproject.toml files to build the package map."""
         for pyproject_path in self.root_path.glob("**/pyproject.toml"):
             try:
                 with pyproject_path.open("rb") as f:
@@ -38,7 +37,6 @@ class Workspace:
                 log.warning(f"Could not process {pyproject_path}: {e}")
 
     def _find_code_dirs(self, pkg_root: Path) -> List[Path]:
-        """Finds potential source directories: src/, tests/, and the package root."""
         dirs: Set[Path] = set()
 
         src_dir = pkg_root / "src"
@@ -63,19 +61,19 @@ class Workspace:
         return list(dirs)
 
     def _get_top_level_importables(self, src_path: Path) -> List[str]:
-        """Identifies top-level importable names (packages and modules) within a source dir."""
         names: Set[str] = set()
         for item in src_path.iterdir():
             # A top-level package is a directory with an __init__.py
             if item.is_dir() and (item / "__init__.py").exists():
                 names.add(item.name)
             # A top-level module is a .py file (but not __init__.py itself)
-            elif item.is_file() and item.name.endswith(".py") and item.stem != "__init__":
+            elif (
+                item.is_file() and item.name.endswith(".py") and item.stem != "__init__"
+            ):
                 names.add(item.stem)
         return list(names)
 
     def get_search_paths(self) -> List[Path]:
-        """Returns all discovered source directories for Griffe."""
         all_paths: Set[Path] = set()
         for paths in self.import_to_source_dirs.values():
             all_paths.update(paths)

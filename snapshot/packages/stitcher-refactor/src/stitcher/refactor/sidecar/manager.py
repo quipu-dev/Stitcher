@@ -7,11 +7,9 @@ class SidecarManager:
         self.sig_root = self.root_path / ".stitcher" / "signatures"
 
     def get_doc_path(self, source_file_path: Path) -> Path:
-        """Returns the absolute path to the doc sidecar for a source file."""
         return source_file_path.resolve().with_suffix(".stitcher.yaml")
 
     def get_signature_path(self, source_file_path: Path) -> Path:
-        """Returns the absolute path to the signature sidecar for a source file."""
         resolved_source = source_file_path.resolve()
         # This encapsulates the complex relative path logic
         try:

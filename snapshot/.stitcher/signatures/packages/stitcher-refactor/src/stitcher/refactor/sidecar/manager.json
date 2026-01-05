@@ -1,0 +1,19 @@
+{
+  "SidecarManager": {},
+  "SidecarManager.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path):",
+    "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+  },
+  "SidecarManager.get_doc_path": {
+    "baseline_code_signature_text": "def get_doc_path(self, source_file_path: Path) -> Path:",
+    "baseline_code_structure_hash": "a6deba2efc0b087502e557a04c26285c5243ee1882bbf8eb967d37b2fa1bb93b",
+    "baseline_yaml_content_hash": "8a69385f4dd28b1371941eebdea7c07c1f8760748b31f4a9771277d1ad58f8aa"
+  },
+  "SidecarManager.get_signature_path": {
+    "baseline_code_signature_text": "def get_signature_path(self, source_file_path: Path) -> Path:",
+    "baseline_code_structure_hash": "44b9954d5c6006885c4847ba942c534ce3e1733ce396ab451b873ff95ed4783e",
+    "baseline_yaml_content_hash": "16c5fbdac7a01085cfe48feb2f07dbce8d26d3e87bc6f439ff0e0a0e4347e961"
+  },
+  "SidecarManager.root_path": {},
+  "SidecarManager.sig_root": {}
+}

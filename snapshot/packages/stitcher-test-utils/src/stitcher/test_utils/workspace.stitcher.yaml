@@ -10,5 +10,7 @@
   Adds/Updates [project.entry-points] section in pyproject.toml.
 "WorkspaceFactory.with_project_name": |-
   Sets the [project].name in pyproject.toml.
+"WorkspaceFactory.with_pyproject": |-
+  Creates a minimal pyproject.toml in a subdirectory.
 "WorkspaceFactory.with_source": |-
   Adds a Python source file.

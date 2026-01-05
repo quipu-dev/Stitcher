@@ -34,6 +34,11 @@
     "baseline_code_structure_hash": "92fba0e02d3135da5c0f12b66992e39c5dfebb23e95514c7c7092943d665da4e",
     "baseline_yaml_content_hash": "9fa315df537d97b00b006c2bec98627e0851c3b8f4485d47caca922d8b1d07c4"
   },
+  "WorkspaceFactory.with_pyproject": {
+    "baseline_code_signature_text": "def with_pyproject(self, path_prefix: str) -> WorkspaceFactory:",
+    "baseline_code_structure_hash": "b067ac951af61aac4bf85edd8aad5c8d2e754d288518d93d7395e1147dd8461e",
+    "baseline_yaml_content_hash": "ebe894d3a1da450d70c2253b64f20ddd79f4178aea1a68823512b92d8ce47d92"
+  },
   "WorkspaceFactory.with_raw_file": {
     "baseline_code_signature_text": "def with_raw_file(self, path: str, content: str) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "46b830f32b85583a3f74e61acba1d8c303ea8ab91a59194332ef791fb0b30e38"

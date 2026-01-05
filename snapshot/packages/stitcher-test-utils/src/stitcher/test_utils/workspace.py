@@ -31,7 +31,6 @@ class WorkspaceFactory:
         return self
 
     def with_pyproject(self, path_prefix: str) -> "WorkspaceFactory":
-        """Creates a minimal pyproject.toml in a subdirectory."""
         pkg_name = Path(path_prefix).name
         pyproject_content = {"project": {"name": pkg_name, "version": "0.1.0"}}
         self._files_to_create.append(

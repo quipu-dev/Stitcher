@@ -1,8 +1,8 @@
 {
   "SemanticGraph": {},
   "SemanticGraph.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path):",
-    "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+    "baseline_code_signature_text": "def __init__(self, workspace: Workspace):",
+    "baseline_code_structure_hash": "db0b79e74ddbded80772fc4f235e1067d97beaedc46f490a78067f739cd3e5f4"
   },
   "SemanticGraph._build_registry": {
     "baseline_code_signature_text": "def _build_registry(self, module: griffe.Module):",
@@ -30,6 +30,7 @@
   "SemanticGraph.registry": {},
   "SemanticGraph.root_path": {},
   "SemanticGraph.search_paths": {},
+  "SemanticGraph.workspace": {},
   "SymbolNode": {},
   "SymbolNode.fqn": {},
   "SymbolNode.kind": {},
