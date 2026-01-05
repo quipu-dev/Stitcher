@@ -17,8 +17,9 @@ def test_refactor_apply_e2e(tmp_path):
         .with_source("src/mypkg/core.py", "class Old: pass")
         .with_source("src/mypkg/app.py", "from mypkg.core import Old")
         .with_source("pyproject.toml", "[project]\nname='mypkg'") # For discovery
-    )
+    ).build()
     # Migration script
+    migration_script_content = """
     migration_script_content = """
 from stitcher.refactor.migration import MigrationSpec, Rename
 def upgrade(spec: MigrationSpec):
@@ -58,7 +59,7 @@ def test_refactor_apply_dry_run(tmp_path):
         .with_project_name("mypkg")
         .with_source("src/mypkg/core.py", "class Old: pass")
         .with_source("pyproject.toml", "[project]\nname='mypkg'")
-    )
+    ).build()
     migration_script_content = """
 from stitcher.refactor.migration import MigrationSpec, Rename
 def upgrade(spec: MigrationSpec):
