@@ -98,22 +98,34 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
         # 4. Scaffold missing __init__.py files for the destination
         # This ensures that moving a file to a new deep directory structure
         # maintains a valid Python package hierarchy.
-        scaffold_ops = self._scaffold_init_files(self.dest_path, root)
+        scaffold_ops = self._scaffold_init_files(self.dest_path, ctx)
         
         return content_update_ops + rename_ops + move_ops + scaffold_ops
 
-    def _scaffold_init_files(self, file_path: Path, root: Path) -> List[FileOp]:
+    def _scaffold_init_files(self, file_path: Path, ctx: RefactorContext) -> List[FileOp]:
         ops: List[FileOp] = []
         parent = file_path.parent
+        root = ctx.graph.root_path
+        search_paths = ctx.graph.search_paths
+
+        # Determine the effective source root for this file
+        active_root = None
+        for sp in search_paths:
+            if file_path.is_relative_to(sp):
+                # Pick the deepest matching search path (e.g. prefer src/pkg over src)
+                if active_root is None or len(sp.parts) > len(active_root.parts):
+                    active_root = sp
         
-        # Traverse up until we hit the root
-        while parent != root and parent.is_relative_to(root):
+        # If the file is not inside any known source root, do NOT scaffold.
+        # This prevents creating __init__.py in root dirs like 'packages/' or 'tests/'.
+        if not active_root:
+            return []
+
+        # Traverse up until we hit the active_root
+        # IMPORTANT: We stop BEFORE processing the active_root itself.
+        # (e.g. we don't want to create src/__init__.py)
+        while parent != active_root and parent.is_relative_to(active_root):
             init_file = parent / "__init__.py"
-            # We assume if it doesn't exist on disk, we need to create it.
-            # NOTE: In a complex transaction, another op might have created it,
-            # or it might be deleted. But adding a duplicate WriteFileOp for an empty
-            # __init__.py is generally safe or can be deduped by TransactionManager if needed.
-            # Here we just check physical existence.
             if not init_file.exists():
                 ops.append(
                     WriteFileOp(
