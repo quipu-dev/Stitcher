@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(refactor): 增强重构引擎以支持 Monorepo 结构", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767591340.6190765, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(refactor): 在重构过程中同步更新测试文件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767591455.424169, "duration_ms": 0}}

@@ -191,19 +191,21 @@ class SemanticGraph:
         self.root_path = root_path
         search_paths = []
 
-        # 1. Add top-level src if it exists
-        top_level_src = self.root_path / "src"
-        if top_level_src.is_dir():
-            search_paths.append(top_level_src)
+        # 1. Add top-level src and tests directories
+        for top_level_dir in ["src", "tests"]:
+            path = self.root_path / top_level_dir
+            if path.is_dir():
+                search_paths.append(path)
 
-        # 2. Add packages from monorepo structure
+        # 2. Add packages from monorepo structure (both src and tests)
         packages_dir = self.root_path / "packages"
         if packages_dir.is_dir():
             for package_path in packages_dir.iterdir():
                 if package_path.is_dir():
-                    package_src_path = package_path / "src"
-                    if package_src_path.is_dir():
-                        search_paths.append(package_src_path)
+                    for sub_dir in ["src", "tests"]:
+                        package_sub_dir = package_path / sub_dir
+                        if package_sub_dir.is_dir():
+                            search_paths.append(package_sub_dir)
 
         # 3. Fallback to root if no specific source directories were found
         if not search_paths:
