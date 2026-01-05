@@ -1,155 +1,165 @@
-遵循 Quipu 协议，我将修正该测试以确保它能准确揭示**内容合并冲突 (Content Merge Conflict)** 这一架构盲点。
+很好，测试失败验证了我们的核心问题：“后写入覆盖 (Last Write Wins)”，这导致了数据丢失。
 
-之前的测试通过是因为现有的 `TransactionManager` 具备基础的路径 Rebase 能力，这掩盖了路径冲突的问题。新的测试将引入**双重修改 (Concurrent Modifications)**，这是简单的 Rebase 无法解决的——后一个 `Write` 必然会覆盖前一个 `Write`，导致数据丢失。
+现在我们开始实施 Planner 2.0 的第一步：构建基础设施层。我将首先创建 `intent` 模块，并根据路线图定义 `RefactorIntent` 类层次结构。这些简单的 `dataclass` 将成为新架构的基石，它们负责声明“做什么”，而不是“如何做”。
 
-## [WIP] test: 修正架构缺陷验证测试 (Lost Edit Scenario)
+## [WIP] feat(refactor): 定义 RefactorIntent 基础设施
 
 ### 用户需求
-修正 `test_fail_concurrent_move_and_rename.py`，使其能稳定地复现数据丢失问题。
+根据重构路线图，开始实施 Planner 2.0 的基础设施层，首先定义 `RefactorIntent` 类。
 
 ### 评论
-原测试意外通过，因为 `TransactionManager._rebase_ops` 处理了路径变更。新测试将通过引入针对同一文件的两次独立内容修改（两个不同的重命名操作），迫使系统暴露出“后写入覆盖先写入”的缺陷。
+这是将重构引擎从“命令式”转向“声明式”的关键一步。通过引入 `Intent` 对象，我们将操作的“意图收集”与“执行规划”彻底分离。这使得 Planner 可以在执行前对所有意图进行全局分析、聚合和冲突消解，从而根除“僵尸文件”和“丢失的编辑”等问题。
 
 ### 目标
-1.  在一个文件中定义两个符号：`class A` 和 `def b`。
-2.  在一个事务中同时执行三个操作：
-    - Move 文件。
-    - Rename `A` -> `NewA`。
-    - Rename `b` -> `NewB`。
-3.  断言最终文件同时包含 `NewA` 和 `NewB`。
-4.  预期：当前架构只能保留最后一个操作的结果，导致测试失败。
+1.  创建新文件 `packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py`。
+2.  在该文件中定义 `RefactorIntent` 的基类及其所有子类（`RenameIntent`, `MoveFileIntent` 等）。
+3.  使用 `dataclasses` 来创建清晰、不可变的意图数据结构。
 
 ### 基本原理
-当前架构是线性的：Op1 读取原始代码 -> 生成全量新代码；Op2 读取原始代码 -> 生成全量新代码。当它们被串行执行时，Op2 的全量写入会无情地覆盖 Op1 的成果。
+我们将创建一个新的 `intent.py` 模块来存放这些核心数据结构。这些类本身不包含任何逻辑，它们是纯粹的数据载体。`Planner` 将是这些 `Intent` 对象的消费者，负责将它们转化为最终的、无冲突的 `FileOp` 列表。
 
 ### 标签
-#intent/tooling #flow/draft #priority/critical #comp/tests #concept/state #scope/core #ai/instruct #task/domain/refactoring #task/object/planner #task/action/verify-failure #task/state/continue
+#intent/architect #flow/draft #priority/critical #comp/engine #concept/state #scope/api #ai/instruct #task/domain/refactoring #task/object/planner #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重写测试逻辑
+#### Acts 1: 创建 Intent 模块
+
+我们将创建 `intent.py` 文件，并填充 `RefactorIntent` 的类层次结构。
 
 ~~~~~act
 write_file
-packages/stitcher-refactor/src/stitcher/refactor/tests/integration/test_fail_concurrent_move_and_rename.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py
 ~~~~~
 ~~~~~python
-import pytest
-from stitcher.refactor.engine.graph import SemanticGraph
-from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import (
-    TransactionManager,
-    MoveFileOp,
-    WriteFileOp,
-    DeleteFileOp
+from __future__ import annotations
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+
+@dataclass(frozen=True)
+class RefactorIntent:
+    """Base class for all refactoring intents."""
+
+    pass
+
+
+# --- Symbol-level Intents ---
+
+
+@dataclass(frozen=True)
+class RenameIntent(RefactorIntent):
+    """Intent to rename a symbol and all its usages."""
+
+    old_fqn: str
+    new_fqn: str
+
+
+# --- Filesystem-level Intents ---
+
+
+@dataclass(frozen=True)
+class FileSystemIntent(RefactorIntent):
+    """Base class for intents that directly manipulate the filesystem."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class MoveFileIntent(FileSystemIntent):
+    """Intent to move a file from a source to a destination."""
+
+    src_path: Path
+    dest_path: Path
+
+
+@dataclass(frozen=True)
+class DeleteFileIntent(FileSystemIntent):
+    """Intent to delete a file."""
+
+    path: Path
+
+
+@dataclass(frozen=True)
+class ScaffoldIntent(FileSystemIntent):
+    """Intent to create a file, typically an empty __init__.py."""
+
+    path: Path
+    content: str = ""
+
+
+# --- Sidecar-level Intents ---
+
+
+@dataclass(frozen=True)
+class SidecarUpdateIntent(RefactorIntent):
+    """
+    Intent to update keys within a sidecar file due to a symbol rename.
+    This is a high-level intent that will be processed by a dedicated aggregator.
+    """
+
+    sidecar_path: Path
+    module_fqn: Optional[str]
+    old_fqn: str
+    new_fqn: str
+~~~~~
+
+#### Acts 2: 更新 `__init__.py`
+
+为了让新的 `intent` 模块可以被方便地导入，我们需要更新 `engine` 包的 `__init__.py` 文件。
+
+~~~~~act
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py
+~~~~~
+~~~~~python.old
+from .transaction import TransactionManager
+from .context import RefactorContext
+from .graph import SemanticGraph
+from .planner import Planner
+
+__all__ = ["TransactionManager", "RefactorContext", "SemanticGraph", "Planner"]
+~~~~~
+~~~~~python.new
+from .transaction import TransactionManager
+from .context import RefactorContext
+from .graph import SemanticGraph
+from .planner import Planner
+from .intent import (
+    RefactorIntent,
+    RenameIntent,
+    FileSystemIntent,
+    MoveFileIntent,
+    DeleteFileIntent,
+    ScaffoldIntent,
+    SidecarUpdateIntent,
 )
-from stitcher.refactor.operations.move_file import MoveFileOperation
-from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
-from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
 
-def test_smoking_gun_concurrent_modifications_lost_edit(tmp_path):
-    """
-    THE SMOKING GUN TEST (REVISED)
-    
-    Scenario:
-    We have a file 'mypkg/core.py' containing TWO symbols.
-    We want to perform a transaction that:
-    1. Moves the file.
-    2. Renames Symbol A.
-    3. Renames Symbol B.
-    
-    Current Architecture Failure Mode (The "Lost Edit"):
-    1. MoveOp: Plans Move(core -> utils).
-    2. RenameOp(A): Reads 'core.py' (original), replaces A->NewA. Plans: Write(core, Content_A_Modified).
-    3. RenameOp(B): Reads 'core.py' (original), replaces B->NewB. Plans: Write(core, Content_B_Modified).
-    
-    Execution (even with Path Rebasing):
-    1. Move(core -> utils) executes.
-    2. Write(utils, Content_A_Modified) executes. (File has NewA, but old B).
-    3. Write(utils, Content_B_Modified) executes. (File has NewB, but old A).
-       -> IT OVERWRITES THE PREVIOUS WRITE.
-    
-    Result: The file ends up with only ONE of the renames applied.
-    """
-    # 1. ARRANGE
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_pyproject(".")
-        .with_source("mypkg/__init__.py", "")
-        .with_source(
-            "mypkg/core.py", 
-            """
-class OldClass:
-    pass
-
-def old_func():
-    pass
-            """
-        )
-        .build()
-    )
-
-    src_path = project_root / "mypkg/core.py"
-    dest_path = project_root / "mypkg/utils.py"
-    
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-    
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-
-    # Three operations touching the same file
-    move_op = MoveFileOperation(src_path, dest_path)
-    rename_class_op = RenameSymbolOperation("mypkg.core.OldClass", "mypkg.utils.NewClass")
-    rename_func_op = RenameSymbolOperation("mypkg.core.old_func", "mypkg.utils.new_func")
-
-    # Analyze independently (Linear Architecture)
-    ops_1 = move_op.analyze(ctx)
-    ops_2 = rename_class_op.analyze(ctx)
-    ops_3 = rename_func_op.analyze(ctx)
-    
-    all_ops = ops_1 + ops_2 + ops_3
-
-    tm = TransactionManager(project_root)
-    for fop in all_ops:
-        if isinstance(fop, MoveFileOp):
-            tm.add_move(fop.path, fop.dest)
-        elif isinstance(fop, WriteFileOp):
-            tm.add_write(fop.path, fop.content)
-        elif isinstance(fop, DeleteFileOp):
-            tm.add_delete_file(fop.path)
-            
-    tm.commit()
-
-    # 3. ASSERT
-    assert dest_path.exists(), "Destination file missing!"
-    
-    content = dest_path.read_text()
-    
-    has_new_class = "class NewClass" in content
-    has_new_func = "def new_func" in content
-    
-    # Debug output
-    if not (has_new_class and has_new_func):
-        print("\n--- FAILURE DIAGNOSTIC ---")
-        print(f"Content of {dest_path}:")
-        print(content)
-        print("--------------------------")
-
-    # Both renames must be present. 
-    # Current architecture will fail this: one will be missing.
-    assert has_new_class, "Lost Edit: Class rename was overwritten!"
-    assert has_new_func, "Lost Edit: Function rename was overwritten!"
+__all__ = [
+    "TransactionManager",
+    "RefactorContext",
+    "SemanticGraph",
+    "Planner",
+    "RefactorIntent",
+    "RenameIntent",
+    "FileSystemIntent",
+    "MoveFileIntent",
+    "DeleteFileIntent",
+    "ScaffoldIntent",
+    "SidecarUpdateIntent",
+]
 ~~~~~
 
 ### 下一步建议
 
-确认测试失败（变红）后，我们将正式开始 `Planner 2.0` 的开发工作。我们将按照路线图，首先在 `stitcher.refactor.intent` 模块中定义 `RefactorIntent` 类层次结构。
+基础设施已经就位。接下来的关键一步是**改造现有的 `AbstractOperation`**。
+
+我建议我们开始修改 `MoveFileOperation` 和 `RenameSymbolOperation`：
+1.  废弃返回 `List[FileOp]` 的 `analyze` 方法。
+2.  新增一个 `collect_intents(ctx: RefactorContext) -> List[RefactorIntent]` 方法。
+3.  将原 `analyze` 方法中的逻辑迁移到 `collect_intents` 中，使其返回相应的 `Intent` 对象，而不是直接生成 `FileOp`。
+
+这将是迈向 Planner 2.0 的实质性一步。

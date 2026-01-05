@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 修正架构缺陷验证测试 (Lost Edit Scenario)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767616310.2250779, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(refactor): 定义 RefactorIntent 基础设施", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767616424.5358856, "duration_ms": 0}}
