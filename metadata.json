@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现 MigrationLoader 以解析迁移脚本", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767592335.8379998, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实现 Planner 以编排重构操作", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767592405.540175, "duration_ms": 0}}

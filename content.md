@@ -1,25 +1,25 @@
-好的，我们继续阶段四。现在我们来实现 `MigrationLoader`，它将负责解析用户编写的 Python 迁移脚本，并将其转换为 `MigrationSpec` 对象。
+好的，我们来创建 `Planner`。它的职责是消费 `MigrationSpec`，并将其中的高级重构操作转换为一个具体的、可执行的底层文件操作列表。
 
-## [WIP] feat: 实现 MigrationLoader 以解析迁移脚本
+## [WIP] feat: 实现 Planner 以编排重构操作
 
 ### 用户需求
-创建一个 `MigrationLoader` 类，它能够动态地加载一个指定的 Python 文件，执行其中的 `upgrade(spec: MigrationSpec)` 函数，并返回一个填充了重构操作的 `MigrationSpec` 实例。
+创建一个 `Planner` 类，该类接收一个 `MigrationSpec` 和一个 `RefactorContext`，遍历其中的所有 `AbstractOperation`，调用它们的 `analyze` 方法，并将返回的所有 `FileOp` 结果聚合成一个单一的、扁平化的列表。
 
 ### 评论
-这是 SMP 系统的核心运行时组件。通过使用 `importlib`，我们可以安全地、动态地加载用户代码，而不会污染全局 `sys.modules`。定义一套清晰的自定义异常 (`MigrationScriptError`) 将有助于向用户提供明确的错误反馈，例如当脚本缺少 `upgrade` 函数或存在语法错误时。
+`Planner` 是重构引擎的中枢神经系统。它将高层次的“重构意图”（如“重命名这个符号”）转化为低层次的“文件系统指令”（如“在文件A中写入这些内容，在文件B中写入那些内容”）。这个组件的引入，完美地将“定义重构”与“执行重构”这两个阶段解耦。
 
 ### 目标
-1.  在 `stitcher.refactor.migration` 模块中添加 `exceptions.py` 和 `loader.py`。
-2.  实现 `MigrationLoader` 类及其核心方法 `load_from_path`。
-3.  处理各种错误情况（文件未找到、语法错误、缺少 `upgrade` 函数等），并抛出自定义异常。
-4.  编写单元测试，覆盖成功加载和所有预期的失败场景。
+1.  在 `stitcher.refactor.engine` 模块中创建 `planner.py` 文件。
+2.  实现 `Planner` 类及其核心的 `plan` 方法。
+3.  更新 `engine/__init__.py` 以导出 `Planner`。
+4.  编写单元测试，验证 `Planner` 能够正确地调用操作并聚合结果。
 
 ### 基本原理
-`MigrationLoader` 利用 Python 的 `importlib.util` 库来实现动态模块加载。它通过文件路径创建一个模块规范 (`spec`)，然后基于该规范创建一个新的模块对象，并执行脚本文件中的代码。这个过程是隔离的，确保了用户脚本的执行不会干扰 Stitcher 的内部状态。加载成功后，它会查找并调用约定好的 `upgrade` 函数，将一个空的 `MigrationSpec` 实例作为参数传入，从而让用户脚本有机会填充这个实例。
+`Planner` 的工作模式非常直接：它作为一个协调器，按顺序执行每个 `AbstractOperation` 的分析阶段。每个操作的 `analyze` 方法都封装了自身的领域知识（例如，一个 `RenameSymbolOperation` 知道如何查找引用并生成代码补丁）。`Planner` 的价值在于它对这个过程进行了抽象，调用者无需关心内部有多少种操作类型，只需提供一个 `MigrationSpec`，就能得到一个完整的、可供 `TransactionManager` 消费的 `FileOp` 列表。
 
 ### 标签
 #intent/build #flow/ready #priority/high
-#comp/refactor #concept/api #scope/core #dx
+#comp/refactor #concept/engine #scope/core #dx
 #ai/instruct
 #task/domain/refactoring #task/object/migration-spec #task/action/implementation
 #task/state/continue #task/status/active
@@ -28,180 +28,118 @@
 
 ### Script
 
-#### Acts 1: 定义自定义异常
+#### Acts 1: 实现 Planner 类
 
-我们首先创建一个 `exceptions.py` 文件来存放与迁移相关的错误类型。
-
-~~~~~act
-write_file
-packages/stitcher-refactor/src/stitcher/refactor/migration/exceptions.py
-~~~~~
-~~~~~python
-class MigrationError(Exception):
-    """Base exception for migration-related errors."""
-    pass
-
-class MigrationScriptError(MigrationError):
-    """Raised when a migration script is invalid."""
-    pass
-~~~~~
-
-#### Acts 2: 实现 MigrationLoader
-
-现在，我们创建 `loader.py` 并实现 `MigrationLoader` 类。
+我们创建 `planner.py` 并定义 `Planner`。
 
 ~~~~~act
 write_file
-packages/stitcher-refactor/src/stitcher/refactor/migration/loader.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py
 ~~~~~
 ~~~~~python
-import importlib.util
-from pathlib import Path
+from typing import List
 
-from .spec import MigrationSpec
-from .exceptions import MigrationScriptError
+from stitcher.refactor.migration import MigrationSpec
+from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.engine.transaction import FileOp
 
 
-class MigrationLoader:
-    def load_from_path(self, path: Path) -> MigrationSpec:
+class Planner:
+    def plan(self, spec: MigrationSpec, ctx: RefactorContext) -> List[FileOp]:
         """
-        Dynamically loads a migration script and returns a populated MigrationSpec.
+        Takes a migration spec and generates a flat list of file operations.
         """
-        if not path.is_file():
-            raise FileNotFoundError(f"Migration script not found at: {path}")
-
-        # Create a unique module name to avoid polluting sys.modules with a common name
-        module_name = f"stitcher.migrations.{path.stem}"
-
-        try:
-            spec = importlib.util.spec_from_file_location(module_name, path)
-            if spec is None or spec.loader is None:
-                raise MigrationScriptError(f"Could not create module spec for {path}")
-
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-        except SyntaxError as e:
-            raise MigrationScriptError(f"Syntax error in migration script {path}: {e}") from e
-        except Exception as e:
-            raise MigrationScriptError(f"Failed to load migration script {path}: {e}") from e
-
-        if not hasattr(module, "upgrade"):
-            raise MigrationScriptError(f"Migration script {path} is missing the 'upgrade' function.")
-
-        upgrade_func = getattr(module, "upgrade")
-        if not callable(upgrade_func):
-            raise MigrationScriptError(f"The 'upgrade' attribute in {path} is not a callable function.")
-
-        migration_spec = MigrationSpec()
-        upgrade_func(migration_spec)
-
-        return migration_spec
+        all_ops: List[FileOp] = []
+        for operation in spec.operations:
+            file_ops = operation.analyze(ctx)
+            all_ops.extend(file_ops)
+        return all_ops
 ~~~~~
 
-#### Acts 3: 更新模块 `__init__.py`
+#### Acts 2: 导出 Planner
 
-我们将 `MigrationLoader` 导出到包的公共 API 中。
+更新 `engine` 模块的 `__init__.py`，使其导出 `Planner` 和其他核心组件。
 
 ~~~~~act
 patch_file
-packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py
 ~~~~~
 ~~~~~python.old
-from .spec import MigrationSpec, Rename, Move, MoveDir
+from .transaction import TransactionManager
 
-__all__ = ["MigrationSpec", "Rename", "Move", "MoveDir"]
+__all__ = ["TransactionManager"]
 ~~~~~
 ~~~~~python.new
-from .spec import MigrationSpec, Rename, Move, MoveDir
-from .loader import MigrationLoader
-from .exceptions import MigrationError, MigrationScriptError
+from .transaction import TransactionManager
+from .context import RefactorContext
+from .graph import SemanticGraph
+from .planner import Planner
 
-__all__ = [
-    "MigrationSpec",
-    "Rename",
-    "Move",
-    "MoveDir",
-    "MigrationLoader",
-    "MigrationError",
-    "MigrationScriptError",
-]
+__all__ = ["TransactionManager", "RefactorContext", "SemanticGraph", "Planner"]
 ~~~~~
 
-#### Acts 4: 编写单元测试
+#### Acts 3: 编写单元测试
 
-最后，我们为 `MigrationLoader` 编写全面的单元测试，以确保其健壮性。
+我们编写测试来验证 `Planner` 是否能正确地调用其操作并聚合 `FileOp` 列表。
 
 ~~~~~act
 write_file
-packages/stitcher-refactor/tests/unit/migration/test_loader.py
+packages/stitcher-refactor/tests/unit/engine/test_planner.py
 ~~~~~
 ~~~~~python
-import pytest
-from pathlib import Path
+from unittest.mock import Mock
 
-from stitcher.refactor.migration.loader import MigrationLoader
-from stitcher.refactor.migration.exceptions import MigrationScriptError
-from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
+from stitcher.refactor.engine.planner import Planner
+from stitcher.refactor.migration import MigrationSpec
+from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.operations.base import AbstractOperation
+from stitcher.refactor.engine.transaction import WriteFileOp, MoveFileOp
 
 
-def test_loader_happy_path(tmp_path: Path):
-    # 1. Arrange: Create a valid migration script
-    script_content = """
-from stitcher.refactor.migration import MigrationSpec, Rename
+def test_planner_collects_and_flattens_ops():
+    # 1. Arrange
+    mock_ctx = Mock(spec=RefactorContext)
+    mock_spec = Mock(spec=MigrationSpec)
 
-def upgrade(spec: MigrationSpec):
-    spec.add(Rename("old.name", "new.name"))
-    spec.add_map({"a.b": "c.d"})
-"""
-    script_path = tmp_path / "001_valid_migration.py"
-    script_path.write_text(script_content)
+    # Mock operations and their analyze results
+    op1_result = [WriteFileOp(path="a.py", content="...")]
+    mock_op1 = Mock(spec=AbstractOperation)
+    mock_op1.analyze.return_value = op1_result
+
+    op2_result = [
+        MoveFileOp(path="b.py", dest="c.py"),
+        WriteFileOp(path="d.py", content="..."),
+    ]
+    mock_op2 = Mock(spec=AbstractOperation)
+    mock_op2.analyze.return_value = op2_result
+
+    # Configure the MigrationSpec mock to return our mock operations
+    type(mock_spec).operations = [mock_op1, mock_op2]
+
+    planner = Planner()
 
     # 2. Act
-    loader = MigrationLoader()
-    spec = loader.load_from_path(script_path)
+    final_plan = planner.plan(mock_spec, mock_ctx)
 
     # 3. Assert
-    assert len(spec.operations) == 2
-    assert isinstance(spec.operations[0], RenameSymbolOperation)
-    assert spec.operations[0].old_fqn == "old.name"
-    assert isinstance(spec.operations[1], RenameSymbolOperation)
-    assert spec.operations[1].old_fqn == "a.b"
+    # Verify that analyze was called on each operation with the correct context
+    mock_op1.analyze.assert_called_once_with(mock_ctx)
+    mock_op2.analyze.assert_called_once_with(mock_ctx)
 
-
-def test_loader_missing_upgrade_function(tmp_path: Path):
-    script_path = tmp_path / "002_no_upgrade.py"
-    script_path.write_text("a = 1")
-    loader = MigrationLoader()
-
-    with pytest.raises(MigrationScriptError, match="missing the 'upgrade' function"):
-        loader.load_from_path(script_path)
-
-
-def test_loader_upgrade_not_callable(tmp_path: Path):
-    script_path = tmp_path / "003_upgrade_is_var.py"
-    script_path.write_text("upgrade = 'not a function'")
-    loader = MigrationLoader()
-
-    with pytest.raises(MigrationScriptError, match="is not a callable function"):
-        loader.load_from_path(script_path)
-
-
-def test_loader_syntax_error(tmp_path: Path):
-    script_path = tmp_path / "004_syntax_error.py"
-    script_path.write_text("def upgrade(spec):\\n  pass(")  # invalid syntax
-    loader = MigrationLoader()
-
-    with pytest.raises(MigrationScriptError, match="Syntax error"):
-        loader.load_from_path(script_path)
-
-
-def test_loader_file_not_found():
-    loader = MigrationLoader()
-
-    with pytest.raises(FileNotFoundError):
-        loader.load_from_path(Path("non_existent_file.py"))
+    # Verify that the final plan is the correct concatenation of the results
+    expected_plan = op1_result + op2_result
+    assert final_plan == expected_plan
+    assert len(final_plan) == 3
 ~~~~~
 
 ### 下一步建议
 
-现在我们已经有了定义迁移 (`MigrationSpec`) 和加载迁移 (`MigrationLoader`) 的机制，下一步是创建 `Planner`。`Planner` 的职责是接收 `MigrationSpec` 中定义的所有操作，然后调用每个操作的 `analyze` 方法，最终将所有生成的 `FileOp` 汇集成一个完整的、可执行的事务计划。
+我们已经完成了 SMP 系统的核心逻辑链条：
+1.  `MigrationLoader` 加载用户脚本生成 `MigrationSpec`。
+2.  `Planner` 将 `MigrationSpec` 转换为一个 `FileOp` 列表。
+
+现在，是时候将这一切与用户连接起来了。下一步是实现 `stitcher refactor apply <migration_file>` 这个 CLI 命令。这个命令将：
+- 接收一个迁移脚本路径。
+- 初始化 `SemanticGraph` 和 `RefactorContext`。
+- 调用 `MigrationLoader` 和 `Planner` 生成计划。
+- 将计划交给 `TransactionManager`，并提供一个交互式的预览和确认界面，让用户决定是否最终执行。
