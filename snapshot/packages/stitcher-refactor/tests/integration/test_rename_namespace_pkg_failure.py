@@ -1,36 +1,3 @@
-由于你在上一次尝试中使用了简化的包结构（直接在根目录下创建 `common` 包），这避开了真实环境中可能导致问题的复杂性，例如 Namespace Package 的路径解析或 `src` 目录布局的处理。
-
-为了捕获这个 Bug，我将构建一个**高保真**的集成测试，完全模拟 `stitcher-common` 的实际物理结构（`packages/pkg_name/src/namespace/pkg/...`）和 Namespace Package 行为。
-
-## [WIP] test: 使用高保真 Namespace 结构复现重构丢失定义的 Bug
-
-### 错误分析
-之前的测试通过了，说明在简单的扁平包结构下，重构引擎工作正常。Bug 很可能隐藏在 **Namespace Package** 的处理逻辑中，或者是 **`src` 目录布局** 导致的路径解析不一致，使得 `SemanticGraph` 收集到的文件路径与 `UsageRegistry` 中的路径无法在后续步骤中正确匹配，或者导致 CST Visitor 未能正确访问类定义节点。
-
-### 用户需求
-创建一个能够**失败**的测试用例，证明在复杂的 Namespace/Src 布局下，对类的重命名操作会遗漏类定义本身。
-
-### 目标
-1.  创建一个名为 `test_rename_namespace_pkg_failure.py` 的测试文件。
-2.  使用 `WorkspaceFactory` 构建一个深层嵌套的 Namespace Package 结构：`packages/stitcher-core/src/stitcher/core/bus.py`。
-3.  确保 `Workspace` 和 `SemanticGraph` 在这种结构下加载。
-4.  执行重命名操作。
-5.  **断言失败**：验证类定义是否被修改。
-
-### 标签
-#intent/tooling #flow/ready #priority/critical #comp/tests #comp/refactor #task/domain/testing #task/object/refactor-engine #task/action/bug-repro-test #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建高保真复现测试
-
-~~~~~act
-write_file
-packages/stitcher-refactor/tests/integration/test_rename_namespace_pkg_failure.py
-~~~~~
-~~~~~python
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import TransactionManager
@@ -123,7 +90,3 @@ def test_rename_symbol_in_namespace_package_structure(tmp_path):
     assert "class FeedbackBus:" in bus_content, \
         f"Class definition was NOT renamed! Content:\n{bus_content}"
     assert "class MessageBus:" not in bus_content
-~~~~~
-
-### 下一步建议
-运行此测试。如果这个测试失败（即 `class MessageBus:` 仍然存在），我们就成功捕获了 Bug。如果它仍然通过，我们将需要检查是否是 `Workspace` 的发现逻辑在测试环境和真实环境中有更深层的差异（例如 `uv` 环境下的 editable install 行为）。
