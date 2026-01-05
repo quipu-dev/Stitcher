@@ -80,9 +80,7 @@ class _UsageVisitor(cst.CSTVisitor):
             else:
                 self.current_package = ""
 
-    def _register_node(
-        self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType
-    ):
+    def _register_node(self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType):
         pos = self.get_metadata(PositionProvider, node)
         loc = UsageLocation(
             file_path=self.file_path,

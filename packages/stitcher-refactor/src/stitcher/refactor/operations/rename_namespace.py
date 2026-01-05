@@ -1,5 +1,4 @@
 import libcst as cst
-from libcst.metadata import PositionProvider, QualifiedNameProvider
 
 from collections import defaultdict
 from typing import List, Dict
@@ -21,9 +20,7 @@ class RenameNamespaceOperation(AbstractOperation):
         ops: List[FileOp] = []
 
         usages = ctx.graph.registry.get_usages(self.old_prefix)
-        import_usages = [
-            u for u in usages if u.ref_type == ReferenceType.IMPORT_PATH
-        ]
+        import_usages = [u for u in usages if u.ref_type == ReferenceType.IMPORT_PATH]
 
         usages_by_file: Dict[Path, List[UsageLocation]] = defaultdict(list)
         for usage in import_usages:
@@ -35,9 +32,7 @@ class RenameNamespaceOperation(AbstractOperation):
                 module = cst.parse_module(original_source)
 
                 # Build locations map for the transformer
-                locations = {
-                    (u.lineno, u.col_offset): u for u in file_usages
-                }
+                locations = {(u.lineno, u.col_offset): u for u in file_usages}
 
                 # Use standard MetadataWrapper
                 wrapper = cst.MetadataWrapper(module)
