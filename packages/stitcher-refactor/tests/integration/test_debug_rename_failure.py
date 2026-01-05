@@ -1,6 +1,7 @@
-import pytest
-from pathlib import Path
-from stitcher.refactor.engine.graph import SemanticGraph, ReferenceType
+import yaml
+import json
+
+from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.transaction import TransactionManager
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
@@ -77,9 +78,6 @@ class MessageBus:
 # The global singleton is now created in stitcher.common.__init__
 """
 
-import yaml
-import json
-
 
 def test_debug_rename_failure_analysis(tmp_path):
     """
@@ -125,8 +123,7 @@ def test_debug_rename_failure_analysis(tmp_path):
     )
 
     bus_path = (
-        project_root
-        / "packages/stitcher-common/src/stitcher/common/messaging/bus.py"
+        project_root / "packages/stitcher-common/src/stitcher/common/messaging/bus.py"
     )
     bus_yaml_path = bus_path.with_suffix(".stitcher.yaml")
     bus_sig_path = (
@@ -155,24 +152,20 @@ def test_debug_rename_failure_analysis(tmp_path):
     # 4. FINAL ASSERTION
     # Assert Python file content
     updated_content = bus_path.read_text()
-    assert (
-        "class FeedbackBus:" in updated_content
-    ), "BUG: Python code definition was not renamed."
+    assert "class FeedbackBus:" in updated_content, (
+        "BUG: Python code definition was not renamed."
+    )
 
     # Assert YAML sidecar content
     updated_yaml_data = yaml.safe_load(bus_yaml_path.read_text())
-    assert (
-        "FeedbackBus" in updated_yaml_data
-    ), "BUG: YAML doc key was not renamed."
+    assert "FeedbackBus" in updated_yaml_data, "BUG: YAML doc key was not renamed."
     assert "MessageBus" not in updated_yaml_data
-    assert (
-        "FeedbackBus.info" in updated_yaml_data
-    ), "BUG: YAML doc method key was not renamed."
+    assert "FeedbackBus.info" in updated_yaml_data, (
+        "BUG: YAML doc method key was not renamed."
+    )
 
     # Assert Signature sidecar content
     updated_sig_data = json.loads(bus_sig_path.read_text())
-    assert (
-        new_fqn in updated_sig_data
-    ), "BUG: Signature JSON FQN key was not renamed."
+    assert new_fqn in updated_sig_data, "BUG: Signature JSON FQN key was not renamed."
     assert old_fqn not in updated_sig_data
     assert updated_sig_data[new_fqn] == {"hash": "abc"}

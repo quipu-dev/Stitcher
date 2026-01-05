@@ -1,5 +1,6 @@
 from stitcher.refactor.migration import MigrationSpec, Rename
 
+
 def upgrade(spec: MigrationSpec):
     """
     Renames the core MessageBus to FeedbackBus to better reflect its purpose.

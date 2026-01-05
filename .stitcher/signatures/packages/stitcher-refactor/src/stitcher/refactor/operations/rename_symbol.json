@@ -8,6 +8,15 @@
     "baseline_code_signature_text": "def _get_base_name(self, fqn: str) -> str:",
     "baseline_code_structure_hash": "2cd38e7c1a18039a42f460d36ca8f4aa70a3716cf653707aa0b0b8a98a22573d"
   },
+  "RenameSymbolOperation._path_to_fqn": {
+    "baseline_code_signature_text": "def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:",
+    "baseline_code_structure_hash": "9d8e022c26c3b25ea32b82b16b0cf737974daed449b0ad2bee3dcdcedc3c9988"
+  },
+  "RenameSymbolOperation._update_sidecar_data": {
+    "baseline_code_signature_text": "def _update_sidecar_data(self, data: Dict[str, Any], module_fqn: Optional[str]) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "63586dadaf20d56a33580c8d608c729b12b8c520876eb11eca1c5375eeba8efd",
+    "baseline_yaml_content_hash": "10272d8081f2968bc3abce110f29f8c98b81d633b3f5da0769f8fab8d7ab14da"
+  },
   "RenameSymbolOperation.analyze": {
     "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
     "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1"

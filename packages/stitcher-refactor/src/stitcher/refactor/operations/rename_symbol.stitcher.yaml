@@ -1,0 +1,4 @@
+"RenameSymbolOperation._update_sidecar_data": |-
+  Intelligently updates keys in sidecar data.
+  Handles both FQN keys and short-name keys (relative to module_fqn).
+  Handles cascading renames (e.g. Class.method).

@@ -78,9 +78,7 @@ def refactor_command(
 
         planner = Planner()
         file_ops = planner.plan(spec, ctx)
-        bus.debug(
-            L.debug.log.refactor_planned_ops_count, count=len(file_ops)
-        )
+        bus.debug(L.debug.log.refactor_planned_ops_count, count=len(file_ops))
 
         if not file_ops:
             bus.success(L.refactor.run.no_ops)

@@ -4,7 +4,7 @@ from needle.pointer import SemanticPointer
 from .protocols import Renderer
 
 
-class MessageBus:
+class FeedbackBus:
     def __init__(self, operator: Callable[[Union[str, SemanticPointer]], str]):
         self._renderer: Optional[Renderer] = None
         self._operator = operator

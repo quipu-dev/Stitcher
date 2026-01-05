@@ -59,7 +59,9 @@ def test_rename_fails_to_update_definition_leading_to_import_error(tmp_path):
     # CRITICAL: The definition in bus.py should ALSO have been updated,
     # but the bug causes it to be missed. We assert this failure case.
     definition_code = definition_file.read_text()
-    assert "class MessageBus: pass" in definition_code, "The class definition was not renamed!"
+    assert "class MessageBus: pass" in definition_code, (
+        "The class definition was not renamed!"
+    )
     assert "class FeedbackBus: pass" not in definition_code
 
 
@@ -74,7 +76,9 @@ def test_rename_operation_succeeds_in_renaming_symbol_definition(tmp_path):
         factory.with_pyproject(".")
         .with_source("mypkg/__init__.py", "")
         .with_source("mypkg/core.py", "class OldName: pass")
-        .with_source("mypkg/app.py", "from mypkg.core import OldName\n\ninstance = OldName()")
+        .with_source(
+            "mypkg/app.py", "from mypkg.core import OldName\n\ninstance = OldName()"
+        )
     ).build()
 
     definition_file = project_root / "mypkg/core.py"

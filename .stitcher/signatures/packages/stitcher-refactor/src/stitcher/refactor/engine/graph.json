@@ -8,8 +8,8 @@
     "baseline_code_structure_hash": "db0b79e74ddbded80772fc4f235e1067d97beaedc46f490a78067f739cd3e5f4"
   },
   "SemanticGraph._build_registry": {
-    "baseline_code_signature_text": "def _build_registry(self, module: griffe.Module):",
-    "baseline_code_structure_hash": "79b85f1a939b0b3111d1c3fc274695275a1b9d772a422e910d9a19d9035471de",
+    "baseline_code_signature_text": "def _build_registry(self, module: griffe.Module, visited: Optional[Set[str]] = None):",
+    "baseline_code_structure_hash": "024f15ff4c592dafdc5fa4e5eed9ba4c7b065f9319a631842ba011fe241dceb3",
     "baseline_yaml_content_hash": "3b22d32ef6308a04c808ebcc4cd95b63b15d1fa00c16bfd7d09c282e584105fc"
   },
   "SemanticGraph._griffe_loader": {},
@@ -89,6 +89,14 @@
   "_UsageVisitor.visit_Attribute": {
     "baseline_code_signature_text": "def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:",
     "baseline_code_structure_hash": "aefe42bae1b746e3a301105d2b20996b76525735046545bb7d54932158adf30a"
+  },
+  "_UsageVisitor.visit_ClassDef": {
+    "baseline_code_signature_text": "def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:",
+    "baseline_code_structure_hash": "a8d85b41a8f83b14052de020444d04ee5c339ce4e565465d97b9a494c1e61cd8"
+  },
+  "_UsageVisitor.visit_FunctionDef": {
+    "baseline_code_signature_text": "def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:",
+    "baseline_code_structure_hash": "228968f6587b436c7b0f5d338ef420bd2a0181aa51a282b48c30ae9d5367b2fc"
   },
   "_UsageVisitor.visit_Import": {
     "baseline_code_signature_text": "def visit_Import(self, node: cst.Import) -> Optional[bool]:",

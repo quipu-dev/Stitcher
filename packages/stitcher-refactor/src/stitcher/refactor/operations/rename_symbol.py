@@ -51,11 +51,6 @@ class RenameSymbolOperation(AbstractOperation):
         data: Dict[str, Any],
         module_fqn: Optional[str],
     ) -> Dict[str, Any]:
-        """
-        Intelligently updates keys in sidecar data.
-        Handles both FQN keys and short-name keys (relative to module_fqn).
-        Handles cascading renames (e.g. Class.method).
-        """
         new_data = {}
         modified = False
 
