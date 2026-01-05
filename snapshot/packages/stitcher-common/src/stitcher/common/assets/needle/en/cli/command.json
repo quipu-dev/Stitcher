@@ -17,5 +17,8 @@
   "strip": {
     "help": "Remove docstrings from source files."
   },
+  "refactor": {
+    "help": "Apply automated refactorings."
+  },
   "not_implemented": "ℹ️  Command '{command}' is not yet implemented."
 }

@@ -17,5 +17,8 @@
   "strip": {
     "help": "从源代码中移除文档字符串。"
   },
+  "refactor": {
+    "help": "应用自动化代码重构。"
+  },
   "not_implemented": "ℹ️  命令 '{command}' 尚未实现。"
 }
