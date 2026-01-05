@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(refactor): 改造 Operation 以收集 Intents", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767616529.6353667, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(refactor): 实现 Planner v2 聚合与批量重命名", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767616663.4067903, "duration_ms": 0}}

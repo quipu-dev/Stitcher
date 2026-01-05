@@ -1,352 +1,273 @@
-好的，我们正式进入 Planner 2.0 路线图的第二步：改造 Operation 层。
+我们已经用测试定位了问题的核心。现在，是时候绞杀这个架构缺陷了。
 
-我将修改 `AbstractOperation`、`RenameSymbolOperation` 和 `MoveFileOperation`，用新的 `collect_intents` 方法取代旧的 `analyze` 方法。这将使 Operation 的职责从“执行者”转变为“意图声明者”，是整个重构的核心。
+我将开始实施 **Planner 2.0** 的核心逻辑。这包括创建一个新的 `GlobalBatchRenamer`，它能够一次性处理所有代码修改，以及重写 `Planner` 本身，使其成为一个真正的意图聚合与规划中心。
 
-## [WIP] feat(refactor): 改造 Operation 以收集 Intents
+## [WIP] feat(refactor): 实现 Planner v2 聚合与批量重命名
 
 ### 用户需求
-修改 `MoveFileOperation` 和 `RenameSymbolOperation`，使其实现 `collect_intents` 方法，返回 `RefactorIntent` 列表，并废弃旧的 `analyze` 方法。
+实施重构路线图的第三步：升级 Planner。使其能够收集并聚合所有 `RefactorIntent`，然后使用新的 `GlobalBatchRenamer` 批量处理所有符号重命名，从而解决“丢失的编辑”问题。
 
 ### 评论
-这是架构演进的关键一步。通过此修改，Operation 类变得更简单、更专注。它们不再关心如何修改文件内容、如何处理文件系统，只负责根据上下文声明“应该发生什么”。这种职责分离将使 Planner 能够对所有意图进行全局优化，从而解决并发修改的根本问题。
+这是整个重构任务的“心脏搭桥手术”。通过引入 `GlobalBatchRenamer`，我们从根本上改变了代码修改的方式——从多次、独立、基于原始文件的“补丁”，升级为一次性、聚合、基于最终状态的“原子转换”。`Planner` 也从一个简单的任务分派器，演变为一个能够理解全局、消解冲突的智能规划引擎。
 
 ### 目标
-1.  在 `AbstractOperation` 基类中，用 `collect_intents` 替换 `analyze` 作为新的抽象方法。
-2.  重写 `RenameSymbolOperation`，使其返回 `RenameIntent` 和 `SidecarUpdateIntent`。
-3.  重写 `MoveFileOperation`，使其返回 `MoveFileIntent`、`RenameIntent`、`SidecarUpdateIntent` 和 `ScaffoldIntent` 的组合。
+1.  创建一个新的 `renamer.py` 模块，并实现 `GlobalBatchRenamer`。
+2.  `GlobalBatchRenamer` 将负责查询所有待重命名符号的用法，按文件分组，并对每个文件执行一次性的 `LibCST` 转换。
+3.  重写 `planner.py`，实现新的 `plan` 方法。该方法将：
+    a. 收集并聚合所有 `RefactorIntent`。
+    b. 调用 `GlobalBatchRenamer` 处理代码修改。
+    c. 聚合 `SidecarUpdateIntent` 并生成 `WriteFileOp`。
+    d. 将其他 `FileSystemIntent` 直接转换为对应的 `FileOp`。
 
 ### 基本原理
-我们将采用 `write_file` 来覆盖这三个核心文件，因为这是一个结构性的、破坏性的变更，而非简单的补丁。`RenameSymbolOperation` 的逻辑将被大幅简化，因为它现在只需声明“重命名”这个意图，而将寻找用法、转换代码的复杂工作委托给未来的 Planner。`MoveFileOperation` 同样被简化，它会声明移动、重命名和脚手架等一系列意图，由 Planner 统一处理。
+我们将遵循“收集 -> 聚合 -> 执行”的核心模式。
+1.  **收集**: `Planner` 调用所有 `Operation` 的 `collect_intents` 方法。
+2.  **聚合**: 所有 `RenameIntent` 被聚合成一个大的 `rename_map`。所有对同一个 `sidecar` 文件的修改意图被分组。
+3.  **执行规划**:
+    - `GlobalBatchRenamer` 接收 `rename_map`，一次性生成所有代码文件的 `WriteFileOp`。
+    - 一个新的 sidecar 处理器循环处理聚合后的 `SidecarUpdateIntent`，确保每个 sidecar 文件只被读写一次。
+    - 其他简单的文件系统意图被直接转换。
+    - 所有生成的 `FileOp` 被组合成最终的事务计划。
 
 ### 标签
-#intent/refine #flow/draft #priority/critical #comp/engine #concept/state #scope/api #ai/instruct #task/domain/refactoring #task/object/planner #task/action/implementation #task/state/continue
+#intent/build #intent/refine #flow/draft #priority/critical #comp/engine #concept/state #scope/core #ai/instruct #task/domain/refactoring #task/object/planner #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 更新抽象基类
+#### Acts 1: 创建 `GlobalBatchRenamer` 及其 Transformer
 
-首先，我们在 `base.py` 中用 `collect_intents` 替换 `analyze`。
+这是解决“丢失的编辑”问题的核心武器。它确保对任何一个文件的所有修改都在一次 `LibCST` 遍历中完成。
 
 ~~~~~act
 write_file
-packages/stitcher-refactor/src/stitcher/refactor/operations/base.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py
 ~~~~~
 ~~~~~python
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+import libcst as cst
+from collections import defaultdict
+from typing import List, Dict
 from pathlib import Path
 
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import FileOp
-from stitcher.refactor.engine.intent import RefactorIntent
+from stitcher.refactor.engine.transaction import WriteFileOp
+from stitcher.refactor.engine.graph import UsageLocation
+from stitcher.refactor.operations.transforms.rename_transformer import (
+    SymbolRenamerTransformer,
+)
 
 
-class SidecarUpdateMixin:
-    def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:
-        base_path = None
-        for sp in sorted(search_paths, key=lambda p: len(p.parts), reverse=True):
+class GlobalBatchRenamer:
+    def __init__(self, rename_map: Dict[str, str], ctx: RefactorContext):
+        self.rename_map = rename_map
+        self.ctx = ctx
+
+    def analyze(self) -> List[WriteFileOp]:
+        ops: List[WriteFileOp] = []
+        usages_by_file: Dict[Path, List[UsageLocation]] = defaultdict(list)
+
+        # 1. Collect all usages for all renames and group by file
+        for old_fqn in self.rename_map.keys():
+            usages = self.ctx.graph.registry.get_usages(old_fqn)
+            for usage in usages:
+                usages_by_file[usage.file_path].append(usage)
+
+        # 2. For each affected file, apply a single transformation that handles ALL renames
+        for file_path, file_usages in usages_by_file.items():
             try:
-                path.relative_to(sp)
-                base_path = sp
-                break
-            except ValueError:
-                continue
+                original_source = file_path.read_text(encoding="utf-8")
+                module = cst.parse_module(original_source)
+                wrapper = cst.MetadataWrapper(module)
 
-        if base_path is None:
-            return None
+                # The key difference: The transformer receives the GLOBAL rename map
+                # and a complete list of locations to modify within this file.
+                transformer = SymbolRenamerTransformer(self.rename_map, file_usages)
+                modified_module = wrapper.visit(transformer)
 
-        rel_path = path.relative_to(base_path)
-        parts = list(rel_path.parts)
-
-        if parts[-1].endswith(".py"):
-            parts[-1] = parts[-1][:-3]
-        elif parts[-1].endswith(".pyi"):
-            parts[-1] = parts[-1][:-4]
-
-        if parts[-1] == "__init__":
-            parts = parts[:-1]
-
-        if not parts:
-            return ""
-
-        return ".".join(parts)
-
-    def _update_sidecar_data(
-        self,
-        data: Dict[str, Any],
-        module_fqn: Optional[str],
-        old_fqn: str,
-        new_fqn: str,
-    ) -> Dict[str, Any]:
-        new_data = {}
-        modified = False
-
-        for key, value in data.items():
-            key_fqn = key
-            is_short_name = False
-
-            if module_fqn:
-                if key.startswith(module_fqn + "."):
-                    key_fqn = key
-                    is_short_name = False
-                else:
-                    # Heuristic: If it starts with the project's root package but not
-                    # the current module, it's likely an FQN from another module.
-                    project_prefix = module_fqn.split(".")[0] + "."
-                    if key.startswith(project_prefix):
-                        key_fqn = key
-                        is_short_name = False
-                    else:
-                        key_fqn = f"{module_fqn}.{key}"
-                        is_short_name = True
-
-            # Determine the effective module FQN for short-name restoration.
-            # If the module itself is being renamed, the new context is new_fqn.
-            effective_new_module = new_fqn if old_fqn == module_fqn else module_fqn
-
-            new_key = key
-            if key_fqn == old_fqn:
-                target_fqn = new_fqn
-                if is_short_name and effective_new_module:
-                    if target_fqn.startswith(effective_new_module + "."):
-                        new_key = target_fqn[len(effective_new_module) + 1 :]
-                    else:
-                        new_key = target_fqn
-                else:
-                    new_key = target_fqn
-                modified = True
-
-            elif key_fqn.startswith(old_fqn + "."):
-                suffix = key_fqn[len(old_fqn) :]
-                target_fqn = new_fqn + suffix
-                if is_short_name and effective_new_module:
-                    if target_fqn.startswith(effective_new_module + "."):
-                        new_key = target_fqn[len(effective_new_module) + 1 :]
-                    else:
-                        new_key = target_fqn
-                else:
-                    new_key = target_fqn
-                modified = True
-
-            new_data[new_key] = value
-
-        return new_data if modified else data
-
-
-class AbstractOperation(ABC):
-    @abstractmethod
-    def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
-        """Collects high-level intents without planning execution."""
-        pass
+                if modified_module.code != original_source:
+                    relative_path = file_path.relative_to(self.ctx.graph.root_path)
+                    ops.append(
+                        WriteFileOp(path=relative_path, content=modified_module.code)
+                    )
+            except Exception:
+                # In a real app, we'd log this, but for now, re-raise
+                raise
+        return ops
 ~~~~~
 
-#### Acts 2: 重构 RenameSymbolOperation
+#### Acts 2: 重写 Planner 以使用新架构
 
-现在，重构 `rename_symbol.py` 以声明意图，而不是执行转换。
+现在，我们将 `planner.py` 彻底改造，使其成为真正的规划中心。
 
 ~~~~~act
 write_file
-packages/stitcher-refactor/src/stitcher/refactor/operations/rename_symbol.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py
 ~~~~~
 ~~~~~python
-from typing import List
-
-from .base import AbstractOperation, SidecarUpdateMixin
-from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.graph import SymbolNode
-from stitcher.refactor.engine.intent import (
-    RefactorIntent,
-    RenameIntent,
-    SidecarUpdateIntent,
-)
-
-
-class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
-    def __init__(self, old_fqn: str, new_fqn: str):
-        self.old_fqn = old_fqn
-        self.new_fqn = new_fqn
-
-    def _find_definition_node(self, ctx: RefactorContext) -> SymbolNode:
-        # Heuristic: Find the first matching symbol node across all loaded packages
-        for pkg_name in ctx.graph._modules.keys():
-            for member in ctx.graph.iter_members(pkg_name):
-                if member.fqn == self.old_fqn:
-                    return member
-        raise ValueError(f"Could not find definition for symbol: {self.old_fqn}")
-
-    def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
-        intents: List[RefactorIntent] = []
-
-        # 1. Declare the core intent: rename the symbol everywhere.
-        # The Planner will be responsible for finding usages and transforming code.
-        intents.append(RenameIntent(old_fqn=self.old_fqn, new_fqn=self.new_fqn))
-
-        # 2. Declare intents to update sidecar files.
-        # The Planner will aggregate these and perform the file modifications.
-        try:
-            definition_node = self._find_definition_node(ctx)
-            if definition_node and definition_node.path:
-                definition_file_path = definition_node.path
-                module_fqn = self._path_to_fqn(
-                    definition_file_path, ctx.graph.search_paths
-                )
-
-                # Doc file intent
-                doc_path = ctx.sidecar_manager.get_doc_path(definition_file_path)
-                if doc_path.exists():
-                    intents.append(
-                        SidecarUpdateIntent(
-                            sidecar_path=doc_path,
-                            module_fqn=module_fqn,
-                            old_fqn=self.old_fqn,
-                            new_fqn=self.new_fqn,
-                        )
-                    )
-
-                # Signature file intent
-                sig_path = ctx.sidecar_manager.get_signature_path(definition_file_path)
-                if sig_path.exists():
-                    intents.append(
-                        SidecarUpdateIntent(
-                            sidecar_path=sig_path,
-                            module_fqn=module_fqn,
-                            old_fqn=self.old_fqn,
-                            new_fqn=self.new_fqn,
-                        )
-                    )
-        except ValueError:
-            # Symbol not found, might be a module rename. The Planner will handle this.
-            pass
-
-        return intents
-~~~~~
-
-#### Acts 3: 重构 MoveFileOperation
-
-最后，重构 `move_file.py` 以声明所有相关的意图。
-
-~~~~~act
-write_file
-packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py
-~~~~~
-~~~~~python
+from collections import defaultdict
 from pathlib import Path
-from typing import List
+from typing import List, Dict, DefaultDict
 
+from stitcher.common.adapters.yaml_adapter import YamlAdapter
+import json
+
+from stitcher.refactor.migration import MigrationSpec
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.operations.base import AbstractOperation, SidecarUpdateMixin
+from stitcher.refactor.engine.transaction import (
+    FileOp,
+    MoveFileOp,
+    WriteFileOp,
+    DeleteFileOp,
+)
 from stitcher.refactor.engine.intent import (
     RefactorIntent,
     RenameIntent,
-    MoveFileIntent,
-    ScaffoldIntent,
     SidecarUpdateIntent,
+    MoveFileIntent,
+    DeleteFileIntent,
+    ScaffoldIntent,
 )
+from stitcher.refactor.engine.renamer import GlobalBatchRenamer
+from stitcher.refactor.operations.base import SidecarUpdateMixin
 
 
-class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
-    def __init__(self, src_path: Path, dest_path: Path):
-        self.src_path = src_path
-        self.dest_path = dest_path
+class Planner(SidecarUpdateMixin):
+    def plan(self, spec: MigrationSpec, ctx: RefactorContext) -> List[FileOp]:
+        all_ops: List[FileOp] = []
 
-    def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
-        intents: List[RefactorIntent] = []
+        # --- 1. Intent Collection ---
+        all_intents: List[RefactorIntent] = []
+        for operation in spec.operations:
+            all_intents.extend(operation.collect_intents(ctx))
 
-        old_module_fqn = self._path_to_fqn(self.src_path, ctx.graph.search_paths)
-        new_module_fqn = self._path_to_fqn(self.dest_path, ctx.graph.search_paths)
+        # --- 2. Intent Aggregation & Processing ---
+        
+        # Aggregate renames for batch processing
+        rename_map: Dict[str, str] = {}
+        for intent in all_intents:
+            if isinstance(intent, RenameIntent):
+                # TODO: Handle rename chains (A->B, B->C should become A->C)
+                rename_map[intent.old_fqn] = intent.new_fqn
 
-        # 1. Declare symbol rename intents if the module's FQN changes.
-        if (
-            old_module_fqn is not None
-            and new_module_fqn is not None
-            and old_module_fqn != new_module_fqn
-        ):
-            # Rename the module itself
-            intents.append(RenameIntent(old_module_fqn, new_module_fqn))
+        # Process symbol renames in code
+        renamer = GlobalBatchRenamer(rename_map, ctx)
+        all_ops.extend(renamer.analyze())
 
-            # Rename all members within the module
-            members = ctx.graph.iter_members(old_module_fqn)
-            for member in members:
-                if member.fqn == old_module_fqn:
-                    continue
-                if member.fqn.startswith(old_module_fqn + "."):
-                    suffix = member.fqn[len(old_module_fqn) :]
-                    target_new_fqn = new_module_fqn + suffix
-                    intents.append(RenameIntent(member.fqn, target_new_fqn))
+        # Aggregate and process sidecar updates
+        sidecar_updates: DefaultDict[
+            Path, List[SidecarUpdateIntent]
+        ] = defaultdict(list)
+        for intent in all_intents:
+            if isinstance(intent, SidecarUpdateIntent):
+                sidecar_updates[intent.sidecar_path].append(intent)
 
-            # 2. Declare sidecar content update intents
-            doc_src_path = ctx.sidecar_manager.get_doc_path(self.src_path)
-            if doc_src_path.exists():
-                intents.append(
-                    SidecarUpdateIntent(
-                        sidecar_path=doc_src_path,
-                        module_fqn=old_module_fqn,
-                        old_fqn=old_module_fqn,
-                        new_fqn=new_module_fqn,
-                    )
+        # TODO: Inject real adapters instead of instantiating them here.
+        yaml_adapter = YamlAdapter()
+        for path, intents in sidecar_updates.items():
+            # Load the sidecar file only once
+            is_yaml = path.suffix == ".yaml"
+            data = yaml_adapter.load(path) if is_yaml else json.loads(path.read_text("utf-8"))
+
+            # Apply all intents for this file
+            for intent in intents:
+                data = self._update_sidecar_data(
+                    data, intent.module_fqn, intent.old_fqn, intent.new_fqn
                 )
+            
+            # Dump the final state
+            content = yaml_adapter.dump(data) if is_yaml else json.dumps(data, indent=2, sort_keys=True)
+            all_ops.append(WriteFileOp(path.relative_to(ctx.graph.root_path), content))
 
-            sig_src_path = ctx.sidecar_manager.get_signature_path(self.src_path)
-            if sig_src_path.exists():
-                intents.append(
-                    SidecarUpdateIntent(
-                        sidecar_path=sig_src_path,
-                        module_fqn=old_module_fqn,
-                        old_fqn=old_module_fqn,
-                        new_fqn=new_module_fqn,
-                    )
-                )
+        # Process simple filesystem intents
+        for intent in all_intents:
+            if isinstance(intent, MoveFileIntent):
+                all_ops.append(MoveFileOp(intent.src_path.relative_to(ctx.graph.root_path), intent.dest_path.relative_to(ctx.graph.root_path)))
+            elif isinstance(intent, DeleteFileIntent):
+                all_ops.append(DeleteFileOp(intent.path.relative_to(ctx.graph.root_path)))
+            elif isinstance(intent, ScaffoldIntent):
+                all_ops.append(WriteFileOp(intent.path.relative_to(ctx.graph.root_path), intent.content))
+        
+        return all_ops
+~~~~~
 
-        # 3. Declare physical file move intents
-        intents.append(MoveFileIntent(self.src_path, self.dest_path))
+#### Acts 3: 修正 Transformer 的一个小 Bug
 
-        yaml_src = ctx.sidecar_manager.get_doc_path(self.src_path)
-        if yaml_src.exists():
-            yaml_dest = ctx.sidecar_manager.get_doc_path(self.dest_path)
-            intents.append(MoveFileIntent(yaml_src, yaml_dest))
+`SymbolRenamerTransformer` 的 `_is_target` 逻辑需要更新，以从全局 `rename_map` 中查找 FQN，而不是只取第一个。
 
-        sig_src = ctx.sidecar_manager.get_signature_path(self.src_path)
-        if sig_src.exists():
-            sig_dest = ctx.sidecar_manager.get_signature_path(self.dest_path)
-            intents.append(MoveFileIntent(sig_src, sig_dest))
+~~~~~act
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/operations/transforms/rename_transformer.py
+~~~~~
+~~~~~python.old
+    def _is_target(self, node: cst.CSTNode) -> Optional[str]:
+        pos = self.get_metadata(PositionProvider, node)
+        key = (pos.start.line, pos.start.column)
+        if key in self._location_index:
+            # Assuming the rename_map contains the single {old_fqn: new_fqn}
+            # relevant to this set of locations.
+            if self.rename_map:
+                return next(iter(self.rename_map.values()))
+        return None
+~~~~~
+~~~~~python.new
+    def _is_target(self, node: cst.CSTNode) -> Optional[str]:
+        pos = self.get_metadata(PositionProvider, node)
+        key = (pos.start.line, pos.start.column)
+        loc = self._location_index.get(key)
+        if loc:
+            # Check if the FQN of this specific usage location is in our rename map
+            if loc.target_node_fqn in self.rename_map:
+                return self.rename_map[loc.target_node_fqn]
+        return None
+~~~~~
+~~~~~act
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/operations/transforms/rename_transformer.py
+~~~~~
+~~~~~python.old
+    def leave_Name(
+        self, original_node: cst.Name, updated_node: cst.Name
+    ) -> cst.BaseExpression:
+        new_fqn = self._is_target(original_node)
+        if new_fqn:
+            old_fqn = next(iter(self.rename_map.keys()))
+            old_short_name = old_fqn.split(".")[-1]
 
-        # 4. Declare scaffolding intents for __init__.py files
-        intents.extend(self._scaffold_init_intents(self.dest_path, ctx))
+            # Name Match Guard: Only rename if the node's text matches the old name.
+            if original_node.value == old_short_name:
+                new_short_name = new_fqn.split(".")[-1]
+                return updated_node.with_changes(value=new_short_name)
 
-        return intents
+        return updated_node
+~~~~~
+~~~~~python.new
+    def leave_Name(
+        self, original_node: cst.Name, updated_node: cst.Name
+    ) -> cst.BaseExpression:
+        new_fqn = self._is_target(original_node)
+        if new_fqn:
+            pos = self.get_metadata(PositionProvider, original_node)
+            key = (pos.start.line, pos.start.column)
+            loc = self._location_index.get(key)
+            if loc:
+                old_fqn = loc.target_node_fqn
+                old_short_name = old_fqn.split(".")[-1]
 
-    def _scaffold_init_intents(
-        self, file_path: Path, ctx: RefactorContext
-    ) -> List[ScaffoldIntent]:
-        intents: List[ScaffoldIntent] = []
-        parent = file_path.parent
-        search_paths = ctx.graph.search_paths
+                # Name Match Guard: Only rename if the node's text matches the old name.
+                if original_node.value == old_short_name:
+                    new_short_name = new_fqn.split(".")[-1]
+                    return updated_node.with_changes(value=new_short_name)
 
-        active_root = None
-        for sp in search_paths:
-            if file_path.is_relative_to(sp):
-                if active_root is None or len(sp.parts) > len(active_root.parts):
-                    active_root = sp
-
-        if not active_root:
-            return []
-
-        while parent != active_root and parent.is_relative_to(active_root):
-            init_file = parent / "__init__.py"
-            if not init_file.exists():
-                intents.append(ScaffoldIntent(path=init_file, content=""))
-            parent = parent.parent
-
-        return intents
+        return updated_node
 ~~~~~
 
 ### 下一步建议
 
-我们已经成功地将核心操作转换为意图声明。现在，`Planner` 成了瓶颈，它仍然在使用旧的 `analyze` 逻辑。
+我们已经完成了 Planner 2.0 的核心实现！
 
-下一步是**升级 Planner (Step 3)**：
-1.  创建一个新的 `Planner.plan_v2` 方法，它接受 `MigrationSpec` 并调用 `collect_intents`。
-2.  实现 **Intent Aggregator** 逻辑，它将收集到的所有 `Intents` 按类型分组（例如，所有 `RenameIntent` 放入一个 `RenameMap`）。
-3.  暂时将聚合后的 `Intents` 转化为简单的描述性字符串并打印出来，以验证意图收集是否正确，然后再继续实现真正的 `FileOp` 生成器。
+现在，最激动人心的时刻到了：**重新运行我们的 "Smoking Gun" 测试** (`test_fail_concurrent_move_and_rename.py`)。
+
+理论上，由于 `GlobalBatchRenamer` 的存在，两次重命名现在应该会被合并到一次文件写入中，从而解决“丢失的编辑”问题。
+
+如果测试通过，我们将进入路线图的最后一步：**验证与回归测试**，以确保新架构没有引入任何新的问题。

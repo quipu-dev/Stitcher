@@ -25,11 +25,11 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
     def _is_target(self, node: cst.CSTNode) -> Optional[str]:
         pos = self.get_metadata(PositionProvider, node)
         key = (pos.start.line, pos.start.column)
-        if key in self._location_index:
-            # Assuming the rename_map contains the single {old_fqn: new_fqn}
-            # relevant to this set of locations.
-            if self.rename_map:
-                return next(iter(self.rename_map.values()))
+        loc = self._location_index.get(key)
+        if loc:
+            # Check if the FQN of this specific usage location is in our rename map
+            if loc.target_node_fqn in self.rename_map:
+                return self.rename_map[loc.target_node_fqn]
         return None
 
     def _create_node_from_fqn(self, fqn: str) -> cst.BaseExpression:
@@ -44,13 +44,17 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
     ) -> cst.BaseExpression:
         new_fqn = self._is_target(original_node)
         if new_fqn:
-            old_fqn = next(iter(self.rename_map.keys()))
-            old_short_name = old_fqn.split(".")[-1]
+            pos = self.get_metadata(PositionProvider, original_node)
+            key = (pos.start.line, pos.start.column)
+            loc = self._location_index.get(key)
+            if loc:
+                old_fqn = loc.target_node_fqn
+                old_short_name = old_fqn.split(".")[-1]
 
-            # Name Match Guard: Only rename if the node's text matches the old name.
-            if original_node.value == old_short_name:
-                new_short_name = new_fqn.split(".")[-1]
-                return updated_node.with_changes(value=new_short_name)
+                # Name Match Guard: Only rename if the node's text matches the old name.
+                if original_node.value == old_short_name:
+                    new_short_name = new_fqn.split(".")[-1]
+                    return updated_node.with_changes(value=new_short_name)
 
         return updated_node
 
