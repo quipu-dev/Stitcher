@@ -91,30 +91,10 @@ class _UsageVisitor(cst.CSTVisitor):
             self._register_node(node, target_fqn)
 
     def _register_module_parts(self, node: cst.CSTNode, absolute_module: str):
-        # Simple implementation: flatten the node to string parts and register base Name if applicable?
-        # Actually, let's rely on _UsageVisitor.visit_Attribute generic logic if possible,
-        # BUT import nodes are special because they might not be in local_symbols yet.
-
-        # For now, let's register the exact module FQN to the top-level node (which might be Attribute or Name).
-        # This covers `import old` -> `import new` (Name -> Name)
-        # And `from old import X` -> `from new import X` (Name -> Name)
-        # It might miss `import pkg.old` -> `import pkg.new` if we only register `pkg.old` to the Attribute node.
-        # But RenameSymbolOperation handles replacement.
-
-        # Let's walk down the attribute chain if possible.
-        curr = node
-        curr_fqn = absolute_module
-
-        while isinstance(curr, cst.Attribute):
-            self._register_node(curr.attr, curr_fqn)
-            curr = curr.value
-            if "." in curr_fqn:
-                curr_fqn = curr_fqn.rsplit(".", 1)[0]
-            else:
-                break
-
-        if isinstance(curr, cst.Name):
-            self._register_node(curr, curr_fqn)
+        # We register the entire module node (which can be a Name or Attribute)
+        # as a usage of the fully resolved module FQN. This allows the
+        # transformer to replace the whole path in one go.
+        self._register_node(node, absolute_module)
 
     def visit_Import(self, node: cst.Import) -> Optional[bool]:
         for alias in node.names:
@@ -199,10 +179,9 @@ class _UsageVisitor(cst.CSTVisitor):
             suffix = ".".join(parts[1:])
             absolute_fqn = f"{root_fqn}.{suffix}" if suffix else root_fqn
 
-            # We want to register the `attr` node (the last part) as a usage of this absolute FQN.
-            # because RenameTransformer targets the specific Name node.
-            # node.attr is the Name node for the last part.
-            self._register_node(node.attr, absolute_fqn)
+            # We register the Attribute node itself as the usage.
+            # This is crucial for RenameSymbolOperation to replace the full qualified path if needed.
+            self._register_node(node, absolute_fqn)
 
         return True
 
@@ -210,7 +189,12 @@ class _UsageVisitor(cst.CSTVisitor):
 class SemanticGraph:
     def __init__(self, root_path: Path):
         self.root_path = root_path
-        self._griffe_loader = griffe.GriffeLoader(search_paths=[self.root_path])
+        search_paths = [self.root_path]
+        src_path = self.root_path / "src"
+        if src_path.is_dir():
+            search_paths.insert(0, src_path)
+
+        self._griffe_loader = griffe.GriffeLoader(search_paths=search_paths)
         self._modules: Dict[str, griffe.Module] = {}
         self.registry = UsageRegistry()
 
