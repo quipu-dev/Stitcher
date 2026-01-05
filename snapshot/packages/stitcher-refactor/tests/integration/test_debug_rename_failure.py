@@ -96,6 +96,11 @@ def test_debug_rename_failure_analysis(tmp_path):
             "packages/stitcher-common/src/stitcher/common/messaging/protocols.py",
             "class Renderer: pass"
         )
+        # Add the missing __init__.py to make 'messaging' a valid package
+        .with_source(
+            "packages/stitcher-common/src/stitcher/common/messaging/__init__.py",
+            ""
+        )
         # Use REAL content for bus.py
         .with_source(
             "packages/stitcher-common/src/stitcher/common/messaging/bus.py", 
