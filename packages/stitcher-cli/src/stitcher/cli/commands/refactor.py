@@ -24,18 +24,18 @@ def refactor_command(
         file_okay=True,
         dir_okay=False,
         readable=True,
-        help="Path to the Python migration script.",
+        help=nexus(L.cli.option.refactor_script_path.help),
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
-        help="Show planned changes without applying them.",
+        help=nexus(L.cli.option.refactor_dry_run.help),
     ),
     yes: bool = typer.Option(
         False,
         "-y",
         "--yes",
-        help="Automatically confirm and apply changes.",
+        help=nexus(L.cli.option.refactor_yes.help),
     ),
 ):
     root_path = Path.cwd()

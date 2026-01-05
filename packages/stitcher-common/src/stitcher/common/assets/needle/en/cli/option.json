@@ -2,11 +2,26 @@
   "force": {
     "help": "Code-first: Overwrite YAML content if it differs from source code."
   },
+  "force_relink": {
+    "help": "[Non-interactive] For 'Signature Drift' errors, forces relinking."
+  },
   "non_interactive": {
     "help": "Force non-interactive mode, failing on unresolved conflicts."
   },
   "reconcile": {
     "help": "YAML-first: Ignore source docstrings if they conflict with existing YAML."
+  },
+  "reconcile_co_evolution": {
+    "help": "[Non-interactive] For 'Co-evolution' errors, accepts both changes."
+  },
+  "refactor_dry_run": {
+    "help": "Show planned changes without applying them."
+  },
+  "refactor_script_path": {
+    "help": "Path to the Python migration script."
+  },
+  "refactor_yes": {
+    "help": "Automatically confirm and apply changes."
   },
   "strip": {
     "help": "Remove docstrings from source code after pumping."

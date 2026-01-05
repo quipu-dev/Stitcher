@@ -20,5 +20,8 @@
   "refactor": {
     "help": "应用自动化代码重构。"
   },
+  "refactor_apply": {
+    "help": "从迁移脚本应用自动化代码重构。"
+  },
   "not_implemented": "ℹ️  命令 '{command}' 尚未实现。"
 }

@@ -20,5 +20,8 @@
   "refactor": {
     "help": "Apply automated refactorings."
   },
+  "refactor_apply": {
+    "help": "Apply automated refactorings from a migration script."
+  },
   "not_implemented": "ℹ️  Command '{command}' is not yet implemented."
 }

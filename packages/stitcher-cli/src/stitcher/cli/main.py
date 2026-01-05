@@ -46,7 +46,9 @@ app.command(name="inject", help=nexus(L.cli.command.inject.help))(inject_command
 refactor_app = typer.Typer(
     name="refactor", help=nexus(L.cli.command.refactor.help), no_args_is_help=True
 )
-refactor_app.command(name="apply")(refactor_command)
+refactor_app.command(name="apply", help=nexus(L.cli.command.refactor_apply.help))(
+    refactor_command
+)
 app.add_typer(refactor_app)
 
 
