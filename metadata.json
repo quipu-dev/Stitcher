@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 隔离 refactor 命令测试以修复 ModuleNotFoundError", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767593725.2795515, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 重构 refactor 命令测试以验证意图", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767593859.4405077, "duration_ms": 0}}

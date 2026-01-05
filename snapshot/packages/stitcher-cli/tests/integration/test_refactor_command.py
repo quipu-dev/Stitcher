@@ -2,7 +2,8 @@ import pytest
 from typer.testing import CliRunner
 
 from stitcher.cli.main import app
-from stitcher.test_utils import WorkspaceFactory
+from stitcher.test_utils import WorkspaceFactory, SpyBus
+from needle.pointer import L
 
 runner = CliRunner()
 
@@ -34,15 +35,17 @@ def upgrade(spec: MigrationSpec):
 
     # 2. Act
     monkeypatch.chdir(tmp_path)
-    result = runner.invoke(
-        app,
-        ["refactor", "apply", str(migration_script), "--yes"],
-        catch_exceptions=False,
-    )
+    spy_bus = SpyBus()
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        result = runner.invoke(
+            app,
+            ["refactor", "apply", str(migration_script), "--yes"],
+            catch_exceptions=False,
+        )
 
     # 3. Assert
     assert result.exit_code == 0, result.stdout
-    assert "Refactor complete" in result.stdout
+    spy_bus.assert_id_called(L.refactor.run.success)
 
     # Verify file changes
     core_py = tmp_path / "src/mypkg/core.py"
@@ -58,6 +61,7 @@ def test_refactor_apply_dry_run(tmp_path, monkeypatch):
         factory
         .with_project_name("mypkg")
         .with_source("src/mypkg/core.py", "class Old: pass")
+        .with_source("src/mypkg/app.py", "from mypkg.core import Old")
         .with_source("pyproject.toml", "[project]\nname='mypkg'")
     ).build()
     migration_script_content = """
@@ -73,16 +77,22 @@ def upgrade(spec: MigrationSpec):
 
     # 2. Act
     monkeypatch.chdir(tmp_path)
-    result = runner.invoke(
-        app,
-        ["refactor", "apply", str(migration_script), "--dry-run"],
-        catch_exceptions=False,
-    )
+    spy_bus = SpyBus()
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        result = runner.invoke(
+            app,
+            ["refactor", "apply", str(migration_script), "--dry-run"],
+            catch_exceptions=False,
+        )
 
     # 3. Assert
-    assert result.exit_code == 0
-    assert "operations will be performed" in result.stdout
-    assert "Refactor complete" not in result.stdout # Should not be applied
+    assert result.exit_code == 0, result.stdout
+    spy_bus.assert_id_called(L.refactor.run.preview_header)
+
+    # Assert success message was NOT called
+    success_id = str(L.refactor.run.success)
+    called_ids = [msg["id"] for msg in spy_bus.get_messages()]
+    assert success_id not in called_ids
 
     # Verify NO file changes
     core_py = tmp_path / "src/mypkg/core.py"
