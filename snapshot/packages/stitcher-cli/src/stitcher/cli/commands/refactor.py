@@ -72,7 +72,7 @@ def refactor_command(
 
         if not file_ops:
             bus.success(L.refactor.run.no_ops)
-            raise typer.Exit()
+            return
 
         # 3. Preview and Confirm
         tm = TransactionManager(root_path)
@@ -92,7 +92,7 @@ def refactor_command(
             typer.echo(f"  {desc}")
 
         if dry_run:
-            raise typer.Exit()
+            return
 
         # 4. Execute
         confirmed = yes or typer.confirm(nexus(L.refactor.run.confirm), default=False)
