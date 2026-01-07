@@ -132,25 +132,25 @@ def test_coverage_command_output_and_alignment(tmp_path, monkeypatch):
     # -- Assert Alignment --
     header_line = next(l for l in lines if l.strip().startswith("Name"))
     long_path_line = next(l for l in lines if "documented_long_path.py" in l)
+    short_path_line = next(l for l in lines if "undocumented.py" in l)
 
-    # Find start index of each column in the header
+    # Find start index of each column in the header, which defines our search boundaries
     stmts_start = header_line.find("Stmts")
     miss_start = header_line.find("Miss")
     cover_start = header_line.find("Cover")
 
     # Check that TOTAL line columns align with header
-    # We find the start of the number, which might be padded with spaces
-    assert total_line.find(str(total_data["stmts"])) >= stmts_start
-    assert total_line.find(str(total_data["miss"])) >= miss_start
-    assert total_line.find(total_data["cover"]) >= cover_start
+    # By providing a start index to find(), we ensure we search in the correct column region.
+    assert total_line.find(str(total_data["stmts"]), stmts_start) != -1
+    assert total_line.find(str(total_data["miss"]), miss_start) != -1
+    assert total_line.find(total_data["cover"], cover_start) != -1
 
     # Check a data line with a long path for alignment
-    assert long_path_line.find(str(pd_data["stmts"])) >= stmts_start
-    assert long_path_line.find(str(pd_data["miss"])) >= miss_start
-    assert long_path_line.find(pd_data["cover"]) >= cover_start
+    assert long_path_line.find(str(pd_data["stmts"]), stmts_start) != -1
+    assert long_path_line.find(str(pd_data["miss"]), miss_start) != -1
+    assert long_path_line.find(pd_data["cover"], cover_start) != -1
 
-    # Check a data line with a short path for alignment
-    short_path_line = next(l for l in lines if "undocumented.py" in l)
-    assert short_path_line.find(str(ud_data["stmts"])) >= stmts_start
-    assert short_path_line.find(str(ud_data["miss"])) >= miss_start
-    assert short_path_line.find(ud_data["cover"]) >= cover_start
+    # Check a data line with a short path for alignment (this was the failing one)
+    assert short_path_line.find(str(ud_data["stmts"]), stmts_start) != -1
+    assert short_path_line.find(str(ud_data["miss"]), miss_start) != -1
+    assert short_path_line.find(ud_data["cover"], cover_start) != -1

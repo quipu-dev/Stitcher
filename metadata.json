@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修正 `is_documentable` 逻辑以正确排除私有模块", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767768120.3543608, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 `cov` 命令集成测试中的对齐断言逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767768226.545273, "duration_ms": 0}}
