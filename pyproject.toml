@@ -18,6 +18,7 @@ dev = [
     "stitcher-cli",
     "stitcher-application",
     "stitcher-test-utils",
+    "stitcher-refactor",
 ]
 
 [tool.uv.workspace]
@@ -35,6 +36,7 @@ stitcher-application = { workspace = true }
 stitcher-python-adapter = { workspace = true }
 stitcher-cli = { workspace = true }
 stitcher-test-utils = { workspace = true }
+stitcher-refactor = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
@@ -52,7 +54,8 @@ pythonpath = [
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-runtime/src",
     "packages/pyneedle/src",
-    "packages/stitcher-test-utils/src"
+    "packages/stitcher-test-utils/src",
+    "packages/stitcher-refactor/src"
 ]
 
 [tool.stitcher.targets.stitcher]
@@ -65,6 +68,7 @@ scan_paths = [
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
     "packages/stitcher-test-utils/src",
+    "packages/stitcher-refactor/src",
 ]
 stub_package = "packages/stitcher-stubs"
 
@@ -95,4 +99,5 @@ extraPaths = [
     "packages/pyneedle/src",
     "packages/stitcher-stubs/src",
     "packages/needle-stubs/src",
+    "packages/stitcher-refactor/src",
 ]

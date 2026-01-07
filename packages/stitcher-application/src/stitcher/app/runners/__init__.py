@@ -3,6 +3,7 @@ from .generate import GenerateRunner
 from .init import InitRunner
 from .pump import PumpRunner
 from .transform import TransformRunner
+from .coverage import CoverageRunner
 
 __all__ = [
     "CheckRunner",
@@ -10,4 +11,5 @@ __all__ = [
     "InitRunner",
     "PumpRunner",
     "TransformRunner",
+    "CoverageRunner",
 ]

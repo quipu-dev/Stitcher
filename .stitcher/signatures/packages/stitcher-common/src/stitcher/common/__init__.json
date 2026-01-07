@@ -11,7 +11,7 @@
   "_project_root": {},
   "_user_factory": {},
   "bus": {
-    "baseline_yaml_content_hash": "9d8ffa4c49435c2db1936daf0af4c95dc2cac7f4e020f1ac2e82b5e4542cda3b"
+    "baseline_yaml_content_hash": "4f1c69f6a0eeb6dd83463e36fa5744c82a2dc63985560db0f65d7e12d1a2357b"
   },
   "get_current_renderer": {
     "baseline_code_signature_text": "def get_current_renderer() -> OverlayOperator:",

@@ -1,0 +1,22 @@
+{
+  "CoverageRunner": {},
+  "CoverageRunner.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, doc_manager: DocumentManager):",
+    "baseline_code_structure_hash": "07c2206c14a805541cfc7c07feb0135d4f953f898acd0999cf9aa0d17252e35c"
+  },
+  "CoverageRunner._analyze_module_coverage": {
+    "baseline_code_signature_text": "def _analyze_module_coverage(self, module) -> CoverageResult:",
+    "baseline_code_structure_hash": "f51ff5db3c276479bce71e0fe761b309cb58b032fd363423a6912df50d501e6f"
+  },
+  "CoverageRunner._render_report": {
+    "baseline_code_signature_text": "def _render_report(self, results: List[CoverageResult]):",
+    "baseline_code_structure_hash": "df0e3d48dcbe6ddcee62e116c1422fd19ee7b869af0215bf6ef00c1aab3f7a8c"
+  },
+  "CoverageRunner.doc_manager": {},
+  "CoverageRunner.root_path": {},
+  "CoverageRunner.run": {
+    "baseline_code_signature_text": "def run(self) -> bool:",
+    "baseline_code_structure_hash": "721d76a32c15d47dcca6c5eb082a905b7cf7a0e184ca505f8d5648c46922807d"
+  },
+  "CoverageRunner.scanner": {}
+}

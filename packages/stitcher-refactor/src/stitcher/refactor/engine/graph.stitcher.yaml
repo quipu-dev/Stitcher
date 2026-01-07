@@ -1,0 +1,8 @@
+"SemanticGraph._build_registry": |-
+  Walks the module tree, builds local symbol tables from Griffe Aliases,
+  and scans CST for usages.
+"UsageLocation": |-
+  Represents a specific usage of a symbol in the codebase.
+"_UsageVisitor": |-
+  Scans a file's CST for Name nodes and resolves them using a local symbol table.
+  Uses LibCST to ensure positions match the Transformer exactly.

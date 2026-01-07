@@ -1,18 +1,18 @@
-"MessageBus": |-
+"FeedbackBus": |-
   Coordinates message resolution and rendering.
-"MessageBus.__init__": |-
+"FeedbackBus.__init__": |-
   Initializes the bus with an operator (callable) for message lookup.
-"MessageBus.debug": |-
+"FeedbackBus.debug": |-
   Sends a debug-level message.
-"MessageBus.error": |-
+"FeedbackBus.error": |-
   Sends an error-level message.
-"MessageBus.info": |-
+"FeedbackBus.info": |-
   Sends an info-level message.
-"MessageBus.render_to_string": |-
+"FeedbackBus.render_to_string": |-
   Resolves a message to a string without sending it to the renderer.
-"MessageBus.set_renderer": |-
+"FeedbackBus.set_renderer": |-
   Sets the renderer responsible for displaying messages.
-"MessageBus.success": |-
+"FeedbackBus.success": |-
   Sends a success-level message.
-"MessageBus.warning": |-
+"FeedbackBus.warning": |-
   Sends a warning-level message.

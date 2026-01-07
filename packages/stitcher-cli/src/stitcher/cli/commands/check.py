@@ -1,5 +1,6 @@
 import typer
-from stitcher.common import bus
+from stitcher.common import bus, stitcher_operator as nexus
+from needle.pointer import L
 from stitcher.cli.factories import make_app, make_interaction_handler
 
 
@@ -7,21 +8,23 @@ def check_command(
     force_relink: bool = typer.Option(
         False,
         "--force-relink",
-        help="[Non-interactive] For 'Signature Drift' errors, forces relinking.",
+        help=nexus(L.cli.option.force_relink.help),
     ),
     reconcile: bool = typer.Option(
         False,
         "--reconcile",
-        help="[Non-interactive] For 'Co-evolution' errors, accepts both changes.",
+        help=nexus(L.cli.option.reconcile_co_evolution.help),
     ),
     non_interactive: bool = typer.Option(
         False,
         "--non-interactive",
-        help="Force non-interactive mode, failing on unresolved conflicts.",
+        help=nexus(L.cli.option.non_interactive.help),
     ),
 ):
     if force_relink and reconcile:
-        bus.error("Cannot use --force-relink and --reconcile simultaneously.")
+        bus.error(
+            L.error.cli.conflicting_options, opt1="force-relink", opt2="reconcile"
+        )
         raise typer.Exit(code=1)
 
     # Use factory to decide if we need an interaction handler

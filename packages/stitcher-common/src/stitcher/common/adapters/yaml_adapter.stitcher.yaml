@@ -1,5 +1,7 @@
 "YamlAdapter": |-
   An adapter to read/write documentation from/to YAML files.
+"YamlAdapter.dump": |-
+  Dumps a dictionary of docstrings to a YAML formatted string.
 "YamlAdapter.load": |-
   Loads docstrings from a YAML file. Returns an empty dictionary if the file
   does not exist, is not a valid YAML, or is not a dictionary.

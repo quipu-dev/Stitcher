@@ -214,3 +214,129 @@ def test_check_interactive_purge_deletes_empty_yaml(tmp_path, monkeypatch):
     assert not doc_file.exists(), (
         "YAML file should have been deleted after last entry was purged."
     )
+
+
+# --- Test Suite for Signature Drift ---
+
+
+@pytest.fixture
+def drift_workspace(tmp_path):
+    """Creates a workspace with a signature drift conflict."""
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/app.py", "def func(a: int): ...")
+        .with_docs("src/app.stitcher.yaml", {"func": "Doc"})
+        .build()
+    )
+    # Run init to create baseline
+    app = create_test_app(root_path=project_root)
+    app.run_init()
+    # Introduce drift
+    (project_root / "src/app.py").write_text("def func(a: str): ...")
+    return project_root
+
+
+def test_check_interactive_relink_fixes_drift(drift_workspace, monkeypatch):
+    handler = MockResolutionHandler([ResolutionAction.RELINK])
+    app = create_test_app(root_path=drift_workspace, interaction_handler=handler)
+    spy_bus = SpyBus()
+
+    initial_hashes = get_stored_hashes(drift_workspace, "src/app.py")
+
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        assert app.run_check() is True
+
+    spy_bus.assert_id_called(L.check.state.relinked, level="success")
+
+    final_hashes = get_stored_hashes(drift_workspace, "src/app.py")
+    assert (
+        final_hashes["func"]["baseline_code_structure_hash"]
+        != initial_hashes["func"]["baseline_code_structure_hash"]
+    )
+
+    # Verify that a subsequent check is clean
+    app_verify = create_test_app(root_path=drift_workspace)
+    spy_verify = SpyBus()
+    with spy_verify.patch(monkeypatch, "stitcher.common.bus"):
+        assert app_verify.run_check() is True
+    spy_verify.assert_id_called(L.check.run.success)
+
+
+def test_check_interactive_skip_drift_fails_check(drift_workspace, monkeypatch):
+    handler = MockResolutionHandler([ResolutionAction.SKIP])
+    app = create_test_app(root_path=drift_workspace, interaction_handler=handler)
+    spy_bus = SpyBus()
+
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        assert app.run_check() is False
+
+    spy_bus.assert_id_called(L.check.state.signature_drift, level="error")
+    spy_bus.assert_id_called(L.check.run.fail, level="error")
+
+
+# --- Test Suite for Co-Evolution ---
+
+
+@pytest.fixture
+def co_evolution_workspace(tmp_path):
+    """Creates a workspace with a co-evolution conflict."""
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source("src/app.py", "def func(a: int): ...")
+        .with_docs("src/app.stitcher.yaml", {"func": "Old Doc"})
+        .build()
+    )
+    app = create_test_app(root_path=project_root)
+    app.run_init()
+    # Introduce co-evolution
+    (project_root / "src/app.py").write_text("def func(a: str): ...")
+    (project_root / "src/app.stitcher.yaml").write_text('func: "New Doc"')
+    return project_root
+
+
+def test_check_interactive_reconcile_fixes_co_evolution(
+    co_evolution_workspace, monkeypatch
+):
+    handler = MockResolutionHandler([ResolutionAction.RECONCILE])
+    app = create_test_app(root_path=co_evolution_workspace, interaction_handler=handler)
+    spy_bus = SpyBus()
+
+    initial_hashes = get_stored_hashes(co_evolution_workspace, "src/app.py")
+
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        assert app.run_check() is True
+
+    spy_bus.assert_id_called(L.check.state.reconciled, level="success")
+
+    final_hashes = get_stored_hashes(co_evolution_workspace, "src/app.py")
+    assert (
+        final_hashes["func"]["baseline_code_structure_hash"]
+        != initial_hashes["func"]["baseline_code_structure_hash"]
+    )
+    assert (
+        final_hashes["func"]["baseline_yaml_content_hash"]
+        != initial_hashes["func"]["baseline_yaml_content_hash"]
+    )
+
+    # Verify that a subsequent check is clean
+    app_verify = create_test_app(root_path=co_evolution_workspace)
+    spy_verify = SpyBus()
+    with spy_verify.patch(monkeypatch, "stitcher.common.bus"):
+        assert app_verify.run_check() is True
+    spy_verify.assert_id_called(L.check.run.success)
+
+
+def test_check_interactive_skip_co_evolution_fails_check(
+    co_evolution_workspace, monkeypatch
+):
+    handler = MockResolutionHandler([ResolutionAction.SKIP])
+    app = create_test_app(root_path=co_evolution_workspace, interaction_handler=handler)
+    spy_bus = SpyBus()
+
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        assert app.run_check() is False
+
+    spy_bus.assert_id_called(L.check.state.co_evolution, level="error")
+    spy_bus.assert_id_called(L.check.run.fail, level="error")

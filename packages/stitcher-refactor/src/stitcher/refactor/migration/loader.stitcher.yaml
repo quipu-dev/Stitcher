@@ -1,0 +1,2 @@
+"MigrationLoader.load_from_path": |-
+  Dynamically loads a migration script and returns a populated MigrationSpec.

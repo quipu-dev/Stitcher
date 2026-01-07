@@ -7,7 +7,7 @@ from needle.pointer import L
 from needle.operators import I18NFactoryOperator, OverlayOperator
 from needle.runtime import _find_project_root
 from .formatting import format_docstring, parse_docstring
-from .messaging.bus import MessageBus
+from .messaging.bus import FeedbackBus
 from .interfaces import DocumentAdapter
 from .adapters.yaml_adapter import YamlAdapter
 
@@ -93,7 +93,7 @@ def stitcher_operator(key):
     return renderer(key)
 
 
-bus = MessageBus(operator=stitcher_operator)
+bus = FeedbackBus(operator=stitcher_operator)
 
 
 __all__ = [

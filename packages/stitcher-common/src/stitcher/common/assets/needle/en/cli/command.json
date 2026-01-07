@@ -2,6 +2,9 @@
   "check": {
     "help": "Verify consistency between code and docs."
   },
+  "cov": {
+    "help": "Show documentation coverage report."
+  },
   "generate": {
     "help": "Generate .pyi stubs based on pyproject.toml config."
   },
@@ -16,6 +19,12 @@
   },
   "strip": {
     "help": "Remove docstrings from source files."
+  },
+  "refactor": {
+    "help": "Apply automated refactorings."
+  },
+  "refactor_apply": {
+    "help": "Apply automated refactorings from a migration script."
   },
   "not_implemented": "ℹ️  Command '{command}' is not yet implemented."
 }

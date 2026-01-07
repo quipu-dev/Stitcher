@@ -142,6 +142,11 @@
     "baseline_code_structure_hash": "3913e29f0c174565e95c6a9a7dc0ec2a0a9cb7ad123bacd4e602c235025ff6d1",
     "baseline_yaml_content_hash": "8bbaf6a0dd107660708523a0e0f8c4fb0465e5cba270dab276af8d6e4b310151"
   },
+  "ModuleDef.get_public_documentable_fqns": {
+    "baseline_code_signature_text": "def get_public_documentable_fqns(self) -> Set[str]:",
+    "baseline_code_structure_hash": "ff6941bca8778e1b33e1bf173bfe9a9cd0e3e66a91415fd0e3037f9e48d3c940",
+    "baseline_yaml_content_hash": "ec70ba36781cbf21234c3775a9d24332b83470040b1d84cb543921bc5e0b2e7d"
+  },
   "ModuleDef.get_undocumented_public_keys": {
     "baseline_code_signature_text": "def get_undocumented_public_keys(self) -> List[str]:",
     "baseline_code_structure_hash": "fb0d44d70b0badcc8b9ad0fbc49a56169c9adb3e8b3b6fb88372eb1f3c6dcb5c",

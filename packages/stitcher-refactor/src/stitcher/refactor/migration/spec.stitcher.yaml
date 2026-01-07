@@ -1,0 +1,12 @@
+"MigrationSpec": |-
+  A container for defining a set of refactoring operations.
+  This serves as the API for Stitcher Migration Packs (SMP).
+"MigrationSpec.add": |-
+  Register a single atomic operation.
+"MigrationSpec.add_map": |-
+  Syntactic sugar for adding multiple RenameSymbolOperation items.
+
+  Args:
+      rename_map: A dictionary mapping old FQNs to new FQNs.
+"MigrationSpec.operations": |-
+  Returns the list of collected operations.

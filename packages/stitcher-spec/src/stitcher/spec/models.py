@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Set
 
 
 class ArgumentKind(str, Enum):
@@ -68,18 +68,24 @@ class ModuleDef:
     dunder_all: Optional[str] = None
 
     def is_documentable(self) -> bool:
-        # A module is documentable if it has a docstring, public attributes,
-        # functions, or classes. Boilerplate like __all__ or __path__ should be ignored.
+        # A module is documentable if it has a docstring, or any public
+        # attributes, functions, or classes.
         has_public_attributes = any(
             not attr.name.startswith("_") for attr in self.attributes
         )
+        has_public_functions = any(
+            not func.name.startswith("_") for func in self.functions
+        )
+        has_public_classes = any(not cls.name.startswith("_") for cls in self.classes)
 
         return bool(
-            self.docstring or has_public_attributes or self.functions or self.classes
+            self.docstring
+            or has_public_attributes
+            or has_public_functions
+            or has_public_classes
         )
 
     def get_all_fqns(self) -> List[str]:
-        """返回模块中所有可文档化实体的 FQN 列表。"""
         fqns = []
         if self.docstring:
             # Consistent with how we might handle module doc in the future
@@ -98,6 +104,38 @@ class ModuleDef:
             for method in cls.methods:
                 fqns.append(f"{cls.name}.{method.name}")
         return sorted(fqns)
+
+    def get_public_documentable_fqns(self) -> Set[str]:
+        keys: Set[str] = set()
+
+        # Module docstring itself
+        if self.is_documentable():
+            keys.add("__doc__")
+
+        # Public Functions
+        for func in self.functions:
+            if not func.name.startswith("_"):
+                keys.add(func.name)
+
+        # Public Classes and their contents
+        for cls in self.classes:
+            if not cls.name.startswith("_"):
+                keys.add(cls.name)
+                # Public attributes in the class
+                for attr in cls.attributes:
+                    if not attr.name.startswith("_"):
+                        keys.add(f"{cls.name}.{attr.name}")
+                # Public methods
+                for method in cls.methods:
+                    if not method.name.startswith("_"):
+                        keys.add(f"{cls.name}.{method.name}")
+
+        # Module-level public attributes
+        for attr in self.attributes:
+            if not attr.name.startswith("_"):
+                keys.add(attr.name)
+
+        return keys
 
     def get_undocumented_public_keys(self) -> List[str]:
         keys = []
@@ -166,8 +204,6 @@ class ResolutionPlan:
 
 @dataclass
 class FunctionExecutionPlan:
-    """定义对单个 FQN 的最终执行操作。"""
-
     fqn: str
     strip_source_docstring: bool = False
     update_code_fingerprint: bool = False

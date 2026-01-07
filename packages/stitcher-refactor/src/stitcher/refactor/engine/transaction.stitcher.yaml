@@ -1,0 +1,3 @@
+"TransactionManager._rebase_ops": |-
+  Rebases operations to handle cases where a file is moved and then modified.
+  For example: [Move(A->B), Write(A)] becomes [Move(A->B), Write(B)].

@@ -1,0 +1,3 @@
+"AbstractOperation.collect_intents": |-
+  Analyzes the codebase and returns a list of high-level intents
+  without planning execution.

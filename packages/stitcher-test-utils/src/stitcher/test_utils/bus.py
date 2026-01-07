@@ -20,27 +20,11 @@ class SpyRenderer(Renderer):
 
 
 class SpyBus:
-    """
-    A Test Utility that spies on the global stitcher.common.bus singleton.
-
-    Instead of replacing the bus instance (which fails if modules have already
-    imported the instance via 'from stitcher.common import bus'),
-    this utility patches the instance methods directly.
-    """
-
     def __init__(self):
         self._spy_renderer = SpyRenderer()
 
     @contextmanager
     def patch(self, monkeypatch: Any, target: str = "stitcher.common.bus"):
-        """
-        Patches the global bus to capture messages.
-
-        Args:
-            monkeypatch: The pytest monkeypatch fixture.
-            target: Kept for compatibility with existing tests, but functionally
-                    we always patch the singleton instance found at stitcher.common.bus.
-        """
         # The singleton instance we need to mutate
         real_bus = stitcher.common.bus
 

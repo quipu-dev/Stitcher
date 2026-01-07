@@ -1,0 +1,4 @@
+"SidecarManager.get_doc_path": |-
+  Returns the absolute path to the doc sidecar for a source file.
+"SidecarManager.get_signature_path": |-
+  Returns the absolute path to the signature sidecar for a source file.

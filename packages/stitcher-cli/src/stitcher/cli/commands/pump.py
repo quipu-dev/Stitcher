@@ -19,11 +19,11 @@ def pump_command(
     non_interactive: bool = typer.Option(
         False,
         "--non-interactive",
-        help="Force non-interactive mode, failing on unresolved conflicts.",
+        help=nexus(L.cli.option.non_interactive.help),
     ),
 ):
     if force and reconcile:
-        bus.error("Cannot use --force and --reconcile simultaneously.")
+        bus.error(L.error.cli.conflicting_options, opt1="force", opt2="reconcile")
         raise typer.Exit(code=1)
 
     # Use factory logic

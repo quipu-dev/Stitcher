@@ -1,0 +1,3 @@
+{
+  "conflicting_options": "❌ 不能同时使用 --{opt1} 和 --{opt2}。"
+}

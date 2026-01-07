@@ -1,0 +1,38 @@
+{
+  "DeleteDirectoryIntent": {
+    "baseline_yaml_content_hash": "37ce14e8bf3afbb75f14f94706ef49124d22ad08d0f788dcc34d7952d392f851"
+  },
+  "DeleteDirectoryIntent.path": {},
+  "DeleteFileIntent": {
+    "baseline_yaml_content_hash": "f806162e2b5b4d74987c6bd29f459907cd831ddde7b306bbfc75e7951c6500d2"
+  },
+  "DeleteFileIntent.path": {},
+  "FileSystemIntent": {
+    "baseline_yaml_content_hash": "2284a0edab6dd98a758d3737584c15fd6f52ce6d976b2a2dc0f95a30c96f68b3"
+  },
+  "MoveFileIntent": {
+    "baseline_yaml_content_hash": "791a40f83d00d874a25cf6d0e0193873f409e7376383fc373320f64a579c29ba"
+  },
+  "MoveFileIntent.dest_path": {},
+  "MoveFileIntent.src_path": {},
+  "RefactorIntent": {
+    "baseline_yaml_content_hash": "ef7ca2a6732bbba66edb3ad7a5669e61856e3cdedb72c54624f616f4484f211d"
+  },
+  "RenameIntent": {
+    "baseline_yaml_content_hash": "e8c0529813f0edef58e1cf77b2e20a1cefb21d0b5c30093fca7c41747fe5b4a4"
+  },
+  "RenameIntent.new_fqn": {},
+  "RenameIntent.old_fqn": {},
+  "ScaffoldIntent": {
+    "baseline_yaml_content_hash": "5105f5b5830a02816acac2acca8ad3d6b2f7cb6f1e3a7f6cf4b9fd81e1febdbf"
+  },
+  "ScaffoldIntent.content": {},
+  "ScaffoldIntent.path": {},
+  "SidecarUpdateIntent": {
+    "baseline_yaml_content_hash": "5cbefd318e81276a14386ec3ae582cf50c815b5d990e1fd3312a837c980193b1"
+  },
+  "SidecarUpdateIntent.module_fqn": {},
+  "SidecarUpdateIntent.new_fqn": {},
+  "SidecarUpdateIntent.old_fqn": {},
+  "SidecarUpdateIntent.sidecar_path": {}
+}

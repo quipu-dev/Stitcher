@@ -1,0 +1,26 @@
+{
+  "MigrationSpec": {
+    "baseline_yaml_content_hash": "db9c7b20aa79d098af8370ab21d3856f991ddc3d93f2964770006491b1f5305c"
+  },
+  "MigrationSpec.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
+    "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+  },
+  "MigrationSpec._operations": {},
+  "MigrationSpec.add": {
+    "baseline_code_signature_text": "def add(self, operation: AbstractOperation) -> MigrationSpec:",
+    "baseline_code_structure_hash": "023ccd135383b4a502e52b8357ad619ec2d31305f65d66b7641313d6386811bc",
+    "baseline_yaml_content_hash": "f6976ed63e1dce4ab14f90d12b31b2a4818fbb8b4eda6914a4fbb195adb3d885"
+  },
+  "MigrationSpec.add_map": {
+    "baseline_code_signature_text": "def add_map(self, rename_map: Dict[str, str]) -> MigrationSpec:",
+    "baseline_code_structure_hash": "0e36020a5a3c32dc43767133bb9a8ed5e3d8220a4ecbcbce12a0b1f230af1c9c",
+    "baseline_yaml_content_hash": "23b18d8e2c7f4032a996eaa80b36dc4ccda08cc933db1536902e79551069a221"
+  },
+  "MigrationSpec.operations": {
+    "baseline_yaml_content_hash": "30bb899c2936df06f66d9a4904c4805f8045c9844c6ea7e8f97ee8735ff9815b"
+  },
+  "Move": {},
+  "MoveDir": {},
+  "Rename": {}
+}

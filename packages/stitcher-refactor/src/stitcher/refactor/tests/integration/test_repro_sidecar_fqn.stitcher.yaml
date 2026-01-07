@@ -1,0 +1,10 @@
+"test_repro_sidecar_keys_should_remain_short_names_after_directory_move": "Reproduction\
+  \ test for the bug where moving a DIRECTORY causes Sidecar keys\nin child files\
+  \ to be expanded to FQNs instead of remaining as Short Names.\n\nScenario:\n  Structure:\
+  \ mypkg/section/core.py\n  Sidecar:   mypkg/section/core.stitcher.yaml (Key: \"\
+  MyClass\")\n  Action:    Move dir 'mypkg/section' -> 'mypkg/moved_section'\n  \n\
+  Technical Cause Analysis (Hypothesis):\n  When moving a directory, the RenameIntent\
+  \ is for 'mypkg.section'.\n  The module is 'mypkg.section.core'.\n  The 'effective_new_module'\
+  \ logic likely fails to account for prefix renames,\n  leaving the effective module\
+  \ as the OLD one, which fails to match the NEW FQN\n  of the class, thus preventing\
+  \ short-name restoration."

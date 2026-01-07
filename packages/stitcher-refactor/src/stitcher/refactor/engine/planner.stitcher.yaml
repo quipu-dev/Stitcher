@@ -1,0 +1,2 @@
+"Planner.plan": |-
+  Takes a migration spec and generates a flat list of file operations.

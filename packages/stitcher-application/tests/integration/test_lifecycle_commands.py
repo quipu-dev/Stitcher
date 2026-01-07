@@ -64,3 +64,37 @@ def test_inject_command_injects_docstrings(tmp_path, monkeypatch):
 
     spy_bus.assert_id_called(L.inject.file.success)
     spy_bus.assert_id_called(L.inject.run.complete)
+
+
+def test_strip_command_removes_attribute_docstrings(tmp_path, monkeypatch):
+    # Arrange
+    factory = WorkspaceFactory(tmp_path)
+    source_path = "src/main.py"
+    initial_code = dedent("""
+    from dataclasses import dataclass
+
+    @dataclass
+    class MyData:
+        attr: str
+        \"\"\"Attr doc.\"\"\"
+    """)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source(source_path, initial_code)
+        .build()
+    )
+
+    app = create_test_app(root_path=project_root)
+    spy_bus = SpyBus()
+
+    # Act
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        app.run_strip()
+
+    # Assert
+    final_code = (project_root / source_path).read_text()
+    assert '"""Attr doc."""' not in final_code
+    assert "attr: str" in final_code  # Ensure the attribute itself was not removed
+
+    spy_bus.assert_id_called(L.strip.file.success)
+    spy_bus.assert_id_called(L.strip.run.complete)

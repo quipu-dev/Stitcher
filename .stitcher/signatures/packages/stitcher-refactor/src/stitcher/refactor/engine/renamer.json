@@ -1,0 +1,13 @@
+{
+  "GlobalBatchRenamer": {},
+  "GlobalBatchRenamer.__init__": {
+    "baseline_code_signature_text": "def __init__(self, rename_map: Dict[str, str], ctx: RefactorContext):",
+    "baseline_code_structure_hash": "3f061419b21de35a5c8bdd43d41e455f2f8b409df8988a18637d724142c22391"
+  },
+  "GlobalBatchRenamer.analyze": {
+    "baseline_code_signature_text": "def analyze(self) -> List[WriteFileOp]:",
+    "baseline_code_structure_hash": "be4940c6c7eb90cc9fd2bdbc3a80dd205c67d5640bcb6cd7ad7c4d2b68b7f25d"
+  },
+  "GlobalBatchRenamer.ctx": {},
+  "GlobalBatchRenamer.rename_map": {}
+}

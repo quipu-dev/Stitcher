@@ -1,0 +1,22 @@
+{
+  "AbstractOperation": {},
+  "AbstractOperation.analyze": {
+    "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
+    "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1",
+    "baseline_yaml_content_hash": "b784ec87513350954be88fcbf01b0991e7d99769bc2981bd544cd68034f786f1"
+  },
+  "AbstractOperation.collect_intents": {
+    "baseline_code_signature_text": "def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:",
+    "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625",
+    "baseline_yaml_content_hash": "258913016fc1a8646b579767d8de94d90931b54d9129f3d91404f43f0a71b13e"
+  },
+  "SidecarUpdateMixin": {},
+  "SidecarUpdateMixin._path_to_fqn": {
+    "baseline_code_signature_text": "def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:",
+    "baseline_code_structure_hash": "9d8e022c26c3b25ea32b82b16b0cf737974daed449b0ad2bee3dcdcedc3c9988"
+  },
+  "SidecarUpdateMixin._update_sidecar_data": {
+    "baseline_code_signature_text": "def _update_sidecar_data(self, data: Dict[str, Any], module_fqn: Optional[str], old_fqn: str, new_fqn: str) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "90293dbce85734f0498d51c275c62bb7abf8e87a6a147f2ec982ec19bc50bda7"
+  }
+}

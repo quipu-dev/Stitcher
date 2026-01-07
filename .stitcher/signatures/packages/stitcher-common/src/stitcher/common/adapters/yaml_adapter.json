@@ -2,6 +2,11 @@
   "YamlAdapter": {
     "baseline_yaml_content_hash": "8f062ba6cc4aa1a10b219c01f06f346693197fb010bc0ec894470b705cde94bb"
   },
+  "YamlAdapter.dump": {
+    "baseline_code_signature_text": "def dump(self, data: Dict[str, str]) -> str:",
+    "baseline_code_structure_hash": "e21d2b8669ad1eba8eb75b603b88ad4dae026dd14f96a5ef436a2b4a6708dd15",
+    "baseline_yaml_content_hash": "1938d783a5e848be6c316f9039c124511628c47f6302d2bbc28dfe2667b66414"
+  },
   "YamlAdapter.load": {
     "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, str]:",
     "baseline_code_structure_hash": "ef21d314c98812203d6777bd75855c109b1dadf617994d7a622ffcebd3b67de6",

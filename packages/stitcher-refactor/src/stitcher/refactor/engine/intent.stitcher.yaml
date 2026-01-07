@@ -1,0 +1,17 @@
+"DeleteDirectoryIntent": |-
+  Intent to delete an empty directory.
+"DeleteFileIntent": |-
+  Intent to delete a file.
+"FileSystemIntent": |-
+  Base class for intents that directly manipulate the filesystem.
+"MoveFileIntent": |-
+  Intent to move a file from a source to a destination.
+"RefactorIntent": |-
+  Base class for all refactoring intents.
+"RenameIntent": |-
+  Intent to rename a symbol and all its usages.
+"ScaffoldIntent": |-
+  Intent to create a file, typically an empty __init__.py.
+"SidecarUpdateIntent": |-
+  Intent to update keys within a sidecar file due to a symbol rename.
+  This is a high-level intent that will be processed by a dedicated aggregator.

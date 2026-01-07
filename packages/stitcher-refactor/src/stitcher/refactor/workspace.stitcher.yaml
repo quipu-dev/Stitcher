@@ -1,0 +1,8 @@
+"Workspace._discover_packages": |-
+  Scans for all pyproject.toml files to build the package map.
+"Workspace._find_code_dirs": |-
+  Finds potential source directories: src/, tests/, and the package root.
+"Workspace._get_top_level_importables": |-
+  Identifies top-level importable names (packages and modules) within a source dir.
+"Workspace.get_search_paths": |-
+  Returns all discovered source directories for Griffe.

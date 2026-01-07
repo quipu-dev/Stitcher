@@ -1,0 +1,10 @@
+{
+  "loading_graph": "🔍 Loading semantic graph for all project packages...",
+  "planning": "📝 Planning refactoring operations...",
+  "no_ops": "✅ No operations planned. Nothing to do.",
+  "preview_header": "⚠️  The following {count} operations will be performed:",
+  "confirm": "Do you want to apply these changes?",
+  "aborted": "🚫 Refactor aborted by user.",
+  "applying": "🚀 Applying changes...",
+  "success": "✨ Refactor complete. {count} operations performed."
+}

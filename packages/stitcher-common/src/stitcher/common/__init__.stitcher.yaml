@@ -1,5 +1,5 @@
 "bus": |-
-  The global singleton MessageBus instance.
+  The global singleton FeedbackBus instance.
 "get_current_renderer": |-
   Returns the OverlayOperator for the current configured language.
   This implements the 'Lazy Pipeline Construction' pattern.

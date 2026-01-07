@@ -1,0 +1,4 @@
+"MigrationError": |-
+  Base exception for migration-related errors.
+"MigrationScriptError": |-
+  Raised when a migration script is invalid.
