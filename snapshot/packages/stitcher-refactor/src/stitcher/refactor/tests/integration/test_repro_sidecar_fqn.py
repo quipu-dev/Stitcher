@@ -14,22 +14,6 @@ from stitcher.test_utils import WorkspaceFactory
 
 
 def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_path):
-    """
-    Reproduction test for the bug where moving a DIRECTORY causes Sidecar keys
-    in child files to be expanded to FQNs instead of remaining as Short Names.
-    
-    Scenario:
-      Structure: mypkg/section/core.py
-      Sidecar:   mypkg/section/core.stitcher.yaml (Key: "MyClass")
-      Action:    Move dir 'mypkg/section' -> 'mypkg/moved_section'
-      
-    Technical Cause Analysis (Hypothesis):
-      When moving a directory, the RenameIntent is for 'mypkg.section'.
-      The module is 'mypkg.section.core'.
-      The 'effective_new_module' logic likely fails to account for prefix renames,
-      leaving the effective module as the OLD one, which fails to match the NEW FQN
-      of the class, thus preventing short-name restoration.
-    """
     # 1. ARRANGE
     factory = WorkspaceFactory(tmp_path)
     project_root = (
@@ -39,9 +23,7 @@ def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_p
         .with_source("mypkg/section/core.py", "class MyClass:\n    pass")
         .with_docs(
             "mypkg/section/core.stitcher.yaml",
-            {
-                "MyClass": "Class doc"
-            },
+            {"MyClass": "Class doc"},
         )
         .build()
     )
@@ -82,11 +64,11 @@ def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_p
     # The file should now be at mypkg/moved_section/core.stitcher.yaml
     new_yaml_path = dest_dir / "core.stitcher.yaml"
     assert new_yaml_path.exists(), "Sidecar file was not moved correctly!"
-    
+
     data = yaml.safe_load(new_yaml_path.read_text())
-    
+
     print(f"\n[DEBUG] Keys in new sidecar: {list(data.keys())}")
-    
+
     # Assert Short Name retention
     # This assertion is expected to FAIL if the bug is present.
     # It will likely contain "mypkg.moved_section.core.MyClass" instead.

@@ -76,9 +76,7 @@ class ModuleDef:
         has_public_functions = any(
             not func.name.startswith("_") for func in self.functions
         )
-        has_public_classes = any(
-            not cls.name.startswith("_") for cls in self.classes
-        )
+        has_public_classes = any(not cls.name.startswith("_") for cls in self.classes)
 
         return bool(
             self.docstring
@@ -108,7 +106,6 @@ class ModuleDef:
         return sorted(fqns)
 
     def get_public_documentable_fqns(self) -> Set[str]:
-        """Returns a set of all public FQNs that should have documentation."""
         keys: Set[str] = set()
 
         # Module docstring itself

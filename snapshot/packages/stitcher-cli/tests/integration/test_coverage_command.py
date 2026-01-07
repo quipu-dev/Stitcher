@@ -1,4 +1,3 @@
-import pytest
 from typer.testing import CliRunner
 
 from stitcher.cli.main import app
@@ -96,8 +95,8 @@ def test_coverage_command_output_and_alignment(tmp_path, monkeypatch):
         }
 
     lines = output.strip().split("\n")
-    report_lines = [l for l in lines if l.strip().startswith("src/")]
-    report_data = {parse_line(l)["name"]: parse_line(l) for l in report_lines}
+    report_lines = [line for line in lines if line.strip().startswith("src/")]
+    report_data = {parse_line(line)["name"]: parse_line(line) for line in report_lines}
 
     # -- Assert Data Correctness --
     assert "src/fully_documented.py" in report_data
@@ -118,21 +117,23 @@ def test_coverage_command_output_and_alignment(tmp_path, monkeypatch):
     assert ud_data["miss"] == 3
     assert ud_data["cover"] == "0.0%"
 
-    assert "src/not_documentable.py" not in report_data, "Non-documentable files should be excluded"
+    assert "src/not_documentable.py" not in report_data, (
+        "Non-documentable files should be excluded"
+    )
 
     # -- Assert TOTAL line --
-    total_line = next((l for l in lines if l.startswith("TOTAL")), None)
+    total_line = next((line for line in lines if line.startswith("TOTAL")), None)
     assert total_line is not None, "TOTAL line is missing from output"
     total_data = parse_line(total_line)
     assert total_data["name"] == "TOTAL"
     assert total_data["stmts"] == 10  # 4 + 3 + 3
     assert total_data["miss"] == 4  # 0 + 1 + 3
-    assert total_data["cover"] == "60.0%" # (10-4)/10
+    assert total_data["cover"] == "60.0%"  # (10-4)/10
 
     # -- Assert Alignment --
-    header_line = next(l for l in lines if l.strip().startswith("Name"))
-    long_path_line = next(l for l in lines if "documented_long_path.py" in l)
-    short_path_line = next(l for l in lines if "undocumented.py" in l)
+    header_line = next(line for line in lines if line.strip().startswith("Name"))
+    long_path_line = next(line for line in lines if "documented_long_path.py" in line)
+    short_path_line = next(line for line in lines if "undocumented.py" in line)
 
     # Find start index of each column in the header, which defines our search boundaries
     stmts_start = header_line.find("Stmts")

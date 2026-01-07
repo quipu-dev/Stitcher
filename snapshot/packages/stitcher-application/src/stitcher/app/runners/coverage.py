@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List
 import typer
 
-from stitcher.common import bus
 from stitcher.config import load_config_from_path
 from stitcher.app.services import DocumentManager, ScannerService
 from stitcher.app.types import CoverageResult
@@ -53,9 +52,11 @@ class CoverageRunner:
         stmts_col_width = 7
         miss_col_width = 7
         cover_col_width = 10
-        
+
         # Calculate total width for the horizontal rule
-        total_width = name_col_width + stmts_col_width + miss_col_width + cover_col_width + 3 # For spaces
+        total_width = (
+            name_col_width + stmts_col_width + miss_col_width + cover_col_width + 3
+        )  # For spaces
 
         typer.echo("\n" + ("-" * total_width))
         typer.secho(
@@ -111,7 +112,6 @@ class CoverageRunner:
         )
         typer.echo("")
 
-
     def run(self) -> bool:
         configs, _ = load_config_from_path(self.root_path)
         all_results: List[CoverageResult] = []
@@ -122,6 +122,6 @@ class CoverageRunner:
             for module in modules:
                 result = self._analyze_module_coverage(module)
                 all_results.append(result)
-        
+
         self._render_report(all_results)
         return True

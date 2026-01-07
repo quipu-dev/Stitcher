@@ -88,6 +88,8 @@
   A list of functions defined at the module level.
 "ModuleDef.get_all_fqns": |-
   返回模块中所有可文档化实体的 FQN 列表。
+"ModuleDef.get_public_documentable_fqns": |-
+  Returns a set of all public FQNs that should have documentation.
 "ModuleDef.get_undocumented_public_keys": |-
   Returns a list of public keys (FQNs) that do not have a docstring.
 "ModuleDef.imports": |-
