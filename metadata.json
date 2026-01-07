@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix: 确保在命名空间重命名期间 Sidecar 键名保持为短名称", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767621796.1481478, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实现 `stitcher cov` 用于文档覆盖率报告", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767767825.9028158, "duration_ms": 0}}

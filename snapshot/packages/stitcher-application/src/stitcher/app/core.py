@@ -20,6 +20,7 @@ from .runners import (
     InitRunner,
     PumpRunner,
     TransformRunner,
+    CoverageRunner,
 )
 from .types import PumpResult
 
@@ -71,6 +72,9 @@ class StitcherApp:
         self.transform_runner = TransformRunner(
             root_path, self.scanner, self.doc_manager, transformer
         )
+        self.coverage_runner = CoverageRunner(
+            root_path, self.scanner, self.doc_manager
+        )
 
     def run_from_config(self) -> List[Path]:
         return self.generate_runner.run()
@@ -92,3 +96,6 @@ class StitcherApp:
 
     def run_inject(self) -> List[Path]:
         return self.transform_runner.run_inject()
+
+    def run_cov(self) -> bool:
+        return self.coverage_runner.run()

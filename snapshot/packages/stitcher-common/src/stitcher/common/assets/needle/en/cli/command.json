@@ -2,6 +2,9 @@
   "check": {
     "help": "Verify consistency between code and docs."
   },
+  "cov": {
+    "help": "Show documentation coverage report."
+  },
   "generate": {
     "help": "Generate .pyi stubs based on pyproject.toml config."
   },

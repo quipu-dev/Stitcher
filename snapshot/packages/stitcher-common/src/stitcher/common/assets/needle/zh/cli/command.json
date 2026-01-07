@@ -2,6 +2,9 @@
   "check": {
     "help": "验证代码结构与文档的一致性。"
   },
+  "cov": {
+    "help": "显示文档覆盖率报告。"
+  },
   "generate": {
     "help": "根据 pyproject.toml 配置生成 .pyi 存根文件。"
   },

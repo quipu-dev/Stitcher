@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Set
 
 
 class ArgumentKind(str, Enum):
@@ -97,6 +97,39 @@ class ModuleDef:
             for method in cls.methods:
                 fqns.append(f"{cls.name}.{method.name}")
         return sorted(fqns)
+
+    def get_public_documentable_fqns(self) -> Set[str]:
+        """Returns a set of all public FQNs that should have documentation."""
+        keys: Set[str] = set()
+
+        # Module docstring itself
+        if self.is_documentable():
+            keys.add("__doc__")
+
+        # Public Functions
+        for func in self.functions:
+            if not func.name.startswith("_"):
+                keys.add(func.name)
+
+        # Public Classes and their contents
+        for cls in self.classes:
+            if not cls.name.startswith("_"):
+                keys.add(cls.name)
+                # Public attributes in the class
+                for attr in cls.attributes:
+                    if not attr.name.startswith("_"):
+                        keys.add(f"{cls.name}.{attr.name}")
+                # Public methods
+                for method in cls.methods:
+                    if not method.name.startswith("_"):
+                        keys.add(f"{cls.name}.{method.name}")
+
+        # Module-level public attributes
+        for attr in self.attributes:
+            if not attr.name.startswith("_"):
+                keys.add(attr.name)
+
+        return keys
 
     def get_undocumented_public_keys(self) -> List[str]:
         keys = []
