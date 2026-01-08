@@ -29,6 +29,10 @@ from .runners import (
     CoverageRunner,
 )
 from .types import PumpResult, FileCheckResult, CoverageResult
+from stitcher.adapter.python.docstring import (
+    get_docstring_codec,
+    get_docstring_serializer,
+)
 
 
 class StitcherApp:
@@ -89,12 +93,15 @@ class StitcherApp:
     def _configure_and_scan(self, config: StitcherConfig) -> List[ModuleDef]:
         if config.name != "default":
             bus.info(L.generate.target.processing, name=config.name)
-        
-        # Future: self.doc_manager.set_strategy(config.docstring_style)
+
+        # Configure Docstring Strategy
+        parser, _ = get_docstring_codec(config.docstring_style)
+        serializer = get_docstring_serializer(config.docstring_style)
+        self.doc_manager.set_strategy(parser, serializer)
 
         # Handle Plugins
         plugin_modules = self.scanner.process_plugins(config.plugins)
-        
+
         # Handle Files
         unique_files = self.scanner.get_files_from_config(config)
         source_modules = self.scanner.scan_files(unique_files)
