@@ -2,6 +2,7 @@
 # namespace packages in editable installs.
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
+from .docstring import DocstringIR, DocstringSection, DocstringItem
 from .models import (
     Argument,
     ArgumentKind,
@@ -21,13 +22,20 @@ from .protocols import (
     LanguageTransformerProtocol,
     FingerprintStrategyProtocol,
     StubGeneratorProtocol,
+    DocstringParserProtocol,
+    DocstringRendererProtocol,
 )
 
 __all__ = [
+    "DocstringIR",
+    "DocstringSection",
+    "DocstringItem",
     "LanguageParserProtocol",
     "LanguageTransformerProtocol",
     "FingerprintStrategyProtocol",
     "StubGeneratorProtocol",
+    "DocstringParserProtocol",
+    "DocstringRendererProtocol",
     "Fingerprint",
     "InvalidFingerprintKeyError",
     "Argument",
