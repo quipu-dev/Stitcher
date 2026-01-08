@@ -123,7 +123,7 @@ class GoogleDocstringRenderer(BaseStructuredRenderer):
         if section.kind == SectionKind.TEXT or section.kind == SectionKind.ADMONITION:
             if isinstance(content, str):
                 for line in content.splitlines():
-                    lines.append(f"    {line}")
+                    lines.append(line)
         elif isinstance(content, list):
             for item in content:
                 if not isinstance(item, DocstringItem): continue
@@ -135,9 +135,9 @@ class GoogleDocstringRenderer(BaseStructuredRenderer):
                     prefix = f"{item.annotation}"
 
                 if prefix:
-                    lines.append(f"    {prefix}: {item.description}" if item.description else f"    {prefix}")
+                    lines.append(f"{prefix}: {item.description}" if item.description else prefix)
                 elif item.description:
-                    lines.append(f"    {item.description}")
+                    lines.append(item.description)
 
         return "\n".join(lines)
 

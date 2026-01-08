@@ -1,28 +1,32 @@
-## [WIP] 修复 `StubGenerator` 中冗余的缩进，使生成的 `.pyi` 文件内容与预期完全匹配。
+## [WIP] 修复 `GoogleDocstringRenderer`，移除其实现中的硬编码缩进，使其严格遵守职责划分。
 
-测试断言失败的根本原因在于 `StubGenerator` 中存在一个微妙的缩进逻辑错误。
+### 错误分析
 
-`stitcher.common.format_docstring` 工具函数被设计为接收目标缩进字符串，并返回一个**已经完全格式化好、包含正确缩进**的完整 `"""..."""` 块。
+测试再次失败，但这次的 `AssertionError` 提供了关键线索。通过分析差异 (`-     """` vs `+ """`) 和 `Skipping 51 identical leading characters`，我定位到问题源于 `GoogleDocstringRenderer` 的一个实现错误，该错误导致了双重缩进。
 
-然而，在 `stub_generator.py` 的 `generate`（模块级）、`_generate_function` 和 `_generate_class` 方法中，我们在调用 `format_docstring` 之后，错误地**又对返回的整个块再次应用了缩进**。
+1.  **职责划分**:
+    *   `Renderer` 的职责是根据 `DocstringIR` 生成一个**未缩进**的、格式正确的文档字符串**内容块**。
+    *   `stitcher.common.format_docstring` 的职责是接收这个内容块和目标缩进（由 `StubGenerator` 提供），然后将整个块（包括 `"""`）正确地缩进并放置到代码中。
 
-```python
-# 错误的代码
-formatted = format_docstring(doc_content, self._indent(level + 1))
-lines.append(f"{self._indent(level + 1)}{formatted}") # <--- 冗余的缩进
-```
+2.  **错误点**:
+    `GoogleDocstringRenderer` 违反了这个职责划分。它在生成 `Args:` 和 `Returns:` 等部分时，硬编码了 `    `（四个空格）的前缀。
+    ```python
+    # 错误的代码
+    lines.append(f"    {prefix}: {item.description}")
+    ```
+    这导致它输出的已经是一个缩进过的块。随后，这个块被传递给 `format_docstring`，后者根据 `StubGenerator` 的指令再次进行缩进，从而产生了多余的一层缩进，导致最终生成的 `.pyi` 文件与 `dedent` 精确生成的期望字符串不匹配。
 
-这导致生成的 `.pyi` 文件中，文档字符串块比预期的多了一层缩进，从而引发了与 `dedent` 精确生成的期望字符串的断言失败。
+    相比之下，`NumpyDocstringRenderer` 的实现是正确的，因为它使用的缩进是用于格式化参数描述相对于参数本身的**内部相对位置**，而不是对整个块进行外部缩进。
 
 ### 用户需求
-修复 `StubGenerator` 中冗余的缩进，使生成的 `.pyi` 文件内容与预期完全匹配。
+修复 `GoogleDocstringRenderer`，移除其实现中的硬编码缩进，使其严格遵守职责划分。
 
 ### 评论
-这是一个典型的因职责不清导致的错误。格式化工具和其调用者都尝试处理缩进，造成了双重操作。修复此问题将使 `StubGenerator` 的逻辑更清晰、更正确。
+这是一个经典的“关注点分离”原则被违反的案例。通过将缩进控制权完全交还给 `format_docstring` 和 `StubGenerator`，我们能确保渲染逻辑的正确性和可预测性。
 
 ### 目标
-1.  定位 `packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py` 文件。
-2.  移除在 `generate`（模块）、`_generate_function` 和 `_generate_class` 方法中对 `format_docstring` 返回结果的额外缩进。
+1.  修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py` 文件。
+2.  在 `GoogleDocstringRenderer._render_section` 方法中，移除所有对输出行进行硬编码缩进的 `    ` 前缀。
 
 ### 标签
 #intent/fix #flow/ready #priority/critical #comp/adapter #concept/docstring #scope/core #task/domain/testing #task/object/e2e-test #task/action/bug-fix #task/state/continue
@@ -31,69 +35,56 @@ lines.append(f"{self._indent(level + 1)}{formatted}") # <--- 冗余的缩进
 
 ### Script
 
-#### Acts 1: 修正 StubGenerator 中的缩进逻辑
+#### Acts 1: 移除 Google 渲染器中的硬编码缩进
 
-我们将分三次 `patch` 操作，精确移除 `stub_generator.py` 中三处不正确的缩进代码。
+我们将精确地修改 `GoogleDocstringRenderer._render_section` 方法，移除不正确的缩进逻辑。
 
-首先，修正模块级文档字符串的生成：
 ~~~~~act
 patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py
+packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py
 ~~~~~
 ~~~~~python.old
-        if doc_content:
-            formatted = format_docstring(doc_content, self._indent(0))
-            lines.append(f"{self._indent(0)}{formatted}")
-            lines.append("")  # Empty line after docstring
-~~~~~
-~~~~~python.new
-        if doc_content:
-            formatted = format_docstring(doc_content, self._indent(0))
-            lines.append(formatted)
-            lines.append("")  # Empty line after docstring
-~~~~~
+        if section.kind == SectionKind.TEXT or section.kind == SectionKind.ADMONITION:
+            if isinstance(content, str):
+                for line in content.splitlines():
+                    lines.append(f"    {line}")
+        elif isinstance(content, list):
+            for item in content:
+                if not isinstance(item, DocstringItem): continue
+                prefix = ""
+                if item.name:
+                    prefix = f"{item.name}"
+                    if item.annotation: prefix += f" ({item.annotation})"
+                elif item.annotation:
+                    prefix = f"{item.annotation}"
 
-其次，修正函数级文档字符串的生成：
-~~~~~act
-patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py
-~~~~~
-~~~~~python.old
-        if doc_content:
-            lines.append(def_line)
-            formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(f"{self._indent(level + 1)}{formatted}")
-            lines.append(f"{self._indent(level + 1)}...")
-        else:
+                if prefix:
+                    lines.append(f"    {prefix}: {item.description}" if item.description else f"    {prefix}")
+                elif item.description:
+                    lines.append(f"    {item.description}")
 ~~~~~
 ~~~~~python.new
-        if doc_content:
-            lines.append(def_line)
-            formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(formatted)
-            lines.append(f"{self._indent(level + 1)}...")
-        else:
-~~~~~
+        if section.kind == SectionKind.TEXT or section.kind == SectionKind.ADMONITION:
+            if isinstance(content, str):
+                for line in content.splitlines():
+                    lines.append(line)
+        elif isinstance(content, list):
+            for item in content:
+                if not isinstance(item, DocstringItem): continue
+                prefix = ""
+                if item.name:
+                    prefix = f"{item.name}"
+                    if item.annotation: prefix += f" ({item.annotation})"
+                elif item.annotation:
+                    prefix = f"{item.annotation}"
 
-最后，修正类级文档字符串的生成：
-~~~~~act
-patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/internal/stub_generator.py
-~~~~~
-~~~~~python.old
-        if doc_content:
-            formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(f"{self._indent(level + 1)}{formatted}")
-            has_content = True
-~~~~~
-~~~~~python.new
-        if doc_content:
-            formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(formatted)
-            has_content = True
+                if prefix:
+                    lines.append(f"{prefix}: {item.description}" if item.description else prefix)
+                elif item.description:
+                    lines.append(item.description)
 ~~~~~
 
 ### 下一步建议
-这个修复应该能解决测试失败的问题。请重新运行测试。
+这次修复是高度针对性的，应该能够解决端到端测试中的断言失败问题。请重新运行测试。
 
-如果测试通过，那么整个“结构化文档渲染管线”的实现和验证就全部完成了。我将准备一个 `[COMMIT]` 计划，将这次任务的所有相关变更（包括代码、新测试和修复）作为一个原子单元提交。
+一旦测试通过，整个“结构化文档”的实现和验证就真正完成了。我将立刻准备 `[COMMIT]` 计划，将本次任务的所有相关变更打包提交。
