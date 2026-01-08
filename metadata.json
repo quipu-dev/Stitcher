@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 完善结构化文档的标题处理逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767844431.1818025, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正返回类型的语义映射", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767844541.9551084, "duration_ms": 0}}

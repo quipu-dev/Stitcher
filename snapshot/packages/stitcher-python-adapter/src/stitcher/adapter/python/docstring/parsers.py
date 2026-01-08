@@ -107,15 +107,26 @@ class GriffeDocstringParser(DocstringParserProtocol):
                 )
             return DocstringSection(kind=kind, title=title, content=items)
 
-        if isinstance(section, (DocstringSectionReturns, DocstringSectionYields, DocstringSectionRaises)):
-            # Returns, Yields, Raises (list of items, usually without name for Returns/Yields, or exception name for Raises)
+        if isinstance(section, (DocstringSectionReturns, DocstringSectionYields)):
+            # For returns/yields, Griffe often puts the type in the `name` field.
             items = []
             for item in section.value:
-                # For Returns/Yields, 'name' might be empty or the variable name.
-                # For Raises, 'annotation' is usually the Exception type.
                 items.append(
                     DocstringItem(
-                        name=item.name or "",
+                        name=None,  # The type is not a name
+                        annotation=item.name,  # The type is stored in griffe's 'name'
+                        description=item.description or "",
+                    )
+                )
+            return DocstringSection(kind=kind, title=title, content=items)
+
+        if isinstance(section, DocstringSectionRaises):
+            # For raises, the exception type is in the `annotation` field.
+            items = []
+            for item in section.value:
+                items.append(
+                    DocstringItem(
+                        name=None,  # The exception type is not a name
                         annotation=str(item.annotation) if item.annotation else None,
                         description=item.description or "",
                     )
