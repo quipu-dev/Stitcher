@@ -169,7 +169,7 @@ class StubGenerator:
         if doc_content:
             lines.append(def_line)
             formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(formatted)
+            lines.append(f"{self._indent(level + 1)}{formatted}")
             lines.append(f"{self._indent(level + 1)}...")
         else:
             # For functions without docstrings, use a single line format.
@@ -204,7 +204,7 @@ class StubGenerator:
 
         if doc_content:
             formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(formatted)
+            lines.append(f"{self._indent(level + 1)}{formatted}")
             has_content = True
 
         # Attributes
