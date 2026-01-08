@@ -1,44 +1,3 @@
-好的，我们来为 `DocumentManager` 的新策略驱动功能编写单元测试。遵循 Monorepo 测试架构，我将在 `stitcher-application` 包内创建一个新的单元测试文件，专门用于验证不同文档风格策略的序列化和反序列化逻辑。
-
-## [WIP] test: 为 DocumentManager 添加策略切换和序列化单元测试
-
-### 用户需求
-为 `DocumentManager` 添加单元测试，以验证以下功能：
-1.  能够正确地根据注入的策略（Raw, Google, NumPy）序列化 `DocstringIR`。
-2.  能够从不同风格的 YAML 结构反序列化回 `DocstringIR`。
-3.  在序列化和反序列化过程中，`Addon` 数据能够被正确保留。
-
-### 评论
-添加这些测试至关重要，它能确保我们对 `DocumentManager` 的重构是正确且健壮的。通过验证序列化的往返（round-trip）能力和对插件元数据的保留，我们为后续更复杂的渲染管线（Phase 3）奠定了坚实可靠的基础。
-
-### 目标
-1.  创建一个新的测试文件 `packages/stitcher-application/tests/unit/test_doc_manager_strategies.py`。
-2.  在该文件中，实现一个 `sample_ir` fixture，用于提供一个标准的、包含各种元素的 `DocstringIR` 实例。
-3.  编写参数化的测试用例，覆盖 Google 和 NumPy 风格的结构化序列化。
-4.  编写一个独立的测试用例，验证传统的 Raw 风格（字符串和混合模式）的序列化。
-5.  编写一个参数化的测试用例，确保在所有支持的风格中，`Addon` 数据都能在序列化往返过程中被保留。
-
-### 基本原理
-我们遵循“测试与代码共存”的原则，在 `stitcher-application` 包的 `tests/unit` 目录中创建新的测试。通过使用 `pytest` 的 fixture 和参数化功能，我们可以用最少的代码覆盖多种场景，使测试集保持简洁、可读和可维护。
-
-### 标签
-#intent/tooling #flow/ready #priority/high
-#comp/tests #comp/runtime #concept/state
-#task/domain/testing #task/object/doc-manager #task/action/build #task/state/begin
-
----
-
-### Script
-
-#### Acts 1: 创建 DocumentManager 策略测试文件
-
-我将创建一个新的测试文件，其中包含验证 `DocumentManager` 策略切换和序列化/反序列化逻辑所需的所有测试用例和 fixture。
-
-~~~~~act
-write_file
-packages/stitcher-application/tests/unit/test_doc_manager_strategies.py
-~~~~~
-~~~~~python
 import pytest
 from stitcher.app.services import DocumentManager
 from stitcher.spec import (
@@ -165,10 +124,3 @@ class TestDocumentManagerStrategies:
         deserialized_ir = doc_manager._deserialize_ir(serialized_data)
         assert deserialized_ir.summary == "Just a simple string."
         assert not deserialized_ir.addons
-~~~~~
-
-### 下一步建议
-测试已经就位，为我们的重构提供了安全保障。现在我们可以充满信心地进入 Phase 3。我建议下一步开始实施 **渲染管线的集成**：
-
-1.  修改 `DocumentManager.apply_docs_to_module`，使其将完整的 `DocstringIR` 对象附加到 `ModuleDef` 上，而不是仅仅注入字符串。
-2.  修改 `GenerateRunner` 和 `StubGenerator` 以消费这个 `DocstringIR`，并与代码中的类型信息合并，生成最终的、格式正确的文档字符串。
