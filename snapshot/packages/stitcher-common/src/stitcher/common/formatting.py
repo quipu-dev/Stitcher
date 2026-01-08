@@ -37,5 +37,7 @@ def format_docstring(content: str, indent_str: str) -> str:
     # Note: The start quotes do NOT have indentation here, as that is handled
     # by the caller (StubGenerator) or the AST wrapper (LibCST).
     # However, internal lines MUST have the indentation.
-    indented_body = "\n".join(f"{indent_str}{line}" for line in lines)
+    indented_body = "\n".join(
+        f"{indent_str}{line}" if line else "" for line in lines
+    )
     return f'"""\n{indented_body}\n{indent_str}"""'

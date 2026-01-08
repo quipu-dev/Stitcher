@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 重构文档生成流程为骨架生成加注入的两阶段模式", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767850364.4333322, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(common): prevent whitespace injection on empty docstring lines", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767850781.9598074, "duration_ms": 0}}
