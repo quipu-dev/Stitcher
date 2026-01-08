@@ -2,27 +2,24 @@ from pathlib import Path
 from typing import List
 import typer
 
-from stitcher.config import load_config_from_path
-from stitcher.app.services import DocumentManager, ScannerService
+from stitcher.app.services import DocumentManager
 from stitcher.app.types import CoverageResult
+from stitcher.spec import ModuleDef
 
 
 class CoverageRunner:
     def __init__(
         self,
         root_path: Path,
-        scanner: ScannerService,
         doc_manager: DocumentManager,
     ):
         self.root_path = root_path
-        self.scanner = scanner
         self.doc_manager = doc_manager
 
-    def _analyze_module_coverage(self, module) -> CoverageResult:
+    def _analyze_module_coverage(self, module: ModuleDef) -> CoverageResult:
         public_fqns = module.get_public_documentable_fqns()
         documented_fqns = set(self.doc_manager.load_docs_for_module(module).keys())
 
-        # The module docstring is checked via 'is_documentable' but the key is '__doc__'
         if module.docstring and "__doc__" in public_fqns:
             documented_fqns.add("__doc__")
 
@@ -39,24 +36,27 @@ class CoverageRunner:
             coverage=coverage,
         )
 
-    def _render_report(self, results: List[CoverageResult]):
+    def run_batch(self, modules: List[ModuleDef]) -> List[CoverageResult]:
+        results = []
+        for module in modules:
+            results.append(self._analyze_module_coverage(module))
+        return results
+
+    def report(self, results: List[CoverageResult]):
         if not results:
             return
 
-        # Dynamically determine column width
         paths = [r.path for r in results if r.total_symbols > 0]
         max_path_len = max(len(p) for p in paths) if paths else 0
         name_col_width = max(len("Name"), len("TOTAL"), max_path_len)
 
-        # Define other column widths
         stmts_col_width = 7
         miss_col_width = 7
         cover_col_width = 10
 
-        # Calculate total width for the horizontal rule
         total_width = (
             name_col_width + stmts_col_width + miss_col_width + cover_col_width + 3
-        )  # For spaces
+        )
 
         typer.echo("\n" + ("-" * total_width))
         typer.secho(
@@ -111,17 +111,3 @@ class CoverageRunner:
             bold=True,
         )
         typer.echo("")
-
-    def run(self) -> bool:
-        configs, _ = load_config_from_path(self.root_path)
-        all_results: List[CoverageResult] = []
-
-        for config in configs:
-            unique_files = self.scanner.get_files_from_config(config)
-            modules = self.scanner.scan_files(unique_files)
-            for module in modules:
-                result = self._analyze_module_coverage(module)
-                all_results.append(result)
-
-        self._render_report(all_results)
-        return True

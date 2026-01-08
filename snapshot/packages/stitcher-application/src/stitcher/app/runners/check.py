@@ -1,10 +1,10 @@
 import copy
 from pathlib import Path
 from collections import defaultdict
+from typing import List, Tuple
 
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.config import load_config_from_path
 from stitcher.spec import (
     ModuleDef,
     ConflictType,
@@ -12,6 +12,7 @@ from stitcher.spec import (
     Fingerprint,
     LanguageParserProtocol,
 )
+from stitcher.config import StitcherConfig
 from stitcher.app.services import (
     DocumentManager,
     SignatureManager,
@@ -27,7 +28,6 @@ class CheckRunner:
     def __init__(
         self,
         root_path: Path,
-        scanner: ScannerService,
         parser: LanguageParserProtocol,
         doc_manager: DocumentManager,
         sig_manager: SignatureManager,
@@ -35,7 +35,6 @@ class CheckRunner:
         interaction_handler: InteractionHandler | None,
     ):
         self.root_path = root_path
-        self.scanner = scanner
         self.parser = parser
         self.doc_manager = doc_manager
         self.sig_manager = sig_manager
@@ -44,9 +43,9 @@ class CheckRunner:
 
     def _analyze_file(
         self, module: ModuleDef
-    ) -> tuple[FileCheckResult, list[InteractionContext]]:
+    ) -> Tuple[FileCheckResult, List[InteractionContext]]:
         result = FileCheckResult(path=module.file_path)
-        unresolved_conflicts: list[InteractionContext] = []
+        unresolved_conflicts: List[InteractionContext] = []
 
         # Content checks
         if (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists():
@@ -55,7 +54,6 @@ class CheckRunner:
             result.warnings["redundant"].extend(doc_issues["redundant"])
             result.errors["pending"].extend(doc_issues["pending"])
             result.errors["conflict"].extend(doc_issues["conflict"])
-            # extra is now handled as a potential interactive conflict
             for fqn in doc_issues["extra"]:
                 unresolved_conflicts.append(
                     InteractionContext(module.file_path, fqn, ConflictType.DANGLING_DOC)
@@ -136,9 +134,7 @@ class CheckRunner:
     def _apply_resolutions(
         self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]
     ):
-        # --- Handle Signature Updates ---
         sig_updates_by_file = defaultdict(list)
-        # --- Handle Doc Purges ---
         purges_by_file = defaultdict(list)
 
         for file_path, fqn_actions in resolutions.items():
@@ -150,7 +146,7 @@ class CheckRunner:
 
         # Apply signature updates
         for file_path, fqn_actions in sig_updates_by_file.items():
-            module_def = ModuleDef(file_path=file_path)  # Minimal def for path logic
+            module_def = ModuleDef(file_path=file_path)
             stored_hashes = self.sig_manager.load_composite_hashes(module_def)
             new_hashes = copy.deepcopy(stored_hashes)
 
@@ -197,39 +193,32 @@ class CheckRunner:
             if len(docs) < original_len:
                 doc_path = (self.root_path / file_path).with_suffix(".stitcher.yaml")
                 if not docs:
-                    # If all docs are purged, delete the file
                     if doc_path.exists():
                         doc_path.unlink()
                 else:
-                    # Serialize before saving
                     final_data = {
                         k: self.doc_manager._serialize_ir(v) for k, v in docs.items()
                     }
                     self.doc_manager.adapter.save(doc_path, final_data)
 
-    def run(self, force_relink: bool = False, reconcile: bool = False) -> bool:
-        configs, _ = load_config_from_path(self.root_path)
-        all_results: list[FileCheckResult] = []
-        all_conflicts: list[InteractionContext] = []
-        all_modules: list[ModuleDef] = []
+    def analyze_batch(
+        self, modules: List[ModuleDef]
+    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
+        results = []
+        conflicts = []
+        for module in modules:
+            res, conf = self._analyze_file(module)
+            results.append(res)
+            conflicts.extend(conf)
+        return results, conflicts
 
-        # 1. Analysis Phase
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-            unique_files = self.scanner.get_files_from_config(config)
-            modules = self.scanner.scan_files(unique_files)
-            all_modules.extend(modules)
-            for module in modules:
-                result, conflicts = self._analyze_file(module)
-                all_results.append(result)
-                all_conflicts.extend(conflicts)
-
-        # 2. Execution Phase (Auto-reconciliation for doc improvements)
-        for res in all_results:
+    def auto_reconcile_docs(
+        self, results: List[FileCheckResult], modules: List[ModuleDef]
+    ):
+        for res in results:
             if res.infos["doc_improvement"]:
                 module_def = next(
-                    (m for m in all_modules if m.file_path == res.path), None
+                    (m for m in modules if m.file_path == res.path), None
                 )
                 if not module_def:
                     continue
@@ -253,15 +242,24 @@ class CheckRunner:
                 if new_hashes != stored_hashes:
                     self.sig_manager.save_composite_hashes(module_def, new_hashes)
 
-        # 3. Interactive Resolution Phase
-        if all_conflicts and self.interaction_handler:
+    def resolve_conflicts(
+        self,
+        results: List[FileCheckResult],
+        conflicts: List[InteractionContext],
+        force_relink: bool = False,
+        reconcile: bool = False,
+    ) -> bool:
+        if not conflicts:
+            return True
+
+        if self.interaction_handler:
             chosen_actions = self.interaction_handler.process_interactive_session(
-                all_conflicts
+                conflicts
             )
             resolutions_by_file = defaultdict(list)
             reconciled_results = defaultdict(lambda: defaultdict(list))
 
-            for i, context in enumerate(all_conflicts):
+            for i, context in enumerate(conflicts):
                 action = chosen_actions[i]
                 if action == ResolutionAction.RELINK:
                     resolutions_by_file[context.file_path].append((context.fqn, action))
@@ -277,7 +275,7 @@ class CheckRunner:
                     resolutions_by_file[context.file_path].append((context.fqn, action))
                     reconciled_results[context.file_path]["purged"].append(context.fqn)
                 elif action == ResolutionAction.SKIP:
-                    for res in all_results:
+                    for res in results:
                         if res.path == context.file_path:
                             error_key = {
                                 ConflictType.SIGNATURE_DRIFT: "signature_drift",
@@ -292,7 +290,7 @@ class CheckRunner:
 
             self._apply_resolutions(dict(resolutions_by_file))
 
-            for res in all_results:
+            for res in results:
                 if res.path in reconciled_results:
                     res.reconciled["force_relink"] = reconciled_results[res.path][
                         "force_relink"
@@ -305,10 +303,10 @@ class CheckRunner:
                     )
         else:
             handler = NoOpInteractionHandler(force_relink, reconcile)
-            chosen_actions = handler.process_interactive_session(all_conflicts)
+            chosen_actions = handler.process_interactive_session(conflicts)
             resolutions_by_file = defaultdict(list)
             reconciled_results = defaultdict(lambda: defaultdict(list))
-            for i, context in enumerate(all_conflicts):
+            for i, context in enumerate(conflicts):
                 action = chosen_actions[i]
                 if action != ResolutionAction.SKIP:
                     key = (
@@ -319,7 +317,7 @@ class CheckRunner:
                     resolutions_by_file[context.file_path].append((context.fqn, action))
                     reconciled_results[context.file_path][key].append(context.fqn)
                 else:
-                    for res in all_results:
+                    for res in results:
                         if res.path == context.file_path:
                             error_key = {
                                 ConflictType.SIGNATURE_DRIFT: "signature_drift",
@@ -327,8 +325,9 @@ class CheckRunner:
                                 ConflictType.DANGLING_DOC: "extra",
                             }.get(context.conflict_type, "unknown")
                             res.errors[error_key].append(context.fqn)
+
             self._apply_resolutions(dict(resolutions_by_file))
-            for res in all_results:
+            for res in results:
                 if res.path in reconciled_results:
                     res.reconciled["force_relink"] = reconciled_results[res.path][
                         "force_relink"
@@ -336,17 +335,18 @@ class CheckRunner:
                     res.reconciled["reconcile"] = reconciled_results[res.path][
                         "reconcile"
                     ]
+        return True
 
-        # 4. Reformatting Phase
+    def reformat_all(self, modules: List[ModuleDef]):
         bus.info(L.check.run.reformatting)
-        for module in all_modules:
+        for module in modules:
             self.doc_manager.reformat_docs_for_module(module)
             self.sig_manager.reformat_hashes_for_module(module)
 
-        # 5. Reporting Phase
+    def report(self, results: List[FileCheckResult]) -> bool:
         global_failed_files = 0
         global_warnings_files = 0
-        for res in all_results:
+        for res in results:
             for key in sorted(res.infos["doc_improvement"]):
                 bus.info(L.check.state.doc_updated, key=key)
             if res.is_clean:

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.config import load_config_from_path, StitcherConfig
+from stitcher.config import StitcherConfig
 from stitcher.spec import ModuleDef, StubGeneratorProtocol
 from stitcher.app.services import (
     DocumentManager,
@@ -55,11 +55,19 @@ class GenerateRunner:
         else:
             bus.info(L.generate.stub_pkg.exists, name=stub_pkg_name)
 
-    def _generate_stubs(
-        self, modules: List[ModuleDef], config: StitcherConfig
+    def run_batch(
+        self,
+        modules: List[ModuleDef],
+        config: StitcherConfig,
+        project_name: Optional[str] = None,
     ) -> List[Path]:
         generated_files: List[Path] = []
         created_py_typed: set[Path] = set()
+
+        if config.stub_package:
+            stub_base_name = config.name if config.name != "default" else project_name
+            self._scaffold_stub_package(config, stub_base_name)
+
         for module in modules:
             self.doc_manager.apply_docs_to_module(module)
             pyi_content = self.generator.generate(module)
@@ -106,35 +114,3 @@ class GenerateRunner:
             bus.success(L.generate.file.success, path=relative_path)
             generated_files.append(output_path)
         return generated_files
-
-    def run(self) -> List[Path]:
-        configs, project_name = load_config_from_path(self.root_path)
-        all_generated_files: List[Path] = []
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
-
-            # Debug config info
-            bus.debug(
-                L.debug.log.msg,
-                msg=f"Config '{config.name}': scan_paths={config.scan_paths}",
-            )
-
-            if config.stub_package:
-                stub_base_name = (
-                    config.name if config.name != "default" else project_name
-                )
-                self._scaffold_stub_package(config, stub_base_name)
-            unique_files = self.scanner.get_files_from_config(config)
-            source_modules = self.scanner.scan_files(unique_files)
-            plugin_modules = self.scanner.process_plugins(config.plugins)
-            all_modules = source_modules + plugin_modules
-            if not all_modules:
-                if len(configs) == 1:
-                    bus.warning(L.warning.no_files_or_plugins_found)
-                continue
-            generated_files = self._generate_stubs(all_modules, config)
-            all_generated_files.extend(generated_files)
-        if all_generated_files:
-            bus.success(L.generate.run.complete, count=len(all_generated_files))
-        return all_generated_files
