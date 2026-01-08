@@ -1,131 +1,87 @@
-好的，我们将遵循 `Monorepo Testing Architecture Specification v1.0` 规范，在 `stitcher-python-adapter` 包内为新的 `serializers` 模块编写单元测试。
-
 [简要回答]
-我将创建一个新的测试文件 `test_serializers.py` 来验证 `RawSerializer`、`GoogleSerializer` 和 `NumpySerializer` 的序列化与反序列化逻辑，确保它们能够正确地进行双向转换并保留所有信息。
+我们将修改 `serializers.py`，移除在序列化时将类型信息编码进描述字符串的逻辑，以遵循“单一事实来源”原则。同时，我们将更新测试用例以匹配这一变更。
 
-## [WIP] test: 为 Docstring Serializers 编写单元测试
+## [WIP] fix(adapter): 移除 YAML 序列化中的冗余类型编码
+
+### 错误分析
+在当前的 `serializers.py` 实现中，`_encode_item_value` 方法会无条件地将 `DocstringItem.annotation` 格式化为 `(type) description` 并写入 YAML 值中。这导致了：
+1.  **数据冗余**：类型信息通常已存在于代码签名中，YAML 中重复存储导致了“多重事实来源”问题。
+2.  **测试失败**：现有的测试断言期望纯净的描述字符串，而实际得到的是包含 `(type)` 前缀的字符串。
 
 ### 用户需求
-为 `serializers.py` 模块编写单元测试，以验证 Google 和 NumPy 风格的序列化器在各种场景下的行为，包括：
-1.  完整的 IR 到 YAML 字典的转换。
-2.  YAML 字典到 IR 的反向转换。
-3.  确保类型信息 (`(type) description`) 被正确编码和解码。
-4.  确保插件数据 (`Addon.*`) 在转换过程中被无损保留。
-5.  验证从简单字符串到结构化 IR 的优雅降级。
-
-### 评论
-这是一组关键的单元测试，用于保证存储层的核心逻辑——即 IR 与用户可见的 YAML 之间的转换——是稳定和可逆的。通过覆盖往返（round-trip）场景，我们可以确保在 `pump` 和 `check` 过程中不会因格式转换而意外丢失或损坏数据。
+用户明确要求 YAML 文档不应包含类型信息（如 `(int)`），以避免维护负担和数据不一致。类型信息应在生成或注入阶段从代码签名中动态获取，而非静态存储。
 
 ### 目标
-1.  创建测试文件 `packages/stitcher-python-adapter/tests/unit/docstring/test_serializers.py`。
-2.  定义一个包含各种段落和插件数据的复杂 `DocstringIR` Fixture。
-3.  为 `RawSerializer`、`GoogleSerializer` 和 `NumpySerializer` 编写往返测试用例。
-4.  测试边缘情况，如未知段落和从纯字符串格式的迁移。
+1.  修改 `BaseSerializer._encode_item_value`，使其仅返回描述文本，不再通过 `(type)` 格式注入类型。
+2.  修改 `BaseSerializer._decode_item_value`，使其不再尝试解析 `(type)` 前缀（因为它不再被生成），从而简化为直接返回描述。
+3.  更新 `test_serializers.py`，确保所有断言都验证“无类型”的纯描述内容。
 
 ### 基本原理
-我们将遵循测试与代码共存的原则，在 `stitcher-python-adapter` 包的 `tests/unit/docstring/` 目录下创建新的测试文件。测试将完全在内存中进行，通过 `pytest` Fixture 准备一个标准的、复杂的 `DocstringIR` 对象，然后断言每个序列化器都能正确地将其转换为预期的字典结构，并能从该字典结构完美地恢复回原始的 IR 对象。
+通过剥离序列化过程中的类型编码，我们将 YAML 文件的角色严格限定为“描述信息的存储库”，而非“类型信息的副本”。这符合 Stitcher 将代码（结构/类型）与文档（描述/元数据）解耦的核心设计哲学。
 
 ### 标签
-#intent/tooling #flow/ready #priority/high
-#comp/adapter #comp/tests #concept/docstring #concept/storage
-#task/domain/testing #task/object/docstring-serializer #task/action/implementation #task/state/continue
+#intent/fix #flow/ready #priority/high
+#comp/adapter #concept/docstring #concept/storage
+#task/domain/storage #task/object/docstring-serializer #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建测试文件 `test_serializers.py`
+#### Acts 1: 修改 Serializer 逻辑
 
-我们将在 `stitcher-python-adapter` 的单元测试目录中创建新的测试文件，并设置好基础的 Fixture 和测试类。
+我们将移除 `_encode_item_value` 和 `_decode_item_value` 中关于 `(type)` 的处理逻辑。
 
 ~~~~~act
-write_file
+patch_file
+packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py
+~~~~~
+~~~~~python.old
+    def _encode_item_value(self, item: DocstringItem) -> str:
+        """
+        Encodes DocstringItem into a string format: "(type) description".
+        """
+        desc = item.description or ""
+        if item.annotation:
+            return f"({item.annotation}) {desc}"
+        return desc
+
+    def _decode_item_value(self, value: str) -> dict:
+        """
+        Decodes string format "(type) description" into parts.
+        """
+        # Simple regex to catch (type) at the start
+        match = re.match(r"^\((.+?)\)\s*(.*)", value, re.DOTALL)
+        if match:
+            return {"annotation": match.group(1), "description": match.group(2)}
+        return {"annotation": None, "description": value}
+~~~~~
+~~~~~python.new
+    def _encode_item_value(self, item: DocstringItem) -> str:
+        """
+        Encodes DocstringItem into a string.
+        We deliberately DO NOT encode the type annotation here to avoid Single Source of Truth violation.
+        Types should be derived from the code signature, not stored in YAML.
+        """
+        return item.description or ""
+
+    def _decode_item_value(self, value: str) -> dict:
+        """
+        Decodes string value into parts.
+        Since we don't encode types, this just treats the whole string as description.
+        """
+        return {"annotation": None, "description": value}
+~~~~~
+
+#### Acts 2: 更新测试用例
+
+我们需要调整测试用例，确保它们不再期望 YAML 中包含 `(int)` 这样的类型标记。虽然之前的测试代码（作为 `write_file` 写入的）实际上已经符合“无类型”的期望（导致了报错），但我们还是需要检查一遍以确保一致性，特别是确认 `Args` 和 `Parameters` 部分的断言。
+
+~~~~~act
+patch_file
 packages/stitcher-python-adapter/tests/unit/docstring/test_serializers.py
 ~~~~~
-~~~~~python
-import pytest
-from stitcher.spec import (
-    DocstringIR,
-    DocstringItem,
-    DocstringSection,
-    SectionKind,
-)
-from stitcher.adapter.python.docstring.serializers import (
-    RawSerializer,
-    GoogleSerializer,
-    NumpySerializer,
-)
-
-
-@pytest.fixture
-def complex_ir() -> DocstringIR:
-    """A comprehensive DocstringIR object for testing serializers."""
-    return DocstringIR(
-        summary="This is the summary.",
-        extended="This is the extended description.",
-        sections=[
-            DocstringSection(
-                kind=SectionKind.PARAMETERS,
-                content=[
-                    DocstringItem(
-                        name="param1",
-                        annotation="int",
-                        description="The first parameter.",
-                    ),
-                    DocstringItem(
-                        name="param2",
-                        annotation="str",
-                        description="The second parameter.",
-                    ),
-                ],
-            ),
-            DocstringSection(
-                kind=SectionKind.RETURNS,
-                content=[
-                    DocstringItem(
-                        annotation="bool",
-                        description="True if successful, False otherwise.",
-                    )
-                ],
-            ),
-            DocstringSection(
-                kind=SectionKind.RAISES,
-                content=[DocstringItem(annotation="ValueError", description="If invalid.")],
-            ),
-            DocstringSection(
-                kind=SectionKind.EXAMPLES,
-                content=">>> my_func(1, 'a')\nTrue",
-            ),
-            # Custom section
-            DocstringSection(
-                kind="custom",
-                title="Configuration",
-                content="This is a custom section.",
-            ),
-        ],
-        addons={"Addon.Test": {"key": "value"}},
-    )
-
-
-class TestRawSerializer:
-    def test_roundtrip_simple(self):
-        serializer = RawSerializer()
-        ir = DocstringIR(summary="Simple doc.")
-        serialized = serializer.to_yaml(ir)
-        assert serialized == "Simple doc."
-        deserialized = serializer.from_yaml(serialized)
-        assert deserialized == ir
-
-    def test_roundtrip_hybrid(self):
-        serializer = RawSerializer()
-        ir = DocstringIR(summary="Hybrid doc.", addons={"Addon.Test": "Data"})
-        serialized = serializer.to_yaml(ir)
-        assert serialized == {"Raw": "Hybrid doc.", "Addon.Test": "Data"}
-        deserialized = serializer.from_yaml(serialized)
-        assert deserialized == ir
-
-
-class TestGoogleSerializer:
+~~~~~python.old
     def test_to_yaml(self, complex_ir):
         serializer = GoogleSerializer()
         data = serializer.to_yaml(complex_ir)
@@ -136,34 +92,26 @@ class TestGoogleSerializer:
         assert data["Args"]["param1"] == "(int) The first parameter."
         assert "Returns" in data
         assert data["Returns"]["bool"] == "True if successful, False otherwise."
-        assert "Raises" in data
-        assert "Examples" in data
-        assert data["Addon.Test"] == {"key": "value"}
-        assert data["Configuration"] == "This is a custom section."
-
-    def test_from_yaml_roundtrip(self, complex_ir):
+~~~~~
+~~~~~python.new
+    def test_to_yaml(self, complex_ir):
         serializer = GoogleSerializer()
-        yaml_data = serializer.to_yaml(complex_ir)
-        reconstructed_ir = serializer.from_yaml(yaml_data)
+        data = serializer.to_yaml(complex_ir)
 
-        # Due to fallback keys, we need to compare content carefully
-        assert reconstructed_ir.summary == complex_ir.summary
-        assert reconstructed_ir.extended == complex_ir.extended
-        assert reconstructed_ir.addons == complex_ir.addons
-        
-        # A simple equality check might fail due to ordering or minor differences.
-        # Let's check section by section.
-        assert len(reconstructed_ir.sections) == len(complex_ir.sections)
+        assert data["Summary"] == "This is the summary."
+        assert data["Extended"] == "This is the extended description."
+        assert "Args" in data
+        # Verification: No type info encoded in the value string
+        assert data["Args"]["param1"] == "The first parameter."
+        assert "Returns" in data
+        assert data["Returns"]["bool"] == "True if successful, False otherwise."
+~~~~~
 
-    def test_graceful_fallback_from_string(self):
-        serializer = GoogleSerializer()
-        ir = serializer.from_yaml("Just a raw string.")
-        assert ir.summary == "Just a raw string."
-        assert not ir.sections
-        assert not ir.addons
-
-
-class TestNumpySerializer:
+~~~~~act
+patch_file
+packages/stitcher-python-adapter/tests/unit/docstring/test_serializers.py
+~~~~~
+~~~~~python.old
     def test_to_yaml(self, complex_ir):
         serializer = NumpySerializer()
         data = serializer.to_yaml(complex_ir)
@@ -173,20 +121,18 @@ class TestNumpySerializer:
         assert data["Parameters"]["param1"] == "(int) The first parameter."
         assert "Returns" in data
         assert "Raises" in data
-        assert "Examples" in data
-        assert data["Addon.Test"] == {"key": "value"}
-        assert data["Configuration"] == "This is a custom section."
-
-    def test_from_yaml_roundtrip(self, complex_ir):
+~~~~~
+~~~~~python.new
+    def test_to_yaml(self, complex_ir):
         serializer = NumpySerializer()
-        yaml_data = serializer.to_yaml(complex_ir)
-        reconstructed_ir = serializer.from_yaml(yaml_data)
+        data = serializer.to_yaml(complex_ir)
 
-        assert reconstructed_ir.summary == complex_ir.summary
-        assert reconstructed_ir.extended == complex_ir.extended
-        assert reconstructed_ir.addons == complex_ir.addons
-        assert len(reconstructed_ir.sections) == len(complex_ir.sections)
+        assert data["Summary"] == "This is the summary."
+        assert "Parameters" in data  # Key difference from Google
+        assert data["Parameters"]["param1"] == "The first parameter."
+        assert "Returns" in data
+        assert "Raises" in data
 ~~~~~
 
 ### 下一步建议
-我们已经为序列化器的核心逻辑建立了测试覆盖。下一步是实施计划的第二部分：**在 `stitcher-application` 的 `DocumentManager` 中集成这些新的序列化器**，使其能够根据项目配置动态选择并使用它们。这将是打通整个 Style-Aware 存储流程的最后一步。
+现在序列化逻辑已经修正，您可以运行测试来验证。如果测试通过，我们就可以进入 Plan 2：将这些 Serializer 集成到 `stitcher-application` 中。

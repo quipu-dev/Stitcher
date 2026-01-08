@@ -88,7 +88,8 @@ class TestGoogleSerializer:
         assert data["Summary"] == "This is the summary."
         assert data["Extended"] == "This is the extended description."
         assert "Args" in data
-        assert data["Args"]["param1"] == "(int) The first parameter."
+        # Verification: No type info encoded in the value string
+        assert data["Args"]["param1"] == "The first parameter."
         assert "Returns" in data
         assert data["Returns"]["bool"] == "True if successful, False otherwise."
         assert "Raises" in data
@@ -125,7 +126,7 @@ class TestNumpySerializer:
 
         assert data["Summary"] == "This is the summary."
         assert "Parameters" in data  # Key difference from Google
-        assert data["Parameters"]["param1"] == "(int) The first parameter."
+        assert data["Parameters"]["param1"] == "The first parameter."
         assert "Returns" in data
         assert "Raises" in data
         assert "Examples" in data

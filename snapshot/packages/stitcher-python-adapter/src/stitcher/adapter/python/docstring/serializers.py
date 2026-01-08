@@ -19,21 +19,17 @@ class BaseSerializer(DocstringSerializerProtocol):
 
     def _encode_item_value(self, item: DocstringItem) -> str:
         """
-        Encodes DocstringItem into a string format: "(type) description".
+        Encodes DocstringItem into a string.
+        We deliberately DO NOT encode the type annotation here to avoid Single Source of Truth violation.
+        Types should be derived from the code signature, not stored in YAML.
         """
-        desc = item.description or ""
-        if item.annotation:
-            return f"({item.annotation}) {desc}"
-        return desc
+        return item.description or ""
 
     def _decode_item_value(self, value: str) -> dict:
         """
-        Decodes string format "(type) description" into parts.
+        Decodes string value into parts.
+        Since we don't encode types, this just treats the whole string as description.
         """
-        # Simple regex to catch (type) at the start
-        match = re.match(r"^\((.+?)\)\s*(.*)", value, re.DOTALL)
-        if match:
-            return {"annotation": match.group(1), "description": match.group(2)}
         return {"annotation": None, "description": value}
 
     def to_yaml(self, ir: DocstringIR) -> Dict[str, Any]:
