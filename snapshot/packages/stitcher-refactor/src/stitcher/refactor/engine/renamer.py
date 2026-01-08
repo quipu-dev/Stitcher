@@ -4,7 +4,7 @@ from typing import List, Dict
 from pathlib import Path
 
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import WriteFileOp
+from stitcher.common.transaction import WriteFileOp
 from stitcher.refactor.engine.graph import UsageLocation
 from stitcher.refactor.operations.transforms.rename_transformer import (
     SymbolRenamerTransformer,

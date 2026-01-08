@@ -3,7 +3,7 @@ import yaml
 
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import (
+from stitcher.common.transaction import (
     TransactionManager,
     MoveFileOp,
     DeleteDirectoryOp,

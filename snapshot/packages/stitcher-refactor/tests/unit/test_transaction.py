@@ -1,6 +1,6 @@
 from pathlib import Path
 from unittest.mock import Mock
-from stitcher.refactor.engine.transaction import (
+from stitcher.common.transaction import (
     TransactionManager,
     FileSystemAdapter,
     WriteFileOp,

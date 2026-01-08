@@ -3,12 +3,12 @@ import json
 
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import TransactionManager
+from stitcher.common.transaction import TransactionManager
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.refactor.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
-from stitcher.refactor.engine.transaction import WriteFileOp
+from stitcher.common.transaction import WriteFileOp
 
 # Injected real content of bus.py to match production environment exactly
 BUS_PY_CONTENT = """

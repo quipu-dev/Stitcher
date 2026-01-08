@@ -8,7 +8,7 @@ import json
 if TYPE_CHECKING:
     from stitcher.refactor.migration import MigrationSpec
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import (
+from stitcher.common.transaction import (
     FileOp,
     MoveFileOp,
     WriteFileOp,
