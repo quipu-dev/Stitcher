@@ -3,48 +3,39 @@ import json
 from pathlib import Path
 from typing import Dict, Optional, Any, Union
 
-from stitcher.spec import ModuleDef, ClassDef, FunctionDef, DocstringIR
+from stitcher.spec import (
+    ModuleDef,
+    ClassDef,
+    FunctionDef,
+    DocstringIR,
+    DocstringParserProtocol,
+    DocstringSerializerProtocol,
+)
 from stitcher.common import DocumentAdapter, YamlAdapter
-from stitcher.adapter.python import RawDocstringParser
+from stitcher.adapter.python import RawDocstringParser, RawSerializer
 
 
 class DocumentManager:
     def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):
         self.root_path = root_path
         self.adapter = adapter or YamlAdapter()
-        # In Phase 1, we hardcode RawDocstringParser.
-        # Future phases will inject this via config.
-        self.parser = RawDocstringParser()
+        # Defaults to Raw mode for backward compatibility
+        self.parser: DocstringParserProtocol = RawDocstringParser()
+        self.serializer: DocstringSerializerProtocol = RawSerializer()
+
+    def set_strategy(
+        self,
+        parser: DocstringParserProtocol,
+        serializer: DocstringSerializerProtocol,
+    ):
+        self.parser = parser
+        self.serializer = serializer
 
     def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
-        if isinstance(data, str):
-            return self.parser.parse(data)
-
-        if isinstance(data, dict):
-            summary = data.get("Raw", "")
-            # Assume other keys starting with "Addon." are addons
-            addons = {k: v for k, v in data.items() if k.startswith("Addon.")}
-
-            # Future: Handle structured sections (Args, Returns) here
-
-            ir = self.parser.parse(summary)
-            ir.addons = addons
-            return ir
-
-        return DocstringIR()
+        return self.serializer.from_yaml(data)
 
     def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
-        summary = ir.summary or ""
-
-        # If we have addons, we MUST use the dictionary format (Hybrid Mode)
-        if ir.addons:
-            output = {"Raw": summary}
-            output.update(ir.addons)
-            # Future: Serialize structured sections here
-            return output
-
-        # Otherwise, degrade to simple string (Raw Mode)
-        return summary
+        return self.serializer.to_yaml(ir)
 
     def _extract_from_function(
         self, func: FunctionDef, prefix: str = ""

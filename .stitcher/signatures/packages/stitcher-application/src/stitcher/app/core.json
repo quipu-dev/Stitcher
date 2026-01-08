@@ -44,6 +44,10 @@
     "baseline_code_signature_text": "def _apply_resolutions(self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]):",
     "baseline_code_structure_hash": "5a10cfb2b48149d205274fbe089baca395860335fc1e68ed6b71989b33d6a8d5"
   },
+  "StitcherApp._configure_and_scan": {
+    "baseline_code_signature_text": "def _configure_and_scan(self, config: StitcherConfig) -> List[ModuleDef]:",
+    "baseline_code_structure_hash": "05ce23e5b7304b078490cf92c16e582ffeec64c126bbfb05fe76774a45e8b505"
+  },
   "StitcherApp._derive_logical_path": {
     "baseline_code_signature_text": "def _derive_logical_path(self, file_path: str) -> Path:",
     "baseline_code_structure_hash": "4f221986426b30a0f065226d1a3000796fba88810c0fd68d209dee9892e7fd4f"
@@ -59,6 +63,10 @@
   "StitcherApp._get_files_from_config": {
     "baseline_code_signature_text": "def _get_files_from_config(self, config: StitcherConfig) -> List[Path]:",
     "baseline_code_structure_hash": "43ac3bab6d1a51870ca26829271f72941b2480329c012e1725e54b7fd805b77a"
+  },
+  "StitcherApp._load_configs": {
+    "baseline_code_signature_text": "def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:",
+    "baseline_code_structure_hash": "1504c712d9dbd4a7f3d6bc63ff1de5504012b399a8ce872360f93682cfca6508"
   },
   "StitcherApp._process_plugins": {
     "baseline_code_signature_text": "def _process_plugins(self, plugins: Dict[str, str]) -> List[ModuleDef]:",
@@ -82,6 +90,7 @@
   "StitcherApp.init_runner": {},
   "StitcherApp.merger": {},
   "StitcherApp.pump_runner": {},
+  "StitcherApp.root_path": {},
   "StitcherApp.run_check": {
     "baseline_code_signature_text": "def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:",
     "baseline_code_structure_hash": "4cfe338208fefaf498e609a386a62469c06faddfb7d8cb43fbc915fd2d672ac8",

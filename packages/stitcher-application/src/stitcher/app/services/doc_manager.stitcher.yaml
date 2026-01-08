@@ -37,3 +37,5 @@
   The root path of the project.
 "DocumentManager.save_docs_for_module": |-
   Extracts docs from module (code), serializes them, and saves to YAML.
+"DocumentManager.set_strategy": |-
+  Injects the parsing and serialization strategy.

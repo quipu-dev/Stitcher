@@ -97,9 +97,7 @@ class PumpRunner:
                 yaml_docs = self.doc_manager.load_docs_for_module(module)
                 for key in res["conflicts"]:
                     yaml_summary = yaml_docs[key].summary if key in yaml_docs else ""
-                    src_summary = (
-                        source_docs[key].summary if key in source_docs else ""
-                    )
+                    src_summary = source_docs[key].summary if key in source_docs else ""
                     doc_diff = self.differ.generate_text_diff(
                         yaml_summary or "",
                         src_summary or "",

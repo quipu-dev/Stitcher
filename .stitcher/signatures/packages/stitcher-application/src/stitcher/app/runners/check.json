@@ -1,12 +1,12 @@
 {
   "CheckRunner": {},
   "CheckRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, differ: Differ, interaction_handler: InteractionHandler | None):",
-    "baseline_code_structure_hash": "20350e480c5d9cb602efa01ee62e3334528c3b9ad13366282e8564bf4c62458d"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, differ: Differ, interaction_handler: InteractionHandler | None):",
+    "baseline_code_structure_hash": "828d05f0b65d607bca99ccc8e312b1fafaabd7eb6ed116010e8f60dd3e3b9c7e"
   },
   "CheckRunner._analyze_file": {
-    "baseline_code_signature_text": "def _analyze_file(self, module: ModuleDef) -> tuple[FileCheckResult, list[InteractionContext]]:",
-    "baseline_code_structure_hash": "65be8897174265e0e6de678c3bbd6aa229548817c7a54630c50c8ac47da8495a"
+    "baseline_code_signature_text": "def _analyze_file(self, module: ModuleDef) -> Tuple[FileCheckResult, List[InteractionContext]]:",
+    "baseline_code_structure_hash": "0132c14a534d4d0e6ee64997f27c36e8ac79d259b293697fbe9d7e2829e65e1b"
   },
   "CheckRunner._apply_resolutions": {
     "baseline_code_signature_text": "def _apply_resolutions(self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]):",
@@ -16,10 +16,30 @@
     "baseline_code_signature_text": "def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:",
     "baseline_code_structure_hash": "62016244a2fa1e685039c4248ad132dc2bdf55fb5b67eabda296c12fb9f79b73"
   },
+  "CheckRunner.analyze_batch": {
+    "baseline_code_signature_text": "def analyze_batch(self, modules: List[ModuleDef]) -> Tuple[List[FileCheckResult], List[InteractionContext]]:",
+    "baseline_code_structure_hash": "8742a43e421e48d1a4d7776ad0be983b97b7bb7b890e7c1f7c95a9e00daf45b8"
+  },
+  "CheckRunner.auto_reconcile_docs": {
+    "baseline_code_signature_text": "def auto_reconcile_docs(self, results: List[FileCheckResult], modules: List[ModuleDef]):",
+    "baseline_code_structure_hash": "b19909870f99eac4c1aecbac8e9ad003854fe8513ee72cabbe21639f31f38718"
+  },
   "CheckRunner.differ": {},
   "CheckRunner.doc_manager": {},
   "CheckRunner.interaction_handler": {},
   "CheckRunner.parser": {},
+  "CheckRunner.reformat_all": {
+    "baseline_code_signature_text": "def reformat_all(self, modules: List[ModuleDef]):",
+    "baseline_code_structure_hash": "1ffd9769c49297ddeaccf6ce1061dfa70a81478a8bbd6e4d5720439f020f4f7a"
+  },
+  "CheckRunner.report": {
+    "baseline_code_signature_text": "def report(self, results: List[FileCheckResult]) -> bool:",
+    "baseline_code_structure_hash": "3b154b57774cb70599d76bad8a376720541936fda6490637a561551c556354f4"
+  },
+  "CheckRunner.resolve_conflicts": {
+    "baseline_code_signature_text": "def resolve_conflicts(self, results: List[FileCheckResult], conflicts: List[InteractionContext], force_relink: bool = False, reconcile: bool = False) -> bool:",
+    "baseline_code_structure_hash": "7c312fb41ba8a7400e0883713391a167220fa568d784e32a0b58963a346d7366"
+  },
   "CheckRunner.root_path": {},
   "CheckRunner.run": {
     "baseline_code_signature_text": "def run(self, force_relink: bool = False, reconcile: bool = False) -> bool:",
