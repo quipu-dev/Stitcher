@@ -1,0 +1,4 @@
+"DocstringMerger": |-
+  Service responsible for merging conflicting DocstringIR objects.
+"DocstringMerger.merge": |-
+  Merges an incoming docstring into a base docstring, preserving addons from the base.

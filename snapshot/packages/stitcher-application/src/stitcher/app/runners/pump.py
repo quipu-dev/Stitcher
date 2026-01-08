@@ -20,6 +20,8 @@ from stitcher.app.services import (
     DocumentManager,
     SignatureManager,
     ScannerService,
+    Differ,
+    DocstringMerger,
 )
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
@@ -35,6 +37,8 @@ class PumpRunner:
         doc_manager: DocumentManager,
         sig_manager: SignatureManager,
         transformer: LanguageTransformerProtocol,
+        differ: Differ,
+        merger: DocstringMerger,
         interaction_handler: InteractionHandler | None,
     ):
         self.root_path = root_path
@@ -43,18 +47,9 @@ class PumpRunner:
         self.doc_manager = doc_manager
         self.sig_manager = sig_manager
         self.transformer = transformer
+        self.differ = differ
+        self.merger = merger
         self.interaction_handler = interaction_handler
-
-    def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:
-        return "\n".join(
-            difflib.unified_diff(
-                a.splitlines(),
-                b.splitlines(),
-                fromfile=label_a,
-                tofile=label_b,
-                lineterm="",
-            )
-        )
 
     def _generate_execution_plan(
         self,
@@ -123,8 +118,8 @@ class PumpRunner:
                         # Extract summaries for diffing
                         yaml_summary = yaml_docs[key].summary if key in yaml_docs else ""
                         src_summary = source_docs[key].summary if key in source_docs else ""
-                        
-                        doc_diff = self._generate_diff(
+
+                        doc_diff = self.differ.generate_text_diff(
                             yaml_summary or "",
                             src_summary or "",
                             "yaml",
@@ -195,13 +190,12 @@ class PumpRunner:
                     if fqn in source_docs:
                         src_ir = source_docs[fqn]
                         existing_ir = new_yaml_docs.get(fqn)
-                        
-                        # Preserve addons if updating
-                        if existing_ir:
-                            src_ir.addons = existing_ir.addons
-                        
-                        if existing_ir != src_ir:
-                            new_yaml_docs[fqn] = src_ir
+
+                        # Use merger service to handle logic (e.g. preserve addons)
+                        merged_ir = self.merger.merge(existing_ir, src_ir)
+
+                        if existing_ir != merged_ir:
+                            new_yaml_docs[fqn] = merged_ir
                             updated_keys_in_file.append(fqn)
                             file_had_updates = True
 

@@ -17,6 +17,7 @@ from stitcher.app.services import (
     DocumentManager,
     SignatureManager,
     ScannerService,
+    Differ,
 )
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
@@ -31,6 +32,7 @@ class CheckRunner:
         parser: LanguageParserProtocol,
         doc_manager: DocumentManager,
         sig_manager: SignatureManager,
+        differ: Differ,
         interaction_handler: InteractionHandler | None,
     ):
         self.root_path = root_path
@@ -38,18 +40,8 @@ class CheckRunner:
         self.parser = parser
         self.doc_manager = doc_manager
         self.sig_manager = sig_manager
+        self.differ = differ
         self.interaction_handler = interaction_handler
-
-    def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:
-        return "\n".join(
-            difflib.unified_diff(
-                a.splitlines(),
-                b.splitlines(),
-                fromfile=label_a,
-                tofile=label_b,
-                lineterm="",
-            )
-        )
 
     def _analyze_file(
         self, module: ModuleDef
@@ -112,7 +104,7 @@ class CheckRunner:
             elif not code_matches:
                 sig_diff = None
                 if baseline_sig_text and current_sig_text:
-                    sig_diff = self._generate_diff(
+                    sig_diff = self.differ.generate_text_diff(
                         baseline_sig_text,
                         current_sig_text,
                         "baseline",
