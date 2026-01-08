@@ -1,5 +1,5 @@
 from pathlib import Path
-from stitcher.refactor.engine.transaction import (
+from stitcher.common.transaction import (
     TransactionManager,
     WriteFileOp,
     MoveFileOp,
