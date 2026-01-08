@@ -10,7 +10,6 @@ requires-python = ">=3.10"
 dependencies = [
     "stitcher-spec",
     "stitcher-common",
-    "stitcher-application",
     "griffe",
     "libcst",
     "tomli>=2.0.1; python_version < '3.11'",
@@ -22,4 +21,3 @@ packages = ["src/stitcher"]
 [tool.uv.sources]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
-stitcher-application = { workspace = true }
