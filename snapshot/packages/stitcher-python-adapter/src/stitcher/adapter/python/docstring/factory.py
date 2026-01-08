@@ -17,7 +17,7 @@ class RawDocstringRenderer(DocstringRendererProtocol):
     Used for 'raw' mode consistency.
     """
 
-    def render(self, docstring_ir) -> str:
+    def render(self, docstring_ir, context=None) -> str:
         # For raw mode, we just return the summary as the full docstring.
         # Addons and other fields are ignored in raw render.
         return docstring_ir.summary or ""
