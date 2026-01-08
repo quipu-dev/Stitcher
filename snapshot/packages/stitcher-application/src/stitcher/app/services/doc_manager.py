@@ -28,7 +28,6 @@ class DocumentManager:
         parser: DocstringParserProtocol,
         serializer: DocstringSerializerProtocol,
     ):
-        """Injects the parsing and serialization strategy."""
         self.parser = parser
         self.serializer = serializer
 

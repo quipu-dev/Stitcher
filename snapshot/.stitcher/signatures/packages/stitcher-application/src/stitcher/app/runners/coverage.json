@@ -1,22 +1,30 @@
 {
   "CoverageRunner": {},
   "CoverageRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, doc_manager: DocumentManager):",
-    "baseline_code_structure_hash": "07c2206c14a805541cfc7c07feb0135d4f953f898acd0999cf9aa0d17252e35c"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager):",
+    "baseline_code_structure_hash": "9eefd734286e0c4793c61cac684e57ceb57d5c1983858fe0cbd4d543dfcd4966"
   },
   "CoverageRunner._analyze_module_coverage": {
-    "baseline_code_signature_text": "def _analyze_module_coverage(self, module) -> CoverageResult:",
-    "baseline_code_structure_hash": "f51ff5db3c276479bce71e0fe761b309cb58b032fd363423a6912df50d501e6f"
+    "baseline_code_signature_text": "def _analyze_module_coverage(self, module: ModuleDef) -> CoverageResult:",
+    "baseline_code_structure_hash": "67b0de8e1dacbb0f6d2faaa4f3d02616b54b8bfbfcf9e6e25be383040fab59e5"
   },
   "CoverageRunner._render_report": {
     "baseline_code_signature_text": "def _render_report(self, results: List[CoverageResult]):",
     "baseline_code_structure_hash": "df0e3d48dcbe6ddcee62e116c1422fd19ee7b869af0215bf6ef00c1aab3f7a8c"
   },
   "CoverageRunner.doc_manager": {},
+  "CoverageRunner.report": {
+    "baseline_code_signature_text": "def report(self, results: List[CoverageResult]):",
+    "baseline_code_structure_hash": "e53a8cddc75897a1498351447783092631925cc788a3b708e9ef928c48fb3642"
+  },
   "CoverageRunner.root_path": {},
   "CoverageRunner.run": {
     "baseline_code_signature_text": "def run(self) -> bool:",
     "baseline_code_structure_hash": "721d76a32c15d47dcca6c5eb082a905b7cf7a0e184ca505f8d5648c46922807d"
+  },
+  "CoverageRunner.run_batch": {
+    "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef]) -> List[CoverageResult]:",
+    "baseline_code_structure_hash": "963606d2fa671e837956ce272a0eb73904a44910317c9ed931157fee805fba62"
   },
   "CoverageRunner.scanner": {}
 }

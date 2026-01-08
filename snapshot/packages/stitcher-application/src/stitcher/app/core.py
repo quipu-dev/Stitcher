@@ -79,9 +79,7 @@ class StitcherApp:
             self.stub_pkg_manager,
             stub_generator,
         )
-        self.init_runner = InitRunner(
-            root_path, self.doc_manager, self.sig_manager
-        )
+        self.init_runner = InitRunner(root_path, self.doc_manager, self.sig_manager)
         self.transform_runner = TransformRunner(
             root_path, self.doc_manager, transformer
         )
@@ -105,31 +103,31 @@ class StitcherApp:
         # Handle Files
         unique_files = self.scanner.get_files_from_config(config)
         source_modules = self.scanner.scan_files(unique_files)
-        
+
         all_modules = source_modules + plugin_modules
         if not all_modules:
             # We don't warn here per config, but maybe we should?
             # Original logic warned if ALL configs yielded nothing.
             pass
-            
+
         return all_modules
 
     def run_from_config(self) -> List[Path]:
         configs, project_name = self._load_configs()
         all_generated: List[Path] = []
         found_any = False
-        
+
         for config in configs:
             modules = self._configure_and_scan(config)
             if not modules:
                 continue
             found_any = True
-            
+
             paths = self.generate_runner.run_batch(modules, config, project_name)
             all_generated.extend(paths)
-            
+
         if not found_any and len(configs) == 1:
-             bus.warning(L.warning.no_files_or_plugins_found)
+            bus.warning(L.warning.no_files_or_plugins_found)
 
         if all_generated:
             bus.success(L.generate.run.complete, count=len(all_generated))
@@ -145,44 +143,46 @@ class StitcherApp:
             if not modules:
                 continue
             found_any = True
-            
+
             created = self.init_runner.run_batch(modules)
             all_created.extend(created)
-            
+
         if not found_any:
             bus.info(L.init.no_docs_found)
         elif all_created:
             bus.success(L.init.run.complete, count=len(all_created))
         else:
             bus.info(L.init.no_docs_found)
-            
+
         return all_created
 
     def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
         all_modules: List[ModuleDef] = []
-        
+
         for config in configs:
             modules = self._configure_and_scan(config)
             if not modules:
                 continue
             all_modules.extend(modules)
-            
+
             results, conflicts = self.check_runner.analyze_batch(modules)
-            
+
             # Interactive resolution is tricky across batches if we want to support 'abort'.
             # But typically we resolve per batch or resolve all at once.
             # Original logic resolved ALL at once.
             # Let's aggregate first.
             all_results.extend(results)
-            
+
             # Auto-reconcile docs (infos) immediately per batch or globally?
             # Modules are needed for re-saving.
             self.check_runner.auto_reconcile_docs(results, modules)
 
             # Resolve conflicts for this batch
-            if not self.check_runner.resolve_conflicts(results, conflicts, force_relink, reconcile):
+            if not self.check_runner.resolve_conflicts(
+                results, conflicts, force_relink, reconcile
+            ):
                 return False
 
         # Reformat All
@@ -196,16 +196,18 @@ class StitcherApp:
     ) -> PumpResult:
         bus.info(L.pump.run.start)
         configs, _ = self._load_configs()
-        
+
         global_success = True
         all_redundant: List[Path] = []
-        
+
         for config in configs:
             modules = self._configure_and_scan(config)
             if not modules:
                 continue
-            
-            result = self.pump_runner.run_batch(modules, config, strip, force, reconcile)
+
+            result = self.pump_runner.run_batch(
+                modules, config, strip, force, reconcile
+            )
             if not result.success:
                 global_success = False
             all_redundant.extend(result.redundant_files)
@@ -221,41 +223,41 @@ class StitcherApp:
             for config in configs:
                 files_to_process.extend(self.scanner.get_files_from_config(config))
             files_to_process = sorted(list(set(files_to_process)))
-            
+
         return self.transform_runner.run_strip(files_to_process)
 
     def run_inject(self) -> List[Path]:
         configs, _ = self._load_configs()
         all_modified: List[Path] = []
         found_any_docs = False
-        
+
         for config in configs:
             modules = self._configure_and_scan(config)
             if not modules:
                 continue
-            
+
             # We assume if modules exist, docs might exist.
             # Transform runner will check doc existence.
             modified = self.transform_runner.run_inject_batch(modules)
             if modified:
                 found_any_docs = True
             all_modified.extend(modified)
-            
+
         if all_modified:
             bus.success(L.inject.run.complete, count=len(all_modified))
         elif not found_any_docs:
             bus.info(L.inject.no_docs_found)
-            
+
         return all_modified
 
     def run_cov(self) -> bool:
         configs, _ = self._load_configs()
         all_results: List[CoverageResult] = []
-        
+
         for config in configs:
             modules = self._configure_and_scan(config)
             results = self.coverage_runner.run_batch(modules)
             all_results.extend(results)
-            
+
         self.coverage_runner.report(all_results)
         return True

@@ -1,8 +1,8 @@
 {
   "PumpRunner": {},
   "PumpRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, transformer: LanguageTransformerProtocol, differ: Differ, merger: DocstringMerger, interaction_handler: InteractionHandler | None):",
-    "baseline_code_structure_hash": "d28416ab99cc1b2a5cf41b66022e52de41c53f84628e729c867dd7608658c39f"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, sig_manager: SignatureManager, transformer: LanguageTransformerProtocol, differ: Differ, merger: DocstringMerger, interaction_handler: InteractionHandler | None):",
+    "baseline_code_structure_hash": "50334d7b427fa6eed57f984e2349f96e65afbbf6a1602f04509c1d06e7bd8e5e"
   },
   "PumpRunner._generate_diff": {
     "baseline_code_signature_text": "def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:",
@@ -22,6 +22,10 @@
   "PumpRunner.run": {
     "baseline_code_signature_text": "def run(self, strip: bool = False, force: bool = False, reconcile: bool = False) -> PumpResult:",
     "baseline_code_structure_hash": "43c277941d6c604f282848bae3e473260a276d998ff2c2db940147f66b52375d"
+  },
+  "PumpRunner.run_batch": {
+    "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef], config: StitcherConfig, strip: bool = False, force: bool = False, reconcile: bool = False) -> PumpResult:",
+    "baseline_code_structure_hash": "e52f554808a12f199ee9e5bfd3325ee14e32a3d1c400d49bfceac770d8b75919"
   },
   "PumpRunner.scanner": {},
   "PumpRunner.sig_manager": {},

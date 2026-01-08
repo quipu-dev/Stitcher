@@ -90,5 +90,11 @@
     "baseline_code_signature_text": "def save_docs_for_module(self, module: ModuleDef) -> Path:",
     "baseline_code_structure_hash": "02e5fe452fa0690256cf2ccf7dd9bf4ee571745329485156eea4f2879692527a",
     "baseline_yaml_content_hash": "c30f2cec878e8951aebe24bc87a7adb9fd507c0c59aafe0d2a5902e3f1b413b3"
+  },
+  "DocumentManager.serializer": {},
+  "DocumentManager.set_strategy": {
+    "baseline_code_signature_text": "def set_strategy(self, parser: DocstringParserProtocol, serializer: DocstringSerializerProtocol):",
+    "baseline_code_structure_hash": "b9800de0282d3f7b7a216cc4fc1e457a5de9dff7c4c29bf5d4018b08cb47f2cf",
+    "baseline_yaml_content_hash": "0cff586d15ad7c0811defd1ec5212ab1c6bd75d7413abc32d53b54da34794e48"
   }
 }

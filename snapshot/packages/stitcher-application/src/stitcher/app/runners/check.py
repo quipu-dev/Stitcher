@@ -12,11 +12,9 @@ from stitcher.spec import (
     Fingerprint,
     LanguageParserProtocol,
 )
-from stitcher.config import StitcherConfig
 from stitcher.app.services import (
     DocumentManager,
     SignatureManager,
-    ScannerService,
     Differ,
 )
 from stitcher.app.protocols import InteractionHandler, InteractionContext
@@ -217,9 +215,7 @@ class CheckRunner:
     ):
         for res in results:
             if res.infos["doc_improvement"]:
-                module_def = next(
-                    (m for m in modules if m.file_path == res.path), None
-                )
+                module_def = next((m for m in modules if m.file_path == res.path), None)
                 if not module_def:
                     continue
 

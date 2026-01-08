@@ -38,5 +38,4 @@
 "DocumentManager.save_docs_for_module": |-
   Extracts docs from module (code), serializes them, and saves to YAML.
 "DocumentManager.set_strategy": |-
-  Configures the parser and serializer used by the manager.
-  Allows switching between Raw, Google, and NumPy styles dynamically.
+  Injects the parsing and serialization strategy.

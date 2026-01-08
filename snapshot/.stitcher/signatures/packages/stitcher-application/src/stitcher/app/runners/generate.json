@@ -19,6 +19,10 @@
     "baseline_code_signature_text": "def run(self) -> List[Path]:",
     "baseline_code_structure_hash": "fb52c518ced5dce36777b9c36e0c8ccfdbd34c24c8a6d8493866d38bc9e729e7"
   },
+  "GenerateRunner.run_batch": {
+    "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef], config: StitcherConfig, project_name: Optional[str] = None) -> List[Path]:",
+    "baseline_code_structure_hash": "d74b488ad3eb40ab176e2f17e66e9b460f2dbb6f56b67e411971a121eaae57fe"
+  },
   "GenerateRunner.scanner": {},
   "GenerateRunner.stub_pkg_manager": {}
 }
