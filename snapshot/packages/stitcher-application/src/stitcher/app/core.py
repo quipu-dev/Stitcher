@@ -41,6 +41,7 @@ class StitcherApp:
         fingerprint_strategy: FingerprintStrategyProtocol,
         interaction_handler: Optional[InteractionHandler] = None,
     ):
+        self.root_path = root_path
         # 1. Core Services
         self.doc_manager = DocumentManager(root_path)
         self.sig_manager = SignatureManager(root_path, fingerprint_strategy)

@@ -28,8 +28,6 @@ def runner(tmp_path) -> PumpRunner:
     doc_manager = DocumentManager(root_path=tmp_path)
     return PumpRunner(
         root_path=tmp_path,
-        scanner=MagicMock(),
-        parser=MagicMock(),
         doc_manager=doc_manager,
         sig_manager=MagicMock(),
         transformer=MagicMock(),
