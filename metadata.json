@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 添加结构化文档渲染的端到端集成测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767848599.9136355, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 修复 `StubGenerator` 中冗余的缩进，使生成的 `.pyi` 文件内容与预期完全匹配。", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767848690.8896835, "duration_ms": 0}}

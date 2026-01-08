@@ -32,7 +32,7 @@ class StubGenerator:
 
         if doc_content:
             formatted = format_docstring(doc_content, self._indent(0))
-            lines.append(f"{self._indent(0)}{formatted}")
+            lines.append(formatted)
             lines.append("")  # Empty line after docstring
 
         # 2. Imports (TODO: Pass these through from scanner later)
@@ -169,7 +169,7 @@ class StubGenerator:
         if doc_content:
             lines.append(def_line)
             formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(f"{self._indent(level + 1)}{formatted}")
+            lines.append(formatted)
             lines.append(f"{self._indent(level + 1)}...")
         else:
             # For functions without docstrings, use a single line format.
@@ -204,7 +204,7 @@ class StubGenerator:
 
         if doc_content:
             formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(f"{self._indent(level + 1)}{formatted}")
+            lines.append(formatted)
             has_content = True
 
         # Attributes
