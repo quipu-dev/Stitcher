@@ -1,48 +1,3 @@
-好的，我们将遵循 `Monorepo Testing Architecture Specification v1.0` 规范，在 `stitcher-python-adapter` 包内为新的 `serializers` 模块编写单元测试。
-
-[简要回答]
-我将创建一个新的测试文件 `test_serializers.py` 来验证 `RawSerializer`、`GoogleSerializer` 和 `NumpySerializer` 的序列化与反序列化逻辑，确保它们能够正确地进行双向转换并保留所有信息。
-
-## [WIP] test: 为 Docstring Serializers 编写单元测试
-
-### 用户需求
-为 `serializers.py` 模块编写单元测试，以验证 Google 和 NumPy 风格的序列化器在各种场景下的行为，包括：
-1.  完整的 IR 到 YAML 字典的转换。
-2.  YAML 字典到 IR 的反向转换。
-3.  确保类型信息 (`(type) description`) 被正确编码和解码。
-4.  确保插件数据 (`Addon.*`) 在转换过程中被无损保留。
-5.  验证从简单字符串到结构化 IR 的优雅降级。
-
-### 评论
-这是一组关键的单元测试，用于保证存储层的核心逻辑——即 IR 与用户可见的 YAML 之间的转换——是稳定和可逆的。通过覆盖往返（round-trip）场景，我们可以确保在 `pump` 和 `check` 过程中不会因格式转换而意外丢失或损坏数据。
-
-### 目标
-1.  创建测试文件 `packages/stitcher-python-adapter/tests/unit/docstring/test_serializers.py`。
-2.  定义一个包含各种段落和插件数据的复杂 `DocstringIR` Fixture。
-3.  为 `RawSerializer`、`GoogleSerializer` 和 `NumpySerializer` 编写往返测试用例。
-4.  测试边缘情况，如未知段落和从纯字符串格式的迁移。
-
-### 基本原理
-我们将遵循测试与代码共存的原则，在 `stitcher-python-adapter` 包的 `tests/unit/docstring/` 目录下创建新的测试文件。测试将完全在内存中进行，通过 `pytest` Fixture 准备一个标准的、复杂的 `DocstringIR` 对象，然后断言每个序列化器都能正确地将其转换为预期的字典结构，并能从该字典结构完美地恢复回原始的 IR 对象。
-
-### 标签
-#intent/tooling #flow/ready #priority/high
-#comp/adapter #comp/tests #concept/docstring #concept/storage
-#task/domain/testing #task/object/docstring-serializer #task/action/implementation #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建测试文件 `test_serializers.py`
-
-我们将在 `stitcher-python-adapter` 的单元测试目录中创建新的测试文件，并设置好基础的 Fixture 和测试类。
-
-~~~~~act
-write_file
-packages/stitcher-python-adapter/tests/unit/docstring/test_serializers.py
-~~~~~
-~~~~~python
 import pytest
 from stitcher.spec import (
     DocstringIR,
@@ -186,7 +141,3 @@ class TestNumpySerializer:
         assert reconstructed_ir.extended == complex_ir.extended
         assert reconstructed_ir.addons == complex_ir.addons
         assert len(reconstructed_ir.sections) == len(complex_ir.sections)
-~~~~~
-
-### 下一步建议
-我们已经为序列化器的核心逻辑建立了测试覆盖。下一步是实施计划的第二部分：**在 `stitcher-application` 的 `DocumentManager` 中集成这些新的序列化器**，使其能够根据项目配置动态选择并使用它们。这将是打通整个 Style-Aware 存储流程的最后一步。
