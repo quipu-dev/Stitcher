@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor: 解耦对比与合并逻辑至独立服务", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767842712.994098, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实施结构化文档适配器层 (解析与渲染)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767844150.0062547, "duration_ms": 0}}
