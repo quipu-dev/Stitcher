@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional, Set
 
+from .docstring import DocstringIR
+
 
 class ArgumentKind(str, Enum):
     POSITIONAL_ONLY = "POSITIONAL_ONLY"
@@ -36,6 +38,7 @@ class FunctionDef:
     return_annotation: Optional[str] = None
     decorators: List[str] = field(default_factory=list)
     docstring: Optional[str] = None
+    docstring_ir: Optional[DocstringIR] = None
     is_async: bool = False
     is_static: bool = False  # @staticmethod
     is_class: bool = False  # @classmethod
@@ -47,6 +50,7 @@ class ClassDef:
     bases: List[str] = field(default_factory=list)
     decorators: List[str] = field(default_factory=list)
     docstring: Optional[str] = None
+    docstring_ir: Optional[DocstringIR] = None
     attributes: List[Attribute] = field(default_factory=list)
     methods: List[FunctionDef] = field(default_factory=list)
     # Nested classes can be supported later if needed, but usually .pyi flattens or keeps them nested.
@@ -57,6 +61,7 @@ class ClassDef:
 class ModuleDef:
     file_path: str  # Relative path from project root
     docstring: Optional[str] = None
+    docstring_ir: Optional[DocstringIR] = None
     attributes: List[Attribute] = field(default_factory=list)
     functions: List[FunctionDef] = field(default_factory=list)
     classes: List[ClassDef] = field(default_factory=list)

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from stitcher.app.runners import PumpRunner
-from stitcher.app.services import DocumentManager
+from stitcher.app.services import DocumentManager, Differ, DocstringMerger
 from stitcher.spec import (
     ModuleDef,
     FunctionDef,
@@ -33,6 +33,8 @@ def runner(tmp_path) -> PumpRunner:
         doc_manager=doc_manager,
         sig_manager=MagicMock(),
         transformer=MagicMock(),
+        differ=MagicMock(spec=Differ),
+        merger=MagicMock(spec=DocstringMerger),
         interaction_handler=None,
     )
 

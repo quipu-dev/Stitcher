@@ -16,6 +16,7 @@ class StitcherConfig:
     plugins: Dict[str, str] = field(default_factory=dict)
     stub_path: Optional[str] = None
     stub_package: Optional[str] = None
+    docstring_style: str = "raw"
 
 
 def _find_pyproject_toml(search_path: Path) -> Path:
@@ -77,6 +78,7 @@ def load_config_from_path(
                     plugins=plugins,
                     stub_path=target_data.get("stub_path"),
                     stub_package=target_data.get("stub_package"),
+                    docstring_style=target_data.get("docstring_style", "raw"),
                 )
             )
     else:
@@ -87,6 +89,7 @@ def load_config_from_path(
                 plugins=plugins,
                 stub_path=stitcher_data.get("stub_path"),
                 stub_package=stitcher_data.get("stub_package"),
+                docstring_style=stitcher_data.get("docstring_style", "raw"),
             )
         )
 

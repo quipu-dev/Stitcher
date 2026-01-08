@@ -12,6 +12,8 @@ from stitcher.app.services import (
     SignatureManager,
     StubPackageManager,
     ScannerService,
+    Differ,
+    DocstringMerger,
 )
 from .protocols import InteractionHandler
 from .runners import (
@@ -40,6 +42,8 @@ class StitcherApp:
         self.sig_manager = SignatureManager(root_path, fingerprint_strategy)
         self.stub_pkg_manager = StubPackageManager()
         self.scanner = ScannerService(root_path, parser)
+        self.differ = Differ()
+        self.merger = DocstringMerger()
 
         # 2. Runners (Command Handlers)
         self.check_runner = CheckRunner(
@@ -48,6 +52,7 @@ class StitcherApp:
             parser,
             self.doc_manager,
             self.sig_manager,
+            self.differ,
             interaction_handler,
         )
         self.pump_runner = PumpRunner(
@@ -57,6 +62,8 @@ class StitcherApp:
             self.doc_manager,
             self.sig_manager,
             transformer,
+            self.differ,
+            self.merger,
             interaction_handler,
         )
         self.generate_runner = GenerateRunner(

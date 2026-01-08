@@ -1,0 +1,4 @@
+"Differ": |-
+  Service responsible for calculating and rendering differences.
+"Differ.generate_text_diff": |-
+  Generates a standard unified diff between two strings.

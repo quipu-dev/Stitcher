@@ -60,14 +60,18 @@ class TransformRunner:
             unique_files = self.scanner.get_files_from_config(config)
             modules = self.scanner.scan_files(unique_files)
             for module in modules:
-                docs = self.doc_manager.load_docs_for_module(module)
-                if not docs:
+                docs_ir = self.doc_manager.load_docs_for_module(module)
+                if not docs_ir:
                     continue
-                total_docs_found += len(docs)
+                total_docs_found += len(docs_ir)
+                
+                # Convert IR map to simple str map for transformer
+                docs_str = {k: v.summary or "" for k, v in docs_ir.items()}
+                
                 source_path = self.root_path / module.file_path
                 try:
                     original_content = source_path.read_text(encoding="utf-8")
-                    injected_content = self.transformer.inject(original_content, docs)
+                    injected_content = self.transformer.inject(original_content, docs_str)
                     if original_content != injected_content:
                         source_path.write_text(injected_content, encoding="utf-8")
                         all_modified_files.append(source_path)

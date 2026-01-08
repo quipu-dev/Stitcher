@@ -20,6 +20,8 @@ from stitcher.app.services import (
     DocumentManager,
     SignatureManager,
     ScannerService,
+    Differ,
+    DocstringMerger,
 )
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
@@ -35,6 +37,8 @@ class PumpRunner:
         doc_manager: DocumentManager,
         sig_manager: SignatureManager,
         transformer: LanguageTransformerProtocol,
+        differ: Differ,
+        merger: DocstringMerger,
         interaction_handler: InteractionHandler | None,
     ):
         self.root_path = root_path
@@ -43,18 +47,9 @@ class PumpRunner:
         self.doc_manager = doc_manager
         self.sig_manager = sig_manager
         self.transformer = transformer
+        self.differ = differ
+        self.merger = merger
         self.interaction_handler = interaction_handler
-
-    def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:
-        return "\n".join(
-            difflib.unified_diff(
-                a.splitlines(),
-                b.splitlines(),
-                fromfile=label_a,
-                tofile=label_b,
-                lineterm="",
-            )
-        )
 
     def _generate_execution_plan(
         self,
@@ -120,9 +115,13 @@ class PumpRunner:
                     source_docs = self.doc_manager.flatten_module_docs(module)
                     yaml_docs = self.doc_manager.load_docs_for_module(module)
                     for key in res["conflicts"]:
-                        doc_diff = self._generate_diff(
-                            yaml_docs.get(key, ""),
-                            source_docs.get(key, ""),
+                        # Extract summaries for diffing
+                        yaml_summary = yaml_docs[key].summary if key in yaml_docs else ""
+                        src_summary = source_docs[key].summary if key in source_docs else ""
+
+                        doc_diff = self.differ.generate_text_diff(
+                            yaml_summary or "",
+                            src_summary or "",
                             "yaml",
                             "code",
                         )
@@ -188,13 +187,17 @@ class PumpRunner:
                     continue
 
                 if plan.hydrate_yaml:
-                    if (
-                        fqn in source_docs
-                        and new_yaml_docs.get(fqn) != source_docs[fqn]
-                    ):
-                        new_yaml_docs[fqn] = source_docs[fqn]
-                        updated_keys_in_file.append(fqn)
-                        file_had_updates = True
+                    if fqn in source_docs:
+                        src_ir = source_docs[fqn]
+                        existing_ir = new_yaml_docs.get(fqn)
+
+                        # Use merger service to handle logic (e.g. preserve addons)
+                        merged_ir = self.merger.merge(existing_ir, src_ir)
+
+                        if existing_ir != merged_ir:
+                            new_yaml_docs[fqn] = merged_ir
+                            updated_keys_in_file.append(fqn)
+                            file_had_updates = True
 
                 fp = new_hashes.get(fqn) or Fingerprint()
                 fqn_was_updated = False
@@ -213,11 +216,19 @@ class PumpRunner:
 
                 if plan.update_doc_fingerprint:
                     if fqn in source_docs:
-                        doc_hash = self.doc_manager.compute_yaml_content_hash(
-                            source_docs[fqn]
-                        )
-                        fp["baseline_yaml_content_hash"] = doc_hash
-                        fqn_was_updated = True
+                        # Compute hash of the SERIALIZED content (what will be written to yaml)
+                        # source_docs[fqn] is IR. We need raw content.
+                        # Note: This source_docs[fqn] has addons merged in previous step if it was updated!
+                        # Wait, source_docs came from flatten_module_docs(module) at start of loop.
+                        # It does NOT have addons.
+                        
+                        # We need the IR that we are about to save (which might have addons).
+                        ir_to_save = new_yaml_docs.get(fqn)
+                        if ir_to_save:
+                             serialized = self.doc_manager._serialize_ir(ir_to_save)
+                             doc_hash = self.doc_manager.compute_yaml_content_hash(serialized)
+                             fp["baseline_yaml_content_hash"] = doc_hash
+                             fqn_was_updated = True
 
                 if fqn_was_updated:
                     new_hashes[fqn] = fp
@@ -242,9 +253,20 @@ class PumpRunner:
 
             if not file_has_errors:
                 if file_had_updates:
+                    # new_yaml_docs is Dict[str, DocstringIR], need to serialize!
+                    # BUT doc_manager.adapter.save expects raw Dict. 
+                    # We should rely on doc_manager helper instead of calling adapter directly,
+                    # OR manually serialize here.
+                    # Since doc_manager.save_docs_for_module re-extracts from module (which we don't want, we have merged state),
+                    # we must serialize here.
+                    
+                    final_data = {
+                        k: self.doc_manager._serialize_ir(v) 
+                        for k, v in new_yaml_docs.items()
+                    }
                     module_path = self.root_path / module.file_path
                     doc_path = module_path.with_suffix(".stitcher.yaml")
-                    self.doc_manager.adapter.save(doc_path, new_yaml_docs)
+                    self.doc_manager.adapter.save(doc_path, final_data)
 
                 if signatures_need_save:
                     self.sig_manager.save_composite_hashes(module, new_hashes)

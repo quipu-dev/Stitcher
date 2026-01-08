@@ -1,6 +1,7 @@
 from typing import Protocol, Dict, Union, Optional, List
 from .models import ModuleDef, FunctionDef, ClassDef
 from .fingerprint import Fingerprint
+from .docstring import DocstringIR
 
 
 class LanguageParserProtocol(Protocol):
@@ -19,3 +20,11 @@ class FingerprintStrategyProtocol(Protocol):
 
 class StubGeneratorProtocol(Protocol):
     def generate(self, module: ModuleDef) -> str: ...
+
+
+class DocstringParserProtocol(Protocol):
+    def parse(self, docstring_text: str) -> DocstringIR: ...
+
+
+class DocstringRendererProtocol(Protocol):
+    def render(self, docstring_ir: DocstringIR) -> str: ...
