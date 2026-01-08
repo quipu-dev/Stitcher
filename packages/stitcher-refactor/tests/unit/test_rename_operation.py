@@ -8,7 +8,7 @@ from stitcher.refactor.engine.graph import (
     SymbolNode,
 )
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
-from stitcher.refactor.engine.transaction import WriteFileOp
+from stitcher.common.transaction import WriteFileOp
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.refactor.workspace import Workspace
 

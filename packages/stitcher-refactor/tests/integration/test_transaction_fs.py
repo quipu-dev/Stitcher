@@ -1,4 +1,4 @@
-from stitcher.refactor.engine.transaction import TransactionManager
+from stitcher.common.transaction import TransactionManager
 
 
 def test_real_fs_commit(tmp_path):

@@ -1,4 +1,4 @@
-from .transaction import TransactionManager
+from stitcher.common.transaction import TransactionManager
 from .context import RefactorContext
 from .graph import SemanticGraph
 from .planner import Planner

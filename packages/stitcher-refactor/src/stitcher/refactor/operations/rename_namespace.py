@@ -7,7 +7,7 @@ from pathlib import Path
 from .base import AbstractOperation
 from .transforms.rename_namespace_transformer import NamespaceRenamerTransformer
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.transaction import FileOp, WriteFileOp
+from stitcher.common.transaction import FileOp, WriteFileOp
 from stitcher.refactor.engine.graph import UsageLocation, ReferenceType
 
 
