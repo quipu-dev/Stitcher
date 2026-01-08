@@ -101,14 +101,8 @@ class TestGoogleSerializer:
         yaml_data = serializer.to_yaml(complex_ir)
         reconstructed_ir = serializer.from_yaml(yaml_data)
 
-        # Due to fallback keys, we need to compare content carefully
-        assert reconstructed_ir.summary == complex_ir.summary
-        assert reconstructed_ir.extended == complex_ir.extended
-        assert reconstructed_ir.addons == complex_ir.addons
-        
-        # A simple equality check might fail due to ordering or minor differences.
-        # Let's check section by section.
-        assert len(reconstructed_ir.sections) == len(complex_ir.sections)
+        # A direct equality check is the most robust way to test roundtrip
+        assert reconstructed_ir == complex_ir
 
     def test_graceful_fallback_from_string(self):
         serializer = GoogleSerializer()
@@ -137,7 +131,4 @@ class TestNumpySerializer:
         yaml_data = serializer.to_yaml(complex_ir)
         reconstructed_ir = serializer.from_yaml(yaml_data)
 
-        assert reconstructed_ir.summary == complex_ir.summary
-        assert reconstructed_ir.extended == complex_ir.extended
-        assert reconstructed_ir.addons == complex_ir.addons
-        assert len(reconstructed_ir.sections) == len(complex_ir.sections)
+        assert reconstructed_ir == complex_ir

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 为 Docstring Serializers 编写单元测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767845956.5416417, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正序列化器中 Returns/Raises 节的冗余类型编码", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767846061.360081, "duration_ms": 0}}

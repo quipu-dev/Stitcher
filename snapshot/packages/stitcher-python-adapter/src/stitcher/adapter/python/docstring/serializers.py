@@ -106,18 +106,21 @@ class StructuredSerializer(BaseSerializer):
                 # Dict[name, encoded_value]
                 section_data = {}
                 for item in section.content:
-                    # If item has no name (e.g. Returns/Raises), we need a strategy.
-                    # For Returns/Raises, Google/NumPy style often puts type as name or key.
-                    # We use item.annotation as key if name is missing?
-                    # Or just a list? YAML dicts are better.
-                    
                     k = item.name
                     if not k:
-                         # Fallback for return/raises where name might be empty but annotation exists
-                         k = item.annotation or "return" # Fallback key
-                         
-                    section_data[k] = self._encode_item_value(item)
-                
+                        # Fallback for return/raises where name might be empty but annotation exists
+                        k = item.annotation or "return"  # Fallback key
+                    
+                    # For sections where the key IS the type, value is just the description.
+                    if section.kind in [
+                        SectionKind.RETURNS,
+                        SectionKind.YIELDS,
+                        SectionKind.RAISES,
+                    ]:
+                        section_data[k] = item.description or ""
+                    else:
+                        section_data[k] = self._encode_item_value(item)
+
                 data[key] = section_data
 
         if ir.addons:
@@ -151,16 +154,16 @@ class StructuredSerializer(BaseSerializer):
                     # Reconstruction logic
                     item = DocstringItem(description=decoded["description"])
                     
+                    # The `name` variable here is the key from the YAML dict.
                     if kind in [SectionKind.RETURNS, SectionKind.YIELDS, SectionKind.RAISES]:
-                         # For these, the 'key' in YAML usually represents the Type/Exception
-                         # We stored it as 'name' in section_data above for persistence
-                         # But semantically it maps to annotation for Returns/Raises
-                         item.annotation = name
-                         # item.name remains None
+                        # For these kinds, the key is the annotation.
+                        item.annotation = name
+                        item.name = None
                     else:
-                         item.name = name
-                         if decoded["annotation"]:
-                             item.annotation = decoded["annotation"]
+                        # For parameters/attributes, the key is the name.
+                        item.name = name
+                        if decoded["annotation"]:
+                            item.annotation = decoded["annotation"]
                     
                     items.append(item)
                 
