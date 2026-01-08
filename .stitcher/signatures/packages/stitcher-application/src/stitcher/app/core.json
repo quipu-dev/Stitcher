@@ -90,6 +90,7 @@
   "StitcherApp.init_runner": {},
   "StitcherApp.merger": {},
   "StitcherApp.pump_runner": {},
+  "StitcherApp.refactor_runner": {},
   "StitcherApp.root_path": {},
   "StitcherApp.run_check": {
     "baseline_code_signature_text": "def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:",
@@ -119,6 +120,10 @@
     "baseline_code_signature_text": "def run_pump(self, strip: bool = False, force: bool = False, reconcile: bool = False) -> PumpResult:",
     "baseline_code_structure_hash": "763f9eb957504d7a09170f91882675bfef77a43552c2e9341a7f0135c4738b8b",
     "baseline_yaml_content_hash": "a4087469e851d91b53efc885c5003ab5a83c7e5b68582f9bf1029bce0cbb73bf"
+  },
+  "StitcherApp.run_refactor_apply": {
+    "baseline_code_signature_text": "def run_refactor_apply(self, migration_script: Path, dry_run: bool = False, confirm_callback: Optional[Callable[[int], bool]] = None) -> bool:",
+    "baseline_code_structure_hash": "1f70a2403d1deb812868717568abd06e3bcae9a73175c3a5ce0a0ced8a49928c"
   },
   "StitcherApp.run_strip": {
     "baseline_code_signature_text": "def run_strip(self, files: Optional[List[Path]] = None) -> List[Path]:",

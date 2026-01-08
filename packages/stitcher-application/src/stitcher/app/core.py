@@ -27,7 +27,9 @@ from .runners import (
     PumpRunner,
     TransformRunner,
     CoverageRunner,
+    RefactorRunner,
 )
+from typing import Callable
 from .types import PumpResult, FileCheckResult, CoverageResult
 from stitcher.adapter.python.docstring import (
     get_docstring_codec,
@@ -85,6 +87,7 @@ class StitcherApp:
             root_path, self.doc_manager, transformer
         )
         self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
+        self.refactor_runner = RefactorRunner(root_path)
 
     def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:
         return load_config_from_path(self.root_path)
@@ -265,3 +268,13 @@ class StitcherApp:
 
         self.coverage_runner.report(all_results)
         return True
+
+    def run_refactor_apply(
+        self,
+        migration_script: Path,
+        dry_run: bool = False,
+        confirm_callback: Optional[Callable[[int], bool]] = None,
+    ) -> bool:
+        return self.refactor_runner.run_apply(
+            migration_script, dry_run, confirm_callback
+        )

@@ -684,6 +684,7 @@ dependencies = [
     { name = "stitcher-common" },
     { name = "stitcher-config" },
     { name = "stitcher-python-adapter" },
+    { name = "stitcher-refactor" },
     { name = "stitcher-spec" },
 ]
 
@@ -693,6 +694,7 @@ requires-dist = [
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-config", editable = "packages/stitcher-config" },
     { name = "stitcher-python-adapter", editable = "packages/stitcher-python-adapter" },
+    { name = "stitcher-refactor", editable = "packages/stitcher-refactor" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
 ]
 
@@ -805,7 +807,6 @@ source = { editable = "packages/stitcher-refactor" }
 dependencies = [
     { name = "griffe" },
     { name = "libcst" },
-    { name = "stitcher-application" },
     { name = "stitcher-common" },
     { name = "stitcher-spec" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
@@ -815,7 +816,6 @@ dependencies = [
 requires-dist = [
     { name = "griffe" },
     { name = "libcst" },
-    { name = "stitcher-application", editable = "packages/stitcher-application" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
