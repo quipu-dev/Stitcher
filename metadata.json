@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(spec): 为文档字符串格式化实现 Phase 0 基础", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767841219.4039686, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(app): 在 DocumentManager 中实现 DocstringIR 和 Addon 支持", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767841491.1648417, "duration_ms": 0}}

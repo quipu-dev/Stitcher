@@ -57,19 +57,6 @@ class CheckRunner:
         result = FileCheckResult(path=module.file_path)
         unresolved_conflicts: list[InteractionContext] = []
 
-        # Content checks
-        if (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists():
-            doc_issues = self.doc_manager.check_module(module)
-            result.warnings["missing"].extend(doc_issues["missing"])
-            result.warnings["redundant"].extend(doc_issues["redundant"])
-            result.errors["pending"].extend(doc_issues["pending"])
-            result.errors["conflict"].extend(doc_issues["conflict"])
-            # extra is now handled as a potential interactive conflict
-            for fqn in doc_issues["extra"]:
-                unresolved_conflicts.append(
-                    InteractionContext(module.file_path, fqn, ConflictType.DANGLING_DOC)
-                )
-
         # State machine analysis
         is_tracked = (
             (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
@@ -100,6 +87,9 @@ class CheckRunner:
             )
 
             if not code_hash and baseline_code_hash:  # Extra
+                unresolved_conflicts.append(
+                    InteractionContext(module.file_path, fqn, ConflictType.DANGLING_DOC)
+                )
                 continue
             if code_hash and not baseline_code_hash:  # New
                 continue
@@ -195,8 +185,11 @@ class CheckRunner:
 
         # Apply doc purges
         for file_path, fqns_to_purge in purges_by_file.items():
-            module_def = ModuleDef(file_path=file_path)
-            docs = self.doc_manager.load_docs_for_module(module_def)
+            doc_path = (self.root_path / file_path).with_suffix(".stitcher.yaml")
+            if not doc_path.exists():
+                continue
+
+            docs = self.doc_manager.adapter.load(doc_path)
             original_len = len(docs)
 
             for fqn in fqns_to_purge:
@@ -204,11 +197,8 @@ class CheckRunner:
                     del docs[fqn]
 
             if len(docs) < original_len:
-                doc_path = (self.root_path / file_path).with_suffix(".stitcher.yaml")
                 if not docs:
-                    # If all docs are purged, delete the file
-                    if doc_path.exists():
-                        doc_path.unlink()
+                    doc_path.unlink()
                 else:
                     self.doc_manager.adapter.save(doc_path, docs)
 
