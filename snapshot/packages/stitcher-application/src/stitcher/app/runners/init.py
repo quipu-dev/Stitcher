@@ -33,7 +33,9 @@ class InitRunner:
             if not modules:
                 continue
             for module in modules:
-                output_path = self.doc_manager.save_docs_for_module(module)
+                output_path = self.doc_manager.save_docs_for_module(
+                    module, style=config.docstring_style
+                )
 
                 # Use the new unified compute method
                 computed_fingerprints = self.sig_manager.compute_fingerprints(module)

@@ -1,12 +1,11 @@
 import copy
-import difflib
 from pathlib import Path
 from typing import Dict, List
 from collections import defaultdict
 
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.config import load_config_from_path
+from stitcher.config import load_config_from_path, StitcherConfig
 from stitcher.spec import (
     ModuleDef,
     ConflictType,
@@ -56,9 +55,10 @@ class PumpRunner:
         module: ModuleDef,
         decisions: Dict[str, ResolutionAction],
         strip_requested: bool,
+        style: str = "raw",
     ) -> Dict[str, FunctionExecutionPlan]:
         plan: Dict[str, FunctionExecutionPlan] = {}
-        source_docs = self.doc_manager.flatten_module_docs(module)
+        source_docs = self.doc_manager.flatten_module_docs(module, style=style)
 
         for fqn in module.get_all_fqns():
             decision = decisions.get(fqn)
@@ -66,11 +66,9 @@ class PumpRunner:
             exec_plan = FunctionExecutionPlan(fqn=fqn)
 
             if decision == ResolutionAction.SKIP:
-                pass  # All flags default to False
+                pass
             else:
-                # All other cases require updating the code fingerprint.
                 exec_plan.update_code_fingerprint = True
-
                 if decision == ResolutionAction.HYDRATE_OVERWRITE or (
                     decision is None and has_source_doc
                 ):
@@ -91,11 +89,10 @@ class PumpRunner:
         bus.info(L.pump.run.start)
         configs, _ = load_config_from_path(self.root_path)
 
-        all_modules: List[ModuleDef] = []
+        modules_by_config: Dict[str, List[ModuleDef]] = defaultdict(list)
         all_conflicts: List[InteractionContext] = []
 
         # --- Phase 1: Analysis ---
-        # Scan all files and identify conflicts WITHOUT applying changes
         for config in configs:
             if config.name != "default":
                 bus.info(L.generate.target.processing, name=config.name)
@@ -103,27 +100,30 @@ class PumpRunner:
             modules = self.scanner.scan_files(unique_files)
             if not modules:
                 continue
-            all_modules.extend(modules)
+            modules_by_config[config.name].extend(modules)
 
             for module in modules:
-                # IMPORTANT: dry_run=True, force=False, reconcile=False
-                # We want to see the RAW conflicts first so we can decide on them.
                 res = self.doc_manager.hydrate_module(
-                    module, force=False, reconcile=False, dry_run=True
+                    module,
+                    force=False,
+                    reconcile=False,
+                    dry_run=True,
+                    style=config.docstring_style,
                 )
                 if not res["success"]:
-                    source_docs = self.doc_manager.flatten_module_docs(module)
+                    source_docs = self.doc_manager.flatten_module_docs(
+                        module, style=config.docstring_style
+                    )
                     yaml_docs = self.doc_manager.load_docs_for_module(module)
                     for key in res["conflicts"]:
-                        # Extract summaries for diffing
-                        yaml_summary = yaml_docs[key].summary if key in yaml_docs else ""
-                        src_summary = source_docs[key].summary if key in source_docs else ""
-
+                        yaml_summary = (
+                            yaml_docs[key].summary if key in yaml_docs else ""
+                        )
+                        src_summary = (
+                            source_docs[key].summary if key in source_docs else ""
+                        )
                         doc_diff = self.differ.generate_text_diff(
-                            yaml_summary or "",
-                            src_summary or "",
-                            "yaml",
-                            "code",
+                            yaml_summary or "", src_summary or "", "yaml", "code"
                         )
                         all_conflicts.append(
                             InteractionContext(
@@ -135,7 +135,6 @@ class PumpRunner:
                         )
 
         # --- Phase 2: Decision ---
-        # Solve conflicts via InteractionHandler (or NoOp defaults)
         decisions: Dict[str, ResolutionAction] = {}
         if all_conflicts:
             handler = self.interaction_handler or NoOpInteractionHandler(
@@ -151,144 +150,109 @@ class PumpRunner:
                 decisions[context.fqn] = action
 
         # --- Phase 3 & 4: Planning & Execution ---
-        # Apply decisions, write files, and record stats
         strip_jobs = defaultdict(list)
         redundant_files_list: List[Path] = []
-        total_updated_keys = 0
-        total_reconciled_keys = 0
-        unresolved_conflicts_count = 0
+        total_updated_keys, total_reconciled_keys, unresolved_conflicts_count = 0, 0, 0
 
-        for module in all_modules:
-            file_plan = self._generate_execution_plan(module, decisions, strip)
+        for config in configs:
+            modules = modules_by_config[config.name]
+            for module in modules:
+                file_plan = self._generate_execution_plan(
+                    module, decisions, strip, style=config.docstring_style
+                )
+                source_docs = self.doc_manager.flatten_module_docs(
+                    module, style=config.docstring_style
+                )
+                current_yaml_docs = self.doc_manager.load_docs_for_module(module)
+                stored_hashes = self.sig_manager.load_composite_hashes(module)
+                current_fingerprints = self.sig_manager.compute_fingerprints(module)
 
-            source_docs = self.doc_manager.flatten_module_docs(module)
-            current_yaml_docs = self.doc_manager.load_docs_for_module(module)
-            stored_hashes = self.sig_manager.load_composite_hashes(module)
+                new_yaml_docs = current_yaml_docs.copy()
+                new_hashes = copy.deepcopy(stored_hashes)
+                file_had_updates, file_has_errors, file_has_redundancy = False, False, False
+                updated_keys_in_file, reconciled_keys_in_file = [], []
 
-            # Pre-compute current fingerprints for efficiency
-            current_fingerprints = self.sig_manager.compute_fingerprints(module)
+                for fqn, plan in file_plan.items():
+                    if decisions.get(fqn) == ResolutionAction.SKIP:
+                        unresolved_conflicts_count += 1
+                        file_has_errors = True
+                        bus.error(
+                            L.pump.error.conflict, path=module.file_path, key=fqn
+                        )
+                        continue
 
-            new_yaml_docs = current_yaml_docs.copy()
-            new_hashes = copy.deepcopy(stored_hashes)
-
-            file_had_updates = False
-            file_has_errors = False  # Check for atomic writes
-            file_has_redundancy = False
-            updated_keys_in_file = []
-            reconciled_keys_in_file = []
-
-            for fqn, plan in file_plan.items():
-                if fqn in decisions and decisions[fqn] == ResolutionAction.SKIP:
-                    unresolved_conflicts_count += 1
-                    file_has_errors = (
-                        True  # Mark file as having issues, preventing partial save
-                    )
-                    bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
-                    continue
-
-                if plan.hydrate_yaml:
-                    if fqn in source_docs:
-                        src_ir = source_docs[fqn]
-                        existing_ir = new_yaml_docs.get(fqn)
-
-                        # Use merger service to handle logic (e.g. preserve addons)
-                        merged_ir = self.merger.merge(existing_ir, src_ir)
-
-                        if existing_ir != merged_ir:
+                    if plan.hydrate_yaml and fqn in source_docs:
+                        merged_ir = self.merger.merge(
+                            new_yaml_docs.get(fqn), source_docs[fqn]
+                        )
+                        if new_yaml_docs.get(fqn) != merged_ir:
                             new_yaml_docs[fqn] = merged_ir
                             updated_keys_in_file.append(fqn)
                             file_had_updates = True
 
-                fp = new_hashes.get(fqn) or Fingerprint()
-                fqn_was_updated = False
+                    fp = new_hashes.get(fqn) or Fingerprint()
+                    fqn_was_updated = False
+                    if plan.update_code_fingerprint:
+                        current_fp = current_fingerprints.get(fqn, Fingerprint())
+                        if "current_code_structure_hash" in current_fp:
+                            fp["baseline_code_structure_hash"] = current_fp["current_code_structure_hash"]
+                        if "current_code_signature_text" in current_fp:
+                            fp["baseline_code_signature_text"] = current_fp["current_code_signature_text"]
+                        fqn_was_updated = True
 
-                if plan.update_code_fingerprint:
-                    current_fp = current_fingerprints.get(fqn, Fingerprint())
-                    if "current_code_structure_hash" in current_fp:
-                        fp["baseline_code_structure_hash"] = current_fp[
-                            "current_code_structure_hash"
-                        ]
-                    if "current_code_signature_text" in current_fp:
-                        fp["baseline_code_signature_text"] = current_fp[
-                            "current_code_signature_text"
-                        ]
-                    fqn_was_updated = True
-
-                if plan.update_doc_fingerprint:
-                    if fqn in source_docs:
-                        # Compute hash of the SERIALIZED content (what will be written to yaml)
-                        # source_docs[fqn] is IR. We need raw content.
-                        # Note: This source_docs[fqn] has addons merged in previous step if it was updated!
-                        # Wait, source_docs came from flatten_module_docs(module) at start of loop.
-                        # It does NOT have addons.
-                        
-                        # We need the IR that we are about to save (which might have addons).
+                    if plan.update_doc_fingerprint:
                         ir_to_save = new_yaml_docs.get(fqn)
                         if ir_to_save:
-                             serialized = self.doc_manager._serialize_ir(ir_to_save)
-                             doc_hash = self.doc_manager.compute_yaml_content_hash(serialized)
-                             fp["baseline_yaml_content_hash"] = doc_hash
-                             fqn_was_updated = True
-
-                if fqn_was_updated:
-                    new_hashes[fqn] = fp
-
-                if (
-                    fqn in decisions
-                    and decisions[fqn] == ResolutionAction.HYDRATE_KEEP_EXISTING
-                ):
-                    reconciled_keys_in_file.append(fqn)
-
-                if plan.strip_source_docstring:
-                    strip_jobs[module.file_path].append(fqn)
-
-                # Check for redundancy:
-                # If the doc exists in source and we are not stripping it in this run,
-                # it is potentially redundant because we have either updated or reconciled it in YAML.
-                if fqn in source_docs and not plan.strip_source_docstring:
-                    file_has_redundancy = True
-
-            # Atomic save logic: Only save if there were updates AND no errors in this file.
-            signatures_need_save = new_hashes != stored_hashes
-
-            if not file_has_errors:
-                if file_had_updates:
-                    # new_yaml_docs is Dict[str, DocstringIR], need to serialize!
-                    # BUT doc_manager.adapter.save expects raw Dict. 
-                    # We should rely on doc_manager helper instead of calling adapter directly,
-                    # OR manually serialize here.
-                    # Since doc_manager.save_docs_for_module re-extracts from module (which we don't want, we have merged state),
-                    # we must serialize here.
+                            serialized = self.doc_manager._serialize_ir(
+                                ir_to_save, style=config.docstring_style
+                            )
+                            doc_hash = self.doc_manager.compute_yaml_content_hash(serialized)
+                            fp["baseline_yaml_content_hash"] = doc_hash
+                            fqn_was_updated = True
                     
-                    final_data = {
-                        k: self.doc_manager._serialize_ir(v) 
-                        for k, v in new_yaml_docs.items()
-                    }
-                    module_path = self.root_path / module.file_path
-                    doc_path = module_path.with_suffix(".stitcher.yaml")
-                    self.doc_manager.adapter.save(doc_path, final_data)
+                    if fqn_was_updated:
+                        new_hashes[fqn] = fp
+                    
+                    if decisions.get(fqn) == ResolutionAction.HYDRATE_KEEP_EXISTING:
+                        reconciled_keys_in_file.append(fqn)
 
-                if signatures_need_save:
-                    self.sig_manager.save_composite_hashes(module, new_hashes)
+                    if plan.strip_source_docstring:
+                        strip_jobs[module.file_path].append(fqn)
+                    
+                    if fqn in source_docs and not plan.strip_source_docstring:
+                        file_has_redundancy = True
 
-                if file_has_redundancy:
-                    redundant_files_list.append(self.root_path / module.file_path)
+                if not file_has_errors:
+                    if file_had_updates:
+                        final_data = {
+                            k: self.doc_manager._serialize_ir(v, style=config.docstring_style)
+                            for k, v in new_yaml_docs.items()
+                        }
+                        module_path = self.root_path / module.file_path
+                        doc_path = module_path.with_suffix(".stitcher.yaml")
+                        self.doc_manager.adapter.save(doc_path, final_data)
 
-            if updated_keys_in_file:
-                total_updated_keys += len(updated_keys_in_file)
-                bus.success(
-                    L.pump.file.success,
-                    path=module.file_path,
-                    count=len(updated_keys_in_file),
-                )
+                    if new_hashes != stored_hashes:
+                        self.sig_manager.save_composite_hashes(module, new_hashes)
 
-            if reconciled_keys_in_file:
-                total_reconciled_keys += len(reconciled_keys_in_file)
-                bus.info(
-                    L.pump.info.reconciled,
-                    path=module.file_path,
-                    count=len(reconciled_keys_in_file),
-                )
+                    if file_has_redundancy:
+                        redundant_files_list.append(self.root_path / module.file_path)
+
+                if updated_keys_in_file:
+                    total_updated_keys += len(updated_keys_in_file)
+                    bus.success(
+                        L.pump.file.success,
+                        path=module.file_path,
+                        count=len(updated_keys_in_file),
+                    )
+
+                if reconciled_keys_in_file:
+                    total_reconciled_keys += len(reconciled_keys_in_file)
+                    bus.info(
+                        L.pump.info.reconciled,
+                        path=module.file_path,
+                        count=len(reconciled_keys_in_file),
+                    )
 
         # --- Phase 5: Stripping ---
         if strip_jobs:
@@ -315,21 +279,11 @@ class PumpRunner:
             if total_stripped_files > 0:
                 bus.success(L.strip.run.complete, count=total_stripped_files)
 
-        # Phase 6: Ensure Signatures Integrity
-        # This is a safety sweep. In most cases, Phase 4 handles it via 'signatures_need_save'.
-        # But if files were skipped or other edge cases, we might want to check again?
-        # Actually, Phase 4 covers the main "Update Logic".
-        # Doing a reformat here might mask atomic failures if we aren't careful.
-        # Let's rely on Phase 4's explicit save logic for now to respect atomicity.
-
         # Final Reporting
         if unresolved_conflicts_count > 0:
             bus.error(L.pump.run.conflict, count=unresolved_conflicts_count)
             return PumpResult(success=False)
 
-        # We define activity as actual changes to data (updates or strips).
-        # Reconciliation is a resolution state change but not a data "pump", so we respect
-        # existing test expectations that reconciliation alone = "no changes" in terms of content output.
         has_activity = (total_updated_keys > 0) or strip_jobs
 
         if not has_activity:
