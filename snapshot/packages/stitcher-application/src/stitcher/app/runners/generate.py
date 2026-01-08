@@ -4,7 +4,18 @@ from pathlib import Path
 from stitcher.common import bus
 from needle.pointer import L
 from stitcher.config import StitcherConfig
-from stitcher.spec import ModuleDef, StubGeneratorProtocol
+from typing import List, Optional, Dict
+from pathlib import Path
+
+from stitcher.common import bus
+from needle.pointer import L
+from stitcher.config import StitcherConfig
+from stitcher.spec import (
+    ModuleDef,
+    StubGeneratorProtocol,
+    LanguageTransformerProtocol,
+    DocstringRendererProtocol,
+)
 from stitcher.app.services import (
     DocumentManager,
     StubPackageManager,
@@ -20,12 +31,46 @@ class GenerateRunner:
         doc_manager: DocumentManager,
         stub_pkg_manager: StubPackageManager,
         generator: StubGeneratorProtocol,
+        transformer: LanguageTransformerProtocol,
     ):
         self.root_path = root_path
         self.scanner = scanner
         self.doc_manager = doc_manager
         self.stub_pkg_manager = stub_pkg_manager
         self.generator = generator
+        self.transformer = transformer
+        self.renderer: Optional[DocstringRendererProtocol] = None
+
+    def set_renderer(self, renderer: DocstringRendererProtocol) -> None:
+        self.renderer = renderer
+
+    def _render_docs_for_module(self, module: ModuleDef) -> Dict[str, str]:
+        docs = {}
+        if not self.renderer:
+            return {}
+
+        # Module doc
+        if module.docstring_ir:
+            docs["__doc__"] = self.renderer.render(module.docstring_ir, context=module)
+
+        # Functions
+        for func in module.functions:
+            if func.docstring_ir:
+                docs[func.name] = self.renderer.render(func.docstring_ir, context=func)
+
+        # Classes
+        for cls in module.classes:
+            if cls.docstring_ir:
+                docs[cls.name] = self.renderer.render(cls.docstring_ir, context=cls)
+            # Methods
+            for method in cls.methods:
+                if method.docstring_ir:
+                    fqn = f"{cls.name}.{method.name}"
+                    docs[fqn] = self.renderer.render(
+                        method.docstring_ir, context=method
+                    )
+
+        return docs
 
     def _scaffold_stub_package(
         self, config: StitcherConfig, stub_base_name: Optional[str]
@@ -70,7 +115,16 @@ class GenerateRunner:
 
         for module in modules:
             self.doc_manager.apply_docs_to_module(module)
-            pyi_content = self.generator.generate(module)
+
+            # Phase 1: Generate Skeleton
+            skeleton_code = self.generator.generate(module)
+
+            # Phase 2: Render Docs
+            docs_map = self._render_docs_for_module(module)
+
+            # Phase 3: Inject Docs
+            final_content = self.transformer.inject(skeleton_code, docs_map)
+
             if config.stub_package:
                 logical_path = self.scanner.derive_logical_path(module.file_path)
                 stub_logical_path = self.stub_pkg_manager._get_pep561_logical_path(
@@ -109,7 +163,7 @@ class GenerateRunner:
                 while current != src_root and src_root in current.parents:
                     (current / "__init__.pyi").touch(exist_ok=True)
                     current = current.parent
-            output_path.write_text(pyi_content, encoding="utf-8")
+            output_path.write_text(final_content, encoding="utf-8")
             relative_path = output_path.relative_to(self.root_path)
             bus.success(L.generate.file.success, path=relative_path)
             generated_files.append(output_path)

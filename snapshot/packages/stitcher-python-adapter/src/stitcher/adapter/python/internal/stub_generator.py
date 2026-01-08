@@ -1,5 +1,4 @@
 from typing import List
-from typing import Optional
 from stitcher.spec import (
     Argument,
     ArgumentKind,
@@ -7,33 +6,17 @@ from stitcher.spec import (
     ClassDef,
     FunctionDef,
     ModuleDef,
-    DocstringRendererProtocol,
 )
-from stitcher.common import format_docstring
 
 
 class StubGenerator:
     def __init__(self, indent_spaces: int = 4):
         self._indent_str = " " * indent_spaces
-        self._renderer: Optional[DocstringRendererProtocol] = None
-
-    def set_renderer(self, renderer: DocstringRendererProtocol) -> None:
-        self._renderer = renderer
 
     def generate(self, module: ModuleDef) -> str:
         lines = []
 
-        # 1. Module Docstring
-        doc_content = None
-        if module.docstring_ir and self._renderer:
-            doc_content = self._renderer.render(module.docstring_ir, context=module)
-        elif module.docstring:
-            doc_content = module.docstring
-
-        if doc_content:
-            formatted = format_docstring(doc_content, self._indent(0))
-            lines.append(formatted)
-            lines.append("")  # Empty line after docstring
+        # 1. Module Docstring (Ignored in skeleton generation)
 
         # 2. Imports (TODO: Pass these through from scanner later)
         if module.imports:
@@ -159,21 +142,8 @@ class StubGenerator:
 
         def_line = f"{indent}{prefix}def {func.name}({args_str}){ret_str}:"
 
-        # Body
-        doc_content = None
-        if func.docstring_ir and self._renderer:
-            doc_content = self._renderer.render(func.docstring_ir, context=func)
-        elif func.docstring:
-            doc_content = func.docstring
-
-        if doc_content:
-            lines.append(def_line)
-            formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(f"{self._indent(level + 1)}{formatted}")
-            lines.append(f"{self._indent(level + 1)}...")
-        else:
-            # For functions without docstrings, use a single line format.
-            lines.append(f"{def_line} ...")
+        # Body - Always use ellipsis for skeleton
+        lines.append(f"{def_line} ...")
 
         return "\n".join(lines)
 
@@ -195,17 +165,7 @@ class StubGenerator:
         # Body
         has_content = False
 
-        # Docstring
-        doc_content = None
-        if cls.docstring_ir and self._renderer:
-            doc_content = self._renderer.render(cls.docstring_ir, context=cls)
-        elif cls.docstring:
-            doc_content = cls.docstring
-
-        if doc_content:
-            formatted = format_docstring(doc_content, self._indent(level + 1))
-            lines.append(f"{self._indent(level + 1)}{formatted}")
-            has_content = True
+        # Docstring (Ignored in skeleton)
 
         # Attributes
         for attr in cls.attributes:

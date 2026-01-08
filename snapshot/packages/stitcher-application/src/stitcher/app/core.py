@@ -78,6 +78,7 @@ class StitcherApp:
             self.doc_manager,
             self.stub_pkg_manager,
             stub_generator,
+            transformer,
         )
         self.init_runner = InitRunner(root_path, self.doc_manager, self.sig_manager)
         self.transform_runner = TransformRunner(
@@ -97,9 +98,8 @@ class StitcherApp:
         serializer = get_docstring_serializer(config.docstring_style)
         self.doc_manager.set_strategy(parser, serializer)
 
-        # Inject renderer into stub generator
-        if hasattr(self.generate_runner.generator, "set_renderer"):
-            self.generate_runner.generator.set_renderer(renderer)
+        # Inject renderer into generate runner
+        self.generate_runner.set_renderer(renderer)
 
         # Handle Plugins
         plugin_modules = self.scanner.process_plugins(config.plugins)
