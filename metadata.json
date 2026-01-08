@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(common): prevent whitespace injection on empty docstring lines", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767850781.9598074, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor: 重构存根生成为两阶段模式并修复文档格式", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767850878.5532925, "duration_ms": 0}}
