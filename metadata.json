@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 统一资产路径解析逻辑至 AssetPathResolver", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767854814.5419178, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor: 统一资产路径解析逻辑至 stitcher-common", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1767854895.021305, "duration_ms": 0}}
