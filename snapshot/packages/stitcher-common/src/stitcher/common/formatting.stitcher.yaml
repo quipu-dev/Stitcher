@@ -5,10 +5,11 @@
 
   Args:
       content: The clean, canonical content of the docstring.
-      indent_str: The indentation string to apply to the docstring block.
+      indent_str: The indentation string to apply to the entire docstring block,
+        including the opening and closing triple quotes.
 
   Returns:
-      The formatted, quoted, and indented docstring literal.
+      The fully formatted, quoted, and indented docstring literal.
 "parse_docstring": |-
   Parses a raw docstring from source code into its clean, canonical form.
 

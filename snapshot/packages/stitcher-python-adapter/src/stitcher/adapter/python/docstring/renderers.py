@@ -134,10 +134,15 @@ class GoogleDocstringRenderer(BaseStructuredRenderer):
                 elif item.annotation:
                     prefix = f"{item.annotation}"
 
+                line_content = ""
                 if prefix:
-                    lines.append(f"{prefix}: {item.description}" if item.description else prefix)
+                    line_content = f"{prefix}: {item.description}" if item.description else prefix
                 elif item.description:
-                    lines.append(item.description)
+                    line_content = item.description
+
+                if line_content:
+                    # Apply semantic indentation for items within a section.
+                    lines.append(f"    {line_content}")
 
         return "\n".join(lines)
 
