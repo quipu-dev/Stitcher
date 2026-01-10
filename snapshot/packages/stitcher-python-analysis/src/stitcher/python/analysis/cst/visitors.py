@@ -1,8 +1,7 @@
-from typing import List, Optional
+from typing import List, Optional, Set
 
 import re
 import libcst as cst
-from typing import Set
 from stitcher.spec import (
     Argument,
     ArgumentKind,

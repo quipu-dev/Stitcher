@@ -1,5 +1,5 @@
 from stitcher.spec import ModuleDef
-from .internal.parser import parse_source_code
+from stitcher.python.analysis.cst.visitors import parse_source_code
 
 
 class PythonParser:
