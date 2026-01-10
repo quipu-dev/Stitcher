@@ -11,6 +11,7 @@ from stitcher.adapter.python import (
     PythonFingerprintStrategy,
 )
 
+from stitcher.adapter.python.griffe_parser import GriffePythonParser
 
 def create_test_app(
     root_path: Path, interaction_handler: Optional[InteractionHandler] = None
