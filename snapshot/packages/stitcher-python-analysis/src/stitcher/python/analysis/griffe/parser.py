@@ -11,6 +11,7 @@ from stitcher.spec import (
     Attribute,
     Argument,
     ArgumentKind,
+    SourceLocation,
 )
 from stitcher.python.analysis.cst.visitors import _enrich_typing_imports
 
@@ -83,6 +84,16 @@ class GriffePythonParser(LanguageParserProtocol):
             imports=imports,
         )
 
+    def _extract_location(self, obj: griffe.Object) -> Optional[SourceLocation]:
+        if obj.lineno:
+            return SourceLocation(
+                lineno=obj.lineno,
+                col_offset=0,  # Griffe doesn't provide column
+                end_lineno=obj.end_lineno or obj.lineno,
+                end_col_offset=0,
+            )
+        return None
+
     def _map_class(self, gc: griffe.Class) -> ClassDef:
         methods = []
         attributes = []
@@ -100,6 +111,7 @@ class GriffePythonParser(LanguageParserProtocol):
             docstring=docstring,
             attributes=attributes,
             methods=methods,
+            location=self._extract_location(gc),
         )
 
     def _map_attribute(self, ga: griffe.Attribute) -> Attribute:
@@ -107,7 +119,11 @@ class GriffePythonParser(LanguageParserProtocol):
         value = str(ga.value) if ga.value else None
         docstring = ga.docstring.value if ga.docstring else None
         return Attribute(
-            name=ga.name, annotation=annotation, value=value, docstring=docstring
+            name=ga.name,
+            annotation=annotation,
+            value=value,
+            docstring=docstring,
+            location=self._extract_location(ga),
         )
 
     def _map_function(self, gf: griffe.Function) -> FunctionDef:
@@ -123,6 +139,7 @@ class GriffePythonParser(LanguageParserProtocol):
             decorators=[str(d.value) for d in gf.decorators],
             is_static="staticmethod" in gf.labels,
             is_class="classmethod" in gf.labels,
+            location=self._extract_location(gf),
         )
 
     def _map_argument(self, param: griffe.Parameter) -> Argument:

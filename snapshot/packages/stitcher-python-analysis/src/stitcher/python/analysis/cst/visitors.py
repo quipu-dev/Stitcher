@@ -1,7 +1,8 @@
-from typing import List, Optional, Set
+from typing import List, Optional, Set, cast
 
 import re
 import libcst as cst
+from libcst.metadata import PositionProvider, CodeRange
 from stitcher.spec import (
     Argument,
     ArgumentKind,
@@ -9,10 +10,13 @@ from stitcher.spec import (
     ClassDef,
     FunctionDef,
     ModuleDef,
+    SourceLocation,
 )
 
 
 class IRBuildingVisitor(cst.CSTVisitor):
+    METADATA_DEPENDENCIES = (PositionProvider,)
+
     def __init__(self):
         # Module level containers
         self.functions: List[FunctionDef] = []
@@ -38,6 +42,15 @@ class IRBuildingVisitor(cst.CSTVisitor):
         code = self._dummy_module.code_for_node(node).strip()
         self.imports.append(code)
         return False
+
+    def _extract_location(self, node: cst.CSTNode) -> SourceLocation:
+        pos = cast(CodeRange, self.get_metadata(PositionProvider, node))
+        return SourceLocation(
+            lineno=pos.start.line,
+            col_offset=pos.start.column,
+            end_lineno=pos.end.line,
+            end_col_offset=pos.end.column,
+        )
 
     def _add_attribute(self, attr: Attribute):
         if self._class_stack:
@@ -65,7 +78,12 @@ class IRBuildingVisitor(cst.CSTVisitor):
             node.annotation.annotation
         ).strip()
 
-        self._add_attribute(Attribute(name=name, annotation=annotation, value=value))
+        loc = self._extract_location(node)
+        self._add_attribute(
+            Attribute(
+                name=name, annotation=annotation, value=value, location=loc
+            )
+        )
         return False
 
     def visit_Assign(self, node: cst.Assign) -> Optional[bool]:
@@ -86,7 +104,10 @@ class IRBuildingVisitor(cst.CSTVisitor):
             self.dunder_all = value
             return False
 
-        self._add_attribute(Attribute(name=name, annotation=None, value=value))
+        loc = self._extract_location(node)
+        self._add_attribute(
+            Attribute(name=name, annotation=None, value=value, location=loc)
+        )
         return False
 
     def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
@@ -113,6 +134,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
             decorators.append(dec_code)
 
         # 5. Create ClassDef object and push to stack
+        loc = self._extract_location(node)
         cls_def = ClassDef(
             name=class_name,
             bases=bases,
@@ -120,6 +142,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
             docstring=docstring,
             methods=[],
             attributes=[],
+            location=loc,
         )
         self._class_stack.append(cls_def)
 
@@ -181,6 +204,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
                 is_class = True
 
         # 7. Build Object
+        loc = self._extract_location(node)
         func_def = FunctionDef(
             name=func_name,
             args=args,
@@ -190,6 +214,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
             decorators=decorators,
             is_static=is_static,
             is_class=is_class,
+            location=loc,
         )
 
         # 7. Add to appropriate scope
@@ -342,8 +367,9 @@ def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
         # For now, let it bubble up or wrap in a StitcherError
         raise ValueError(f"Syntax error in {file_path}: {e}") from e
 
+    wrapper = cst.MetadataWrapper(cst_module)
     visitor = IRBuildingVisitor()
-    cst_module.visit(visitor)
+    wrapper.visit(visitor)
 
     module_def = ModuleDef(
         file_path=file_path,

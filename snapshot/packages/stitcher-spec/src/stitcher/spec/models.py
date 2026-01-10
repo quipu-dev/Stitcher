@@ -5,6 +5,14 @@ from typing import List, Optional, Set
 from .docstring import DocstringIR
 
 
+@dataclass
+class SourceLocation:
+    lineno: int
+    col_offset: int
+    end_lineno: int
+    end_col_offset: int
+
+
 class ArgumentKind(str, Enum):
     POSITIONAL_ONLY = "POSITIONAL_ONLY"
     POSITIONAL_OR_KEYWORD = "POSITIONAL_OR_KEYWORD"
@@ -29,6 +37,7 @@ class Attribute:
         None  # The string representation of the value (for constants)
     )
     docstring: Optional[str] = None
+    location: Optional[SourceLocation] = None
 
 
 @dataclass
@@ -42,6 +51,7 @@ class FunctionDef:
     is_async: bool = False
     is_static: bool = False  # @staticmethod
     is_class: bool = False  # @classmethod
+    location: Optional[SourceLocation] = None
 
 
 @dataclass
@@ -53,6 +63,7 @@ class ClassDef:
     docstring_ir: Optional[DocstringIR] = None
     attributes: List[Attribute] = field(default_factory=list)
     methods: List[FunctionDef] = field(default_factory=list)
+    location: Optional[SourceLocation] = None
     # Nested classes can be supported later if needed, but usually .pyi flattens or keeps them nested.
     # For MVP, let's keep it simple.
 
