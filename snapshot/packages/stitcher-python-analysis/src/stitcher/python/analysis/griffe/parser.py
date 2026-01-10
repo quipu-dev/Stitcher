@@ -65,8 +65,8 @@ class GriffePythonParser(LanguageParserProtocol):
 
         for member in gm.members.values():
             if member.is_alias:
-                continue
-            if member.is_function:
+                attributes.append(self._map_alias(cast(griffe.Alias, member)))
+            elif member.is_function:
                 functions.append(self._map_function(cast(griffe.Function, member)))
             elif member.is_class:
                 classes.append(self._map_class(cast(griffe.Class, member)))
@@ -100,7 +100,9 @@ class GriffePythonParser(LanguageParserProtocol):
         methods = []
         attributes = []
         for member in gc.members.values():
-            if member.is_function:
+            if member.is_alias:
+                attributes.append(self._map_alias(cast(griffe.Alias, member)))
+            elif member.is_function:
                 methods.append(self._map_function(cast(griffe.Function, member)))
             elif member.is_attribute:
                 attributes.append(self._map_attribute(cast(griffe.Attribute, member)))
@@ -125,6 +127,14 @@ class GriffePythonParser(LanguageParserProtocol):
             annotation=annotation,
             value=value,
             docstring=docstring,
+            location=self._extract_location(ga),
+        )
+
+    def _map_alias(self, ga: griffe.Alias) -> Attribute:
+        # Alias doesn't have a value or annotation typically, but it has a target path.
+        return Attribute(
+            name=ga.name,
+            alias_target=ga.target_path,
             location=self._extract_location(ga),
         )
 
