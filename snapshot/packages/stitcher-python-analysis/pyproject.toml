@@ -3,12 +3,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "stitcher-python-adapter"
+name = "stitcher-python-analysis"
 version = "0.1.0"
-description = "Python language adapter for Stitcher, implementing core protocols."
+description = "Shared Python semantic analysis services (CST/AST) for Stitcher."
 requires-python = ">=3.10"
 dependencies = [
-    "stitcher-python-analysis",
     "stitcher-spec",
     "stitcher-common",
     "libcst",
@@ -19,6 +18,5 @@ dependencies = [
 packages = ["src/stitcher"]
 
 [tool.uv.sources]
-stitcher-python-analysis = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
