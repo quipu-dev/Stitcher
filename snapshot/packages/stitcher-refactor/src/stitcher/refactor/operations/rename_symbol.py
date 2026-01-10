@@ -15,11 +15,10 @@ class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
         self.old_fqn = old_fqn
         self.new_fqn = new_fqn
 
-    def _find_definition_node(self, ctx: RefactorContext) -> SymbolNode:
-        node = ctx.graph.find_symbol(self.old_fqn)
-        if node is None:
-            raise ValueError(f"Could not find definition for symbol: {self.old_fqn}")
-        return node
+    from typing import Optional
+
+    def _find_definition_node(self, ctx: RefactorContext) -> Optional[SymbolNode]:
+        return ctx.graph.find_symbol(self.old_fqn)
 
     def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
         intents: List[RefactorIntent] = []
@@ -29,7 +28,8 @@ class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
         intents.append(RenameIntent(old_fqn=self.old_fqn, new_fqn=self.new_fqn))
 
         # 2. Declare intents to update sidecar files.
-        # Let the ValueError propagate if the symbol is not found.
+        # If the symbol definition is found, try to update sidecars.
+        # If not found, skip sidecar updates but proceed with code rename.
         definition_node = self._find_definition_node(ctx)
         if definition_node and definition_node.path:
             definition_file_path = definition_node.path

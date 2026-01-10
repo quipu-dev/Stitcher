@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 RenameSymbolOperation 中的静默异常并增强 Graph", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768033356.0637841, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 优化 RenameSymbolOperation 容错性并修复测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768033964.346174, "duration_ms": 0}}

@@ -86,6 +86,8 @@ def test_rename_symbol_analyze_orchestration():
     mock_definition_node = Mock(spec=SymbolNode)
     mock_definition_node.fqn = old_fqn
     mock_definition_node.path = file_a_path  # Assume definition is in file_a
+    # Important: Mock find_symbol to return our node, preventing TypeError
+    mock_graph.find_symbol.return_value = mock_definition_node
     mock_graph.iter_members.return_value = [mock_definition_node]
 
     # Mock file system reads
