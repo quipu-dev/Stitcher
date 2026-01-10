@@ -38,14 +38,12 @@ def make_app(
     parser = GriffePythonParser()
 
     transformer = PythonTransformer()
-    generator = PythonStubGenerator()
     strategy = PythonFingerprintStrategy()
 
     return StitcherApp(
         root_path=get_project_root(),
         parser=parser,
         transformer=transformer,
-        stub_generator=generator,
         fingerprint_strategy=strategy,
         interaction_handler=handler,
     )
