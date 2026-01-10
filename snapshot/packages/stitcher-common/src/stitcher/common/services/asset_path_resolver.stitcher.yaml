@@ -1,9 +1,11 @@
 "AssetPathResolver": |-
-  Centralized service for resolving paths to Stitcher assets (docs and signatures).
-  Ensures consistent mapping between source files and their sidecars across the system.
+  Centralized resolver for Stitcher asset paths (Sidecars and Signatures).
+
+  This class encapsulates the logic for mapping a source code file to its
+  corresponding documentation sidecar (.stitcher.yaml) and signature file (.json).
 "AssetPathResolver.get_doc_path": |-
-  Resolves the path to the documentation sidecar (.stitcher.yaml).
-  Strategy: Colocated with source file.
+  Returns the path to the documentation sidecar (.stitcher.yaml).
+  The doc sidecar sits right next to the source file.
 "AssetPathResolver.get_signature_path": |-
-  Resolves the path to the signature file (.json).
-  Strategy: Mirrored structure inside .stitcher/signatures/.
+  Returns the path to the signature sidecar (.json).
+  The signature sidecar sits in .stitcher/signatures/, mirroring the source tree.
