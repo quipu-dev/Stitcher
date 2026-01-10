@@ -14,12 +14,14 @@ dependencies = [
     "griffe",
     "libcst",
     "tomli>=2.0.1; python_version < '3.11'",
+    "stitcher-index",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/stitcher"]
 
 [tool.uv.sources]
-stitcher-python-analysis = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
+stitcher-index = { workspace = true }
+stitcher-python-analysis = { workspace = true }

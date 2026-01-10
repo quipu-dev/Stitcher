@@ -14,6 +14,7 @@ dependencies = [
     "stitcher-python-adapter",
     "stitcher-stubgen",
     "stitcher-refactor",
+    "stitcher-index",
     "pyneedle",
 ]
 
@@ -27,4 +28,5 @@ stitcher-config = { workspace = true }
 stitcher-python-adapter = { workspace = true }
 stitcher-stubgen = { workspace = true }
 stitcher-refactor = { workspace = true }
+stitcher-index = { workspace = true }
 pyneedle = { workspace = true }

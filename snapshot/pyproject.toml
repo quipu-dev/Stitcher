@@ -21,13 +21,14 @@ dev = [
     "stitcher-stubgen",
     "stitcher-test-utils",
     "stitcher-refactor",
+    "stitcher-index",
 ]
 
 [tool.setuptools.packages.find]
 exclude = ["migrations*"]
 
 [tool.uv.workspace]
-members = ["packages/*", "packages/stitcher-test-utils", "packages/stitcher-python-analysis"]
+members = ["packages/*", "packages/stitcher-test-utils", "packages/stitcher-python-analysis", "packages/stitcher-index"]
 
 [tool.uv.sources]
 pyneedle = { workspace = true }
@@ -43,6 +44,7 @@ stitcher-cli = { workspace = true }
 stitcher-stubgen = { workspace = true }
 stitcher-test-utils = { workspace = true }
 stitcher-refactor = { workspace = true }
+stitcher-index = { workspace = true }
 stitcher-python-analysis = { workspace = true }
 
 [tool.pytest.ini_options]
@@ -64,7 +66,8 @@ pythonpath = [
     "packages/stitcher-test-utils/src",
     "packages/stitcher-refactor/src",
     "packages/stitcher-stubgen/src",
-    "packages/stitcher-python-analysis/src"
+    "packages/stitcher-python-analysis/src",
+    "packages/stitcher-index/src"
 ]
 
 [tool.stitcher.targets.stitcher]
@@ -111,4 +114,5 @@ extraPaths = [
     "packages/stitcher-refactor/src",
     "packages/stitcher-stubgen/src",
     "packages/stitcher-python-analysis/src",
+    "packages/stitcher-index/src",
 ]
