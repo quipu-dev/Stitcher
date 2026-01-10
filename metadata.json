@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M store.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768045450.9044414, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 增强扫描器的文件发现逻辑以避免处理目录", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768045451.394424, "duration_ms": 0}}

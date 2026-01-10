@@ -1,10 +1,13 @@
 import subprocess
 import hashlib
+import logging
 from pathlib import Path
 from typing import List, Protocol, Tuple, Set
 
 from .store import IndexStore
 from .types import SymbolRecord, ReferenceRecord
+
+log = logging.getLogger(__name__)
 
 
 class LanguageAdapterProtocol(Protocol):
@@ -45,19 +48,30 @@ class WorkspaceScanner:
                 capture_output=True,
                 text=True,
             )
-            files = {self.root_path / p for p in result.stdout.strip().splitlines()}
+            # git ls-files should only return files, but we check .is_file()
+            # to be robust against submodules which appear as directories.
+            files = {
+                p
+                for p in (
+                    self.root_path / path_str
+                    for path_str in result.stdout.strip().splitlines()
+                )
+                if p.is_file()
+            }
             return files
         except (subprocess.CalledProcessError, FileNotFoundError):
-            # Fallback to filesystem scan
-            # This is a basic fallback; a real implementation would respect .gitignore
-            return set(self.root_path.rglob("*.*"))
+            # Fallback to filesystem scan, respecting .gitignore is complex,
+            # so we do a simple file-only scan for now.
+            return {p for p in self.root_path.rglob("*") if p.is_file()}
 
     def scan(self) -> None:
         """Runs the complete incremental scanning pipeline."""
         # Stage 1: Discovery
         workspace_paths = self._discover_files()
         workspace_rel_paths = {
-            str(p.relative_to(self.root_path)) for p in workspace_paths
+            str(p.relative_to(self.root_path))
+            for p in workspace_paths
+            if p.is_file()  # Safeguard
         }
 
         # Handle deletions
@@ -69,6 +83,10 @@ class WorkspaceScanner:
         confirmed_dirty_files: List[Tuple[Path, str, float, int]] = []
 
         for file_path in workspace_paths:
+            if not file_path.is_file():
+                log.debug(f"Skipping non-file path from discovery: {file_path}")
+                continue
+
             rel_path_str = str(file_path.relative_to(self.root_path))
             stat = file_path.stat()
             mtime, size = stat.st_mtime, stat.st_size
