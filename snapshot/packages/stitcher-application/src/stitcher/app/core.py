@@ -163,6 +163,8 @@ class StitcherApp:
         all_results: List[FileCheckResult] = []
         all_modules: List[ModuleDef] = []
 
+        self.scanner.had_errors = False
+
         for config in configs:
             modules = self._configure_and_scan(config)
             if not modules:
@@ -191,7 +193,8 @@ class StitcherApp:
         self.check_runner.reformat_all(all_modules)
 
         # Final Report
-        return self.check_runner.report(all_results)
+        report_success = self.check_runner.report(all_results)
+        return report_success and not self.scanner.had_errors
 
     def run_pump(
         self,
@@ -204,6 +207,7 @@ class StitcherApp:
         configs, _ = self._load_configs()
         tm = TransactionManager(self.root_path, dry_run=dry_run)
 
+        self.scanner.had_errors = False
         global_success = True
         all_redundant: List[Path] = []
 
@@ -218,6 +222,9 @@ class StitcherApp:
             if not result.success:
                 global_success = False
             all_redundant.extend(result.redundant_files)
+
+        if self.scanner.had_errors:
+            global_success = False
 
         tm.commit()
         return PumpResult(success=global_success, redundant_files=all_redundant)
