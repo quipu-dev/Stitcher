@@ -1,12 +1,11 @@
 import libcst as cst
 from pathlib import Path
-from stitcher.refactor.engine.graph import _UsageVisitor, UsageRegistry
+from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
 
 
 def parse_and_visit(code: str, module_fqn: str = "mypkg.mod"):
     """
-    Helper to run _UsageVisitor on a snippet of code.
-    Assumes the file is at /tmp/mypkg/mod.py (conceptually).
+    Helper to run UsageScanVisitor on a snippet of code.
     """
     registry = UsageRegistry()
     wrapper = cst.MetadataWrapper(cst.parse_module(code))
@@ -16,7 +15,7 @@ def parse_and_visit(code: str, module_fqn: str = "mypkg.mod"):
 
     is_init = module_fqn.endswith(".__init__")
 
-    visitor = _UsageVisitor(
+    visitor = UsageScanVisitor(
         file_path=Path("dummy.py"),
         local_symbols=local_symbols,
         registry=registry,
