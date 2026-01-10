@@ -27,15 +27,7 @@ class _ImportVisitor(ast.NodeVisitor):
 
 
 class GriffePythonParser(LanguageParserProtocol):
-    """
-    A Python parser implementation using Griffe.
-    Migrated from stitcher-python-adapter.
-    """
-
     def parse(self, source_code: str, file_path: str = "") -> ModuleDef:
-        """
-        Parses the given source code into a Stitcher ModuleDef IR using Griffe.
-        """
         # 1. Parse into AST
         try:
             tree = ast.parse(source_code)

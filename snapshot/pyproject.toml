@@ -52,35 +52,35 @@ addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
 testpaths = ["tests", "packages"]
 norecursedirs = ["tests/fixtures"]
 pythonpath = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
-    "packages/stitcher-scanner/src",
-    "packages/stitcher-io/src",
-    "packages/stitcher-config/src",
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
-    "packages/pyneedle-spec/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-index/src",
+    "packages/stitcher-python-adapter/src",
+    "packages/stitcher-python-analysis/src",
+    "packages/stitcher-refactor/src",
+    "packages/stitcher-spec/src",
+    "packages/stitcher-stubgen/src",
+    "packages/stitcher-test-utils/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-runtime/src",
-    "packages/pyneedle/src",
-    "packages/stitcher-test-utils/src",
-    "packages/stitcher-refactor/src",
-    "packages/stitcher-stubgen/src",
-    "packages/stitcher-python-analysis/src",
-    "packages/stitcher-index/src"
+    "packages/pyneedle-spec/src",
 ]
 
 [tool.stitcher.targets.stitcher]
 scan_paths = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
-    "packages/stitcher-scanner/src",
-    "packages/stitcher-io/src",
-    "packages/stitcher-config/src",
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
-    "packages/stitcher-test-utils/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-index/src",
+    "packages/stitcher-python-adapter/src",
+    "packages/stitcher-python-analysis/src",
     "packages/stitcher-refactor/src",
+    "packages/stitcher-spec/src",
+    "packages/stitcher-stubgen/src",
+    "packages/stitcher-test-utils/src",
 ]
 stub_package = "packages/stitcher-stubs"
 
@@ -89,7 +89,6 @@ scan_paths = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-runtime/src",
-    "packages/pyneedle/src",
 ]
 stub_package = "packages/needle-stubs"
 

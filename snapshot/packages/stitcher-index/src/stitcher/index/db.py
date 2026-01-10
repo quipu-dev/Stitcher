@@ -31,7 +31,6 @@ class DatabaseManager:
         return conn
 
     def initialize(self) -> None:
-        """Loads schema.sql and initializes the database tables."""
         schema_path = files("stitcher.index").joinpath("schema.sql")
         schema_sql = schema_path.read_text(encoding="utf-8")
 
@@ -41,11 +40,6 @@ class DatabaseManager:
 
     @contextmanager
     def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
-        """
-        Yields a managed connection.
-        Commits on success, rolls back on exception.
-        Closes connection at the end.
-        """
         conn = self._get_raw_connection()
         try:
             yield conn

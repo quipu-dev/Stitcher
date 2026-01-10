@@ -23,11 +23,6 @@ from stitcher.spec import (
 
 
 class RawDocstringParser(DocstringParserProtocol):
-    """
-    A simple parser that treats the entire input text as the summary.
-    Does not attempt to parse sections or parameters.
-    """
-
     def parse(self, docstring_text: str) -> DocstringIR:
         if not docstring_text:
             return DocstringIR()
@@ -35,10 +30,6 @@ class RawDocstringParser(DocstringParserProtocol):
 
 
 class GriffeDocstringParser(DocstringParserProtocol):
-    """
-    A parser that uses Griffe to parse Google/Numpy style docstrings into IR.
-    """
-
     def __init__(self, style: str = "google"):
         self.style = Parser(style)
 

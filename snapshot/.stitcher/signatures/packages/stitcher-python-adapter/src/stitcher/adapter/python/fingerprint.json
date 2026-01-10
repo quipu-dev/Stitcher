@@ -1,0 +1,44 @@
+{
+  "EntityHasher": {
+    "baseline_yaml_content_hash": "a594e3e6e3cf1eeed5456fba28c82afd8c9490a8a6cf08ebec403e96decfe062"
+  },
+  "EntityHasher.update": {
+    "baseline_code_signature_text": "def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:",
+    "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713",
+    "baseline_yaml_content_hash": "3474205bfcc1930346b0c5175cbb1149dfc61510cce5330bc71f2eb976092d5d"
+  },
+  "PythonFingerprintStrategy": {
+    "baseline_yaml_content_hash": "5510039501752c6a8ad7042442829ee0031f807b324bf3287f5fd3f76f438bd3"
+  },
+  "PythonFingerprintStrategy.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
+    "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+  },
+  "PythonFingerprintStrategy.compute": {
+    "baseline_code_signature_text": "def compute(self, entity: Union[FunctionDef, ClassDef]) -> Fingerprint:",
+    "baseline_code_structure_hash": "256ccdba13895196e98d14eb59d4f59ed77c7cbf590278e1bd62205ac6786445"
+  },
+  "PythonFingerprintStrategy.hashers": {},
+  "SignatureTextHasher": {
+    "baseline_yaml_content_hash": "309556f7a93d8e45b00c7c405749c6e48a4ef59035d7cb6e2cb7673095624fbd"
+  },
+  "SignatureTextHasher._get_signature_string": {
+    "baseline_code_signature_text": "def _get_signature_string(self, func: FunctionDef) -> str:",
+    "baseline_code_structure_hash": "52c761eec3fe573316866f08e059601797c25b53adf572fc2613e2fb1a430d66"
+  },
+  "SignatureTextHasher.update": {
+    "baseline_code_signature_text": "def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:",
+    "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713"
+  },
+  "StructureHasher": {
+    "baseline_yaml_content_hash": "049b866c0b46b7bc0f07d2916faea80627b94f0e6f0aa6ce2e5e323702265921"
+  },
+  "StructureHasher._compute_func_hash": {
+    "baseline_code_signature_text": "def _compute_func_hash(self, func: FunctionDef) -> str:",
+    "baseline_code_structure_hash": "4af5a2512691a1559ef332e6bd5cb3e4ccb9b0fea485cccd1d915e46ca50e177"
+  },
+  "StructureHasher.update": {
+    "baseline_code_signature_text": "def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:",
+    "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713"
+  }
+}

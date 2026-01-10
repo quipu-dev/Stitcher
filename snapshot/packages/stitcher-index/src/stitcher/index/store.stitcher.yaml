@@ -1,0 +1,7 @@
+"IndexStore.sync_file": |-
+  Registers a file in the index.
+  Returns: (file_id, is_changed)
+  is_changed is True if the file is new or content_hash changed.
+"IndexStore.update_analysis": |-
+  Atomically replaces all symbols and references for a file,
+  and marks the file as indexed.

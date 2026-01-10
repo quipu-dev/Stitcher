@@ -10,11 +10,6 @@ class IndexStore:
     def sync_file(
         self, path: str, content_hash: str, mtime: float, size: int
     ) -> Tuple[int, bool]:
-        """
-        Registers a file in the index.
-        Returns: (file_id, is_changed)
-        is_changed is True if the file is new or content_hash changed.
-        """
         with self.db.get_connection() as conn:
             cursor = conn.execute(
                 "SELECT id, content_hash FROM files WHERE path = ?", (path,)
@@ -70,10 +65,6 @@ class IndexStore:
         symbols: List[SymbolRecord],
         references: List[ReferenceRecord],
     ) -> None:
-        """
-        Atomically replaces all symbols and references for a file,
-        and marks the file as indexed.
-        """
         with self.db.get_connection() as conn:
             # 1. Clear old data for this file
             conn.execute("DELETE FROM symbols WHERE file_id = ?", (file_id,))

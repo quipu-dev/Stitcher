@@ -1,0 +1,5 @@
+"GriffeDocstringParser": |-
+  A parser that uses Griffe to parse Google/Numpy style docstrings into IR.
+"RawDocstringParser": |-
+  A simple parser that treats the entire input text as the summary.
+  Does not attempt to parse sections or parameters.

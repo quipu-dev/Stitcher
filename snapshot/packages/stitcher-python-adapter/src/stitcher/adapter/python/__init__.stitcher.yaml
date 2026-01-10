@@ -1,6 +1,0 @@
-"PythonParser": |-
-  Adapter entry point for Python parsing. Delegates to the Analysis layer's CST visitors.
-"PythonTransformer": |-
-  Adapter entry point for Python code transformation (strip/inject). Delegates to Analysis layer.
-"PythonFingerprintStrategy": |-
-  Computes stability fingerprints for Python entities.

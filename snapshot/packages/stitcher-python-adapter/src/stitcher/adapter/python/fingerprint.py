@@ -4,18 +4,12 @@ from stitcher.spec import FunctionDef, ClassDef, Fingerprint, ArgumentKind
 
 
 class EntityHasher(Protocol):
-    """Protocol for individual hashing strategies."""
-
     def update(
         self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
-    ) -> None:
-        """Calculate specific hashes and update the fingerprint object."""
-        ...
+    ) -> None: ...
 
 
 class StructureHasher:
-    """Computes the structural hash (signature shape) of a function."""
-
     def update(
         self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
     ) -> None:
@@ -48,8 +42,6 @@ class StructureHasher:
 
 
 class SignatureTextHasher:
-    """Generates the human-readable signature text for diffing."""
-
     def update(
         self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
     ) -> None:
@@ -90,10 +82,6 @@ class SignatureTextHasher:
 
 
 class PythonFingerprintStrategy:
-    """
-    Coordinator that delegates to a list of composable Hashers.
-    """
-
     def __init__(self):
         self.hashers: List[EntityHasher] = [
             StructureHasher(),

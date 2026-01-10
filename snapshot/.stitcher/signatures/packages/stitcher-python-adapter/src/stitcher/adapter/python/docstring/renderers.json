@@ -1,0 +1,41 @@
+{
+  "BaseStructuredRenderer": {},
+  "BaseStructuredRenderer._get_default_title": {
+    "baseline_code_signature_text": "def _get_default_title(self, kind: str) -> str:",
+    "baseline_code_structure_hash": "3f9f914f1df4a6095996e0eaa333a7c61beb2b120a2eb47e8c7e23c8d12cb927"
+  },
+  "BaseStructuredRenderer._merge_params_with_context": {
+    "baseline_code_signature_text": "def _merge_params_with_context(self, items: List[DocstringItem], context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> List[DocstringItem]:",
+    "baseline_code_structure_hash": "575b3ce43b70578de7361862bfa4bc6047c6e14be81c4812320d6e69d8a6f974"
+  },
+  "BaseStructuredRenderer._merge_returns_with_context": {
+    "baseline_code_signature_text": "def _merge_returns_with_context(self, items: List[DocstringItem], context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> List[DocstringItem]:",
+    "baseline_code_structure_hash": "ef7a693097f45e5bc3e840bb318504e56381962b73ef7b1f4a21c302bea06d03"
+  },
+  "BaseStructuredRenderer._render_section": {
+    "baseline_code_signature_text": "def _render_section(self, section: DocstringSection, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> str:",
+    "baseline_code_structure_hash": "ba947518f1f0b9c59a54d2e2d2bfe123d8999b0e7631df8b4d1c0a63815ef43c"
+  },
+  "BaseStructuredRenderer.render": {
+    "baseline_code_signature_text": "def render(self, docstring_ir: DocstringIR, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]] = None) -> str:",
+    "baseline_code_structure_hash": "771c150ad2e54877bc0e41f243f0eed5594c46fd2dad4d3bd2743c6b296999f0"
+  },
+  "GoogleDocstringRenderer": {},
+  "GoogleDocstringRenderer._get_default_title": {
+    "baseline_code_signature_text": "def _get_default_title(self, kind: str) -> str:",
+    "baseline_code_structure_hash": "3f9f914f1df4a6095996e0eaa333a7c61beb2b120a2eb47e8c7e23c8d12cb927"
+  },
+  "GoogleDocstringRenderer._render_section": {
+    "baseline_code_signature_text": "def _render_section(self, section: DocstringSection, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> str:",
+    "baseline_code_structure_hash": "ba947518f1f0b9c59a54d2e2d2bfe123d8999b0e7631df8b4d1c0a63815ef43c"
+  },
+  "NumpyDocstringRenderer": {},
+  "NumpyDocstringRenderer._get_default_title": {
+    "baseline_code_signature_text": "def _get_default_title(self, kind: str) -> str:",
+    "baseline_code_structure_hash": "3f9f914f1df4a6095996e0eaa333a7c61beb2b120a2eb47e8c7e23c8d12cb927"
+  },
+  "NumpyDocstringRenderer._render_section": {
+    "baseline_code_signature_text": "def _render_section(self, section: DocstringSection, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> str:",
+    "baseline_code_structure_hash": "ba947518f1f0b9c59a54d2e2d2bfe123d8999b0e7631df8b4d1c0a63815ef43c"
+  }
+}

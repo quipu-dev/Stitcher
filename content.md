@@ -7,27 +7,36 @@ style: ruff and stitcher
 
 ### 📝 变更文件摘要:
 ```
-.../src/stitcher/__init__.json                     |  3 ++
- .../stitcher-cli/src/stitcher/__init__.json        |  3 ++
- .../stitcher-common/src/stitcher/__init__.json     |  3 ++
- .../stitcher-refactor/src/stitcher/__init__.json   |  3 ++
- .../stitcher-spec/src/stitcher/__init__.json       |  3 ++
- .../stitcher-test-utils/src/stitcher/__init__.json |  3 ++
- .../stitcher-application/src/stitcher/__init__.py  |  1 -
- packages/stitcher-cli/src/stitcher/__init__.py     |  1 -
- packages/stitcher-common/src/stitcher/__init__.py  |  1 -
- packages/stitcher-config/src/stitcher/__init__.py  |  1 -
- packages/stitcher-index/src/stitcher/__init__.py   |  2 +-
- packages/stitcher-index/src/stitcher/index/db.py   | 13 ++++---
- .../stitcher-index/src/stitcher/index/store.py     | 12 +++---
- .../stitcher-index/src/stitcher/index/types.py     |  2 +-
- packages/stitcher-index/tests/conftest.py          |  6 ++-
- packages/stitcher-index/tests/unit/test_store.py   | 44 ++++++++++++----------
- .../src/stitcher/__init__.py                       |  1 -
- .../src/stitcher/__init__.py                       |  1 -
- .../stitcher-refactor/src/stitcher/__init__.py     |  1 -
- packages/stitcher-spec/src/stitcher/__init__.py    |  1 -
- packages/stitcher-stubgen/src/stitcher/__init__.py |  1 -
- .../stitcher-test-utils/src/stitcher/__init__.py   |  1 -
- 22 files changed, 61 insertions(+), 46 deletions(-)
+.../stitcher-index/src/stitcher/__init__.json      |   3 +
+ .../stitcher-index/src/stitcher/index/db.json      |  23 +++++
+ .../stitcher-index/src/stitcher/index/store.json   |  30 ++++++
+ .../stitcher-index/src/stitcher/index/types.json   |  26 ++++++
+ .../src/stitcher/__init__.json                     |   3 +
+ .../src/stitcher/adapter/python/__init__.json      |   3 +
+ .../adapter/python/docstring/__init__.json         |   3 +
+ .../stitcher/adapter/python/docstring/factory.json |  19 ++++
+ .../stitcher/adapter/python/docstring/parsers.json |  25 +++++
+ .../adapter/python/docstring/renderers.json        |  41 +++++++++
+ .../adapter/python/docstring/serializers.json      |  59 ++++++++++++
+ .../src/stitcher/adapter/python/fingerprint.json   |  44 +++++++++
+ .../src/stitcher/adapter/python/griffe_parser.json |   3 +
+ .../src/stitcher/adapter/python/inspector.json     |  15 +++
+ .../src/stitcher/adapter/python/parser.json        |   7 ++
+ .../src/stitcher/adapter/python/transformer.json   |  11 +++
+ .../src/stitcher/__init__.json                     |   3 +
+ .../python/analysis/cst/rename_transformers.json   |  63 +++++++++++++
+ .../stitcher/python/analysis/cst/transformers.json | 101 +++++++++++++++++++++
+ .../python/analysis/cst/usage_visitor.json         |  61 +++++++++++++
+ .../src/stitcher/python/analysis/cst/visitors.json |  70 ++++++++++++++
+ .../stitcher/python/analysis/griffe/parser.json    |  44 +++++++++
+ .../src/stitcher/python/analysis/models.json       |  20 ++++
+ .../stitcher-stubgen/src/stitcher/__init__.json    |   3 +
+ .../src/stitcher/stubgen/__init__.json             |  20 ++++
+ .../src/stitcher/stubgen/generator.json            |  32 +++++++
+ .../src/stitcher/stubgen/runners.json              |  30 ++++++
+ .../src/stitcher/stubgen/services.json             |  11 +++
+ packages/stitcher-index/src/stitcher/index/db.py   |   6 --
+ .../src/stitcher/index/db.stitcher.yaml            |   6 ++
+ ...
+ 50 files changed, 865 insertions(+), 125 deletions(-)
 ```
