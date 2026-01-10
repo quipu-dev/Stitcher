@@ -36,12 +36,8 @@ class RefactorRunner:
             sidecar_manager = SidecarManager(self.root_path)
             graph = SemanticGraph(workspace)
 
-            # Load all packages discovered by the workspace
-            pkg_names = list(workspace.import_to_source_dirs.keys())
-            bus.debug(L.debug.log.refactor_discovered_packages, packages=pkg_names)
-            for pkg_name in pkg_names:
-                bus.debug(L.debug.log.refactor_loading_package, package=pkg_name)
-                graph.load(pkg_name)
+            # Load all workspace symbols, including main packages and peripherals
+            graph.load_from_workspace()
 
             ctx = RefactorContext(
                 workspace=workspace, graph=graph, sidecar_manager=sidecar_manager

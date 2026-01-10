@@ -19,6 +19,7 @@ class Workspace:
         self.config = config
         # 'cascade' -> {'/path/to/cascade-application/src', '/path/to/cascade-engine/src'}
         self.import_to_source_dirs: Dict[str, Set[Path]] = defaultdict(set)
+        self.peripheral_source_dirs: Set[Path] = set()
 
         if self.config:
             self._build_from_config()
@@ -29,13 +30,19 @@ class Workspace:
         if not self.config:
             return
 
-        all_paths_str = self.config.scan_paths + self.config.peripheral_paths
-        for path_str in all_paths_str:
+        # Process main scan paths
+        for path_str in self.config.scan_paths:
             code_dir = self.root_path / path_str
             if code_dir.is_dir():
                 import_names = self._get_top_level_importables(code_dir)
                 for import_name in import_names:
                     self.import_to_source_dirs[import_name].add(code_dir)
+
+        # Process peripheral paths
+        for path_str in self.config.peripheral_paths:
+            p_path = self.root_path / path_str
+            if p_path.exists():
+                self.peripheral_source_dirs.add(p_path)
 
     def _discover_packages(self) -> None:
         for pyproject_path in self.root_path.glob("**/pyproject.toml"):
@@ -96,5 +103,17 @@ class Workspace:
         all_paths: Set[Path] = set()
         for paths in self.import_to_source_dirs.values():
             all_paths.update(paths)
+        all_paths.update(self.peripheral_source_dirs)
         all_paths.add(self.root_path)
         return sorted(list(all_paths))
+
+    def is_peripheral(self, file_path: Path) -> bool:
+        abs_file_path = file_path.resolve()
+        for p_dir in self.peripheral_source_dirs:
+            # Path.is_relative_to is available in Python 3.9+
+            try:
+                abs_file_path.relative_to(p_dir.resolve())
+                return True
+            except ValueError:
+                continue
+        return False

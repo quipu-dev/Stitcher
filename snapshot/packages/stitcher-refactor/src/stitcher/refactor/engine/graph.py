@@ -183,12 +183,26 @@ class SemanticGraph:
         self._modules: Dict[str, griffe.Module] = {}
         self.registry = UsageRegistry()
 
-    def load(self, package_name: str, submodules: bool = True) -> None:
-        module = self._griffe_loader.load(package_name, submodules=submodules)
-        # Ensure we are dealing with a Module, not an Alias
-        if isinstance(module, griffe.Module):
-            self._modules[package_name] = module
-            self._griffe_loader.resolve_aliases()
+    def load_from_workspace(self) -> None:
+        # 1. Load all main packages
+        for pkg_name in self.workspace.import_to_source_dirs.keys():
+            module = self._griffe_loader.load(pkg_name, submodules=True)
+            if isinstance(module, griffe.Module):
+                self._modules[pkg_name] = module
+
+        # 2. Load all peripheral files/directories
+        for p_dir in self.workspace.peripheral_source_dirs:
+            if p_dir.is_dir():
+                for py_file in p_dir.rglob("*.py"):
+                    self._griffe_loader.load(py_file)
+            elif p_dir.is_file() and p_dir.suffix == ".py":
+                self._griffe_loader.load(p_dir)
+
+        # 3. Resolve all aliases now that everything is loaded
+        self._griffe_loader.resolve_aliases()
+
+        # 4. Build usage registry for everything
+        for module in self._griffe_loader.modules_collection.values():
             self._build_registry(module)
 
     def _build_registry(
