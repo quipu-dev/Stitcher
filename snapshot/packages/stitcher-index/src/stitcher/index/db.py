@@ -1,8 +1,9 @@
 import sqlite3
 import logging
 from pathlib import Path
-from typing import Optional, Generator
+from typing import Generator
 from contextlib import contextmanager
+
 try:
     from importlib.resources import files
 except ImportError:
@@ -19,12 +20,12 @@ class DatabaseManager:
     def _get_raw_connection(self) -> sqlite3.Connection:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(self.db_path))
-        
+
         # Performance & Integrity optimizations
         conn.execute("PRAGMA journal_mode = WAL;")
         conn.execute("PRAGMA synchronous = NORMAL;")
         conn.execute("PRAGMA foreign_keys = ON;")
-        
+
         # Return rows as sqlite3.Row for dict-like access
         conn.row_factory = sqlite3.Row
         return conn
@@ -33,7 +34,7 @@ class DatabaseManager:
         """Loads schema.sql and initializes the database tables."""
         schema_path = files("stitcher.index").joinpath("schema.sql")
         schema_sql = schema_path.read_text(encoding="utf-8")
-        
+
         with self.get_connection() as conn:
             conn.executescript(schema_sql)
             log.debug(f"Initialized database at {self.db_path}")
@@ -41,7 +42,7 @@ class DatabaseManager:
     @contextmanager
     def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
         """
-        Yields a managed connection. 
+        Yields a managed connection.
         Commits on success, rolls back on exception.
         Closes connection at the end.
         """

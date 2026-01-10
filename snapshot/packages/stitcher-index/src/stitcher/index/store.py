@@ -59,9 +59,7 @@ class IndexStore:
 
     def get_file_by_path(self, path: str) -> Optional[FileRecord]:
         with self.db.get_connection() as conn:
-            row = conn.execute(
-                "SELECT * FROM files WHERE path = ?", (path,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM files WHERE path = ?", (path,)).fetchone()
             if row:
                 return FileRecord(**dict(row))
         return None
@@ -73,13 +71,15 @@ class IndexStore:
         references: List[ReferenceRecord],
     ) -> None:
         """
-        Atomically replaces all symbols and references for a file, 
+        Atomically replaces all symbols and references for a file,
         and marks the file as indexed.
         """
         with self.db.get_connection() as conn:
             # 1. Clear old data for this file
             conn.execute("DELETE FROM symbols WHERE file_id = ?", (file_id,))
-            conn.execute("DELETE FROM 'references' WHERE source_file_id = ?", (file_id,))
+            conn.execute(
+                "DELETE FROM 'references' WHERE source_file_id = ?", (file_id,)
+            )
 
             # 2. Insert new symbols
             if symbols:
