@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(cli): 实现 `stitcher index build` 命令", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768046970.3162658, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] tune(cli): 为 index 命令添加国际化支持", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768047076.5554051, "duration_ms": 0}}

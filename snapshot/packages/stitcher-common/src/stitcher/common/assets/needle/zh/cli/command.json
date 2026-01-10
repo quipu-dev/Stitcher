@@ -26,5 +26,11 @@
   "refactor_apply": {
     "help": "从迁移脚本应用自动化代码重构。"
   },
+  "index": {
+    "help": "管理语义索引。"
+  },
+  "index_build": {
+    "help": "增量式构建或更新语义索引。"
+  },
   "not_implemented": "ℹ️  命令 '{command}' 尚未实现。"
 }
