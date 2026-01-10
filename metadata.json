@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Scanner 过滤逻辑并强制创建 index gitignore", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768046317.8346364, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(index): 实现具有四阶段增量流水线的 WorkspaceScanner", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768046350.5747452, "duration_ms": 0}}

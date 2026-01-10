@@ -1,269 +1,72 @@
-## [WIP] fix: 修复 Scanner 过滤逻辑并强制创建 index gitignore
+好的，任务 1.3 的开发与测试修复已经全部完成。现在我将生成一个 `[COMMIT]` 计划来提交这些更改。
 
-### 错误分析
-
-1.  **Scanner 逻辑漏洞**: `_discover_files` 中的 Git 策略分支直接返回了结果，绕过了我在上次补丁中添加在函数末尾的 `Global Filter` 逻辑。
-2.  **架构缺失**: 根据设计文档，`stitcher-index` 必须在索引目录创建 `.gitignore` 以防止数据库被 Git 追踪。当前代码缺少这一实现，导致 `git ls-files` 将数据库文件视为未跟踪文件返回。
+## [COMMIT] feat(index): 实现具有四阶段增量流水线的 WorkspaceScanner
 
 ### 用户需求
-
-1.  修复 `WorkspaceScanner._discover_files` 确保所有路径都经过过滤。
-2.  在 `DatabaseManager` 初始化时创建 `.stitcher/index/.gitignore`。
+完成任务 1.3：实现持久化索引的增量扫描逻辑。
 
 ### 评论
-
-这是对架构一致性的重要修复。
+这是 Stitcher 2.0 性能架构的基石。通过四阶段流水线（Discovery -> Stat Check -> Hash Check -> Parsing），系统能够以极低的代价跳过未修改的文件，并确保索引状态与物理文件系统保持一致。
 
 ### 目标
-
-1.  修改 `DatabaseManager.initialize` 创建 `.gitignore`。
-2.  重构 `WorkspaceScanner._discover_files` 统一过滤逻辑。
+1.  提交 `WorkspaceScanner` 及其关联的 `LanguageAdapter` 协议。
+2.  提交 `IndexStore` 的扩展功能（批量查询与删除）。
+3.  提交 `DatabaseManager` 的初始化优化（自动创建 `.gitignore`）。
+4.  提交增强后的测试基础设施。
 
 ### 基本原理
-
-*   **统一出口**: 所有发现策略必须汇聚到一个统一的过滤点。
-*   **自包含性**: 组件必须负责维护其自身的隔离性（通过 `.gitignore`）。
+*   **Git 感知**: 优先使用 `git ls-files` 以尊重用户的 `.gitignore` 配置。
+*   **自卫机制**: 自动在 `.stitcher/index/` 创建 `*` 忽略规则，并在扫描时硬编码排除 `.stitcher` 目录，防止无限递归和索引污染。
+*   **二进制安全**: 增加对 `UnicodeDecodeError` 的处理，确保扫描器在遇到非文本文件时能够安全跳过。
+*   **高效同步**: 引入批量元数据加载，将 Phase 2 的文件比对从 $O(N)$ 次数据库查询优化为 $O(N)$ 次内存哈希查找。
 
 ### 标签
-
-#intent/fix #flow/ready #priority/critical #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/stitcher-index #task/action/bug-fix #task/state/continue
+#intent/build #flow/ready #priority/critical 
+#comp/runtime #comp/tests #concept/state #scope/core 
+#ai/instruct 
+#task/domain/storage #task/object/stitcher-index #task/action/implementation 
+#task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 在 DatabaseManager 中添加 .gitignore 创建逻辑
+#### Acts 1: 提交扫描器核心实现及配套设施
+
+我们将所有涉及的文件添加到 Git 暂存区并创建提交。
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py
 packages/stitcher-index/src/stitcher/index/db.py
+packages/stitcher-index/src/stitcher/index/store.py
+packages/stitcher-index/src/stitcher/index/protocols.py
+packages/stitcher-index/src/stitcher/index/scanner.py
+packages/stitcher-index/tests/conftest.py
+packages/stitcher-index/tests/unit/test_scanner.py
 ~~~~~
-~~~~~python.old
-    def initialize(self) -> None:
-        schema_path = files("stitcher.index").joinpath("schema.sql")
-        schema_sql = schema_path.read_text(encoding="utf-8")
-
-        with self.get_connection() as conn:
-            conn.executescript(schema_sql)
-            log.debug(f"Initialized database at {self.db_path}")
-
-    @contextmanager
-~~~~~
-~~~~~python.new
-    def initialize(self) -> None:
-        # 1. Ensure directory structure and gitignore
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        gitignore_path = self.db_path.parent / ".gitignore"
-        if not gitignore_path.exists():
-            gitignore_path.write_text("*\n", encoding="utf-8")
-
-        # 2. Initialize Schema
-        schema_path = files("stitcher.index").joinpath("schema.sql")
-        schema_sql = schema_path.read_text(encoding="utf-8")
-
-        with self.get_connection() as conn:
-            conn.executescript(schema_sql)
-            log.debug(f"Initialized database at {self.db_path}")
-
-    @contextmanager
-~~~~~
-
-#### Acts 2: 修复 WorkspaceScanner 的过滤逻辑
 
 ~~~~~act
-write_file
-packages/stitcher-index/src/stitcher/index/scanner.py
+git_commit
 ~~~~~
-~~~~~python
-import os
-import hashlib
-import subprocess
-import logging
-from pathlib import Path
-from typing import List, Dict, Set, Optional, Tuple
+~~~~~text
+feat(index): implement four-phase incremental scanning pipeline
 
-from .store import IndexStore
-from .types import FileRecord, SymbolRecord, ReferenceRecord
-from .protocols import LanguageAdapter
+Implemented the `WorkspaceScanner` which serves as the core semantic indexing engine. The scanner executes a robust four-phase pipeline:
 
-log = logging.getLogger(__name__)
+1. Discovery: Uses `git ls-files` (falling back to OS walk) to find files, respecting `.gitignore`.
+2. Stat Check: Compares mtime and size against the database cache to skip unmodified files instantly.
+3. Hash Check: Uses SHA256 content hashing to detect changes that didn't affect file statistics.
+4. Parsing: Extracts symbols and references via a pluggable `LanguageAdapter` interface.
 
-
-class WorkspaceScanner:
-    def __init__(self, root_path: Path, store: IndexStore):
-        self.root_path = root_path
-        self.store = store
-        self.adapters: Dict[str, LanguageAdapter] = {}
-
-    def register_adapter(self, extension: str, adapter: LanguageAdapter):
-        """Register a language adapter for a specific file extension (e.g., '.py')."""
-        self.adapters[extension] = adapter
-
-    def scan(self) -> Dict[str, int]:
-        """
-        Execute the 4-phase incremental scan pipeline.
-
-        Returns:
-            Dict with stats: {'added': int, 'updated': int, 'deleted': int, 'skipped': int}
-        """
-        stats = {"added": 0, "updated": 0, "deleted": 0, "skipped": 0}
-
-        # --- Phase 1: Discovery ---
-        discovered_paths = self._discover_files()
-        
-        # Load DB state
-        # Map: relative_path_str -> FileRecord
-        known_files: Dict[str, FileRecord] = {
-            r.path: r for r in self.store.get_all_files_metadata()
-        }
-
-        # --- Handle Deletions ---
-        # If in DB but not on disk (and discovery list), delete it.
-        # Note: discovered_paths contains relative strings
-        for known_path, record in known_files.items():
-            if known_path not in discovered_paths:
-                self.store.delete_file(record.id)
-                stats["deleted"] += 1
-
-        # --- Phase 2 & 3 & 4: Check and Update ---
-        for rel_path_str in discovered_paths:
-            abs_path = self.root_path / rel_path_str
-            
-            try:
-                file_stat = abs_path.stat()
-            except FileNotFoundError:
-                # Race condition: file deleted during scan
-                continue
-
-            current_mtime = file_stat.st_mtime
-            current_size = file_stat.st_size
-            
-            record = known_files.get(rel_path_str)
-
-            # --- Phase 2: Stat Check ---
-            # If metadata matches and it was successfully indexed, skip.
-            if (
-                record
-                and record.indexing_status == 1
-                and record.last_mtime == current_mtime
-                and record.last_size == current_size
-            ):
-                stats["skipped"] += 1
-                continue
-
-            # --- Phase 3: Hash Check ---
-            try:
-                # Always read as bytes first to handle binary files and SHA256
-                content_bytes = abs_path.read_bytes()
-            except (OSError, PermissionError) as e:
-                log.warning(f"Could not read file {rel_path_str}: {e}")
-                continue
-
-            current_hash = hashlib.sha256(content_bytes).hexdigest()
-
-            if record and record.content_hash == current_hash:
-                # Content hasn't changed, but mtime/size did (or status was 0).
-                # Just update metadata, no need to re-parse.
-                self.store.sync_file(
-                    rel_path_str, current_hash, current_mtime, current_size
-                )
-                if record.indexing_status == 1:
-                    stats["skipped"] += 1
-                    continue
-                # If status=0, fall through to Phase 4 to retry parsing.
-
-            # Sync file (Insert or Update)
-            file_id, is_new_content = self.store.sync_file(
-                rel_path_str, current_hash, current_mtime, current_size
-            )
-            
-            if is_new_content:
-                if record:
-                    stats["updated"] += 1
-                else:
-                    stats["added"] += 1
-
-            # --- Phase 4: Parsing (Semantic Extraction) ---
-            self._process_file_content(file_id, abs_path, content_bytes)
-
-        return stats
-
-    def _discover_files(self) -> Set[str]:
-        """
-        Phase 1: Discovery.
-        Returns a set of file paths relative to root_path.
-        """
-        paths = set()
-        used_git = False
-
-        # Strategy 1: Git
-        if (self.root_path / ".git").exists():
-            try:
-                # ls-files --cached (tracked) --others (untracked) --exclude-standard (respect .gitignore)
-                result = subprocess.run(
-                    ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
-                    cwd=self.root_path,
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                paths = set(
-                    line.strip() for line in result.stdout.splitlines() if line.strip()
-                )
-                used_git = True
-            except subprocess.CalledProcessError:
-                log.warning("Git discovery failed, falling back to OS walk.")
-        
-        # Strategy 2: Fallback OS Walk
-        if not used_git:
-            for root, dirs, files in os.walk(self.root_path):
-                # Skip hidden dirs
-                dirs[:] = [d for d in dirs if not d.startswith(".")]
-                
-                for file in files:
-                    if file.startswith("."):
-                        continue
-                    abs_path = Path(root) / file
-                    rel_path = abs_path.relative_to(self.root_path).as_posix()
-                    paths.add(rel_path)
-
-        # Global Filter: Exclude .stitcher directory
-        final_paths = {
-            p for p in paths 
-            if not p.startswith(".stitcher/") and p != ".stitcher"
-        }
-        return final_paths
-
-    def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes):
-        """Phase 4: Parse content using adapters."""
-        # 1. Decode
-        try:
-            # We assume source code is UTF-8.
-            text_content = content_bytes.decode("utf-8")
-        except UnicodeDecodeError:
-            # Binary file or non-utf8. We track the file (Phase 3) but don't index symbols.
-            self.store.update_analysis(file_id, [], [])
-            return
-
-        # 2. Find Adapter
-        ext = abs_path.suffix
-        adapter = self.adapters.get(ext)
-        
-        if not adapter:
-            # No adapter for this type. Mark as indexed.
-            self.store.update_analysis(file_id, [], [])
-            return
-
-        # 3. Parse
-        try:
-            symbols, references = adapter.parse(abs_path, text_content)
-            self.store.update_analysis(file_id, symbols, references)
-        except Exception as e:
-            log.error(f"Failed to parse {abs_path}: {e}")
-            # Clear symbols and mark indexed to stop loop on persistent errors
-            self.store.update_analysis(file_id, [], [])
+Key architectural improvements:
+- Added `git init` support to `WorkspaceFactory` for Git-aware integration testing.
+- DatabaseManager now automatically creates a `.gitignore` in the index directory to prevent tracking binaries.
+- Scanner now explicitly excludes the `.stitcher` system directory to avoid self-referencing loops.
+- Improved IndexStore with batch metadata loading for O(1) in-memory lookups during scans.
+- Enhanced robustness against binary files and Unicode decoding errors.
 ~~~~~
 
 ### 下一步建议
-
-运行测试。如果成功，我们的增量扫描基础设施就稳固了。
+- **任务 1.4 (即将开始)**: 现在扫描器框架已经就绪，下一步是实现真正的 **PythonAdapter**。我们将把现有的 `stitcher-python-analysis` 逻辑封装进 `LanguageAdapter` 协议，使扫描器能够提取 Python 符号和引用。
+- **任务 1.5**: 实现 `stitcher index:build` CLI 命令，让用户能从终端启动扫描。
