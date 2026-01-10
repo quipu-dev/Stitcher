@@ -1,13 +1,18 @@
 {
   "Workspace": {},
   "Workspace.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path):",
-    "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, config: Optional[StitcherConfig] = None):",
+    "baseline_code_structure_hash": "01adb170bd677800d033ff7fad6b7b53d4ee617df0b7440f21842904fe64228a"
+  },
+  "Workspace._build_from_config": {
+    "baseline_code_signature_text": "def _build_from_config(self) -> None:",
+    "baseline_code_structure_hash": "fc1f07484601245bd4135e26c9e447fa2ad16c500c39fe45892e4a0bf5164145",
+    "baseline_yaml_content_hash": "65e10c3564fd351599221102f22e274632ccd1ec7472d9780995e4221e2a9ad0"
   },
   "Workspace._discover_packages": {
     "baseline_code_signature_text": "def _discover_packages(self) -> None:",
     "baseline_code_structure_hash": "0fc2efb7202cd9db28211bc40f7e83a6e018fb53084e03b04336a5df447286c9",
-    "baseline_yaml_content_hash": "d6e5fd8fc3e23e26492068940d463c942cc378f4c88a0290ba091da41e295846"
+    "baseline_yaml_content_hash": "ca57c3876bc89ccf502cedaa8107aaa5da8b5faa8f58b754073f960bd2c2d425"
   },
   "Workspace._find_code_dirs": {
     "baseline_code_signature_text": "def _find_code_dirs(self, pkg_root: Path) -> List[Path]:",
@@ -19,6 +24,7 @@
     "baseline_code_structure_hash": "0075a117b81dae865c8e7b5852839979d552364c0edd634668e37600886aaeee",
     "baseline_yaml_content_hash": "ae76c0c7e729e34076dc892f1e744df54e6633e56aec2b6c777d017a6836f21f"
   },
+  "Workspace.config": {},
   "Workspace.get_search_paths": {
     "baseline_code_signature_text": "def get_search_paths(self) -> List[Path]:",
     "baseline_code_structure_hash": "9238332060e9eff4c3360862f74e7c688ce2926535b633ee4a4acd3a2c344c7b",

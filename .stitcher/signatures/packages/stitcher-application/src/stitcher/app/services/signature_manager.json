@@ -42,7 +42,5 @@
     "baseline_code_structure_hash": "fca68e3422f35a2ad2f84b8066d951ef5852dbc2ae7b4f0a306783a30c2f320e",
     "baseline_yaml_content_hash": "30caad024d2d53643b9d324c6dfa4f47b456afcfcfb48d2c39f1ca64be4cb73d"
   },
-  "SignatureManager.sig_root": {
-    "baseline_yaml_content_hash": "574ffaf700ee03558928b7f303151290a983743417f18cd31c95cf534a0d4433"
-  }
+  "SignatureManager.sig_root": {}
 }

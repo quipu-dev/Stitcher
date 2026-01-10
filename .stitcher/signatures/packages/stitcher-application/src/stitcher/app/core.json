@@ -134,9 +134,7 @@
   "StitcherApp.sig_manager": {
     "baseline_yaml_content_hash": "3b8beb1534d8af06c7ef4b70705fcf132681c7c39ad3394085d84f05906b1f86"
   },
-  "StitcherApp.stub_pkg_manager": {
-    "baseline_yaml_content_hash": "66a764e6bf4baed31dcffb65888c3cfd478d7df8971ee3920d1f517cbafd8949"
-  },
+  "StitcherApp.stub_pkg_manager": {},
   "StitcherApp.stubgen_service": {},
   "StitcherApp.transform_runner": {}
 }

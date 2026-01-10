@@ -284,6 +284,15 @@ class StitcherApp:
         dry_run: bool = False,
         confirm_callback: Optional[Callable[[int], bool]] = None,
     ) -> bool:
+        configs, _ = self._load_configs()
+        if not configs:
+            bus.error(L.error.config.not_found)
+            return False
+
+        # For refactoring, we use the first available config.
+        # This could be extended in the future to allow target selection via CLI.
+        config_to_use = configs[0]
+
         return self.refactor_runner.run_apply(
-            migration_script, dry_run, confirm_callback
+            migration_script, config_to_use, dry_run, confirm_callback
         )

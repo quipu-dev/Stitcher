@@ -13,6 +13,7 @@ def test_refactor_apply_e2e(tmp_path, monkeypatch):
     # Project with a symbol to be renamed
     (
         factory.with_project_name("mypkg")
+        .with_config({"scan_paths": ["src"]})
         .with_source("src/mypkg/__init__.py", "")
         .with_source("src/mypkg/core.py", "class Old: pass")
         .with_source("src/mypkg/app.py", "from mypkg.core import Old")
@@ -52,6 +53,7 @@ def test_refactor_apply_dry_run(tmp_path, monkeypatch):
     factory = WorkspaceFactory(tmp_path)
     (
         factory.with_project_name("mypkg")
+        .with_config({"scan_paths": ["src"]})
         .with_source("src/mypkg/__init__.py", "")
         .with_source("src/mypkg/core.py", "class Old: pass")
         .with_source("src/mypkg/app.py", "from mypkg.core import Old")

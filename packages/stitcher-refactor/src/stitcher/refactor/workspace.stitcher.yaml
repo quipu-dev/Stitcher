@@ -1,5 +1,7 @@
+"Workspace._build_from_config": |-
+  Builds workspace view from a StitcherConfig object.
 "Workspace._discover_packages": |-
-  Scans for all pyproject.toml files to build the package map.
+  (Default) Builds workspace view by scanning for pyproject.toml files.
 "Workspace._find_code_dirs": |-
   Finds potential source directories: src/, tests/, and the package root.
 "Workspace._get_top_level_importables": |-

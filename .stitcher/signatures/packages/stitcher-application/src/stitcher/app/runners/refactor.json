@@ -6,7 +6,7 @@
   },
   "RefactorRunner.root_path": {},
   "RefactorRunner.run_apply": {
-    "baseline_code_signature_text": "def run_apply(self, migration_script: Path, dry_run: bool = False, confirm_callback: Optional[Callable[[int], bool]] = None) -> bool:",
-    "baseline_code_structure_hash": "d54741cfa4e53757f7b7c97877935fd5a3134b90a2604a3cf46046081c8cef21"
+    "baseline_code_signature_text": "def run_apply(self, migration_script: Path, config: StitcherConfig, dry_run: bool = False, confirm_callback: Optional[Callable[[int], bool]] = None) -> bool:",
+    "baseline_code_structure_hash": "f4c8ec05521cba7b1380ddd595a6ea806690da985365733d874bae3403bccd4b"
   }
 }
