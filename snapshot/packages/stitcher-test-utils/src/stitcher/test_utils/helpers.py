@@ -7,7 +7,6 @@ from stitcher.app.protocols import InteractionHandler
 from stitcher.adapter.python import (
     PythonParser,
     PythonTransformer,
-    PythonStubGenerator,
     PythonFingerprintStrategy,
 )
 
