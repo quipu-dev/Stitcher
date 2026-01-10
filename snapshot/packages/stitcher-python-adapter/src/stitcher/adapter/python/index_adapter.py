@@ -129,12 +129,17 @@ class PythonAdapter(LanguageAdapter):
         refs: List[ReferenceRecord] = []
 
         # 1. Build local_symbols map (Name -> FQN)
-        # This helps the visitor distinguish between local usages and globals/builtins
-        # The FQN here is logical (e.g. "pkg.mod.Class")
+        # This helps the visitor distinguish between local usages and globals/builtins.
+        # It maps a name visible in the current scope to its fully-qualified name.
         local_symbols = {}
 
-        # Helper to construct logical FQN for local symbols
-        def register_local(name: str, parent_fqn: str = ""):
+        # 1a. Register all imported aliases (e.g., 'helper' -> 'pkg.utils.helper')
+        for attr in module.attributes:
+            if attr.alias_target:
+                local_symbols[attr.name] = attr.alias_target
+
+        # 1b. Register all local definitions
+        def register_local(name: str, parent_fqn: str = "") -> str:
             fqn = (
                 f"{parent_fqn}.{name}" if parent_fqn else f"{logical_module_fqn}.{name}"
             )
@@ -145,12 +150,13 @@ class PythonAdapter(LanguageAdapter):
             register_local(func.name)
 
         for cls in module.classes:
-            for method in cls.methods:
-                # Assuming UsageScanVisitor handles attribute lookups,
-                # strictly speaking we might not need to pass method names as locals
-                # unless they are used unqualified (which they aren't, they are self.x),
-                # but registering top-level classes/funcs is key.
-                pass
+            cls_fqn = register_local(cls.name)
+            # Register class-level aliases
+            for attr in cls.attributes:
+                if attr.alias_target:
+                    local_symbols[attr.name] = attr.alias_target
+            # Methods are handled by the visitor's scope analysis (e.g., self.method)
+            # so we don't need to register them as top-level local symbols.
 
         # 2. Parse CST and Run Visitor
         try:

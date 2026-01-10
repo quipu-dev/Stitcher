@@ -1,172 +1,50 @@
-Excellent analysis. Your conclusion that **Debt 1.3 (Alias Resolution)** is the blocking dependency for **Debt 1.2 (Reference Analysis)** is spot-on. The proposed implementation path is logical, incremental, and addresses the root cause of the problem.
+Excellent. We are now ready to implement the final piece of this feature. By enriching the `local_symbols` map, we will empower the `UsageScanVisitor` to correctly resolve references to imported aliases, thus completing the semantic chain from usage to definition.
 
-I will now proceed with **Atomic Task 3**: modifying the `PythonAdapter` to process `Attribute` objects that represent aliases and correctly populate the `alias_target_id` field in the resulting `SymbolRecord`.
+Here is the plan for **Atomic Task 4**.
 
-This change is foundational. By teaching the adapter to recognize and persist alias information, we create the necessary "anchors" in the index that will later allow the reference scanner to build a complete semantic graph.
-
-Here is the plan to implement this change.
-
-## [WIP] feat(index): Process alias symbols in PythonAdapter
+## [WIP] feat(index): Enrich local symbol map to enable alias-aware reference scanning
 
 ### 用户需求
 
-根据架构分析，需要修改 `PythonAdapter` 以识别并处理代表模块导入（别名）的 `Attribute` 对象。具体来说，当 `Attribute` 含有 `alias_target` 字段时，生成的 `SymbolRecord` 必须：
-1.  将 `kind` 设置为 `alias`。
-2.  将 `alias_target` (一个逻辑 FQN) 转换为 SURI，并填充到 `SymbolRecord` 的 `alias_target_id` 字段中。
+根据任务计划，需要实施 **Atomic Task 4**。具体目标是更新 `PythonAdapter._extract_references` 方法，使其在构建 `local_symbols` 映射表时，不仅包含本地定义的符号，还包含所有通过 `import` 语句引入的别名。
 
 ### 评论
 
-这是打通“别名解析”链路的关键一步。此修改将使符号索引首次能够持久化模块间的导入关系，为后续的引用分析和代码重构提供了基础数据。这是一个高价值的、纯粹的架构改进。
+这是整个别名解析功能中“画龙点睛”的一笔。前续任务让我们能够在数据库中*存储*别名信息，而此任务则让我们能够*利用*这些信息进行真正的语义分析。完成这一步后，系统的引用分析能力将从简单的文本匹配跃升到具备初步上下文感知的水平，为实现高保真的代码导航和重构奠定了坚实的基础。
 
 ### 目标
 
-1.  重构 `PythonAdapter.parse` 方法，将模块的逻辑 FQN (`logical_module_fqn`) 的计算提前，并将其作为参数传递给 `_extract_symbols` 和 `_extract_references`。
-2.  修改 `_extract_symbols` 方法内部的 `add` 辅助函数，使其能够检查传入的实体对象是否包含 `alias_target` 属性。
-3.  如果 `alias_target` 存在，则将符号的 `kind` 设为 `alias`，并调用 `_guess_suri` 方法将逻辑 FQN 转换为 SURI，填充到 `SymbolRecord` 的 `alias_target_id` 字段。
+1.  修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py` 文件中的 `_extract_references` 方法。
+2.  在方法内部，扩展 `local_symbols` 字典的填充逻辑。
+3.  遍历 `module.attributes` 和每个 `class.attributes`，检查 `attr.alias_target` 字段。
+4.  如果 `attr.alias_target` 存在，则将该别名（`attr.name`）及其指向的完全限定名（`attr.alias_target`）添加到 `local_symbols` 字典中。
+5.  确保此增强后的 `local_symbols` 字典被传递给 `UsageScanVisitor`。
 
 ### 基本原理
 
-为了保持代码的 DRY (Don't Repeat Yourself) 原则，我们将修改 `_extract_symbols` 内部的 `add` 辅助函数。由于模块级属性和类属性都通过此函数创建 `SymbolRecord`，将别名处理逻辑集中在此处可以确保所有类型的别名（`import x`, `from y import z`）都能被统一处理。
+`UsageScanVisitor` 在遍历代码的 AST 时，会遇到各种标识符（`Name` 节点）。它通过查询 `local_symbols` 映射来判断这个标识符究竟指向哪个“真实”的实体。
 
-同时，为了让 `add` 函数能够调用 `_guess_suri`，我们需要将 `logical_module_fqn` 从 `parse` 方法一路传递下来。这是一个小型的、必要的重构，可以提高数据流的清晰度。
+目前的实现只将文件中*定义*的函数和类放入了 `local_symbols`。这导致当 Visitor 遇到一个*导入*的符号（如 `helper`）时，它在映射表中找不到对应的条目，因而无法解析该引用。
+
+本次修改的核心就是将 `ModuleDef` 中携带的别名信息（`Attribute` with `alias_target`）注入到 `local_symbols` 映射中。例如，对于 `from .utils import helper`，我们将添加一条 `{ "helper": "your_package.utils.helper" }` 的映射。这样，当 Visitor 遇到 `helper()` 的调用时，它就能立即知道这个 `helper` 实际上是 `your_package.utils.helper`，从而创建出一条正确的引用记录。
 
 ### 标签
 
-#intent/refine #flow/ready #priority/high #comp/tests #concept/state #scope/core #ai/instruct #task/domain/testing #task/object/alias-resolution #task/action/implementation #task/state/continue
+#intent/build #flow/ready #priority/high #comp/core #concept/state #scope/core #ai/instruct #task/domain/testing #task/object/alias-resolution #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 PythonAdapter 以处理别名
+#### Acts 1: 增强 `_extract_references` 以识别别名
 
-我们将使用 `write_file` 覆盖 `index_adapter.py`，因为修改涉及多个方法签名和内部逻辑的联动。
+我们将精确地 `patch` `_extract_references` 方法，以扩展 `local_symbols` 的填充逻辑。
 
 ~~~~~act
-write_file
+patch_file
 packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py
 ~~~~~
-~~~~~python
-from pathlib import Path
-from typing import List, Tuple, Optional
-
-from stitcher.spec import ModuleDef
-from stitcher.index.protocols import LanguageAdapter
-from stitcher.index.types import SymbolRecord, ReferenceRecord
-
-import libcst as cst
-from stitcher.adapter.python.griffe_parser import GriffePythonParser
-from stitcher.adapter.python.fingerprint import PythonFingerprintStrategy
-from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
-from .uri import SURIGenerator
-
-
-class PythonAdapter(LanguageAdapter):
-    def __init__(self, root_path: Path):
-        self.root_path = root_path
-        self.parser = GriffePythonParser()
-        self.hasher = PythonFingerprintStrategy()
-
-    def parse(
-        self, file_path: Path, content: str
-    ) -> Tuple[List[SymbolRecord], List[ReferenceRecord]]:
-        # 1. Calculate relative path for SURI
-        try:
-            rel_path = file_path.relative_to(self.root_path).as_posix()
-        except ValueError:
-            # Fallback if file is not in root (should not happen in normal scan)
-            rel_path = file_path.name
-
-        # 2. Parse into ModuleDef
-        module_def = self.parser.parse(content, file_path=rel_path)
-
-        # Pre-calculate logical FQN for the module
-        logical_module_fqn = rel_path.replace("/", ".").replace(".py", "")
-        if logical_module_fqn.endswith(".__init__"):
-            logical_module_fqn = logical_module_fqn[: -len(".__init__")]
-
-        # 3. Project to Symbols
-        symbols = self._extract_symbols(rel_path, module_def, logical_module_fqn)
-
-        # 4. Project to References
-        references = self._extract_references(
-            rel_path, module_def, content, file_path, logical_module_fqn
-        )
-
-        return symbols, references
-
-    def _extract_symbols(
-        self, rel_path: str, module: ModuleDef, logical_module_fqn: str
-    ) -> List[SymbolRecord]:
-        symbols: List[SymbolRecord] = []
-
-        # Helper to add symbol
-        def add(
-            name: str,
-            kind: str,
-            entity_for_hash: Optional[object] = None,
-            parent_fragment: str = "",
-        ):
-            fragment = f"{parent_fragment}.{name}" if parent_fragment else name
-            suri = SURIGenerator.for_symbol(rel_path, fragment)
-
-            # Compute Hash
-            sig_hash = None
-            if entity_for_hash:
-                fp = self.hasher.compute(entity_for_hash)  # type: ignore
-                sig_hash = fp.get("current_code_structure_hash")
-
-            # Location Handling
-            loc = getattr(entity_for_hash, "location", None)
-
-            # Alias Handling
-            alias_target_id: Optional[str] = None
-            final_kind = kind
-            alias_target_fqn = getattr(entity_for_hash, "alias_target", None)
-            if alias_target_fqn:
-                final_kind = "alias"
-                alias_target_id = self._guess_suri(
-                    alias_target_fqn, logical_module_fqn, rel_path
-                )
-
-            symbols.append(
-                SymbolRecord(
-                    id=suri,
-                    name=name,
-                    kind=final_kind,
-                    lineno=loc.lineno if loc else 0,
-                    col_offset=loc.col_offset if loc else 0,
-                    end_lineno=loc.end_lineno if loc else 0,
-                    end_col_offset=loc.end_col_offset if loc else 0,
-                    logical_path=fragment,  # This is relative logical path in file
-                    signature_hash=sig_hash,
-                    alias_target_id=alias_target_id,
-                )
-            )
-            return fragment
-
-        # 1. Functions
-        for func in module.functions:
-            add(func.name, "function", func)
-
-        # 2. Classes
-        for cls in module.classes:
-            cls_frag = add(cls.name, "class", cls)
-
-            # Methods
-            for method in cls.methods:
-                add(method.name, "method", method, parent_fragment=cls_frag)
-
-            # Attributes
-            for attr in cls.attributes:
-                add(attr.name, "variable", attr, parent_fragment=cls_frag)
-
-        # 3. Module-level Attributes
-        for attr in module.attributes:
-            add(attr.name, "variable", attr)
-
-        return symbols
-
+~~~~~python.old
     def _extract_references(
         self,
         rel_path: str,
@@ -203,79 +81,72 @@ class PythonAdapter(LanguageAdapter):
 
         # 2. Parse CST and Run Visitor
         try:
-            wrapper = cst.MetadataWrapper(cst.parse_module(content))
-            registry = UsageRegistry()
+~~~~~
+~~~~~python.new
+    def _extract_references(
+        self,
+        rel_path: str,
+        module: ModuleDef,
+        content: str,
+        file_path: Path,
+        logical_module_fqn: str,
+    ) -> List[ReferenceRecord]:
+        refs: List[ReferenceRecord] = []
 
-            visitor = UsageScanVisitor(
-                file_path=file_path,
-                local_symbols=local_symbols,
-                registry=registry,
-                current_module_fqn=logical_module_fqn,
-                is_init_file=rel_path.endswith("__init__.py"),
+        # 1. Build local_symbols map (Name -> FQN)
+        # This helps the visitor distinguish between local usages and globals/builtins.
+        # It maps a name visible in the current scope to its fully-qualified name.
+        local_symbols = {}
+
+        # 1a. Register all imported aliases (e.g., 'helper' -> 'pkg.utils.helper')
+        for attr in module.attributes:
+            if attr.alias_target:
+                local_symbols[attr.name] = attr.alias_target
+
+        # 1b. Register all local definitions
+        def register_local(name: str, parent_fqn: str = "") -> str:
+            fqn = (
+                f"{parent_fqn}.{name}" if parent_fqn else f"{logical_module_fqn}.{name}"
             )
-            wrapper.visit(visitor)
+            local_symbols[name] = fqn
+            return fqn
 
-            # 3. Convert Registry to ReferenceRecords
-            # UsageRegistry structure: { target_fqn: [UsageLocation, ...] }
-            for target_fqn, locations in registry._index.items():
-                for loc in locations:
-                    # Convert logical FQN target to SURI
-                    # NOTE: This is a heuristic. We don't have a SourceMap yet.
-                    # We assume standard python layout: a.b.c -> py://a/b.py#c (simplified)
-                    # For local symbols, we can be precise. For external, we guess.
+        for func in module.functions:
+            register_local(func.name)
 
-                    target_suri = self._guess_suri(
-                        target_fqn, logical_module_fqn, rel_path
-                    )
+        for cls in module.classes:
+            cls_fqn = register_local(cls.name)
+            # Register class-level aliases
+            for attr in cls.attributes:
+                if attr.alias_target:
+                    local_symbols[attr.name] = attr.alias_target
+            # Methods are handled by the visitor's scope analysis (e.g., self.method)
+            # so we don't need to register them as top-level local symbols.
 
-                    refs.append(
-                        ReferenceRecord(
-                            target_id=target_suri,
-                            kind=loc.ref_type.value,
-                            lineno=loc.lineno,
-                            col_offset=loc.col_offset,
-                            end_lineno=loc.end_lineno,
-                            end_col_offset=loc.end_col_offset,
-                        )
-                    )
-
-        except Exception:
-            # If CST parsing fails (syntax error), we just return empty refs
-            # Logging should happen higher up
-            pass
-
-        return refs
-
-    def _guess_suri(
-        self, fqn: str, current_module_fqn: str, current_rel_path: str
-    ) -> str:
-        # Case 1: Internal reference (same module)
-        if fqn.startswith(current_module_fqn + "."):
-            fragment = fqn[len(current_module_fqn) + 1 :]
-            return SURIGenerator.for_symbol(current_rel_path, fragment)
-
-        # Case 2: External reference
-        # We naively convert dots to slashes.
-        # This will be incorrect for complex package roots (src/),
-        # but serves as a unique identifier for now.
-        # e.g. "os.path.join" -> "py://os/path.py#join"
-
-        parts = fqn.split(".")
-        if len(parts) == 1:
-            # Top level module or class
-            return SURIGenerator.for_symbol(f"{parts[0]}.py", parts[0])
-
-        # Guess: last part is symbol, rest is path
-        path_parts = parts[:-1]
-        symbol = parts[-1]
-        guessed_path = "/".join(path_parts) + ".py"
-        return SURIGenerator.for_symbol(guessed_path, symbol)
+        # 2. Parse CST and Run Visitor
+        try:
 ~~~~~
 
 ### 下一步建议
 
-我们已经成功地将别名信息引入了符号索引层。现在，`SymbolRecord` 中包含了指向其原始定义的 `alias_target_id`。
+我们已经完成了别名解析和引用分析的核心逻辑实现。整个功能链条（`Parser -> IR -> Adapter -> Index`）现在已经贯通。
 
-下一步，也是 **Atomic Task 4**，是利用这些新信息来修复引用分析的断裂问题。我们需要修改 `_extract_references` 方法，将这些新发现的 `alias` 类型的符号也添加到 `local_symbols` 映射表中，这样 `UsageScanVisitor` 在扫描代码时就能正确解析出这些导入符号的用法了。
+**现在，最关键的下一步是验证。**
 
-如果你同意，我将立即开始准备 **Atomic Task 4** 的计划。
+我强烈建议编写一个或多个集成测试来端到端地验证这个新功能。一个好的测试用例应该包含：
+
+1.  一个定义了函数/类的 `utils.py` 文件。
+2.  一个 `main.py` 文件，其中包含：
+    *   `import utils`
+    *   `from utils import specific_function`
+    *   `from . import sibling` (如果适用)
+    *   对上述导入符号的调用。
+3.  测试逻辑应该：
+    *   创建一个包含这些文件的测试工作区。
+    *   运行 `WorkspaceScanner`。
+    *   查询 `IndexStore` 并断言：
+        *   `main.py` 的符号表中包含了 `kind='alias'` 的 `SymbolRecord`。
+        *   这些别名记录的 `alias_target_id` 正确指向了 `utils.py` 中对应符号的 SURI。
+        *   `main.py` 的引用表中包含了从*调用点*到*别名符号*的 `ReferenceRecord`。
+
+这将确保我们所做的所有修改都能协同工作，并真正解决了最初的技术债务。如果你同意，我将开始设计并实施这个集成测试。
