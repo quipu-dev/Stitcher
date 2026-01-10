@@ -7,13 +7,13 @@ from stitcher.spec import (
     ArgumentKind,
     Attribute,
 )
-from stitcher.adapter.python.internal.stub_generator import StubGenerator
+from stitcher.stubgen.generator import PythonStubGenerator
 
 
 class TestStubGenerator:
     @pytest.fixture
     def generator(self):
-        return StubGenerator()
+        return PythonStubGenerator()
 
     def test_generate_complex_args(self, generator):
         # def func(a: int, b: str = "default", *args, kw_only: bool, **kwargs) -> None:
