@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 
 import yaml
 import tomli_w
+import subprocess
 
 
 class WorkspaceFactory:
@@ -11,6 +12,31 @@ class WorkspaceFactory:
         self.root_path = root_path
         self._files_to_create: List[Dict[str, Any]] = []
         self._pyproject_data: Dict[str, Any] = {}
+
+    def init_git(self) -> "WorkspaceFactory":
+        """Initialize a git repository in the workspace root."""
+        # Create root first if it doesn't exist (though usually build() does this,
+        # we might want to git init before writing files to test untracked logic?)
+        # Actually git init works in empty dir.
+        self.root_path.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["git", "init", "--initial-branch=main"],
+            cwd=self.root_path,
+            check=True,
+            capture_output=True,
+        )
+        # Configure user for commits to work
+        subprocess.run(
+            ["git", "config", "user.email", "test@stitcher.local"],
+            cwd=self.root_path,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Test User"],
+            cwd=self.root_path,
+            check=True,
+        )
+        return self
 
     def with_config(self, stitcher_config: Dict[str, Any]) -> "WorkspaceFactory":
         tool = self._pyproject_data.setdefault("tool", {})

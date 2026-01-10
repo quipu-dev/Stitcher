@@ -136,3 +136,16 @@ class IndexStore:
                 "SELECT * FROM 'references' WHERE source_file_id = ?", (file_id,)
             ).fetchall()
             return [ReferenceRecord(**dict(row)) for row in rows]
+
+    def get_all_files_metadata(self) -> List[FileRecord]:
+        """Fetch all file records to build an in-memory cache for the scanner."""
+        with self.db.get_connection() as conn:
+            rows = conn.execute(
+                "SELECT id, path, content_hash, last_mtime, last_size, indexing_status FROM files"
+            ).fetchall()
+            return [FileRecord(**dict(row)) for row in rows]
+
+    def delete_file(self, file_id: int) -> None:
+        """Remove a file and its associated symbols/references (via cascade)."""
+        with self.db.get_connection() as conn:
+            conn.execute("DELETE FROM files WHERE id = ?", (file_id,))
