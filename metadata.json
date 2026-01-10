@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: Create skeleton for stitcher-index package", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768043000.049926, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M uv.lock", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768044627.7187932, "duration_ms": 0}}
