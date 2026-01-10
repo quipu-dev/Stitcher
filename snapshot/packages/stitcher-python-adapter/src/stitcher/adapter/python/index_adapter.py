@@ -68,10 +68,11 @@ class PythonAdapter(LanguageAdapter):
             loc_start = 0
             loc_end = 0
 
-            if hasattr(entity_for_hash, "location") and entity_for_hash.location:
+            # Use getattr to avoid Pyright errors about accessing attributes on 'object' or 'None'
+            loc = getattr(entity_for_hash, "location", None)
+            if loc:
                 # Mapping Strategy: Use lineno for location_start and end_lineno for location_end
                 # This provides line-level precision for jump-to-definition.
-                loc = entity_for_hash.location
                 loc_start = loc.lineno
                 loc_end = loc.end_lineno
 

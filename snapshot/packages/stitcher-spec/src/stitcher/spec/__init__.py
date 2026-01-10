@@ -10,6 +10,7 @@ from .models import (
     ClassDef,
     FunctionDef,
     ModuleDef,
+    SourceLocation,
     ConflictType,
     ResolutionAction,
     Resolution,
@@ -47,6 +48,7 @@ __all__ = [
     "ClassDef",
     "FunctionDef",
     "ModuleDef",
+    "SourceLocation",
     # Reconciliation Models
     "ConflictType",
     "ResolutionAction",

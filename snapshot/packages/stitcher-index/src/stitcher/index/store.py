@@ -50,7 +50,8 @@ class IndexStore:
                     """,
                     (path, content_hash, mtime, size),
                 )
-                return cursor.lastrowid, True
+                # lastrowid should not be None for INSERT, but type hint says Optional[int]
+                return cursor.lastrowid or 0, True
 
     def get_file_by_path(self, path: str) -> Optional[FileRecord]:
         with self.db.get_connection() as conn:

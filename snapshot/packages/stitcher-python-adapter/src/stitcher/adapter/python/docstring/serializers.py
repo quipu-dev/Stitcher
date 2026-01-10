@@ -18,7 +18,7 @@ class BaseSerializer(DocstringSerializerProtocol):
     def _decode_item_value(self, value: str) -> dict:
         return {"annotation": None, "description": value}
 
-    def to_yaml(self, ir: DocstringIR) -> Dict[str, Any]:
+    def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
         raise NotImplementedError
 
     def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
