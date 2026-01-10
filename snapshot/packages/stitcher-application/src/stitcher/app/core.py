@@ -6,15 +6,14 @@ from needle.pointer import L
 from stitcher.spec import (
     LanguageParserProtocol,
     LanguageTransformerProtocol,
-    StubGeneratorProtocol,
     FingerprintStrategyProtocol,
     ModuleDef,
 )
+from stitcher.stubgen import StubgenService
 from stitcher.config import load_config_from_path, StitcherConfig
 from stitcher.app.services import (
     DocumentManager,
     SignatureManager,
-    StubPackageManager,
     ScannerService,
     Differ,
     DocstringMerger,
@@ -22,7 +21,6 @@ from stitcher.app.services import (
 from .protocols import InteractionHandler
 from .runners import (
     CheckRunner,
-    GenerateRunner,
     InitRunner,
     PumpRunner,
     TransformRunner,
@@ -44,7 +42,6 @@ class StitcherApp:
         root_path: Path,
         parser: LanguageParserProtocol,
         transformer: LanguageTransformerProtocol,
-        stub_generator: StubGeneratorProtocol,
         fingerprint_strategy: FingerprintStrategyProtocol,
         interaction_handler: Optional[InteractionHandler] = None,
     ):
@@ -52,10 +49,12 @@ class StitcherApp:
         # 1. Core Services
         self.doc_manager = DocumentManager(root_path)
         self.sig_manager = SignatureManager(root_path, fingerprint_strategy)
-        self.stub_pkg_manager = StubPackageManager()
         self.scanner = ScannerService(root_path, parser)
         self.differ = Differ()
         self.merger = DocstringMerger()
+        self.stubgen_service = StubgenService(
+            root_path, self.scanner, self.doc_manager, transformer
+        )
 
         # 2. Runners (Command Handlers)
         self.check_runner = CheckRunner(
@@ -74,14 +73,6 @@ class StitcherApp:
             self.differ,
             self.merger,
             interaction_handler,
-        )
-        self.generate_runner = GenerateRunner(
-            root_path,
-            self.scanner,
-            self.doc_manager,
-            self.stub_pkg_manager,
-            stub_generator,
-            transformer,
         )
         self.init_runner = InitRunner(root_path, self.doc_manager, self.sig_manager)
         self.transform_runner = TransformRunner(
@@ -103,7 +94,7 @@ class StitcherApp:
         self.doc_manager.set_strategy(parser, serializer)
 
         # Inject renderer into generate runner
-        self.generate_runner.set_renderer(renderer)
+        self.stubgen_service.set_renderer(renderer)
 
         # Handle Plugins
         plugin_modules = self.scanner.process_plugins(config.plugins)
@@ -132,7 +123,7 @@ class StitcherApp:
                 continue
             found_any = True
 
-            paths = self.generate_runner.run_batch(modules, config, tm, project_name)
+            paths = self.stubgen_service.generate(modules, config, tm, project_name)
             all_generated.extend(paths)
 
         if not found_any and len(configs) == 1 and not tm.dry_run:

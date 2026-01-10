@@ -1,510 +1,452 @@
-Excellent. We will now proceed with the second step: migrating the logic.
+好的，我们现在执行重构的关键一步：**切换**。
 
-As per your instruction, this step will be a "copy" operation. I will create the new files in the `stitcher-stubgen` package with the necessary code, but I will **not** delete the original source files yet. This is a safe, incremental approach.
+我将生成一个计划，它会创建新的 `StubgenService` 外观类，并修改 `StitcherApp` 以使用这个新服务。这将有效地将 `stitcher-application` 包中的旧存根生成代码变为“死代码”，为我们最后一步的清理工作做好准备。
 
-I'll create a plan that populates the new package with the migrated and slightly adapted code.
-
-## [WIP] refactor(arch): Migrate stubgen logic to new package
+## [WIP] refactor(arch): Integrate StubgenService and decouple application
 
 ### 用户需求
 
-将存根生成的核心逻辑（`PythonStubGenerator`, `GenerateRunner`, `StubPackageManager`）从 `stitcher-python-adapter` 和 `stitcher-application` 迁移到新创建的 `stitcher-stubgen` 包中。此阶段仅执行代码的复制和适应性修改，不删除源文件。
+1.  在 `stitcher-stubgen` 包中创建一个高级别的 `StubgenService` 外观类，作为其唯一的公共 API 入口。
+2.  修改 `stitcher-application` 中的 `StitcherApp`，使其不再直接依赖和实例化 `GenerateRunner` 和 `StubPackageManager`，而是通过新创建的 `StubgenService` 来执行所有与存根生成相关的任务。
 
 ### 评论
 
-这是解耦重构的核心执行步骤。通过将相关的代码物理上移动到其所属的新领域边界（`stitcher-stubgen` 包），我们正在将架构意图转化为代码的物理现实。这种“先复制，后切换，再删除”的三步走策略是进行此类重构最安全、最可控的方式，它确保了在任何时刻，系统都处于一个可编译、可测试的状态。
+这是整个重构任务中最核心、价值最高的一步。通过引入 `StubgenService` 外观，我们正在 `stitcher-stubgen` 包周围建立一个清晰、稳定的“API 边界”。`StitcherApp` 从一个了解过多实现细节的“微观管理者”，演变为一个纯粹的“应用编排器”，它只通过高级服务契约进行通信。这完美地体现了**严格分层与边界**的架构公理，是构建可维护、可演进系统的基石。
 
 ### 目标
 
-1.  在 `stitcher-stubgen` 中创建 `generator.py`，并将 `stitcher-python-adapter` 中的 `StubGenerator` 核心逻辑迁移至此，并将其重命名为 `PythonStubGenerator` 作为公共接口。
-2.  在 `stitcher-stubgen` 中创建 `services.py`，并将 `stitcher-application` 中的 `StubPackageManager` 逻辑迁移至此。
-3.  在 `stitcher-stubgen` 中创建 `runners.py`，并将 `stitcher-application` 中的 `GenerateRunner` 逻辑迁移至此，同时更新其内部导入以指向新的 `services.py`。
+1.  在 `packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py` 文件中定义并实现 `StubgenService` 类。
+2.  更新 `stitcher-application` 的 `pyproject.toml`，添加对新包 `stitcher-stubgen` 的工作区依赖。
+3.  重构 `stitcher-application` 中的 `StitcherApp` (`core.py`)，移除旧的生成器依赖，并注入和使用 `StubgenService`。
+4.  清理 `stitcher-application` 中 `runners` 和 `services` 模块的 `__init__.py`，移除对已迁移类的导出。
 
 ### 基本原理
 
-我们使用 `write_file` 来创建三个核心的新模块文件。
-
-1.  对于 `generator.py`，我们直接将 `internal.stub_generator` 的实现作为新的 `PythonStubGenerator` 的实现，这简化了代码结构，移除了不必要的内部包装层。
-2.  对于 `services.py`，这是一个直接的文件内容复制。
-3.  对于 `runners.py`，在复制 `GenerateRunner` 的同时，我们必须主动修正其对 `StubPackageManager` 的导入路径，使其从 `stitcher.app.services` 指向新的 `stitcher.stubgen.services`。这确保了新包内部的模块间依赖是自洽的，为下一步的集成做好了准备。
+我们将分阶段进行修改：
+1.  **定义服务**: 使用 `write_file` 创建 `StubgenService`。这个类将作为 `stitcher-stubgen` 包内部组件的“组合根”，它会自己实例化 `PythonStubGenerator`、`StubPackageManager` 和 `GenerateRunner`，并将它们连接起来，从而向外界隐藏所有实现细节。
+2.  **建立依赖**: 通过 `patch_file` 在 `stitcher-application` 的 `pyproject.toml` 中添加对 `stitcher-stubgen` 的依赖，使 `StitcherApp` 能够导入新服务。
+3.  **切换实现**: 对 `stitcher/app/core.py` 执行一系列精确的 `patch_file` 操作。我们将首先修改导入语句，然后修改 `StitcherApp` 的构造函数以注入 `StubgenService`，最后更新调用点（如 `run_from_config`）以使用新服务的方法。
+4.  **清理导出**: 最后，通过 `patch_file` 修改 `__init__.py` 文件，移除对 `GenerateRunner` 和 `StubPackageManager` 的导出，标志着它们在 `application` 包内的生命周期正式结束。
 
 ### 标签
 
-#intent/refine #flow/ready #priority/high #comp/python-adapter #comp/application #scope/core #task/domain/architecture #task/object/stubgen-package #task/action/migration #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/application #scope/api #scope/core #task/domain/architecture #task/object/stubgen-package #task/action/integration #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 迁移生成器 (Generator) 逻辑
+#### Acts 1: 定义 `StubgenService` 接口
 
-我们将 `stitcher-python-adapter` 内部的 `StubGenerator` 逻辑复制并重构为 `stitcher-stubgen` 包中公开的 `PythonStubGenerator`。
-
-~~~~~act
-write_file
-packages/stitcher-stubgen/src/stitcher/stubgen/generator.py
-~~~~~
-~~~~~python
-from typing import List
-from stitcher.spec import (
-    Argument,
-    ArgumentKind,
-    Attribute,
-    ClassDef,
-    FunctionDef,
-    ModuleDef,
-)
-
-
-class PythonStubGenerator:
-    def __init__(self, indent_spaces: int = 4):
-        self._indent_str = " " * indent_spaces
-
-    def generate(self, module: ModuleDef) -> str:
-        lines = []
-
-        # 1. Module Docstring (Ignored in skeleton generation)
-
-        # 2. Imports (TODO: Pass these through from scanner later)
-        if module.imports:
-            for imp in module.imports:
-                lines.append(imp)
-            lines.append("")
-
-        # 2.5. __all__
-        if module.dunder_all:
-            lines.append(f"__all__ = {module.dunder_all}")
-            lines.append("")
-
-        # 3. Module Attributes
-        for attr in module.attributes:
-            lines.append(self._generate_attribute(attr, 0))
-        if module.attributes:
-            lines.append("")
-
-        # 4. Functions
-        for func in module.functions:
-            lines.append(self._generate_function(func, 0))
-            lines.append("")
-
-        # 5. Classes
-        for cls in module.classes:
-            lines.append(self._generate_class(cls, 0))
-            lines.append("")
-
-        return "\n".join(lines).strip()
-
-    def _indent(self, level: int) -> str:
-        return self._indent_str * level
-
-    def _generate_attribute(
-        self, attr: Attribute, level: int, include_value: bool = True
-    ) -> str:
-        indent = self._indent(level)
-        # In .pyi files, we prefer Type Hints:  name: type
-        # If value is present (constant), we might output: name: type = value
-        # But PEP 484 recommends name: type = ... for constants or just name: type
-        # For class attributes, we purposefully exclude values to avoid scoping issues.
-
-        annotation = attr.annotation if attr.annotation else "Any"
-        line = f"{indent}{attr.name}: {annotation}"
-
-        if include_value and attr.value:
-            line += f" = {attr.value}"
-
-        return line
-
-    def _generate_args(self, args: List[Argument]) -> str:
-        # This is tricky because of POSITIONAL_ONLY (/) and KEYWORD_ONLY (*) markers.
-        # We need to detect transitions between kinds.
-
-        # Simplified approach for MVP:
-        # Just join them. Correctly handling / and * requires looking ahead/behind or state machine.
-        # Let's do a slightly better job:
-
-        parts = []
-
-        # Check if we have pos-only args
-        has_pos_only = any(a.kind == ArgumentKind.POSITIONAL_ONLY for a in args)
-        pos_only_emitted = False
-
-        kw_only_marker_emitted = False
-
-        for i, arg in enumerate(args):
-            # Handle POSITIONAL_ONLY end marker
-            if has_pos_only and not pos_only_emitted:
-                if arg.kind != ArgumentKind.POSITIONAL_ONLY:
-                    parts.append("/")
-                    pos_only_emitted = True
-
-            # Handle KEYWORD_ONLY start marker
-            if arg.kind == ArgumentKind.KEYWORD_ONLY and not kw_only_marker_emitted:
-                # If the previous arg was VAR_POSITIONAL (*args), we don't need a bare *
-                # Otherwise, we do.
-                prev_was_var_pos = (
-                    i > 0 and args[i - 1].kind == ArgumentKind.VAR_POSITIONAL
-                )
-                if not prev_was_var_pos:
-                    parts.append("*")
-                kw_only_marker_emitted = True
-
-            # Format the argument itself
-            arg_str = arg.name
-            if arg.kind == ArgumentKind.VAR_POSITIONAL:
-                arg_str = f"*{arg.name}"
-            elif arg.kind == ArgumentKind.VAR_KEYWORD:
-                arg_str = f"**{arg.name}"
-
-            if arg.annotation:
-                arg_str += f": {arg.annotation}"
-
-            if arg.default:
-                arg_str += f" = {arg.default}"
-
-            parts.append(arg_str)
-
-        # Edge case: If all args were pos-only, we need to append / at the end
-        if has_pos_only and not pos_only_emitted:
-            parts.append("/")
-
-        return ", ".join(parts)
-
-    def _generate_function(self, func: FunctionDef, level: int) -> str:
-        indent = self._indent(level)
-        lines = []
-
-        # Decorators
-        for dec in func.decorators:
-            # dec is raw code like "staticmethod", we need to prepend @
-            # But wait, LibCST might or might not include @?
-            # In our scanner we did: code_for_node(dec.decorator). So it is just the name/call.
-            lines.append(f"{indent}@{dec}")
-
-        # Async
-        prefix = "async " if func.is_async else ""
-
-        # Def
-        args_str = self._generate_args(func.args)
-        ret_str = f" -> {func.return_annotation}" if func.return_annotation else ""
-
-        def_line = f"{indent}{prefix}def {func.name}({args_str}){ret_str}:"
-
-        # Body - Always use ellipsis for skeleton
-        lines.append(f"{def_line} ...")
-
-        return "\n".join(lines)
-
-    def _generate_class(self, cls: ClassDef, level: int) -> str:
-        indent = self._indent(level)
-        lines = []
-
-        # Decorators
-        for dec in cls.decorators:
-            lines.append(f"{indent}@{dec}")
-
-        # Class Def
-        bases_str = ""
-        if cls.bases:
-            bases_str = f"({', '.join(cls.bases)})"
-
-        lines.append(f"{indent}class {cls.name}{bases_str}:")
-
-        # Body
-        has_content = False
-
-        # Docstring (Ignored in skeleton)
-
-        # Attributes
-        for attr in cls.attributes:
-            # We explicitly DISABLE value generation for class attributes.
-            # This prevents bugs where instance attributes initialized from __init__ arguments
-            # (e.g. self.x = x) are generated as class attrs with invalid values (x: Any = x).
-            lines.append(self._generate_attribute(attr, level + 1, include_value=False))
-            has_content = True
-
-        if has_content and cls.methods:
-            lines.append("")  # Spacer between attrs and methods
-
-        # Methods
-        for i, method in enumerate(cls.methods):
-            lines.append(self._generate_function(method, level + 1))
-            if i < len(cls.methods) - 1:
-                lines.append("")  # Spacer between methods
-            has_content = True
-
-        if not has_content:
-            lines.append(f"{self._indent(level + 1)}...")
-
-        return "\n".join(lines)
-~~~~~
-
-#### Acts 2: 迁移服务 (Services) 逻辑
-
-我们将 `StubPackageManager` 移动到新包的 `services.py` 模块中。
+我们在 `stitcher-stubgen` 的主 `__init__.py` 中创建 `StubgenService` 外观类。
 
 ~~~~~act
 write_file
-packages/stitcher-stubgen/src/stitcher/stubgen/services.py
+packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py
 ~~~~~
 ~~~~~python
-from pathlib import Path
-import tomli_w
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-from stitcher.common.transaction import TransactionManager
-
-
-class StubPackageManager:
-    @staticmethod
-    def _get_pep561_logical_path(logical_path: Path) -> Path:
-        if not logical_path.parts:
-            return logical_path
-
-        namespace = logical_path.parts[0]
-        rest_of_path = logical_path.parts[1:]
-        # e.g. my_app/main.py -> my_app-stubs/main.py
-        return Path(f"{namespace}-stubs", *rest_of_path)
-
-    def scaffold(
-        self,
-        package_path: Path,
-        source_project_name: str,
-        package_namespace: str,
-        tm: TransactionManager,
-        root_path: Path,
-    ) -> bool:
-        config_path = package_path / "pyproject.toml"
-        if config_path.exists():
-            return False
-
-        # Note: Directory creation is now handled implicitly by add_write.
-        stub_src_dirname = self._get_pep561_logical_path(
-            Path(package_namespace)
-        ).as_posix()
-
-        # Create pyproject.toml
-        pyproject_content = {
-            "build-system": {
-                "requires": ["hatchling"],
-                "build-backend": "hatchling.build",
-            },
-            "project": {
-                "name": f"{source_project_name}-stubs",
-                "version": "0.1.0",  # Placeholder version
-                "description": f"PEP 561 type stubs for {source_project_name}",
-            },
-            "tool": {
-                "hatch": {
-                    "build": {
-                        "targets": {
-                            "wheel": {
-                                # Essential for packaging .pyi files correctly under the namespace
-                                "packages": [f"src/{stub_src_dirname}"]
-                            }
-                        }
-                    }
-                }
-            },
-        }
-        # Convert dict to TOML string
-        toml_bytes = tomli_w.dumps(pyproject_content).encode("utf-8")
-
-        # Add operation to transaction manager
-        relative_config_path = config_path.relative_to(root_path)
-        tm.add_write(str(relative_config_path), toml_bytes.decode("utf-8"))
-
-        return True
-~~~~~
-
-#### Acts 3: 迁移运行器 (Runner) 逻辑
-
-最后，我们将 `GenerateRunner` 移动到新包的 `runners.py` 模块，并更新其导入路径。
-
-~~~~~act
-write_file
-packages/stitcher-stubgen/src/stitcher/stubgen/runners.py
-~~~~~
-~~~~~python
 from typing import List, Optional
 from pathlib import Path
 
-from stitcher.common import bus
-from needle.pointer import L
-from stitcher.config import StitcherConfig
-from typing import Dict
-
 from stitcher.spec import (
     ModuleDef,
-    StubGeneratorProtocol,
-    LanguageTransformerProtocol,
     DocstringRendererProtocol,
+    LanguageTransformerProtocol,
 )
-from stitcher.app.services import (
-    DocumentManager,
-    ScannerService,
-)
+from stitcher.config import StitcherConfig
 from stitcher.common.transaction import TransactionManager
+from stitcher.app.services import (
+    ScannerService,
+    DocumentManager,
+)
+from .runners import GenerateRunner
 from .services import StubPackageManager
+from .generator import PythonStubGenerator
 
 
-class GenerateRunner:
+class StubgenService:
     def __init__(
         self,
         root_path: Path,
         scanner: ScannerService,
         doc_manager: DocumentManager,
-        stub_pkg_manager: StubPackageManager,
-        generator: StubGeneratorProtocol,
         transformer: LanguageTransformerProtocol,
     ):
-        self.root_path = root_path
-        self.scanner = scanner
-        self.doc_manager = doc_manager
-        self.stub_pkg_manager = stub_pkg_manager
-        self.generator = generator
-        self.transformer = transformer
-        self.renderer: Optional[DocstringRendererProtocol] = None
+        # Internal Composition Root for the stubgen domain
+        self._generator = PythonStubGenerator()
+        self._stub_pkg_manager = StubPackageManager()
+        self._runner = GenerateRunner(
+            root_path,
+            scanner,
+            doc_manager,
+            self._stub_pkg_manager,
+            self._generator,
+            transformer,
+        )
 
     def set_renderer(self, renderer: DocstringRendererProtocol) -> None:
-        self.renderer = renderer
+        self._runner.set_renderer(renderer)
 
-    def _render_docs_for_module(self, module: ModuleDef) -> Dict[str, str]:
-        docs = {}
-        if not self.renderer:
-            return {}
-
-        # Module doc
-        if module.docstring_ir:
-            docs["__doc__"] = self.renderer.render(module.docstring_ir, context=module)
-
-        # Functions
-        for func in module.functions:
-            if func.docstring_ir:
-                docs[func.name] = self.renderer.render(func.docstring_ir, context=func)
-
-        # Classes
-        for cls in module.classes:
-            if cls.docstring_ir:
-                docs[cls.name] = self.renderer.render(cls.docstring_ir, context=cls)
-            # Methods
-            for method in cls.methods:
-                if method.docstring_ir:
-                    fqn = f"{cls.name}.{method.name}"
-                    docs[fqn] = self.renderer.render(
-                        method.docstring_ir, context=method
-                    )
-
-        return docs
-
-    def _scaffold_stub_package(
-        self,
-        config: StitcherConfig,
-        stub_base_name: Optional[str],
-        tm: TransactionManager,
-    ):
-        if not config.stub_package or not stub_base_name:
-            return
-        pkg_path = self.root_path / config.stub_package
-        package_namespace: str = ""
-        for path_str in config.scan_paths:
-            path_parts = Path(path_str).parts
-            if path_parts and path_parts[-1] != "src":
-                # This handles cases like 'src/my_app' where 'my_app' is the namespace.
-                package_namespace = path_parts[-1]
-                break
-
-        if not package_namespace:
-            # Fallback for when all scan_paths end in 'src'.
-            # Derives namespace from the target name (e.g., 'stitcher-cli' -> 'stitcher').
-            package_namespace = stub_base_name.split("-")[0]
-        stub_pkg_name = f"{stub_base_name}-stubs"
-        bus.info(L.generate.stub_pkg.scaffold, name=stub_pkg_name)
-        created = self.stub_pkg_manager.scaffold(
-            pkg_path, stub_base_name, package_namespace, tm, self.root_path
-        )
-        if created:
-            bus.success(L.generate.stub_pkg.success, name=stub_pkg_name)
-        else:
-            bus.info(L.generate.stub_pkg.exists, name=stub_pkg_name)
-
-    def run_batch(
+    def generate(
         self,
         modules: List[ModuleDef],
         config: StitcherConfig,
         tm: TransactionManager,
         project_name: Optional[str] = None,
     ) -> List[Path]:
-        generated_files: List[Path] = []
-        created_py_typed: set[Path] = set()
+        return self._runner.run_batch(modules, config, tm, project_name)
 
-        if config.stub_package:
-            stub_base_name = config.name if config.name != "default" else project_name
-            self._scaffold_stub_package(config, stub_base_name, tm)
 
-        for module in modules:
-            self.doc_manager.apply_docs_to_module(module)
+__all__ = ["StubgenService"]
+~~~~~
 
-            # Phase 1: Generate Skeleton
-            skeleton_code = self.generator.generate(module)
+#### Acts 2: 更新 `stitcher-application` 的依赖
 
-            # Phase 2: Render Docs
-            docs_map = self._render_docs_for_module(module)
+在 `stitcher-application` 的 `pyproject.toml` 中添加对 `stitcher-stubgen` 的依赖。
 
-            # Phase 3: Inject Docs
-            final_content = self.transformer.inject(skeleton_code, docs_map)
+~~~~~act
+patch_file
+packages/stitcher-application/pyproject.toml
+~~~~~
+~~~~~toml
+[project]
+name = "stitcher-application"
+version = "0.1.0"
+description = "Orchestration layer for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "stitcher-spec",
+    "stitcher-common",
+    "stitcher-config",
+    "stitcher-python-adapter",
+    "stitcher-refactor",
+    "pyneedle",
+]
+~~~~~
+~~~~~toml
+[project]
+name = "stitcher-application"
+version = "0.1.0"
+description = "Orchestration layer for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "stitcher-spec",
+    "stitcher-common",
+    "stitcher-config",
+    "stitcher-python-adapter",
+    "stitcher-stubgen",
+    "stitcher-refactor",
+    "pyneedle",
+]
+~~~~~
 
-            if config.stub_package:
-                logical_path = self.scanner.derive_logical_path(module.file_path)
-                stub_logical_path = self.stub_pkg_manager._get_pep561_logical_path(
-                    logical_path
-                )
-                output_path = (
-                    self.root_path
-                    / config.stub_package
-                    / "src"
-                    / stub_logical_path.with_suffix(".pyi")
-                )
-                if stub_logical_path.parts:
-                    top_level_pkg_dir = (
-                        self.root_path
-                        / config.stub_package
-                        / "src"
-                        / stub_logical_path.parts[0]
-                    )
-                    if top_level_pkg_dir not in created_py_typed:
-                        py_typed_path = top_level_pkg_dir / "py.typed"
-                        tm.add_write(str(py_typed_path.relative_to(self.root_path)), "")
-                        created_py_typed.add(top_level_pkg_dir)
-            elif config.stub_path:
-                logical_path = self.scanner.derive_logical_path(module.file_path)
-                output_path = (
-                    self.root_path / config.stub_path / logical_path.with_suffix(".pyi")
-                )
-            else:
-                output_path = self.root_path / Path(module.file_path).with_suffix(
-                    ".pyi"
-                )
+~~~~~act
+patch_file
+packages/stitcher-application/pyproject.toml
+~~~~~
+~~~~~toml
+stitcher-python-adapter = { workspace = true }
+stitcher-refactor = { workspace = true }
+pyneedle = { workspace = true }
+~~~~~
+~~~~~toml
+stitcher-python-adapter = { workspace = true }
+stitcher-stubgen = { workspace = true }
+stitcher-refactor = { workspace = true }
+pyneedle = { workspace = true }
+~~~~~
 
-            relative_path = output_path.relative_to(self.root_path)
+#### Acts 3: 重构 `StitcherApp` 以使用新服务
 
-            if config.stub_package:
-                src_root = self.root_path / config.stub_package / "src"
-                current = output_path.parent
-                while current != src_root and src_root in current.parents:
-                    init_path = current / "__init__.pyi"
-                    tm.add_write(str(init_path.relative_to(self.root_path)), "")
-                    current = current.parent
+现在，我们修改 `stitcher/app/core.py`，完成实现的切换。
 
-            tm.add_write(str(relative_path), final_content)
-            bus.success(L.generate.file.success, path=relative_path)
-            generated_files.append(output_path)
-        return generated_files
+首先，更新导入语句。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python
+from stitcher.spec import (
+    LanguageParserProtocol,
+    LanguageTransformerProtocol,
+    StubGeneratorProtocol,
+    FingerprintStrategyProtocol,
+    ModuleDef,
+)
+from stitcher.config import load_config_from_path, StitcherConfig
+from stitcher.app.services import (
+    DocumentManager,
+    SignatureManager,
+    StubPackageManager,
+    ScannerService,
+    Differ,
+    DocstringMerger,
+)
+from .protocols import InteractionHandler
+from .runners import (
+    CheckRunner,
+    GenerateRunner,
+    InitRunner,
+~~~~~
+~~~~~python
+from stitcher.spec import (
+    LanguageParserProtocol,
+    LanguageTransformerProtocol,
+    FingerprintStrategyProtocol,
+    ModuleDef,
+)
+from stitcher.stubgen import StubgenService
+from stitcher.config import load_config_from_path, StitcherConfig
+from stitcher.app.services import (
+    DocumentManager,
+    SignatureManager,
+    ScannerService,
+    Differ,
+    DocstringMerger,
+)
+from .protocols import InteractionHandler
+from .runners import (
+    CheckRunner,
+    InitRunner,
+~~~~~
+
+接着，修改 `StitcherApp` 的构造函数。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python
+        self,
+        root_path: Path,
+        parser: LanguageParserProtocol,
+        transformer: LanguageTransformerProtocol,
+        stub_generator: StubGeneratorProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
+        interaction_handler: Optional[InteractionHandler] = None,
+    ):
+        self.root_path = root_path
+        # 1. Core Services
+        self.doc_manager = DocumentManager(root_path)
+        self.sig_manager = SignatureManager(root_path, fingerprint_strategy)
+        self.stub_pkg_manager = StubPackageManager()
+        self.scanner = ScannerService(root_path, parser)
+        self.differ = Differ()
+        self.merger = DocstringMerger()
+
+        # 2. Runners (Command Handlers)
+        self.check_runner = CheckRunner(
+            root_path,
+            parser,
+            self.doc_manager,
+            self.sig_manager,
+            self.differ,
+            interaction_handler,
+        )
+        self.pump_runner = PumpRunner(
+            root_path,
+            self.doc_manager,
+            self.sig_manager,
+            transformer,
+            self.differ,
+            self.merger,
+            interaction_handler,
+        )
+        self.generate_runner = GenerateRunner(
+            root_path,
+            self.scanner,
+            self.doc_manager,
+            self.stub_pkg_manager,
+            stub_generator,
+            transformer,
+        )
+        self.init_runner = InitRunner(root_path, self.doc_manager, self.sig_manager)
+        self.transform_runner = TransformRunner(
+            root_path, self.doc_manager, transformer
+        )
+~~~~~
+~~~~~python
+        self,
+        root_path: Path,
+        parser: LanguageParserProtocol,
+        transformer: LanguageTransformerProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
+        interaction_handler: Optional[InteractionHandler] = None,
+    ):
+        self.root_path = root_path
+        # 1. Core Services
+        self.doc_manager = DocumentManager(root_path)
+        self.sig_manager = SignatureManager(root_path, fingerprint_strategy)
+        self.scanner = ScannerService(root_path, parser)
+        self.differ = Differ()
+        self.merger = DocstringMerger()
+        self.stubgen_service = StubgenService(
+            root_path, self.scanner, self.doc_manager, transformer
+        )
+
+        # 2. Runners (Command Handlers)
+        self.check_runner = CheckRunner(
+            root_path,
+            parser,
+            self.doc_manager,
+            self.sig_manager,
+            self.differ,
+            interaction_handler,
+        )
+        self.pump_runner = PumpRunner(
+            root_path,
+            self.doc_manager,
+            self.sig_manager,
+            transformer,
+            self.differ,
+            self.merger,
+            interaction_handler,
+        )
+        self.init_runner = InitRunner(root_path, self.doc_manager, self.sig_manager)
+        self.transform_runner = TransformRunner(
+            root_path, self.doc_manager, transformer
+        )
+~~~~~
+
+修改渲染器设置的调用点。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python
+        self.doc_manager.set_strategy(parser, serializer)
+
+        # Inject renderer into generate runner
+        self.generate_runner.set_renderer(renderer)
+
+        # Handle Plugins
+        plugin_modules = self.scanner.process_plugins(config.plugins)
+~~~~~
+~~~~~python
+        self.doc_manager.set_strategy(parser, serializer)
+
+        # Inject renderer into generate runner
+        self.stubgen_service.set_renderer(renderer)
+
+        # Handle Plugins
+        plugin_modules = self.scanner.process_plugins(config.plugins)
+~~~~~
+
+最后，修改 `run_from_config` 方法以使用新服务。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python
+            if not modules:
+                continue
+            found_any = True
+
+            paths = self.generate_runner.run_batch(modules, config, tm, project_name)
+            all_generated.extend(paths)
+
+        if not found_any and len(configs) == 1 and not tm.dry_run:
+~~~~~
+~~~~~python
+            if not modules:
+                continue
+            found_any = True
+
+            paths = self.stubgen_service.generate(modules, config, tm, project_name)
+            all_generated.extend(paths)
+
+        if not found_any and len(configs) == 1 and not tm.dry_run:
+~~~~~
+
+#### Acts 4: 清理 `application` 包内的导出
+
+我们从 `runners` 和 `services` 的 `__init__.py` 中移除对已迁移类的导出。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/__init__.py
+~~~~~
+~~~~~python
+from .check import CheckRunner
+from .generate import GenerateRunner
+from .init import InitRunner
+from .pump import PumpRunner
+from .transform import TransformRunner
+from .coverage import CoverageRunner
+from .refactor import RefactorRunner
+
+__all__ = [
+    "CheckRunner",
+    "GenerateRunner",
+    "InitRunner",
+    "PumpRunner",
+    "TransformRunner",
+    "CoverageRunner",
+    "RefactorRunner",
+]
+~~~~~
+~~~~~python
+from .check import CheckRunner
+from .init import InitRunner
+from .pump import PumpRunner
+from .transform import TransformRunner
+from .coverage import CoverageRunner
+from .refactor import RefactorRunner
+
+__all__ = [
+    "CheckRunner",
+    "InitRunner",
+    "PumpRunner",
+    "TransformRunner",
+    "CoverageRunner",
+    "RefactorRunner",
+]
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/services/__init__.py
+~~~~~
+~~~~~python
+from .doc_manager import DocumentManager
+from .signature_manager import SignatureManager
+from .stub_package_manager import StubPackageManager
+from .scanner import ScannerService
+from .differ import Differ
+from .merger import DocstringMerger
+
+__all__ = [
+    "DocumentManager",
+    "SignatureManager",
+    "StubPackageManager",
+    "ScannerService",
+    "Differ",
+    "DocstringMerger",
+]
+~~~~~
+~~~~~python
+from .doc_manager import DocumentManager
+from .signature_manager import SignatureManager
+from .scanner import ScannerService
+from .differ import Differ
+from .merger import DocstringMerger
+
+__all__ = [
+    "DocumentManager",
+    "SignatureManager",
+    "ScannerService",
+    "Differ",
+    "DocstringMerger",
+]
 ~~~~~
 
 ### 下一步建议
 
-我们已成功将所有与存根生成相关的逻辑代码复制到了新的 `stitcher-stubgen` 包中。目前，代码存在于两个地方。
+我们已经成功地将 `StitcherApp` 的实现切换到了新的 `StubgenService`。`stitcher-application` 包中的 `GenerateRunner` 和 `StubPackageManager` 以及 `stitcher-python-adapter` 中的 `PythonStubGenerator` 现在已经成为无人使用的“死代码”。
 
-下一步是执行**第 3 步和第 4 步：定义新服务接口并重构消费方**。我将生成一个计划来：
-1.  在 `stitcher-stubgen` 中创建一个高级别的 `StubgenService` 外观类。
-2.  修改 `stitcher-application` 中的 `StitcherApp`，使其不再使用本地的 `GenerateRunner`，而是调用新的 `StubgenService`。
-3.  在完成切换后，最后一步将是删除 `stitcher-application` 和 `stitcher-python-adapter` 中被废弃的旧文件。
+下一步，也是这个重构任务的最后一步，就是**清理这些冗余文件**。我将生成一个计划，安全地删除这些文件，以完成我们的架构重构，使代码库恢复整洁。
