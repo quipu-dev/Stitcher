@@ -21,6 +21,7 @@ members = [
     "stitcher-python-adapter",
     "stitcher-refactor",
     "stitcher-spec",
+    "stitcher-stubgen",
     "stitcher-test-utils",
 ]
 
@@ -760,6 +761,7 @@ dev = [
     { name = "stitcher-application" },
     { name = "stitcher-cli" },
     { name = "stitcher-refactor" },
+    { name = "stitcher-stubgen" },
     { name = "stitcher-test-utils" },
 ]
 
@@ -777,6 +779,7 @@ requires-dist = [
     { name = "stitcher-application", marker = "extra == 'dev'", editable = "packages/stitcher-application" },
     { name = "stitcher-cli", marker = "extra == 'dev'", editable = "packages/stitcher-cli" },
     { name = "stitcher-refactor", marker = "extra == 'dev'", editable = "packages/stitcher-refactor" },
+    { name = "stitcher-stubgen", marker = "extra == 'dev'", editable = "packages/stitcher-stubgen" },
     { name = "stitcher-test-utils", marker = "extra == 'dev'", editable = "packages/stitcher-test-utils" },
 ]
 provides-extras = ["dev"]
@@ -825,6 +828,23 @@ requires-dist = [
 name = "stitcher-spec"
 version = "0.1.0"
 source = { editable = "packages/stitcher-spec" }
+
+[[package]]
+name = "stitcher-stubgen"
+version = "0.1.0"
+source = { editable = "packages/stitcher-stubgen" }
+dependencies = [
+    { name = "stitcher-common" },
+    { name = "stitcher-config" },
+    { name = "stitcher-spec" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-config", editable = "packages/stitcher-config" },
+    { name = "stitcher-spec", editable = "packages/stitcher-spec" },
+]
 
 [[package]]
 name = "stitcher-test-utils"
