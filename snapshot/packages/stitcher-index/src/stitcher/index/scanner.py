@@ -151,7 +151,13 @@ class WorkspaceScanner:
                 abs_path = Path(root) / file
                 rel_path = abs_path.relative_to(self.root_path).as_posix()
                 paths.add(rel_path)
-        return paths
+        
+        # Global Filter: Exclude .stitcher directory
+        final_paths = {
+            p for p in paths 
+            if not p.startswith(".stitcher/") and p != ".stitcher"
+        }
+        return final_paths
 
     def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes):
         """Phase 4: Parse content using adapters."""

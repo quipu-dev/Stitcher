@@ -5,7 +5,7 @@ from stitcher.index.store import IndexStore
 
 @pytest.fixture
 def db_path(tmp_path):
-    return tmp_path / "index.db"
+    return tmp_path / ".stitcher" / "index" / "index.db"
 
 
 @pytest.fixture
