@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M test_scanner_aliases.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768053682.4197698, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: Relocate GriffePythonParser to adapter package", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768053778.2511296, "duration_ms": 0}}
