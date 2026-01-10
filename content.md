@@ -1,103 +1,79 @@
-## [WIP] fix: Resolve ReferenceRecord instantiation error and refactor terminology
+好的，我们已经成功搭建了 `stitcher-index` 的骨架并实现了核心数据库层。现在我将生成一个 `[COMMIT]` 计划，将这些成果作为一个完整、稳固的逻辑单元提交到版本库中。
 
-### 错误分析
-
-测试 `packages/stitcher-index/tests/unit/test_store.py::test_analysis_update` 失败，错误信息为 `TypeError: ReferenceRecord.__init__() got an unexpected keyword argument 'id'`。
-
-这源于 `store.py` 中的 `get_references_by_file` 方法：
-```python
-            rows = conn.execute(
-                "SELECT * FROM 'references' WHERE source_file_id = ?", (file_id,)
-            ).fetchall()
-            return [ReferenceRecord(**dict(row)) for row in rows]
-```
-数据库表 `references` 有一个 `id` 主键列（自增整数），但 `ReferenceRecord` dataclass 定义中没有包含 `id` 字段。当 `**dict(row)` 将 `id` 传递给构造函数时，导致了 TypeError。
-
-**解决方案**:
-我们需要更新 `ReferenceRecord` 定义，使其包含可选的 `id` 字段，或者在转换时排除 `id`。鉴于数据库记录通常需要 ID 进行后续操作（如删除特定引用），在 dataclass 中包含 `id` 是更优的做法。
+## [COMMIT] feat: Initialize stitcher-index package with core database layer
 
 ### 用户需求
 
-1.  修复 `test_store.py` 中的 `ReferenceRecord` 初始化错误。
-2.  探讨并决定是继续使用 "id" 还是改用 "suri" (Stitcher URI) 来指代符号的全局标识符。
+初始化 `stitcher-index` 包，并实现基于 SQLite WAL 模式的持久化层，作为 Stitcher 2.0 语义索引的基石。
 
 ### 评论
 
-关于术语选择 ("id" vs "suri")：
-
-*   **SURI (Stitcher Uniform Resource Identifier)** 是我们定义的**格式标准**（如 `py://...`）。
-*   **ID (Identifier)** 是它在数据库表中的**角色**（主键）。
-
-在数据库 Schema (`schema.sql`) 中使用 `id` 作为列名是符合 SQL 惯例的（Primary Key 通常叫 `id`）。但在 Python 代码 (`types.py`, `store.py`) 中，为了避免混淆（特别是与整数型的 `rowid` 混淆），明确语义是有价值的。
-
-然而，如果我们看 `SymbolRecord`，它的主键就是那个 URI 字符串。如果把它改名叫 `suri`，虽然语义明确，但与数据库列名 `id` 不一致，需要 ORM 层做映射。
-
-**决策建议**:
-保持数据库列名为 `id`（符合 SQL 范式）。但在文档和变量命名中，我们可以更明确。
-对于 Python dataclass：
-*   `SymbolRecord.id`: 这就是 SURI。保持 `id` 简单直接，因为它确实是对象的身份。
-*   `ReferenceRecord.target_id`: 指向目标的 SURI。
-*   `ReferenceRecord.id`: 引用的数据库行 ID (Integer)。
-
-**关于你的问题 "我们是将它用 “id” 键表示更好，还使用 surl 表示更好？"**：
-我认为在**代码变量名**和**文档**中强调 `suri` 是好的（例如 `target_suri`），但在**数据结构字段名**（Schema 和 Dataclass）中，`id` 更通用且不易过时。如果我们未来改变了 ID 的格式（不再是 URI），叫 `suri` 就尴尬了。
-
-因此，我建议：**Schema 和 Dataclass 字段名保持 `id`，但在注释和逻辑变量名中使用 `suri` 来强调其格式约束。**
-
-本次修复将集中在解决 Crash 问题上。
+这是 Stitcher 从“即时工具”向“知识平台”演进的第一个实体步骤。通过引入 URI 风格的标识符规范和支持别名（Alias）的图谱模型，我们从根本上解决了 Monorepo 多语言环境下的实体识别难题。
 
 ### 目标
 
-1.  修改 `packages/stitcher-index/src/stitcher/index/types.py`，为 `ReferenceRecord` 添加可选的 `id: Optional[int]` 字段。
-2.  验证测试通过。
+1.  将 `stitcher-index` 包的所有源文件、配置和测试用例添加到 Git 暂存区。
+2.  更新根目录及相关包的 `pyproject.toml` 以完成依赖集成。
+3.  创建一个详细的 Git Commit 记录此次架构演进。
 
 ### 基本原理
 
-这是标准的 Bug 修复流程。我们不仅要修复代码，还要确保数据模型与数据库 Schema 的对齐。
+此次提交包含了物理结构、配置定义、数据模型（Schema v1.0）以及经过验证的存储逻辑（IndexStore）。这为后续的扫描流水线（Scanner）和查询服务（Query Service）提供了确定的、类型安全的物理边界。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/engine #concept/state #scope/core #ai/refine #task/domain/storage #task/object/stitcher-index #task/action/bug-fix #task/state/continue
+#intent/architect #intent/build #flow/done #priority/high #comp/engine #comp/build #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/stitcher-index #task/action/integration #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `ReferenceRecord` 定义
+#### Acts 1: 提交变更
 
-我们在 `types.py` 中为 `ReferenceRecord` 添加 `id` 字段。
+我们将所有相关变更打包提交。
 
 ~~~~~act
-patch_file
-packages/stitcher-index/src/stitcher/index/types.py
+git_add
+packages/stitcher-index
+packages/stitcher-application/pyproject.toml
+packages/stitcher-refactor/pyproject.toml
+pyproject.toml
 ~~~~~
-~~~~~python
-@dataclass
-class ReferenceRecord:
-    target_id: str
-    kind: str
-    location_start: int
-    location_end: int
-    source_file_id: Optional[int] = None  # Optional when inserting
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python
-@dataclass
-class ReferenceRecord:
-    target_id: str
-    kind: str
-    location_start: int
-    location_end: int
-    source_file_id: Optional[int] = None  # Optional when inserting
-    id: Optional[int] = None  # Database Row ID
+~~~~~text
+feat: Initialize stitcher-index package with core database layer
+
+This commit marks the beginning of the Stitcher 2.0 architecture (The Semantic Hub).
+It introduces the 'stitcher-index' package, designed to maintain a persistent
+knowledge graph of project assets using a high-performance SQLite backend.
+
+Key features implemented:
+- **SURI (Stitcher URI) Specification**: A globally unique, human-readable
+  identifier scheme (`py://<path>#<fragment>`) to handle symbols across 
+  multi-language monorepos.
+- **Database Schema v1.0**: A normalized relational schema supporting file 
+  tracking (SHA256 based), symbol definitions, aliases, and directional 
+  references (usages).
+- **IndexStore & DatabaseManager**: Thread-safe (WAL mode) persistence layer 
+  with atomic 'update_analysis' capabilities and transaction-aware CRUD ops.
+- **Monorepo Integration**: Fully integrated into the project workspace (uv, 
+  pytest, pyright) and added as a dependency to core application packages.
+
+This foundation enables incremental scanning and sub-second global queries 
+in future iterations.
 ~~~~~
 
 ### 下一步建议
 
-修复此 Bug 后，数据库层的基础设施就算稳固了。接下来的逻辑步骤是构建 **任务 1.3: 增量扫描流水线**。
+随着数据库层的稳定，下一步我们将进入 **任务 1.3: 增量扫描流水线** 的开发。
 
-该流水线是 `stitcher-index` 的心脏，它将负责：
-1.  **Discovery**: 快速找出所有文件。
-2.  **Stat Check**: 比较 `mtime`。
-3.  **Hash Check**: 比较内容哈希。
+我们将构建 `WorkspaceScanner`，其核心目标是实现“由轻到重”的四阶段过滤逻辑：
+1.  **Git Discovery**: 瞬时识别待处理文件。
+2.  **Stat Filtering**: 利用 `mtime` 排除 90% 以上未变动文件。
+3.  **Hash Verification**: 确认内容是否真实变化。
+4.  **Language Analysis**: 仅对确认脏（Dirty）的文件调用 AST 解析器。
 
-我建议创建一个新的模块 `packages/stitcher-index/src/stitcher/index/scanner.py` 来承载此逻辑。如果你准备好了，我们可以开始。
+如果你准备好开始扫描器的设计，请告诉我。
