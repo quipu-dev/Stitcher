@@ -38,6 +38,8 @@ class UsageScanVisitor(cst.CSTVisitor):
     ):
         self.file_path = file_path
         self.local_symbols = local_symbols
+        # active_symbols starts with local definitions but grows as we encounter imports
+        self.active_symbols = local_symbols.copy()
         self.registry = registry
         self.current_module_fqn = current_module_fqn
         self.is_init_file = is_init_file
@@ -71,7 +73,7 @@ class UsageScanVisitor(cst.CSTVisitor):
                 self.registry.register(prefix_fqn, loc)
 
     def visit_Name(self, node: cst.Name):
-        target_fqn = self.local_symbols.get(node.value)
+        target_fqn = self.active_symbols.get(node.value)
         if target_fqn:
             self._register_node(node, target_fqn, ReferenceType.SYMBOL)
 
@@ -94,7 +96,20 @@ class UsageScanVisitor(cst.CSTVisitor):
                 self._register_node(
                     alias.name, absolute_module, ReferenceType.IMPORT_PATH
                 )
-        return True
+
+                # Update active_symbols
+                # Case 1: import a.b.c as d -> local 'd' maps to 'a.b.c'
+                if alias.asname:
+                    if isinstance(alias.asname.name, cst.Name):
+                        local_name = alias.asname.name.value
+                        self.active_symbols[local_name] = absolute_module
+                # Case 2: import a.b.c -> local 'a' maps to 'a'
+                else:
+                    top_level = absolute_module.split(".")[0]
+                    self.active_symbols[top_level] = top_level
+
+        # Prevent visiting children to avoid double-counting in visit_Name
+        return False
 
     def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:
         absolute_module = None
@@ -123,7 +138,17 @@ class UsageScanVisitor(cst.CSTVisitor):
                     if imported_name:
                         full_fqn = f"{absolute_module}.{imported_name}"
                         self._register_node(name_node, full_fqn, ReferenceType.SYMBOL)
-        return True
+
+                        # Update active_symbols
+                        # from x import y as z -> local 'z' maps to 'x.y'
+                        local_name = imported_name
+                        if alias.asname and isinstance(alias.asname.name, cst.Name):
+                            local_name = alias.asname.name.value
+
+                        self.active_symbols[local_name] = full_fqn
+
+        # Prevent visiting children to avoid double-counting in visit_Name
+        return False
 
     def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:
         full_name = helpers.get_full_name_for_node(node)
@@ -135,7 +160,7 @@ class UsageScanVisitor(cst.CSTVisitor):
             return True
 
         root_name = parts[0]
-        root_fqn = self.local_symbols.get(root_name)
+        root_fqn = self.active_symbols.get(root_name)
 
         if root_fqn:
             suffix = ".".join(parts[1:])

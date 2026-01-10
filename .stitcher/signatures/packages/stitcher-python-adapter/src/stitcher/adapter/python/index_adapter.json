@@ -5,12 +5,17 @@
     "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
   },
   "PythonAdapter._extract_references": {
-    "baseline_code_signature_text": "def _extract_references(self, rel_path: str, module: ModuleDef) -> List[ReferenceRecord]:",
-    "baseline_code_structure_hash": "984ee4401eae22c5bc6578706df047c820370013e54abf25c069954e459abb55"
+    "baseline_code_signature_text": "def _extract_references(self, rel_path: str, module: ModuleDef, content: str, file_path: Path) -> List[ReferenceRecord]:",
+    "baseline_code_structure_hash": "0b4ed72357142db4054087983c394b0ad938ebb838bc63dc2679de598f7eff76"
   },
   "PythonAdapter._extract_symbols": {
     "baseline_code_signature_text": "def _extract_symbols(self, rel_path: str, module: ModuleDef) -> List[SymbolRecord]:",
     "baseline_code_structure_hash": "b4280ff9bc1e7d6ce28e75f5cfa0af25c332344151284aeab55a59a1510aff58"
+  },
+  "PythonAdapter._guess_suri": {
+    "baseline_code_signature_text": "def _guess_suri(self, fqn: str, current_module_fqn: str, current_rel_path: str) -> str:",
+    "baseline_code_structure_hash": "05bedff15bcd92ccc5d8bced77eaaa0d3a7ccbfac3c2e93929f38749678140da",
+    "baseline_yaml_content_hash": "73205f1faeabbe824ff21983d368ae1554dd0e3f8bd00d21b0aa43be488731bb"
   },
   "PythonAdapter.hasher": {},
   "PythonAdapter.parse": {

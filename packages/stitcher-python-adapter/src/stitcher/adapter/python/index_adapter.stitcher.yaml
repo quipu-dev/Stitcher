@@ -1,0 +1,2 @@
+"PythonAdapter._guess_suri": |-
+  Heuristic to convert a Logical FQN (e.g. 'pkg.mod.func') to a SURI.

@@ -28,6 +28,7 @@
     "baseline_code_structure_hash": "abf738b190d9ece13c1b60031acf1cf961a182f223400f30ef8767d05aa9e362",
     "baseline_yaml_content_hash": "f306310008e15395c4cac50dedd8777fa6b6696bc20acd9c3befbf22499e39cf"
   },
+  "UsageScanVisitor.active_symbols": {},
   "UsageScanVisitor.current_module_fqn": {},
   "UsageScanVisitor.current_package": {},
   "UsageScanVisitor.file_path": {},
