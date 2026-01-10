@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 修复解析器鲁棒性测试的脆弱性", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768036396.760348, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix(application): 确保解析故障会导致命令最终失败", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768036458.6916456, "duration_ms": 0}}

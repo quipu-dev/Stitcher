@@ -1,96 +1,59 @@
-## [WIP] test: 修复解析器鲁棒性测试的脆弱性
+好的，我们已经完成了 `ScannerService` 的鲁棒性增强，并重构了相关的集成测试以确保其稳定性。现在我们将这些变更作为一个完整的逻辑单元进行提交。
 
-### 错误分析
-测试 `test_check_fails_gracefully_on_local_import` 旨在验证当解析器崩溃时应用是否能优雅失败。然而，它依赖于一段特定的“错误”代码（包含局部导入）在 Griffe 解析器中触发崩溃。由于 Griffe 的行为可能随版本变化或在特定环境下表现不同（不再崩溃），导致测试无法触发预期的异常，从而使 `ScannerService` 未能捕获错误，`had_errors` 标志未被设置，最终 `run_check` 返回了 `True`（成功），导致断言失败。
-
-我们不应依赖第三方库的具体 Bug 来进行鲁棒性测试。
+## [COMMIT] fix(application): 确保解析故障会导致命令最终失败
 
 ### 用户需求
-使集成测试 `test_check_fails_gracefully_on_local_import` 具有确定性，无论底层解析器是否修复了该 Bug，测试都应能验证 `StitcherApp` 正确处理了解析异常。
+修复扫描器（ScannerService）捕获异常后不通知上层应用的问题，确保在 Monorepo 检查中，任何文件的解析失败都会使 `check` 或 `pump` 命令返回错误状态。
 
 ### 评论
-通过 Mock `parser.parse` 方法来强制抛出异常，我们可以将测试的关注点从“Griffe 是否有 Bug”转移到“Stitcher 是否能处理异常”这一核心意图上。这符合 D3-P1 测试原则。
+通过在扫描阶段引入显式的错误追踪（`had_errors` 标志），我们增强了系统在面对复杂或损坏代码时的确定性，防止了由于局部解析故障而误报“成功”的风险。同时，重构后的测试用例不再依赖特定第三方库的 Bug，极大地提升了测试套件的可维护性。
 
 ### 目标
-1.  修改 `packages/stitcher-application/tests/integration/test_parser_robustness.py`。
-2.  使用 `monkeypatch` 拦截 `app.scanner.parser.parse`，对特定文件强制抛出 `ValueError`。
-3.  验证 `run_check` 返回 `False` 且错误被记录到 `SpyBus`。
+1.  提交 `ScannerService` 的错误追踪逻辑。
+2.  提交 `StitcherApp` 对扫描错误的全局响应逻辑。
+3.  提交重构后的鲁棒性集成测试。
 
 ### 基本原理
-确定性测试优于依赖外部行为的测试。Mock 是模拟故障场景的标准手段。
+根据 HFEA 公理，架构应当是不可腐蚀的。解析器的不确定性不能通过吞掉异常来掩盖。通过将失败状态显式传递到命令报告层，我们维护了系统的本体论正确性。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/test-robustness #task/action/refactor #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/application #concept/parser #scope/core #ai/instruct #task/domain/application #task/object/scanner-robustness #task/action/commit #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 重构测试用例以使用 Mock 注入故障
+#### Acts 1: 提交变更
+
+我们将所有涉及扫描器鲁棒性修复及其验证测试的文件添加到暂存区。
 
 ~~~~~act
-write_file
+git_add
+packages/stitcher-application/src/stitcher/app/services/scanner.py
+packages/stitcher-application/src/stitcher/app/core.py
 packages/stitcher-application/tests/integration/test_parser_robustness.py
 ~~~~~
-~~~~~python
-from stitcher.test_utils import WorkspaceFactory, create_test_app, SpyBus
-from needle.pointer import L
 
+~~~~~act
+git_commit
+~~~~~
+~~~~~text
+fix(application): ensure parsing failures lead to command failure
 
-def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
-    """
-    Verifies that when the parser raises an exception during scanning,
-    the application handles it gracefully:
-    1. Catches the exception.
-    2. Logs a generic error.
-    3. Ensures the overall command fails (returns False).
-    """
-    # GIVEN a project with a source file
-    ws = WorkspaceFactory(tmp_path)
-    ws.with_config({"scan_paths": ["src/pkg"]})
-    ws.with_source("src/pkg/__init__.py", "")
-    ws.with_source(
-        "src/pkg/core.py",
-        """
-        def foo():
-            pass
-        """,
-    )
-    ws.build()
+This commit introduces a robust error-tracking mechanism in ScannerService
+to ensure that if any file fails to parse (e.g., due to parser crashes or
+syntax errors), the high-level application commands like 'check' and 'pump'
+correctly report failure instead of returning success.
 
-    # Create the app
-    app = create_test_app(tmp_path)
-    
-    # SETUP: Mock the parser to simulate a crash on specific file
-    # We access the parser instance directly attached to the scanner
-    real_parse = app.scanner.parser.parse
-    
-    def failing_parse(source_code, file_path=""):
-        if "core.py" in str(file_path):
-            raise ValueError("Simulated parser crash for testing")
-        return real_parse(source_code, file_path)
-        
-    monkeypatch.setattr(app.scanner.parser, "parse", failing_parse)
-
-    # WHEN we run the check command
-    spy_bus = SpyBus()
-    with spy_bus.patch(monkeypatch):
-        success = app.run_check()
-
-    # THEN the command should fail
-    assert not success, "Command should return False when parser fails"
-    
-    # AND report a generic error
-    spy_bus.assert_id_called(L.error.generic, level="error")
-
-    messages = spy_bus.get_messages()
-    error_msg = next(
-        (m for m in messages if m["id"] == str(L.error.generic)),
-        None,
-    )
-    assert error_msg is not None
-    assert "Simulated parser crash" in str(error_msg["params"].get("error", ""))
+Changes:
+- Added 'had_errors' flag to ScannerService to track scan-time failures.
+- Modified StitcherApp.run_check and run_pump to check this flag when
+  determining the final command result.
+- Refactored 'test_check_fails_gracefully_on_local_import' to use a mock
+  parser, making the test deterministic and independent of Griffe's internal
+  aliasing bugs.
 ~~~~~
 
 ### 下一步建议
-运行测试。
+- **CI 验证**: 建议在 CI 环境中运行完整的测试套件，确保没有引入回归。
+- **扩展扫描监控**: 考虑在未来为 `had_errors` 提供更细粒度的错误摘要（例如：哪些文件在哪个阶段失败了），并集成到 `check` 的最终报告中。
