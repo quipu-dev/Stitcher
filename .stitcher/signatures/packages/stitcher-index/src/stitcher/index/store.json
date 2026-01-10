@@ -5,6 +5,16 @@
     "baseline_code_structure_hash": "33fb90ba984edd391f3364b3681ac9de814db2162cdca6e3e8b0b4ee6a29ba5a"
   },
   "IndexStore.db": {},
+  "IndexStore.delete_file": {
+    "baseline_code_signature_text": "def delete_file(self, file_id: int) -> None:",
+    "baseline_code_structure_hash": "f4b6bec5e418adf6f132694eb9e24257b26541c900c4c6c9c2d825e98eaa20e4",
+    "baseline_yaml_content_hash": "c6d49d54bb6554bdda464262744e015ea0e8156cc74f1a718ba85d789ccf567f"
+  },
+  "IndexStore.get_all_files_metadata": {
+    "baseline_code_signature_text": "def get_all_files_metadata(self) -> List[FileRecord]:",
+    "baseline_code_structure_hash": "96540def72ef665f14f1c74fd8114a7747939c4f95c26a4c90da27eb0d46d599",
+    "baseline_yaml_content_hash": "6acaa68336db602aff9c876b2ed4ff5be2878bfc01ae4c86bee930df0d3a0df7"
+  },
   "IndexStore.get_file_by_path": {
     "baseline_code_signature_text": "def get_file_by_path(self, path: str) -> Optional[FileRecord]:",
     "baseline_code_structure_hash": "cb2eb1b1d7156cfcb5123e907c93d329b7b0d6df6895a29e5adc2ebaa4c87820"

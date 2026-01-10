@@ -15,6 +15,7 @@ from .commands.basics import (
     strip_command,
     inject_command,
 )
+from .commands.index import index_build_command
 
 app = typer.Typer(
     name="stitcher",
@@ -52,6 +53,15 @@ refactor_app.command(name="apply", help=nexus(L.cli.command.refactor_apply.help)
     refactor_command
 )
 app.add_typer(refactor_app)
+
+# Index commands
+index_app = typer.Typer(
+    name="index", help=nexus(L.cli.command.index.help), no_args_is_help=True
+)
+index_app.command(name="build", help=nexus(L.cli.command.index_build.help))(
+    index_build_command
+)
+app.add_typer(index_app)
 
 
 if __name__ == "__main__":

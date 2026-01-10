@@ -1,7 +1,6 @@
 import time
-from pathlib import Path
 from stitcher.index.scanner import WorkspaceScanner
-from stitcher.index.types import SymbolRecord, ReferenceRecord
+from stitcher.index.types import SymbolRecord
 from stitcher.test_utils.workspace import WorkspaceFactory
 
 
@@ -33,7 +32,7 @@ def test_scan_git_discovery(tmp_path, store):
     stats = scanner.scan()
 
     assert stats["added"] == 2  # tracked.py + .gitignore
-    
+
     # Check DB
     assert store.get_file_by_path("tracked.py") is not None
     assert store.get_file_by_path(".gitignore") is not None
@@ -47,11 +46,11 @@ def test_scan_stat_optimization(tmp_path, store):
     wf.build()
 
     scanner = WorkspaceScanner(tmp_path, store)
-    
+
     # First scan
     stats1 = scanner.scan()
     assert stats1["added"] == 1
-    
+
     # Second scan (no changes)
     stats2 = scanner.scan()
     assert stats2["skipped"] == 1
@@ -70,14 +69,16 @@ def test_scan_content_update(tmp_path, store):
     # Modify file
     # Ensure mtime changes (sleep needed on some fast filesystems if test runs super fast?)
     # Usually WorkspaceFactory writes fresh file.
-    time.sleep(0.01) 
+    time.sleep(0.01)
     (tmp_path / "main.py").write_text("v2", encoding="utf-8")
 
     stats = scanner.scan()
     assert stats["updated"] == 1
-    
+
     rec = store.get_file_by_path("main.py")
-    assert rec.content_hash is not None # Should verify hash changed if we calculated it manually
+    assert (
+        rec.content_hash is not None
+    )  # Should verify hash changed if we calculated it manually
 
 
 def test_scan_binary_file(tmp_path, store):
@@ -92,13 +93,13 @@ def test_scan_binary_file(tmp_path, store):
     # Register an adapter for .png to ensure it *would* be called if text
     mock_adapter = MockAdapter()
     scanner.register_adapter(".png", mock_adapter)
-    
+
     stats = scanner.scan()
     assert stats["added"] == 1
 
     rec = store.get_file_by_path("image.png")
-    assert rec.indexing_status == 1 # Should be marked indexed (skipped)
-    
+    assert rec.indexing_status == 1  # Should be marked indexed (skipped)
+
     # Symbols should be empty because decode failed
     syms = store.get_symbols_by_file(rec.id)
     assert len(syms) == 0
@@ -117,7 +118,7 @@ def test_scan_adapter_integration(tmp_path, store):
 
     rec = store.get_file_by_path("app.py")
     syms = store.get_symbols_by_file(rec.id)
-    
+
     assert len(syms) == 1
     assert syms[0].name == "Main"
 

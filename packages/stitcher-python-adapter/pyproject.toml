@@ -11,6 +11,7 @@ dependencies = [
     "stitcher-python-analysis",
     "stitcher-spec",
     "stitcher-common",
+    "stitcher-index",
     "libcst",
     "griffe",
 ]
@@ -22,3 +23,4 @@ packages = ["src/stitcher"]
 stitcher-python-analysis = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
+stitcher-index = { workspace = true }

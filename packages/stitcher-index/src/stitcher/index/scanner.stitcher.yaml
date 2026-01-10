@@ -1,0 +1,12 @@
+"WorkspaceScanner._discover_files": |-
+  Phase 1: Discovery.
+  Returns a set of file paths relative to root_path.
+"WorkspaceScanner._process_file_content": |-
+  Phase 4: Parse content using adapters.
+"WorkspaceScanner.register_adapter": |-
+  Register a language adapter for a specific file extension (e.g., '.py').
+"WorkspaceScanner.scan": |-
+  Execute the 4-phase incremental scan pipeline.
+
+  Returns:
+      Dict with stats: {'added': int, 'updated': int, 'deleted': int, 'skipped': int}

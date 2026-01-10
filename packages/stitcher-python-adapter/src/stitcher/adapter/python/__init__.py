@@ -33,4 +33,7 @@ __all__ = [
     "RawSerializer",
     "get_docstring_codec",
     "get_docstring_serializer",
+    "PythonAdapter",
 ]
+
+from .index_adapter import PythonAdapter

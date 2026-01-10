@@ -26,5 +26,11 @@
   "refactor_apply": {
     "help": "Apply automated refactorings from a migration script."
   },
+  "index": {
+    "help": "Manage the semantic index."
+  },
+  "index_build": {
+    "help": "Build or update the semantic index incrementally."
+  },
   "not_implemented": "ℹ️  Command '{command}' is not yet implemented."
 }

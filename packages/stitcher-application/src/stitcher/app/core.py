@@ -26,10 +26,15 @@ from .runners import (
     TransformRunner,
     CoverageRunner,
     RefactorRunner,
+    IndexRunner,
 )
 from stitcher.common.transaction import TransactionManager
 from typing import Callable
 from .types import PumpResult, FileCheckResult, CoverageResult
+from stitcher.index.db import DatabaseManager
+from stitcher.index.store import IndexStore
+from stitcher.index.scanner import WorkspaceScanner
+from stitcher.adapter.python import PythonAdapter
 from stitcher.adapter.python.docstring import (
     get_docstring_codec,
     get_docstring_serializer,
@@ -80,6 +85,19 @@ class StitcherApp:
         )
         self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
         self.refactor_runner = RefactorRunner(root_path)
+
+        # 3. Indexing Subsystem
+        # Hardcoded path for architectural consistency
+        index_db_path = root_path / ".stitcher" / "index" / "index.db"
+        self.db_manager = DatabaseManager(index_db_path)
+        self.index_store = IndexStore(self.db_manager)
+        self.workspace_scanner = WorkspaceScanner(root_path, self.index_store)
+
+        # Register Adapters
+        # TODO: Load adapters dynamically or via config in future
+        self.workspace_scanner.register_adapter(".py", PythonAdapter(root_path))
+
+        self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
 
     def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:
         return load_config_from_path(self.root_path)
@@ -303,3 +321,6 @@ class StitcherApp:
         return self.refactor_runner.run_apply(
             migration_script, config_to_use, dry_run, confirm_callback
         )
+
+    def run_index_build(self) -> bool:
+        return self.index_runner.run_build()

@@ -1,0 +1,11 @@
+"LanguageAdapter": |-
+  Protocol for language-specific parsers.
+"LanguageAdapter.parse": |-
+  Parse file content into Symbols and References.
+
+  Args:
+      file_path: Absolute path to the file (for error reporting).
+      content: The text content of the file.
+
+  Returns:
+      A tuple of (symbols, references).

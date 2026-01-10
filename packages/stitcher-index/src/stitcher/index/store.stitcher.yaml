@@ -1,3 +1,7 @@
+"IndexStore.delete_file": |-
+  Remove a file and its associated symbols/references (via cascade).
+"IndexStore.get_all_files_metadata": |-
+  Fetch all file records to build an in-memory cache for the scanner.
 "IndexStore.sync_file": |-
   Registers a file in the index.
   Returns: (file_id, is_changed)

@@ -2,6 +2,8 @@
   A test utility providing a fluent API to build virtual project workspaces.
 "WorkspaceFactory.build": |-
   Creates all specified files and directories in the workspace.
+"WorkspaceFactory.init_git": |-
+  Initialize a git repository in the workspace root.
 "WorkspaceFactory.with_config": |-
   Adds/Updates [tool.stitcher] section in pyproject.toml.
 "WorkspaceFactory.with_docs": |-

@@ -1,0 +1,20 @@
+{
+  "SURIGenerator": {
+    "baseline_yaml_content_hash": "54072cdaced8907997908e2875dfdd02d75ad547f579fe37484154e18d220789"
+  },
+  "SURIGenerator.for_file": {
+    "baseline_code_signature_text": "def for_file(rel_path: str) -> str:",
+    "baseline_code_structure_hash": "73c7fb6a31e8ebfd5cba5c121e0422c96a9d550bf9375c335b82f6d7d5aff03a",
+    "baseline_yaml_content_hash": "3290e6a00182d765a6777fb34752fcce23d4d15d53210e56823201d0e262a515"
+  },
+  "SURIGenerator.for_symbol": {
+    "baseline_code_signature_text": "def for_symbol(rel_path: str, fragment: str) -> str:",
+    "baseline_code_structure_hash": "8b1adcc0dc2bb9384ee742397480d5a0b9f432e0b3259bb7944ba08f1529a440",
+    "baseline_yaml_content_hash": "9076a942713972d4ad13d8deb8e2f0e8f709fa4bb83f671d4f8aa05294ca965b"
+  },
+  "SURIGenerator.parse": {
+    "baseline_code_signature_text": "def parse(suri: str) -> tuple[str, Optional[str]]:",
+    "baseline_code_structure_hash": "08a71d34a96c0330ca99918970ed5e8f67cb9bea16c715e519beb79eb1e6c021",
+    "baseline_yaml_content_hash": "50df06e73b7f14c0b65c86ffbd6756a43f602b0fa51e3c5d8cb5204f2272f97e"
+  }
+}

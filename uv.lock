@@ -815,6 +815,7 @@ dependencies = [
     { name = "griffe" },
     { name = "libcst" },
     { name = "stitcher-common" },
+    { name = "stitcher-index" },
     { name = "stitcher-python-analysis" },
     { name = "stitcher-spec" },
 ]
@@ -824,6 +825,7 @@ requires-dist = [
     { name = "griffe" },
     { name = "libcst" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-python-analysis", editable = "packages/stitcher-python-analysis" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
 ]

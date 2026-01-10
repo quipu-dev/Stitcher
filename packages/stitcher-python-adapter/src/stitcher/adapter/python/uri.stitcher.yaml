@@ -1,0 +1,12 @@
+"SURIGenerator": |-
+  Generates Stitcher Uniform Resource Identifiers (SURI) for Python entities.
+"SURIGenerator.for_file": |-
+  Generate SURI for a file.
+  Format: py://<rel_path>
+  Example: py://src/main.py
+"SURIGenerator.for_symbol": |-
+  Generate SURI for a symbol within a file.
+  Format: py://<rel_path>#<fragment>
+  Example: py://src/main.py#MyClass.method
+"SURIGenerator.parse": |-
+  Parse a SURI into (rel_path, fragment).

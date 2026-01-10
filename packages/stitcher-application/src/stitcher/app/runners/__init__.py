@@ -4,6 +4,7 @@ from .pump import PumpRunner
 from .transform import TransformRunner
 from .coverage import CoverageRunner
 from .refactor import RefactorRunner
+from .index import IndexRunner
 
 __all__ = [
     "CheckRunner",
@@ -12,4 +13,5 @@ __all__ = [
     "TransformRunner",
     "CoverageRunner",
     "RefactorRunner",
+    "IndexRunner",
 ]

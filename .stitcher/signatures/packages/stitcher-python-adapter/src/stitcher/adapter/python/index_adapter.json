@@ -1,0 +1,22 @@
+{
+  "PythonAdapter": {},
+  "PythonAdapter.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path):",
+    "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+  },
+  "PythonAdapter._extract_references": {
+    "baseline_code_signature_text": "def _extract_references(self, rel_path: str, module: ModuleDef) -> List[ReferenceRecord]:",
+    "baseline_code_structure_hash": "984ee4401eae22c5bc6578706df047c820370013e54abf25c069954e459abb55"
+  },
+  "PythonAdapter._extract_symbols": {
+    "baseline_code_signature_text": "def _extract_symbols(self, rel_path: str, module: ModuleDef) -> List[SymbolRecord]:",
+    "baseline_code_structure_hash": "b4280ff9bc1e7d6ce28e75f5cfa0af25c332344151284aeab55a59a1510aff58"
+  },
+  "PythonAdapter.hasher": {},
+  "PythonAdapter.parse": {
+    "baseline_code_signature_text": "def parse(self, file_path: Path, content: str) -> Tuple[List[SymbolRecord], List[ReferenceRecord]]:",
+    "baseline_code_structure_hash": "7a85bfb042ee6d345c872fa2507503b53e02e0c710dac969b3b14b818c6b13a1"
+  },
+  "PythonAdapter.parser": {},
+  "PythonAdapter.root_path": {}
+}

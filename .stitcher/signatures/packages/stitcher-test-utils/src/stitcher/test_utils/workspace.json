@@ -13,6 +13,11 @@
     "baseline_code_structure_hash": "a9df94cb7b5ea7954574279f0bd49648fc1c4c971164a3f9b4d556c547c8b9a3",
     "baseline_yaml_content_hash": "abcfe71efe81cf48f05e5b67f083d78ee3298cb510ca7ecce0510e83cf910741"
   },
+  "WorkspaceFactory.init_git": {
+    "baseline_code_signature_text": "def init_git(self) -> WorkspaceFactory:",
+    "baseline_code_structure_hash": "9a07cecae1efc96557422706879a134d623dffe647043c6c9188089ad36917e5",
+    "baseline_yaml_content_hash": "a73071c0f96aed03b2f3c1300fbea97f7358c48a1a3f891495e50ee4fff78b38"
+  },
   "WorkspaceFactory.root_path": {},
   "WorkspaceFactory.with_config": {
     "baseline_code_signature_text": "def with_config(self, stitcher_config: Dict[str, Any]) -> WorkspaceFactory:",

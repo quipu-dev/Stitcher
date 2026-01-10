@@ -3,10 +3,10 @@ import hashlib
 import subprocess
 import logging
 from pathlib import Path
-from typing import List, Dict, Set, Optional, Tuple
+from typing import Dict, Set
 
 from .store import IndexStore
-from .types import FileRecord, SymbolRecord, ReferenceRecord
+from .types import FileRecord
 from .protocols import LanguageAdapter
 
 log = logging.getLogger(__name__)
@@ -19,21 +19,14 @@ class WorkspaceScanner:
         self.adapters: Dict[str, LanguageAdapter] = {}
 
     def register_adapter(self, extension: str, adapter: LanguageAdapter):
-        """Register a language adapter for a specific file extension (e.g., '.py')."""
         self.adapters[extension] = adapter
 
     def scan(self) -> Dict[str, int]:
-        """
-        Execute the 4-phase incremental scan pipeline.
-
-        Returns:
-            Dict with stats: {'added': int, 'updated': int, 'deleted': int, 'skipped': int}
-        """
         stats = {"added": 0, "updated": 0, "deleted": 0, "skipped": 0}
 
         # --- Phase 1: Discovery ---
         discovered_paths = self._discover_files()
-        
+
         # Load DB state
         # Map: relative_path_str -> FileRecord
         known_files: Dict[str, FileRecord] = {
@@ -51,7 +44,7 @@ class WorkspaceScanner:
         # --- Phase 2 & 3 & 4: Check and Update ---
         for rel_path_str in discovered_paths:
             abs_path = self.root_path / rel_path_str
-            
+
             try:
                 file_stat = abs_path.stat()
             except FileNotFoundError:
@@ -60,7 +53,7 @@ class WorkspaceScanner:
 
             current_mtime = file_stat.st_mtime
             current_size = file_stat.st_size
-            
+
             record = known_files.get(rel_path_str)
 
             # --- Phase 2: Stat Check ---
@@ -99,7 +92,7 @@ class WorkspaceScanner:
             file_id, is_new_content = self.store.sync_file(
                 rel_path_str, current_hash, current_mtime, current_size
             )
-            
+
             if is_new_content:
                 if record:
                     stats["updated"] += 1
@@ -112,10 +105,6 @@ class WorkspaceScanner:
         return stats
 
     def _discover_files(self) -> Set[str]:
-        """
-        Phase 1: Discovery.
-        Returns a set of file paths relative to root_path.
-        """
         paths = set()
         used_git = False
 
@@ -136,13 +125,13 @@ class WorkspaceScanner:
                 used_git = True
             except subprocess.CalledProcessError:
                 log.warning("Git discovery failed, falling back to OS walk.")
-        
+
         # Strategy 2: Fallback OS Walk
         if not used_git:
             for root, dirs, files in os.walk(self.root_path):
                 # Skip hidden dirs
                 dirs[:] = [d for d in dirs if not d.startswith(".")]
-                
+
                 for file in files:
                     if file.startswith("."):
                         continue
@@ -152,13 +141,11 @@ class WorkspaceScanner:
 
         # Global Filter: Exclude .stitcher directory
         final_paths = {
-            p for p in paths 
-            if not p.startswith(".stitcher/") and p != ".stitcher"
+            p for p in paths if not p.startswith(".stitcher/") and p != ".stitcher"
         }
         return final_paths
 
     def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes):
-        """Phase 4: Parse content using adapters."""
         # 1. Decode
         try:
             # We assume source code is UTF-8.
@@ -171,7 +158,7 @@ class WorkspaceScanner:
         # 2. Find Adapter
         ext = abs_path.suffix
         adapter = self.adapters.get(ext)
-        
+
         if not adapter:
             # No adapter for this type. Mark as indexed.
             self.store.update_analysis(file_id, [], [])

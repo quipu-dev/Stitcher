@@ -14,7 +14,6 @@ class WorkspaceFactory:
         self._pyproject_data: Dict[str, Any] = {}
 
     def init_git(self) -> "WorkspaceFactory":
-        """Initialize a git repository in the workspace root."""
         # Create root first if it doesn't exist (though usually build() does this,
         # we might want to git init before writing files to test untracked logic?)
         # Actually git init works in empty dir.
