@@ -15,12 +15,14 @@ from stitcher.adapter.python import (
 def create_test_app(
     root_path: Path, interaction_handler: Optional[InteractionHandler] = None
 ) -> StitcherApp:
+    parser = GriffePythonParser()
+    transformer = PythonTransformer()
+    strategy = PythonFingerprintStrategy()
     return StitcherApp(
         root_path=root_path,
-        parser=PythonParser(),
-        transformer=PythonTransformer(),
-        stub_generator=PythonStubGenerator(),
-        fingerprint_strategy=PythonFingerprintStrategy(),
+        parser=parser,
+        transformer=transformer,
+        fingerprint_strategy=strategy,
         interaction_handler=interaction_handler,
     )
 
