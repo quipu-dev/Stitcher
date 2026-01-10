@@ -1,6 +1,6 @@
 import libcst as cst
 from pathlib import Path
-from stitcher.refactor.engine.graph import UsageLocation
+from stitcher.python.analysis.models import UsageLocation, ReferenceType
 from stitcher.refactor.operations.transforms.rename_transformer import (
     SymbolRenamerTransformer,
 )
@@ -22,8 +22,6 @@ def func2():
     # LibCST positions:
     # Line 3: "    foo = 1" -> foo starts at line 3, col 4
     # Line 4: "    return foo" -> foo starts at line 4, col 11
-
-    from stitcher.refactor.engine.graph import ReferenceType
 
     locations = [
         UsageLocation(

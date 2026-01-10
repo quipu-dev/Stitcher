@@ -1,5 +1,8 @@
 from typing import Dict, Optional, List
-from stitcher.python.analysis.cst.transformers import strip_docstrings, inject_docstrings
+from stitcher.python.analysis.cst.transformers import (
+    strip_docstrings,
+    inject_docstrings,
+)
 
 
 class PythonTransformer:

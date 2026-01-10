@@ -2,15 +2,16 @@
   "ReferenceType": {},
   "ReferenceType.IMPORT_PATH": {},
   "ReferenceType.SYMBOL": {},
-  "SemanticGraph": {},
+  "SemanticGraph": {
+    "baseline_yaml_content_hash": "107d9d8ce7f48e351911bdc4c4aa8d442967c10b114179df109ff56a3e7c8f43"
+  },
   "SemanticGraph.__init__": {
     "baseline_code_signature_text": "def __init__(self, workspace: Workspace):",
     "baseline_code_structure_hash": "db0b79e74ddbded80772fc4f235e1067d97beaedc46f490a78067f739cd3e5f4"
   },
   "SemanticGraph._build_registry": {
     "baseline_code_signature_text": "def _build_registry(self, module: griffe.Module, visited: Optional[Set[str]] = None):",
-    "baseline_code_structure_hash": "024f15ff4c592dafdc5fa4e5eed9ba4c7b065f9319a631842ba011fe241dceb3",
-    "baseline_yaml_content_hash": "3b22d32ef6308a04c808ebcc4cd95b63b15d1fa00c16bfd7d09c282e584105fc"
+    "baseline_code_structure_hash": "024f15ff4c592dafdc5fa4e5eed9ba4c7b065f9319a631842ba011fe241dceb3"
   },
   "SemanticGraph._griffe_loader": {},
   "SemanticGraph._modules": {},
@@ -36,19 +37,20 @@
   },
   "SemanticGraph.load_from_workspace": {
     "baseline_code_signature_text": "def load_from_workspace(self) -> None:",
-    "baseline_code_structure_hash": "e5f029f7b4d9d097285699c4c3939b657f0c1c326004d9e9f7dd14b6b83e9c8e"
+    "baseline_code_structure_hash": "e5f029f7b4d9d097285699c4c3939b657f0c1c326004d9e9f7dd14b6b83e9c8e",
+    "baseline_yaml_content_hash": "eabe15f7da6d8745ca9c12d7981ec91b9c02b2e3667ef4f5212350d486c0b4d7"
   },
   "SemanticGraph.registry": {},
   "SemanticGraph.root_path": {},
   "SemanticGraph.search_paths": {},
   "SemanticGraph.workspace": {},
-  "SymbolNode": {},
+  "SymbolNode": {
+    "baseline_yaml_content_hash": "4900ac88eeb806545cd45ed7908a5b05093c43924866887b710ab2f65adc727f"
+  },
   "SymbolNode.fqn": {},
   "SymbolNode.kind": {},
   "SymbolNode.path": {},
-  "UsageLocation": {
-    "baseline_yaml_content_hash": "33e1207a439a86c89e7386d8370a9d0f1fe4bdeb6a41046c0b27a4539b2c16df"
-  },
+  "UsageLocation": {},
   "UsageLocation.col_offset": {},
   "UsageLocation.end_col_offset": {},
   "UsageLocation.end_lineno": {},
@@ -71,9 +73,7 @@
     "baseline_code_signature_text": "def register(self, target_fqn: str, location: UsageLocation):",
     "baseline_code_structure_hash": "205b208dafd47aeb0946fd69a75d55b5e752676fdcd5d104eeff837e807159a5"
   },
-  "_UsageVisitor": {
-    "baseline_yaml_content_hash": "d5f7f37fe082d3a66736ae2641fc6808a7d36a60814b8f1a084cfb963620d9eb"
-  },
+  "_UsageVisitor": {},
   "_UsageVisitor.METADATA_DEPENDENCIES": {},
   "_UsageVisitor.__init__": {
     "baseline_code_signature_text": "def __init__(self, file_path: Path, local_symbols: Dict[str, str], registry: UsageRegistry, current_module_fqn: Optional[str] = None, is_init_file: bool = False):",

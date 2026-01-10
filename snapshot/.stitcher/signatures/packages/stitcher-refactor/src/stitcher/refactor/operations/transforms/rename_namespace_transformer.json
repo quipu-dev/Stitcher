@@ -23,5 +23,6 @@
   },
   "NamespaceRenamerTransformer.locations": {},
   "NamespaceRenamerTransformer.new_prefix": {},
-  "NamespaceRenamerTransformer.old_prefix": {}
+  "NamespaceRenamerTransformer.old_prefix": {},
+  "__all__": {}
 }

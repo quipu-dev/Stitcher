@@ -1,7 +1,5 @@
 {
-  "SymbolRenamerTransformer": {
-    "baseline_yaml_content_hash": "7dbfbc49becb61e5094162114d8c050f1e4588ef5b6d2d7825ec152427142b33"
-  },
+  "SymbolRenamerTransformer": {},
   "SymbolRenamerTransformer.METADATA_DEPENDENCIES": {},
   "SymbolRenamerTransformer.__init__": {
     "baseline_code_signature_text": "def __init__(self, rename_map: Dict[str, str], target_locations: List[UsageLocation]):",
@@ -35,5 +33,6 @@
     "baseline_code_signature_text": "def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.BaseExpression:",
     "baseline_code_structure_hash": "359a7b7d03fd4c22322b79587ce2f48c68c764ee80795ad2766698ab49ff3fef"
   },
-  "SymbolRenamerTransformer.rename_map": {}
+  "SymbolRenamerTransformer.rename_map": {},
+  "__all__": {}
 }

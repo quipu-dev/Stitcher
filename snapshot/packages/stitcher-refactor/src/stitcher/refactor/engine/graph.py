@@ -5,7 +5,6 @@ from typing import List, Dict, Optional, Set
 import logging
 import griffe
 from stitcher.refactor.workspace import Workspace
-from stitcher.python.analysis.models import UsageLocation, ReferenceType
 from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
 
 log = logging.getLogger(__name__)

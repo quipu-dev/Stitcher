@@ -4,9 +4,9 @@ from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.graph import (
     SemanticGraph,
     UsageRegistry,
-    UsageLocation,
     SymbolNode,
 )
+from stitcher.python.analysis.models import UsageLocation, ReferenceType
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.common.transaction import WriteFileOp
 from stitcher.refactor.sidecar.manager import SidecarManager
@@ -43,8 +43,6 @@ def test_rename_symbol_analyze_orchestration():
 
     source_a = "from mypkg.core import OldHelper\n\nobj = OldHelper()"
     source_b = "def func():\n    from mypkg.core import OldHelper\n    return OldHelper"
-
-    from stitcher.refactor.engine.graph import ReferenceType
 
     locations = [
         UsageLocation(
