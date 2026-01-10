@@ -12,8 +12,10 @@ class MockAdapter:
             id=f"py://{path.name}#Main",
             name="Main",
             kind="class",
-            location_start=0,
-            location_end=10,
+            lineno=1,
+            col_offset=0,
+            end_lineno=1,
+            end_col_offset=10,
             logical_path=logical,
         )
         return [sym], []

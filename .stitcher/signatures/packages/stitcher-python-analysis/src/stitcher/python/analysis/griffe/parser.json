@@ -2,6 +2,10 @@
   "GriffePythonParser": {
     "baseline_yaml_content_hash": "45eba255ff2192fe25dd55f3a2069be45ce1e6e6b2b00e2375a8e899c822d935"
   },
+  "GriffePythonParser._extract_location": {
+    "baseline_code_signature_text": "def _extract_location(self, obj: griffe.Object) -> Optional[SourceLocation]:",
+    "baseline_code_structure_hash": "3082de040d57e24c8ce1ff0b58961d7478ca5536b8eefe2a9a8599b69da1d55c"
+  },
   "GriffePythonParser._map_argument": {
     "baseline_code_signature_text": "def _map_argument(self, param: griffe.Parameter) -> Argument:",
     "baseline_code_structure_hash": "0dca449524c6d2660b442eddd5f2a8531d0fa0d18f19e895c8bcebb5e9f2ae55"

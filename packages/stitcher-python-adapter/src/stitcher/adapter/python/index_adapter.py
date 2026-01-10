@@ -60,19 +60,22 @@ class PythonAdapter(LanguageAdapter):
                 fp = self.hasher.compute(entity_for_hash)  # type: ignore
                 sig_hash = fp.get("current_code_structure_hash")
 
-            # Location is currently not provided by ModuleDef in a granular way easily
-            # (Griffe objects have lineno, but ModuleDef might have lost it or it's deep).
-            # For MVP, we use 0, 0 as placeholder or we need to extend ModuleDef to carry location.
-            # Extending ModuleDef is the right way, but for now we proceed.
-            # TODO: Enhance ModuleDef to carry source location info.
+            # Location Handling
+            # We assume entity_for_hash also carries the location info if it is a Def object.
+            # Attribute locations are passed via entity_for_hash if it's an Attribute obj.
+            # But the 'add' signature treats entity_for_hash as Optional[object].
+            # We should check if it has a 'location' attribute.
+            loc = getattr(entity_for_hash, "location", None)
 
             symbols.append(
                 SymbolRecord(
                     id=suri,
                     name=name,
                     kind=kind,
-                    location_start=0,  # Placeholder
-                    location_end=0,  # Placeholder
+                    lineno=loc.lineno if loc else 0,
+                    col_offset=loc.col_offset if loc else 0,
+                    end_lineno=loc.end_lineno if loc else 0,
+                    end_col_offset=loc.end_col_offset if loc else 0,
                     logical_path=fragment,  # This is relative logical path in file
                     signature_hash=sig_hash,
                 )
@@ -93,11 +96,11 @@ class PythonAdapter(LanguageAdapter):
 
             # Attributes
             for attr in cls.attributes:
-                add(attr.name, "variable", None, parent_fragment=cls_frag)
+                add(attr.name, "variable", attr, parent_fragment=cls_frag)
 
         # 3. Module-level Attributes
         for attr in module.attributes:
-            add(attr.name, "variable", None)
+            add(attr.name, "variable", attr)
 
         return symbols
 
@@ -127,7 +130,6 @@ class PythonAdapter(LanguageAdapter):
             register_local(func.name)
 
         for cls in module.classes:
-            cls_fqn = register_local(cls.name)
             for method in cls.methods:
                 # Assuming UsageScanVisitor handles attribute lookups,
                 # strictly speaking we might not need to pass method names as locals
@@ -166,13 +168,10 @@ class PythonAdapter(LanguageAdapter):
                         ReferenceRecord(
                             target_id=target_suri,
                             kind=loc.ref_type.value,
-                            location_start=loc.lineno,  # Simplification: use lineno as start offset proxy for now?
-                            # Wait, ReferenceRecord expects byte offsets (integers) usually,
-                            # but currently we don't have easy byte offset access from UsageLocation (it has line/col).
-                            # TODO: Fix UsageLocation to carry byte offsets or convert line/col to offset.
-                            # For MVP, we will store LINENO in location_start just to signal "not empty".
-                            # This is Technical Debt but allows progress.
-                            location_end=loc.end_lineno,
+                            lineno=loc.lineno,
+                            col_offset=loc.col_offset,
+                            end_lineno=loc.end_lineno,
+                            end_col_offset=loc.end_col_offset,
                         )
                     )
 

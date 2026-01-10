@@ -1,4 +1,4 @@
--- Stitcher Index Schema v1.0
+-- Stitcher Index Schema v1.1
 -- Dialect: SQLite
 -- Mode: WAL (Write-Ahead Logging) enabled
 
@@ -47,9 +47,11 @@ CREATE TABLE IF NOT EXISTS symbols (
     -- [核心机制] 别名目标 ID
     alias_target_id TEXT,
     
-    -- 源代码位置范围 (字节偏移量)
-    location_start INTEGER NOT NULL,
-    location_end INTEGER NOT NULL,
+    -- 源代码位置范围
+    lineno INTEGER NOT NULL,
+    col_offset INTEGER NOT NULL,
+    end_lineno INTEGER NOT NULL,
+    end_col_offset INTEGER NOT NULL,
     
     -- (可选) 签名哈希，用于检测 API 变更
     signature_hash TEXT,
@@ -78,8 +80,10 @@ CREATE TABLE IF NOT EXISTS "references" (
     kind TEXT NOT NULL,
     
     -- 源代码位置范围
-    location_start INTEGER NOT NULL,
-    location_end INTEGER NOT NULL,
+    lineno INTEGER NOT NULL,
+    col_offset INTEGER NOT NULL,
+    end_lineno INTEGER NOT NULL,
+    end_col_offset INTEGER NOT NULL,
     
     FOREIGN KEY (source_file_id) REFERENCES files(id) ON DELETE CASCADE
 );

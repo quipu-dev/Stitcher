@@ -33,8 +33,10 @@ def test_analysis_update(store):
             id="py://src/lib.py#User",
             name="User",
             kind="class",
-            location_start=0,
-            location_end=10,
+            lineno=1,
+            col_offset=0,
+            end_lineno=5,
+            end_col_offset=0,
             logical_path="lib.User",
         )
     ]
@@ -43,8 +45,10 @@ def test_analysis_update(store):
         ReferenceRecord(
             target_id="py://src/other.py#func",
             kind="import",
-            location_start=5,
-            location_end=15,
+            lineno=6,
+            col_offset=0,
+            end_lineno=6,
+            end_col_offset=15,
         )
     ]
 
@@ -73,7 +77,17 @@ def test_analysis_replacement(store):
     # First update
     store.update_analysis(
         fid,
-        [SymbolRecord(id="s1", name="s1", kind="v", location_start=0, location_end=1)],
+        [
+            SymbolRecord(
+                id="s1",
+                name="s1",
+                kind="v",
+                lineno=1,
+                col_offset=0,
+                end_lineno=1,
+                end_col_offset=1,
+            )
+        ],
         [],
     )
 

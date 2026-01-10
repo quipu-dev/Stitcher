@@ -17,8 +17,10 @@ class SymbolRecord:
     id: str
     name: str
     kind: str
-    location_start: int
-    location_end: int
+    lineno: int
+    col_offset: int
+    end_lineno: int
+    end_col_offset: int
     file_id: Optional[int] = None  # Optional when inserting if handled by store context
     logical_path: Optional[str] = None
     alias_target_id: Optional[str] = None
@@ -29,7 +31,9 @@ class SymbolRecord:
 class ReferenceRecord:
     target_id: str
     kind: str
-    location_start: int
-    location_end: int
+    lineno: int
+    col_offset: int
+    end_lineno: int
+    end_col_offset: int
     source_file_id: Optional[int] = None  # Optional when inserting
     id: Optional[int] = None  # Database Row ID
