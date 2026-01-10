@@ -1,8 +1,7 @@
-"SemanticGraph._build_registry": |-
-  Walks the module tree, builds local symbol tables from Griffe Aliases,
-  and scans CST for usages.
-"UsageLocation": |-
-  Represents a specific usage of a symbol in the codebase.
-"_UsageVisitor": |-
-  Scans a file's CST for Name nodes and resolves them using a local symbol table.
-  Uses LibCST to ensure positions match the Transformer exactly.
+"SemanticGraph": |-
+  A project-wide graph representing the relationships between Python symbols.
+  Leverages Griffe for structure and UsageScanVisitor for cross-references.
+"SemanticGraph.load_from_workspace": |-
+  Discovers and loads all packages and peripheral files defined in the workspace.
+"SymbolNode": |-
+  Represents a symbol definition found in the graph.

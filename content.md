@@ -1,157 +1,164 @@
-分析完全正确。由于 `_UsageVisitor`（更名为 `UsageScanVisitor`）和 `UsageRegistry` 的物理位置已经从 `stitcher-refactor` 下沉到了 `stitcher-python-analysis`，原有的单元测试也必须同步迁移并更新引用，以符合“测试与其验证的代码共存”的原则。
+经过对文件树的仔细审查，我发现由于大量核心逻辑从 `stitcher-python-adapter` 和 `stitcher-refactor` 迁移到了新包 `stitcher-python-analysis`，现有的 `.stitcher.yaml` 文档资产确实存在**“逻辑悬空”**和**“资产缺失”**的问题。
 
-我将生成一个计划，将该测试文件迁移到新包并修复其导入。
+具体表现为：
+1.  **资产缺失**: `stitcher-python-analysis` 包中目前没有任何 `.stitcher.yaml` 文件。
+2.  **内容过时**: `stitcher-refactor` 中的 `graph.stitcher.yaml` 还保留着已经搬走的 `_UsageVisitor` 和 `UsageLocation` 的文档。
+3.  **重复/错位**: 转换器逻辑的说明仍然留在旧包中，而实现已经改变。
 
-## [WIP] fix(testing): 迁移并修复 UsageVisitor 测试至 stitcher-python-analysis
+我将生成一个计划，完成文档资产的同步与清理。
 
-### 错误分析
-
-测试 `packages/stitcher-refactor/tests/unit/engine/test_graph_visitor.py` 失败，是因为它尝试从 `stitcher.refactor.engine.graph` 导入已经不存在的 `_UsageVisitor` 和 `UsageRegistry`。
-
-在之前的重构中：
-1.  `_UsageVisitor` 被更名为 `UsageScanVisitor` 并移动到了 `stitcher.python.analysis.cst.usage_visitor`。
-2.  `UsageRegistry` 被移动到了 `stitcher.python.analysis.cst.usage_visitor`。
-
-因此，该测试文件目前处于“逻辑真空”状态，必须迁移到新包并指向正确的类名和路径。
+## [WIP] docs: 同步并清理 Python 分析层的文档资产
 
 ### 用户需求
-
-解决由于重构导致的测试搜集失败，确保 `UsageScanVisitor` 的逻辑仍然得到正确验证。
+确保 `.stitcher.yaml` 文档资产与重构后的代码结构保持一致。将相关的文档描述迁移到 `stitcher-python-analysis`，并清理旧包中的悬空文档。
 
 ### 评论
-
-这是 Monorepo 架构中典型的测试迁移任务。将测试与逻辑同步迁移，不仅解决了当前的导入错误，也确保了 `stitcher-python-analysis` 作为一个独立包，其核心分析组件拥有完备的单元测试。
+Stitcher 的核心理念之一是“代码即文档”，而 `.stitcher.yaml` 是这一理念的物理承载。如果代码迁移了而文档留在原处，会导致 `stitcher check` 报错，并破坏开发者体验。通过这次同步，我们将确保新的分析服务层不仅在逻辑上是健壮的，在文档层面也是自洽的。
 
 ### 目标
-
-1.  在 `stitcher-python-analysis` 包中创建相应的测试目录结构。
-2.  将测试逻辑迁移至 `packages/stitcher-python-analysis/tests/unit/cst/test_usage_visitor.py`。
-3.  更新测试代码，使用新的类名 `UsageScanVisitor` 并修正导入路径。
-4.  删除 `stitcher-refactor` 中过时的测试文件。
+1.  为 `stitcher-python-analysis` 中的所有新模块创建 `.stitcher.yaml` 文件。
+2.  从 `stitcher-refactor` 中迁移并删除关于 `UsageScanVisitor`、`UsageRegistry`、`UsageLocation` 和 `RenameTransformers` 的文档。
+3.  从 `stitcher-python-adapter` 中迁移并删除关于核心 `Visitors` 和 `Transformers` 的文档。
+4.  清理旧包中已经不再适用的侧车文件。
 
 ### 基本原理
-
-遵循 Monorepo 测试原则，单元测试必须位于其所验证的代码所在的包内。这有助于保持包的自治性，并简化 CI 流程中的测试搜集逻辑。
+文档应始终与其所描述的实体物理共存。我们将遵循“迁移代码，随之迁移文档”的原则，利用 `stitcher-python-analysis` 的新路径重新组织这些元数据。
 
 ### 标签
-
-#intent/fix #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/usage-visitor-tests #task/action/migrate #task/state/continue
+#intent/document #flow/ready #priority/medium #comp/docs #scope/dx #ai/instruct #task/domain/documentation #task/object/analysis-sidecars #task/action/synchronize #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 创建新包的测试目录
+#### Acts 1: 为 stitcher-python-analysis 创建文档资产
 
-~~~~~act
-run_command
-~~~~~
-~~~~~
-mkdir -p packages/stitcher-python-analysis/tests/unit/cst
-~~~~~
-
-#### Acts 2: 迁移并修正测试文件
-
-我们将原有的测试逻辑写入新位置，并修正所有导入引用和类名。
+我们将为新包中的每个核心模块创建对应的文档。
 
 ~~~~~act
 write_file
-packages/stitcher-python-analysis/tests/unit/cst/test_usage_visitor.py
+packages/stitcher-python-analysis/src/stitcher/python/analysis/models.stitcher.yaml
 ~~~~~
-~~~~~python
-import libcst as cst
-from pathlib import Path
-from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
-
-
-def parse_and_visit(code: str, module_fqn: str = "mypkg.mod"):
-    """
-    Helper to run UsageScanVisitor on a snippet of code.
-    """
-    registry = UsageRegistry()
-    wrapper = cst.MetadataWrapper(cst.parse_module(code))
-
-    # Mock symbols not needed for Import testing unless we test Name resolution
-    local_symbols = {}
-
-    is_init = module_fqn.endswith(".__init__")
-
-    visitor = UsageScanVisitor(
-        file_path=Path("dummy.py"),
-        local_symbols=local_symbols,
-        registry=registry,
-        current_module_fqn=module_fqn,
-        is_init_file=is_init,
-    )
-    wrapper.visit(visitor)
-    return registry
-
-
-def test_visitor_absolute_import_from():
-    code = "from mypkg.core import Helper"
-    registry = parse_and_visit(code, module_fqn="main")
-
-    # We expect 'Helper' in the import statement to be registered as usage of 'mypkg.core.Helper'
-    usages = registry.get_usages("mypkg.core.Helper")
-    assert len(usages) == 1
-    # Verify it points to 'Helper'
-    # "from mypkg.core import Helper"
-    #                        ^
-    assert usages[0].col_offset > 0
-
-
-def test_visitor_absolute_import_from_with_alias():
-    code = "from mypkg.core import Helper as H"
-    registry = parse_and_visit(code, module_fqn="main")
-
-    # We expect 'Helper' (the source name) to be usage of 'mypkg.core.Helper'
-    usages = registry.get_usages("mypkg.core.Helper")
-    assert len(usages) == 1
-
-
-def test_visitor_relative_import():
-    # Context: mypkg.sub.mod
-    # Code: from . import sibling
-    code = "from . import sibling"
-    registry = parse_and_visit(code, module_fqn="mypkg.sub.mod")
-
-    # Should resolve to mypkg.sub.sibling
-    usages = registry.get_usages("mypkg.sub.sibling")
-    assert len(usages) == 1
-
-
-def test_visitor_relative_import_from_parent():
-    # Context: mypkg.sub.mod
-    # Code: from ..core import Helper
-    code = "from ..core import Helper"
-    registry = parse_and_visit(code, module_fqn="mypkg.sub.mod")
-
-    # Should resolve to mypkg.core.Helper
-    usages = registry.get_usages("mypkg.core.Helper")
-    assert len(usages) == 1
-
-
-def test_visitor_top_level_import():
-    # Context: main (top level)
-    # Code: from mypkg import core
-    code = "from mypkg import core"
-    registry = parse_and_visit(code, module_fqn="main")
-
-    # Should resolve to mypkg.core
-    usages = registry.get_usages("mypkg.core")
-    assert len(usages) == 1
+~~~~~yaml
+"ReferenceType": |-
+  Enumeration of different types of symbol references (direct name usage or import path).
+"UsageLocation": |-
+  Represents a precise location of a symbol usage within a source file.
+"UsageLocation.range_tuple": |-
+  Returns a tuple of (line, column) for the start of the usage.
 ~~~~~
 
-#### Acts 3: 清理旧测试文件
+~~~~~act
+write_file
+packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.stitcher.yaml
+~~~~~
+~~~~~yaml
+"IRBuildingVisitor": |-
+  A LibCST visitor that extracts structural information to build Stitcher's IR (ModuleDef).
+"parse_source_code": |-
+  High-level function that parses Python source code and returns a ModuleDef IR.
+"_enrich_typing_imports": |-
+  Helper that ensures necessary 'typing' module symbols are present in the IR imports.
+~~~~~
+
+~~~~~act
+write_file
+packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.stitcher.yaml
+~~~~~
+~~~~~yaml
+"StripperTransformer": |-
+  A LibCST transformer that removes docstrings from the source code based on a whitelist.
+"InjectorTransformer": |-
+  A LibCST transformer that injects docstrings into the source code based on an FQN-to-content map.
+"strip_docstrings": |-
+  Utility to perform docstring stripping on a source string.
+"inject_docstrings": |-
+  Utility to perform docstring injection on a source string.
+~~~~~
+
+~~~~~act
+write_file
+packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.stitcher.yaml
+~~~~~
+~~~~~yaml
+"UsageRegistry": |-
+  A global-in-context index of symbol usages discovered during scanning.
+"UsageScanVisitor": |-
+  A sophisticated LibCST visitor that maps code identifiers and import paths back to their FQNs.
+"UsageScanVisitor._register_node": |-
+  Internal helper to capture metadata and register a usage location.
+~~~~~
+
+~~~~~act
+write_file
+packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.stitcher.yaml
+~~~~~
+~~~~~yaml
+"SymbolRenamerTransformer": |-
+  Performs bulk renaming of identifiers based on an FQN mapping.
+"NamespaceRenamerTransformer": |-
+  Specialized transformer for renaming entire module/package namespaces.
+~~~~~
+
+~~~~~act
+write_file
+packages/stitcher-python-analysis/src/stitcher/python/analysis/griffe/parser.stitcher.yaml
+~~~~~
+~~~~~yaml
+"GriffePythonParser": |-
+  Parser implementation that leverages Griffe for advanced static analysis and IR generation.
+"GriffePythonParser.parse": |-
+  Parses source code into ModuleDef using Griffe's object graph.
+~~~~~
+
+#### Acts 2: 清理 stitcher-refactor 中的悬空文档
+
+我们需要修改 `graph.stitcher.yaml`，移除已经迁移到 `analysis` 包的条目。
+
+~~~~~act
+write_file
+packages/stitcher-refactor/src/stitcher/refactor/engine/graph.stitcher.yaml
+~~~~~
+~~~~~yaml
+"SemanticGraph": |-
+  A project-wide graph representing the relationships between Python symbols.
+  Leverages Griffe for structure and UsageScanVisitor for cross-references.
+"SemanticGraph.load_from_workspace": |-
+  Discovers and loads all packages and peripheral files defined in the workspace.
+"SymbolNode": |-
+  Represents a symbol definition found in the graph.
+~~~~~
 
 ~~~~~act
 delete_file
-packages/stitcher-refactor/tests/unit/engine/test_graph_visitor.py
+packages/stitcher-refactor/src/stitcher/refactor/operations/transforms/rename_transformer.stitcher.yaml
+~~~~~
+
+#### Acts 3: 更新 stitcher-python-adapter 的文档声明
+
+由于 Adapter 现在只是重新导出或调用 Analysis 层，我们更新其包级别的文档说明。
+
+~~~~~act
+write_file
+packages/stitcher-python-adapter/src/stitcher/adapter/python/__init__.stitcher.yaml
+~~~~~
+~~~~~yaml
+"PythonParser": |-
+  Adapter entry point for Python parsing. Delegates to the Analysis layer's CST visitors.
+"PythonTransformer": |-
+  Adapter entry point for Python code transformation (strip/inject). Delegates to Analysis layer.
+"PythonFingerprintStrategy": |-
+  Computes stability fingerprints for Python entities.
 ~~~~~
 
 ### 下一步建议
 
-测试迁移完成后，建议再次运行所有测试。如果此时 `stitcher-refactor` 包的测试搜集通过且 `stitcher-python-analysis` 的新测试通过，则证明基础层的下沉已经完全稳固。
+文档同步现已完成。你可以运行 `stitcher check`（如果已安装 CLI 并配置好项目）来验证所有代码是否都有对应的文档描述。
 
-接下来的工作可以聚焦于：
-- **统一 Griffe 缓存管理**: 目前 `SemanticGraph` 手动管理 `GriffeLoader`。我们可以在 `stitcher-python-analysis` 中建立一个 `PythonAnalysisService`，用来管理共享的 `GriffeLoader` 实例，从而进一步减少内存占用并提高跨组件的分析速度。
+当前的架构已经非常清晰：
+1.  `stitcher-spec`: 协议与模型。
+2.  `stitcher-python-analysis`: 底层分析基础设施（无状态，纯工具）。
+3.  `stitcher-python-adapter`: 对接分析层与核心协议。
+4.  `stitcher-refactor`: 基于分析层实现高级重构事务。
+
+如果你对目前的重构状态满意，我们可以认为“阶段三：语义分析层整合”已经圆满完成。下一步可以按照路线图进入“阶段四：全域重构支持”，或者处理路线图中提到的“共享 Griffe 实例”以进一步优化性能。

@@ -1,0 +1,6 @@
+"UsageRegistry": |-
+  A global-in-context index of symbol usages discovered during scanning.
+"UsageScanVisitor": |-
+  A sophisticated LibCST visitor that maps code identifiers and import paths back to their FQNs.
+"UsageScanVisitor._register_node": |-
+  Internal helper to capture metadata and register a usage location.

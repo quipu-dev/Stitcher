@@ -1,0 +1,6 @@
+"ReferenceType": |-
+  Enumeration of different types of symbol references (direct name usage or import path).
+"UsageLocation": |-
+  Represents a precise location of a symbol usage within a source file.
+"UsageLocation.range_tuple": |-
+  Returns a tuple of (line, column) for the start of the usage.

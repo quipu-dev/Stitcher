@@ -1,0 +1,4 @@
+"SymbolRenamerTransformer": |-
+  Performs bulk renaming of identifiers based on an FQN mapping.
+"NamespaceRenamerTransformer": |-
+  Specialized transformer for renaming entire module/package namespaces.

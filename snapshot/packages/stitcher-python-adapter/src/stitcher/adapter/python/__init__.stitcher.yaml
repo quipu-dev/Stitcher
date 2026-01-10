@@ -1,9 +1,6 @@
-"PythonFingerprintStrategy": |-
-  Strategy for computing fingerprints for Python entities.
-  Uses a composite approach (StructureHasher + SignatureTextHasher).
 "PythonParser": |-
-  Adapter for parsing Python source code into Stitcher IR.
-"PythonStubGenerator": |-
-  Adapter for generating Python type stubs (.pyi).
+  Adapter entry point for Python parsing. Delegates to the Analysis layer's CST visitors.
 "PythonTransformer": |-
-  Adapter for transforming Python source code (strip/inject docstrings).
+  Adapter entry point for Python code transformation (strip/inject). Delegates to Analysis layer.
+"PythonFingerprintStrategy": |-
+  Computes stability fingerprints for Python entities.

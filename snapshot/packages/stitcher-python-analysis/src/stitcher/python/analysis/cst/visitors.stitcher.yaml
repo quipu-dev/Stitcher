@@ -1,0 +1,6 @@
+"IRBuildingVisitor": |-
+  A LibCST visitor that extracts structural information to build Stitcher's IR (ModuleDef).
+"parse_source_code": |-
+  High-level function that parses Python source code and returns a ModuleDef IR.
+"_enrich_typing_imports": |-
+  Helper that ensures necessary 'typing' module symbols are present in the IR imports.

@@ -1,0 +1,4 @@
+"GriffePythonParser": |-
+  Parser implementation that leverages Griffe for advanced static analysis and IR generation.
+"GriffePythonParser.parse": |-
+  Parses source code into ModuleDef using Griffe's object graph.
