@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.engine.graph import SemanticGraph
-from stitcher.refactor.workspace import Workspace
 
 
 from stitcher.refactor.engine.intent import RenameIntent

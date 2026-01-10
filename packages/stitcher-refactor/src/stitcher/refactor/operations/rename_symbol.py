@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from .base import AbstractOperation, SidecarUpdateMixin
 from stitcher.refactor.engine.context import RefactorContext
@@ -14,8 +14,6 @@ class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
     def __init__(self, old_fqn: str, new_fqn: str):
         self.old_fqn = old_fqn
         self.new_fqn = new_fqn
-
-    from typing import Optional
 
     def _find_definition_node(self, ctx: RefactorContext) -> Optional[SymbolNode]:
         return ctx.graph.find_symbol(self.old_fqn)
