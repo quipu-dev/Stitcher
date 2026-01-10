@@ -1,175 +1,82 @@
-好的，测试失败明确指出了我们需要修复的地方：`stitcher-index` 包中的测试用例仍然在使用旧的、基于 `location_start`/`location_end` 的数据模型。我们需要将它们更新到新的 Schema。
+这是一个逻辑完整的工作单元，我们完成了从 IR 定义到数据库存储的全链路“高保真”升级，彻底解决了符号位置精确度这一核心技术债务。
 
-## [WIP] test(index): 更新测试用例以匹配新的位置 Schema
+我将生成一个 `[COMMIT]` 计划，将这些变更持久化到 Git 仓库中。
 
-### 错误分析
-1.  **`test_store.py`**: `test_analysis_update` 和 `test_analysis_replacement` 在构造 `SymbolRecord` 时，还在使用已被移除的 `location_start` 和 `location_end` 关键字参数，导致 `TypeError`。
-2.  **`test_scanner.py`**: `test_scan_adapter_integration` 失败的原因比较微妙。我们的 `MockAdapter` 在 `parse` 方法中返回的 `SymbolRecord` 实例没有提供新的位置字段 (`lineno`, `col_offset` 等)，导致数据库插入失败（因为这些字段是 `NOT NULL`），最终 `store.get_symbols_by_file` 返回了一个空列表，断言 `len(syms) == 1` 失败。
+## [COMMIT] feat: 实现高保真符号位置追踪与数据库 Schema 迁移
 
 ### 用户需求
-更新 `stitcher-index` 测试套件，使其与新的数据库 Schema 和数据模型（`SymbolRecord`, `ReferenceRecord`）保持一致，确保所有测试通过。
+记录并提交针对“符号位置精确度”债务的修复工作，包括 IR 模型扩展、解析器增强、数据库 Schema 迁移以及相关的 Bug 修复和测试更新。
 
 ### 评论
-这是一个常规的重构后清理步骤。测试是代码的第一个用户，测试失败准确地反映了API契约的变化。修复这些测试不仅能让构建通过，也验证了我们新的数据模型在实际使用中是正确的。
+这次提交标志着 `stitcher-python` 索引系统从“原型阶段”向“工业级阶段”的跨越。我们现在不仅能知道“代码里有什么”，还能精确地知道“它们在哪里”。这种精度对于后续实现 IDE 集成（如 LSIF/SCIP 支持）至关重要。
 
 ### 目标
-1.  修改 `packages/stitcher-index/tests/unit/test_store.py` 中 `SymbolRecord` 和 `ReferenceRecord` 的实例化，使用 `lineno`, `col_offset`, `end_lineno`, `end_col_offset` 字段。
-2.  修改 `packages/stitcher-index/tests/unit/test_scanner.py` 中的 `MockAdapter`，使其返回的 `SymbolRecord` 包含有效的位置信息。
+1.  将所有修改过的源码、配置和测试文件添加到 Git 暂存区。
+2.  创建一个详尽的提交说明，记录这一重大的架构演进。
 
 ### 基本原理
-通过将测试代码与生产代码的接口对齐，我们重新建立了测试套件的有效性，并确保了新数据模型在整个存储和检索生命周期中的正确性。
+遵循 Conventional Commits 规范，将此次变更标记为 `feat`，因为它为系统引入了精确空间定位的新能力，同时也包含了对现有不完善实现的重构 (`refactor`)。
 
 ### 标签
-#intent/fix #flow/ready #priority/high
-#comp/tests #comp/index
-#scope/dx
+#intent/tooling #flow/ready #priority/medium
+#comp/interfaces #comp/analysis #comp/index #comp/adapters #comp/tests
+#concept/history #concept/state
 #ai/instruct
-#task/domain/testing #task/object/test-suite #task/action/update
-#task/state/continue
+#task/domain/tooling #task/object/git-commit #task/action/record
+#task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `test_scanner.py` 中的 `MockAdapter`
+#### Acts 1: 提交还债成果
 
-为 `MockAdapter` 返回的 `SymbolRecord` 添加必需的位置字段。
+我们将所有涉及到的包（spec, analysis, index, adapter）以及根目录的变更进行统一提交。
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-spec/src/stitcher/spec/models.py
+packages/stitcher-spec/src/stitcher/spec/__init__.py
+packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py
+packages/stitcher-python-analysis/src/stitcher/python/analysis/griffe/parser.py
+packages/stitcher-index/src/stitcher/index/schema.sql
+packages/stitcher-index/src/stitcher/index/types.py
+packages/stitcher-index/src/stitcher/index/store.py
+packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py
+packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py
 packages/stitcher-index/tests/unit/test_scanner.py
-~~~~~
-~~~~~python.old
-class MockAdapter:
-    def parse(self, path, content):
-        # Determine logical path from filename for testing
-        logical = path.stem
-        sym = SymbolRecord(
-            id=f"py://{path.name}#Main",
-            name="Main",
-            kind="class",
-            location_start=0,
-            location_end=10,
-            logical_path=logical,
-        )
-        return [sym], []
-
-
-def test_scan_git_discovery(tmp_path, store):
-~~~~~
-~~~~~python.new
-class MockAdapter:
-    def parse(self, path, content):
-        # Determine logical path from filename for testing
-        logical = path.stem
-        sym = SymbolRecord(
-            id=f"py://{path.name}#Main",
-            name="Main",
-            kind="class",
-            lineno=1,
-            col_offset=0,
-            end_lineno=1,
-            end_col_offset=10,
-            logical_path=logical,
-        )
-        return [sym], []
-
-
-def test_scan_git_discovery(tmp_path, store):
-~~~~~
-
-#### Acts 2: 修复 `test_store.py`
-
-更新 `test_analysis_update` 和 `test_analysis_replacement` 以使用新的字段。
-
-~~~~~act
-patch_file
 packages/stitcher-index/tests/unit/test_store.py
-~~~~~
-~~~~~python.old
-    symbols = [
-        SymbolRecord(
-            id="py://src/lib.py#User",
-            name="User",
-            kind="class",
-            location_start=0,
-            location_end=10,
-            logical_path="lib.User",
-        )
-    ]
-
-    references = [
-        ReferenceRecord(
-            target_id="py://src/other.py#func",
-            kind="import",
-            location_start=5,
-            location_end=15,
-        )
-    ]
-~~~~~
-~~~~~python.new
-    symbols = [
-        SymbolRecord(
-            id="py://src/lib.py#User",
-            name="User",
-            kind="class",
-            lineno=1,
-            col_offset=0,
-            end_lineno=5,
-            end_col_offset=0,
-            logical_path="lib.User",
-        )
-    ]
-
-    references = [
-        ReferenceRecord(
-            target_id="py://src/other.py#func",
-            kind="import",
-            lineno=6,
-            col_offset=0,
-            end_lineno=6,
-            end_col_offset=15,
-        )
-    ]
 ~~~~~
 
 ~~~~~act
-patch_file
-packages/stitcher-index/tests/unit/test_store.py
+git_commit
 ~~~~~
-~~~~~python.old
-    # First update
-    store.update_analysis(
-        fid,
-        [SymbolRecord(id="s1", name="s1", kind="v", location_start=0, location_end=1)],
-        [],
-    )
+~~~~~text
+feat(index): implement high-fidelity symbol location tracking and schema migration
 
-    assert len(store.get_symbols_by_file(fid)) == 1
-~~~~~
-~~~~~python.new
-    # First update
-    store.update_analysis(
-        fid,
-        [
-            SymbolRecord(
-                id="s1",
-                name="s1",
-                kind="v",
-                lineno=1,
-                col_offset=0,
-                end_lineno=1,
-                end_col_offset=1,
-            )
-        ],
-        [],
-    )
+This commit settles the 'Data Fidelity Debt' regarding inaccurate symbol locations by implementing a full-stack upgrade from IR models to persistent storage.
 
-    assert len(store.get_symbols_by_file(fid)) == 1
+Core Changes:
+- stitcher-spec: Introduced `SourceLocation` model and integrated it into `FunctionDef`, `ClassDef`, and `Attribute`.
+- stitcher-python-analysis: 
+    - Enhanced `IRBuildingVisitor` (LibCST) to extract line/column offsets using `PositionProvider`.
+    - Updated `GriffePythonParser` to capture line information from Griffe objects.
+- stitcher-index: 
+    - Migrated Database Schema (v1.1) to support precise (line, col) -> (end_line, end_col) coordinates for both symbols and references.
+    - Updated `SymbolRecord` and `ReferenceRecord` types to match the new schema.
+    - Updated `IndexStore` insertion logic.
+- stitcher-python-adapter: 
+    - Updated `PythonAdapter` to map `SourceLocation` metadata to index records, replacing hardcoded placeholders.
+
+Bug Fixes & Refinement:
+- Fixed missing `SourceLocation` export in `stitcher.spec`.
+- Fixed multiple Pyright type errors in `store.py`, `serializers.py`, and `index_adapter.py`.
+- Updated index test suite to align with the new schema.
+
+This infrastructure upgrade enables future precision-critical features like "Jump to Definition", hover tooltips, and AST-based refactorings.
 ~~~~~
 
 ### 下一步建议
-测试已修复并通过。我们已经成功地完成了对数据模型的底层重构，为高保真索引铺平了道路。下一个合乎逻辑的步骤是偿还**鲁棒性债务**。
-
-我建议着手解决 **Debt 2.1 (简化的解析错误处理)**：
-- 修改 `WorkspaceScanner`，在捕获到解析异常时，将错误信息写入 `indexing_errors` 表。这将使系统对部分失败更具弹性，并为用户提供诊断问题的能力。
+我们已经拥有了坚实的数据地基，下一步可以专注于增强索引的“连接性”：
+- **实现引用分析 (Debt 1.2)**: 完善 `UsageScanVisitor` 并打通 `PythonAdapter._extract_references`，将索引从“定义表”升级为“语义图谱”。
+- **错误透明化 (Debt 2.1)**: 将解析过程中的异常持久化到 `indexing_errors` 表中，提升系统的鲁棒性和可观测性。
