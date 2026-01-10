@@ -12,6 +12,7 @@
     "baseline_code_signature_text": "def get_files_from_config(self, config: StitcherConfig) -> List[Path]:",
     "baseline_code_structure_hash": "9c55b5bd2dc86c1ea413855828298e55668c59998e51fbec93a013c13b547cb1"
   },
+  "ScannerService.had_errors": {},
   "ScannerService.parser": {},
   "ScannerService.process_plugins": {
     "baseline_code_signature_text": "def process_plugins(self, plugins: Dict[str, str]) -> List[ModuleDef]:",

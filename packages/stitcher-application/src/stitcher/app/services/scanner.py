@@ -13,6 +13,7 @@ class ScannerService:
     def __init__(self, root_path: Path, parser: LanguageParserProtocol):
         self.root_path = root_path
         self.parser = parser
+        self.had_errors = False
 
     def scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:
         modules = []
@@ -24,6 +25,7 @@ class ScannerService:
                 modules.append(module_def)
             except Exception as e:
                 bus.error(L.error.generic, error=e)
+                self.had_errors = True
         return modules
 
     def get_files_from_config(self, config: StitcherConfig) -> List[Path]:
@@ -71,6 +73,7 @@ class ScannerService:
                 virtual_modules[func_path].functions.append(func_def)
             except InspectionError as e:
                 bus.error(L.error.plugin.inspection, error=e)
+                self.had_errors = True
         return list(virtual_modules.values())
 
     def derive_logical_path(self, file_path: str) -> Path:

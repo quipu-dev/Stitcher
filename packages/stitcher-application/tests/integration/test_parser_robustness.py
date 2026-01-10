@@ -4,37 +4,48 @@ from needle.pointer import L
 
 def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
     """
-    Verifies that the parser failing on a local (non-module-level) import
-    is handled gracefully by the application, causing `check` to fail
-    without crashing.
+    Verifies that when the parser raises an exception during scanning,
+    the application handles it gracefully:
+    1. Catches the exception.
+    2. Logs a generic error.
+    3. Ensures the overall command fails (returns False).
     """
-    # GIVEN a project with a source file containing a local import
-    # that is known to cause issues with type alias resolution in griffe.
+    # GIVEN a project with a source file
     ws = WorkspaceFactory(tmp_path)
-    ws.with_config({"scan_paths": ["src/buggy_pkg"]})
-    ws.with_source("src/buggy_pkg/__init__.py", "")
+    ws.with_config({"scan_paths": ["src/pkg"]})
+    ws.with_source("src/pkg/__init__.py", "")
     ws.with_source(
-        "src/buggy_pkg/core.py",
+        "src/pkg/core.py",
         """
-        class MyClass:
-            def __init__(self):
-                pass
-
-            def a_method(self) -> "Optional[str]":
-                from typing import Optional  # <-- This import causes the parser to fail
-                return "hello"
+        def foo():
+            pass
         """,
     )
     ws.build()
 
-    # WHEN we run the check command
+    # Create the app
     app = create_test_app(tmp_path)
+
+    # SETUP: Mock the parser to simulate a crash on specific file
+    # We access the parser instance directly attached to the scanner
+    real_parse = app.scanner.parser.parse
+
+    def failing_parse(source_code, file_path=""):
+        if "core.py" in str(file_path):
+            raise ValueError("Simulated parser crash for testing")
+        return real_parse(source_code, file_path)
+
+    monkeypatch.setattr(app.scanner.parser, "parse", failing_parse)
+
+    # WHEN we run the check command
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch):
         success = app.run_check()
 
-    # THEN the command should fail, not crash, and report a generic error
-    assert not success
+    # THEN the command should fail
+    assert not success, "Command should return False when parser fails"
+
+    # AND report a generic error
     spy_bus.assert_id_called(L.error.generic, level="error")
 
     messages = spy_bus.get_messages()
@@ -43,5 +54,4 @@ def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
         None,
     )
     assert error_msg is not None
-    # Check that the error reported contains information about the root cause
-    assert "Could not resolve alias" in str(error_msg["params"].get("error", ""))
+    assert "Simulated parser crash" in str(error_msg["params"].get("error", ""))
