@@ -23,6 +23,9 @@ dev = [
     "stitcher-refactor",
 ]
 
+[tool.setuptools.packages.find]
+exclude = ["migrations*"]
+
 [tool.uv.workspace]
 members = ["packages/*", "packages/stitcher-test-utils"]
 
