@@ -19,6 +19,7 @@ members = [
     "stitcher-config",
     "stitcher-python",
     "stitcher-python-adapter",
+    "stitcher-python-analysis",
     "stitcher-refactor",
     "stitcher-spec",
     "stitcher-stubgen",
@@ -794,6 +795,27 @@ dependencies = [
     { name = "griffe" },
     { name = "libcst" },
     { name = "stitcher-common" },
+    { name = "stitcher-python-analysis" },
+    { name = "stitcher-spec" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "griffe" },
+    { name = "libcst" },
+    { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-python-analysis", editable = "packages/stitcher-python-analysis" },
+    { name = "stitcher-spec", editable = "packages/stitcher-spec" },
+]
+
+[[package]]
+name = "stitcher-python-analysis"
+version = "0.1.0"
+source = { editable = "packages/stitcher-python-analysis" }
+dependencies = [
+    { name = "griffe" },
+    { name = "libcst" },
+    { name = "stitcher-common" },
     { name = "stitcher-spec" },
 ]
 
@@ -813,6 +835,7 @@ dependencies = [
     { name = "griffe" },
     { name = "libcst" },
     { name = "stitcher-common" },
+    { name = "stitcher-python-analysis" },
     { name = "stitcher-spec" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
@@ -822,6 +845,7 @@ requires-dist = [
     { name = "griffe" },
     { name = "libcst" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-python-analysis", editable = "packages/stitcher-python-analysis" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
 ]

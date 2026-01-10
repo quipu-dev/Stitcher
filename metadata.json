@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 创建 stitcher-python-analysis 包并更新依赖关系", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768038451.7107549, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: D __init__.py, M uv.lock", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768038473.1521587, "duration_ms": 0}}
