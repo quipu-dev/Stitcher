@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix(refactor): 修复 SemanticGraph 中的迭代错误并增强可观测性", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768034592.5508842, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix: 恢复 SemanticGraph.load 并增强 RenameSymbolOperation 容错性", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768034658.791451, "duration_ms": 0}}

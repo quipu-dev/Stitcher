@@ -1,50 +1,62 @@
-[简要回答]
-好的，测试已顺利通过。这意味着重构引擎的语义图谱构建逻辑已恢复正常。
-
-我现在将生成一个 `[COMMIT]` 计划，将这些修复正式提交到代码库中。
-
-## [COMMIT] fix(refactor): 修复 SemanticGraph 中的迭代错误并增强可观测性
+## [COMMIT] fix: 恢复 SemanticGraph.load 并增强 RenameSymbolOperation 容错性
 
 ### 用户需求
-将 `AttributeError` 的修复和 `SemanticGraph` 错误处理逻辑的改进提交到版本控制系统。
+
+1.  修复因移除 `SemanticGraph.load(package_name)` 导致的大量测试失败。
+2.  增强 `RenameSymbolOperation` 的容错性，使其在找不到符号定义时不再抛出异常，而是优雅地降级（仅执行代码重命名，跳过 Sidecar 更新）。
 
 ### 评论
-这次修复不仅解决了当前阻碍集成测试的 Bug，还通过引入结构化的日志记录和移除静默失败逻辑，显著提升了重构引擎的开发者体验 (DX) 和长期可维护性。
+
+这次修复同时兼顾了向后兼容性和系统的健壮性。恢复 `load` 方法使得单一包的分析再次成为可能，这对于单元测试至关重要。而改进 `RenameSymbolOperation` 的错误处理逻辑，则消除了一个隐蔽的崩溃源，使重构引擎在面对不完整的语义信息时更加有韧性。
 
 ### 目标
-1.  将 `AttributeError` 的修复（`modules_collection.members.values()`）提交。
-2.  将移除 `try-except: pass` 并引入 `logging` 的改进提交。
-3.  确保临时调试用的 `sys.__stderr__` 打印已被清理。
+
+1.  在 `SemanticGraph` 中恢复 `load` 方法。
+2.  在 `SemanticGraph` 中新增 `find_symbol` 方法，提供全图符号查找能力。
+3.  重构 `RenameSymbolOperation` 以使用 `find_symbol` 并移除静默异常处理。
+4.  更新 `Workspace` 以支持周边路径（peripheral paths）的识别。
 
 ### 基本原理
-根据 **HFEA v1.0** 协议，我们不仅修复了错误，还消除了“架构异味”（静默异常）。这种基于确定性的改进使系统更接近“本体正确性”。
+
+通过显式地将“符号查找失败”视为一种有效状态而非异常，我们允许重构操作在信息不完全的情况下继续进行“尽力而为”的处理。这符合实际工程场景，因为静态分析并不总是完美的。同时，保留 `load` 方法作为 helper，避免了为了适配新 API 而大规模重写现有测试的成本。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium
-#comp/runtime #concept/history #scope/core
-#ai/instruct
-#task/domain/refactoring #task/object/semantic-graph #task/action/bug-fix
-#task/state/end #task/status/completed
+
+#intent/fix #flow/ready #priority/critical #comp/engine #comp/tests #scope/core #scope/dx #ai/instruct #task/domain/refactoring #task/object/resilience #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 提交修复与改进
-
-我们将受影响的文件添加到暂存区，并创建一个包含详细说明的提交。
+#### Acts 1: 提交变更
 
 ~~~~~act
 git_add
-packages/stitcher-application/src/stitcher/app/runners/refactor.py
+packages/stitcher-refactor/src/stitcher/refactor/workspace.py
 packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py
+packages/stitcher-application/src/stitcher/app/runners/refactor.py
+packages/stitcher-refactor/src/stitcher/refactor/operations/rename_symbol.py
+packages/stitcher-refactor/tests/unit/operations/test_rename_symbol_operation.py
+packages/stitcher-refactor/tests/unit/test_rename_operation.py
 ~~~~~
 
 ~~~~~act
 git_commit
 ~~~~~
 ~~~~~text
-fix(refactor): fix AttributeError in SemanticGraph and improve error visibility
+fix(refactor): restore SemanticGraph.load and improve rename resilience
+
+1.  **Restore `SemanticGraph.load`**: Re-added the `load(package_name)` method to `SemanticGraph` to fix backward compatibility with existing unit tests and to support isolated package analysis.
+2.  **Add `SemanticGraph.find_symbol`**: Introduced a robust public API for finding symbol definitions across the entire loaded graph.
+3.  **Enhance `RenameSymbolOperation`**:
+    *   Refactored to use `find_symbol`.
+    *   Removed silent `try...except ValueError` block.
+    *   Now gracefully handles missing symbol definitions by skipping sidecar updates instead of crashing or raising errors.
+4.  **Update `Workspace`**: Added support for identifying and loading `peripheral_paths` (e.g. examples, scripts) as distinct from core source paths.
+5.  **Refactor `RefactorRunner`**: Simplified loading logic to use the new `SemanticGraph.load_from_workspace`.
+
+This change stabilizes the refactoring engine and ensures that refactoring operations are resilient to partial semantic information.
+
 
 - Corrected an AttributeError in `SemanticGraph.load_from_workspace` where `self._griffe_loader.modules_collection` (a `ModulesCollection` object) was being accessed with `.values()`. It now correctly uses `.members.values()`.
 - Replaced silent `try-except: pass` blocks with explicit `logging` calls and selective re-raising in `SemanticGraph`. This ensures that critical parsing or loading failures are visible in the logs rather than failing silently.
@@ -53,5 +65,7 @@ fix(refactor): fix AttributeError in SemanticGraph and improve error visibility
 ~~~~~
 
 ### 下一步建议
-- **监控 CI**: 观察 CI 环境中的运行情况，确保在不同的环境配置下语义图谱构建依然稳健。
-- **扩展重构操作**: 既然基础架构已稳定，可以考虑实现更复杂的重构操作，例如跨包的移动 (`Move`) 或更智能的命名空间更新。
+
+现在测试已经通过，基础组件也已增强，我们可以继续执行原计划的 **4.2 调整 Planner 策略**。
+
+具体任务是：修改 `Planner`（或相关的 Operation），在生成 Sidecar 更新意图之前，利用 `Workspace.is_peripheral(path)` 检查文件是否属于周边代码。如果是，则**不生成** `SidecarUpdateIntent`，因为周边代码不应该有伴生的 `.stitcher.yaml` 文件。
