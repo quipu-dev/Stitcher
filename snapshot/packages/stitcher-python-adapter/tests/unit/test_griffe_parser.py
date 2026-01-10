@@ -111,7 +111,7 @@ import os
 from typing import List, Optional
 import sys as system
 """
-        module = parser.parse(code)
+        module = parser.parse(code, file_path="test_imports.py")
 
         # ast.unparse normalizes output
         expected_imports = [
@@ -125,13 +125,13 @@ import sys as system
         for expected in expected_imports:
             assert expected in module.imports
 
-    def test_enrich_typing_imports(parser):
+    def test_enrich_typing_imports(self, parser):
         # Code explicitly missing 'from typing import List'
         code = """
 def process_list(items: List[int]) -> None:
     pass
 """
-        module = parser.parse(code)
+        module = parser.parse(code, file_path="test_typing.py")
 
         # Check that the import was added automatically
         assert "from typing import List" in module.imports
@@ -144,7 +144,8 @@ from . import sibling
 import sys as system
 """
         # Griffe treats imports as Aliases if they are members of the module
-        module = parser.parse(code)
+        # We must provide a file path so Griffe doesn't treat it as a builtin module error
+        module = parser.parse(code, file_path="test_aliases.py")
 
         # We expect attributes for these imports now
         # Note: 'import os' creates an alias 'os' pointing to 'os'

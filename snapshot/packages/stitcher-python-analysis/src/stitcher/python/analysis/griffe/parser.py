@@ -85,15 +85,22 @@ class GriffePythonParser(LanguageParserProtocol):
         )
 
     def _extract_location(self, obj: griffe.Object) -> Optional[SourceLocation]:
-        if obj.lineno:
-            # Safely access end_lineno as it might not be present on base Object type
-            end_lineno = getattr(obj, "end_lineno", None) or obj.lineno
-            return SourceLocation(
-                lineno=obj.lineno,
-                col_offset=0,  # Griffe doesn't provide column
-                end_lineno=end_lineno,
-                end_col_offset=0,
-            )
+        try:
+            # Accessing lineno on an Alias triggers target resolution.
+            # If the target is external/unresolvable, this raises AliasResolutionError (or KeyError).
+            # We catch generic Exception here to be safe against Griffe internals,
+            # accepting that unresolvable aliases will have no location for now.
+            if obj.lineno:
+                # Safely access end_lineno as it might not be present on base Object type
+                end_lineno = getattr(obj, "end_lineno", None) or obj.lineno
+                return SourceLocation(
+                    lineno=obj.lineno,
+                    col_offset=0,  # Griffe doesn't provide column
+                    end_lineno=end_lineno,
+                    end_col_offset=0,
+                )
+        except Exception:
+            pass
         return None
 
     def _map_class(self, gc: griffe.Class) -> ClassDef:

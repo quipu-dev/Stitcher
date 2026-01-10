@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 在 IR 和 Parser 中引入 Alias 支持以增强引用分析", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768051594.6694732, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Griffe 解析器中的 Alias 解析崩溃与测试错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768051714.3581161, "duration_ms": 0}}
