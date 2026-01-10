@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M interfaces.py, M __init__.py, M asset_path_resolver.py ... and 6 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768026123.9882863, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 stubgen 包拆分后的集成问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768026126.5536194, "duration_ms": 0}}

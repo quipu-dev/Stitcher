@@ -50,20 +50,6 @@ class RefactorRunner:
             loader = MigrationLoader()
             spec = loader.load_from_path(migration_script)
 
-            # --- DEBUG ---
-            from stitcher.refactor.operations import RenameSymbolOperation
-
-            for op in spec.operations:
-                if isinstance(op, RenameSymbolOperation):
-                    target_fqn = op.old_fqn
-                    usages = graph.registry.get_usages(target_fqn)
-                    bus.debug(
-                        L.debug.log.refactor_symbol_usage_count,
-                        count=len(usages),
-                        fqn=target_fqn,
-                    )
-            # --- END DEBUG ---
-
             planner = Planner()
             file_ops = planner.plan(spec, ctx)
             bus.debug(L.debug.log.refactor_planned_ops_count, count=len(file_ops))
