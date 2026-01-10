@@ -302,7 +302,7 @@ class SemanticGraph:
                             return found
             return None
 
-        for module in self._griffe_loader.modules_collection.values():
+        for module in self._griffe_loader.modules_collection:
             found = _find_in_members(module)
             if found:
                 return found
