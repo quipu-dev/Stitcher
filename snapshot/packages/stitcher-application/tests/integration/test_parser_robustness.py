@@ -1,4 +1,3 @@
-import pytest
 from stitcher.test_utils import WorkspaceFactory, create_test_app, SpyBus
 from needle.pointer import L
 
