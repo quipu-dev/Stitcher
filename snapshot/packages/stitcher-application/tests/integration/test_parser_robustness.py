@@ -25,16 +25,16 @@ def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
 
     # Create the app
     app = create_test_app(tmp_path)
-    
+
     # SETUP: Mock the parser to simulate a crash on specific file
     # We access the parser instance directly attached to the scanner
     real_parse = app.scanner.parser.parse
-    
+
     def failing_parse(source_code, file_path=""):
         if "core.py" in str(file_path):
             raise ValueError("Simulated parser crash for testing")
         return real_parse(source_code, file_path)
-        
+
     monkeypatch.setattr(app.scanner.parser, "parse", failing_parse)
 
     # WHEN we run the check command
@@ -44,7 +44,7 @@ def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
 
     # THEN the command should fail
     assert not success, "Command should return False when parser fails"
-    
+
     # AND report a generic error
     spy_bus.assert_id_called(L.error.generic, level="error")
 
