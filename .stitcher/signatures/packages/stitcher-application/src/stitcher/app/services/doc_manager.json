@@ -83,6 +83,7 @@
     "baseline_code_structure_hash": "a2f948dc6e91ac5cadfae6dd35803e41ac4599d7f1a652ab5837e4cabb34d632",
     "baseline_yaml_content_hash": "2a5425854930cf4b2eb740e886855013dd77c75b8b4f032eb99bc5fb2d8da988"
   },
+  "DocumentManager.resolver": {},
   "DocumentManager.root_path": {
     "baseline_yaml_content_hash": "ae19ba5d58eb34b77c99f67a28ec6605bbb661b4d7092fa36d9d0c9fc6eb7e9a"
   },

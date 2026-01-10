@@ -15,5 +15,3 @@
 "SignatureManager.save_composite_hashes": |-
   Saves the composite hash map for a module.
   Expected format: { "FQN": { "baseline_code_structure_hash": "...", "baseline_yaml_content_hash": "..." } }
-"SignatureManager.sig_root": |-
-  The root directory for storing signature files.

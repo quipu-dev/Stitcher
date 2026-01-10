@@ -14,10 +14,10 @@ from stitcher.spec import (
 )
 from stitcher.app.services import (
     DocumentManager,
-    StubPackageManager,
     ScannerService,
 )
 from stitcher.common.transaction import TransactionManager
+from .services import StubPackageManager
 
 
 class GenerateRunner:

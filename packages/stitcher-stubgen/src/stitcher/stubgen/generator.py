@@ -9,7 +9,7 @@ from stitcher.spec import (
 )
 
 
-class StubGenerator:
+class PythonStubGenerator:
     def __init__(self, indent_spaces: int = 4):
         self._indent_str = " " * indent_spaces
 

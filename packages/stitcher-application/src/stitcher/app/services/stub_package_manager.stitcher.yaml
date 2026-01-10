@@ -1,9 +1,0 @@
-"StubPackageManager": |-
-  Manages the scaffolding of a PEP 561 stub package.
-"StubPackageManager._get_pep561_logical_path": |-
-  Converts a standard logical path to a PEP 561-compliant one for stubs.
-"StubPackageManager.scaffold": |-
-  Creates the directory structure and pyproject.toml for a stub package.
-
-  Returns:
-      bool: True if the package was created, False if it already existed.

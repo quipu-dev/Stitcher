@@ -1,5 +1,5 @@
 import libcst as cst
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union, cast, Sequence
 from stitcher.common import format_docstring
 
 # Type alias for nodes that have a body attribute
@@ -33,7 +33,7 @@ class StripperTransformer(cst.CSTTransformer):
 
     def _strip_docstrings_from_body(
         self,
-        body_nodes: Union[List[cst.BaseStatement], tuple[cst.BaseStatement, ...]],
+        body_nodes: Sequence[cst.BaseStatement],
         strip_container_doc: bool,
     ) -> List[cst.BaseStatement]:
         if not body_nodes:

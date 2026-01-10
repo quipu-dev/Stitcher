@@ -5,22 +5,24 @@ from typing import Optional
 from stitcher.app import StitcherApp
 from stitcher.app.protocols import InteractionHandler
 from stitcher.adapter.python import (
-    PythonParser,
     PythonTransformer,
-    PythonStubGenerator,
     PythonFingerprintStrategy,
 )
+
+from stitcher.adapter.python.griffe_parser import GriffePythonParser
 
 
 def create_test_app(
     root_path: Path, interaction_handler: Optional[InteractionHandler] = None
 ) -> StitcherApp:
+    parser = GriffePythonParser()
+    transformer = PythonTransformer()
+    strategy = PythonFingerprintStrategy()
     return StitcherApp(
         root_path=root_path,
-        parser=PythonParser(),
-        transformer=PythonTransformer(),
-        stub_generator=PythonStubGenerator(),
-        fingerprint_strategy=PythonFingerprintStrategy(),
+        parser=parser,
+        transformer=transformer,
+        fingerprint_strategy=strategy,
         interaction_handler=interaction_handler,
     )
 

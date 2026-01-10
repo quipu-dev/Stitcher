@@ -104,7 +104,7 @@ class GriffeDocstringParser(DocstringParserProtocol):
                         name=param.name,
                         annotation=str(param.annotation) if param.annotation else None,
                         description=param.description or "",
-                        default=str(param.default) if param.default else None,
+                        default=None,  # `default` is not available on DocstringAttribute
                     )
                 )
             return DocstringSection(kind=kind, title=title, content=items)
@@ -138,7 +138,8 @@ class GriffeDocstringParser(DocstringParserProtocol):
         if isinstance(section, DocstringSectionAdmonition):
             # Admonitions like "Note", "Warning"
             # Griffe puts the content in .value (DocstringSectionText)
-            content = section.value.value
-            return DocstringSection(kind="admonition", title=title, content=content)
+            if isinstance(section.value, DocstringSectionText):
+                content = section.value.value
+                return DocstringSection(kind="admonition", title=title, content=content)
 
         return None

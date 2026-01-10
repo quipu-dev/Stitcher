@@ -33,8 +33,8 @@
     "baseline_yaml_content_hash": "56ba56645ae8bc442c435ee789bb3cfbddd0eaefc0e0a33b11b20ba6d391dc55"
   },
   "StitcherApp.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, transformer: LanguageTransformerProtocol, stub_generator: StubGeneratorProtocol, fingerprint_strategy: FingerprintStrategyProtocol, interaction_handler: Optional[InteractionHandler] = None):",
-    "baseline_code_structure_hash": "07428586822e2d245f3e5c24cd92b7389acf5ec07264222ffdf92184fc56f344"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, transformer: LanguageTransformerProtocol, fingerprint_strategy: FingerprintStrategyProtocol, interaction_handler: Optional[InteractionHandler] = None):",
+    "baseline_code_structure_hash": "da60d66c14e54996f9d0958ad20cacd2099cc1a4c9abc786e83fe7597c7c478c"
   },
   "StitcherApp._analyze_file": {
     "baseline_code_signature_text": "def _analyze_file(self, module: ModuleDef) -> tuple[FileCheckResult, list[InteractionContext]]:",
@@ -137,5 +137,6 @@
   "StitcherApp.stub_pkg_manager": {
     "baseline_yaml_content_hash": "66a764e6bf4baed31dcffb65888c3cfd478d7df8971ee3920d1f517cbafd8949"
   },
+  "StitcherApp.stubgen_service": {},
   "StitcherApp.transform_runner": {}
 }

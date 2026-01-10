@@ -15,8 +15,8 @@
     "baseline_code_structure_hash": "4dce6efd0a3cd30ee96046c54a2c7af729b4661e39e75e8f277b2cad73fe3e23"
   },
   "DocstringSerializerProtocol.to_yaml": {
-    "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Dict[str, Any]:",
-    "baseline_code_structure_hash": "b5da18fb949b3e9ed0d5b8faf353daa30f557fa51afbde3684c5f268aae8a950"
+    "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
+    "baseline_code_structure_hash": "37a505a9dbfb9e1d452ade2b0eae56b42aec7f2a25d0db0e93dfa22c1fc58e66"
   },
   "FingerprintStrategyProtocol": {
     "baseline_yaml_content_hash": "548744f31aa0f674d6e0fc3ead1e689063fdddc0e0213a3f6d19ac377e985f44"

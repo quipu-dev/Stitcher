@@ -2,6 +2,10 @@
   "DocumentAdapter": {
     "baseline_yaml_content_hash": "5a086ed7e2069a1800c0d961eeaeff5b7da613065736aed6bb4db87d5ea5242f"
   },
+  "DocumentAdapter.dump": {
+    "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",
+    "baseline_code_structure_hash": "bf3c79fc5426bd31a175e5837167fc630501321737ae4e06135bb40ea9e742af"
+  },
   "DocumentAdapter.load": {
     "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "eabd26163ff572de5814f693e2b0ee951c1a9f1150be6aa50b3a914e0e8114bf",

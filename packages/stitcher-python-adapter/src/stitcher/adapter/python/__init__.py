@@ -10,7 +10,6 @@ from .docstring import (
     get_docstring_serializer,
 )
 from .fingerprint import PythonFingerprintStrategy
-from .generator import PythonStubGenerator
 from .griffe_parser import GriffePythonParser
 from .inspector import InspectionError, parse_plugin_entry
 from .parser import PythonParser
@@ -22,7 +21,6 @@ __all__ = [
     "InspectionError",
     "PythonFingerprintStrategy",
     "PythonParser",
-    "PythonStubGenerator",
     "PythonTransformer",
     "parse_plugin_entry",
     # Docstring Sub-package

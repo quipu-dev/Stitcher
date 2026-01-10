@@ -50,18 +50,6 @@ class RefactorRunner:
             loader = MigrationLoader()
             spec = loader.load_from_path(migration_script)
 
-            # --- DEBUG ---
-            for op in spec.operations:
-                if op.__class__.__name__ == "RenameSymbolOperation":
-                    target_fqn = op.old_fqn
-                    usages = graph.registry.get_usages(target_fqn)
-                    bus.debug(
-                        L.debug.log.refactor_symbol_usage_count,
-                        count=len(usages),
-                        fqn=target_fqn,
-                    )
-            # --- END DEBUG ---
-
             planner = Planner()
             file_ops = planner.plan(spec, ctx)
             bus.debug(L.debug.log.refactor_planned_ops_count, count=len(file_ops))
@@ -71,16 +59,23 @@ class RefactorRunner:
                 return True
 
             # 3. Preview
+            from stitcher.common.transaction import (
+                WriteFileOp,
+                MoveFileOp,
+                DeleteFileOp,
+                DeleteDirectoryOp,
+            )
+
             tm = TransactionManager(self.root_path)
             for op in file_ops:
                 # Add ops to transaction manager
-                if op.__class__.__name__ == "WriteFileOp":
+                if isinstance(op, WriteFileOp):
                     tm.add_write(op.path, op.content)
-                elif op.__class__.__name__ == "MoveFileOp":
+                elif isinstance(op, MoveFileOp):
                     tm.add_move(op.path, op.dest)
-                elif op.__class__.__name__ == "DeleteFileOp":
+                elif isinstance(op, DeleteFileOp):
                     tm.add_delete_file(op.path)
-                elif op.__class__.__name__ == "DeleteDirectoryOp":
+                elif isinstance(op, DeleteDirectoryOp):
                     tm.add_delete_dir(op.path)
 
             bus.warning(L.refactor.run.preview_header, count=tm.pending_count)
