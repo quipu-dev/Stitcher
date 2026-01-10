@@ -28,9 +28,12 @@ def test_parser_fails_on_local_typing_import():
     module = parser.parse(source_code, "buggy_module.py")
     
     # Verify that the parser survived and produced the alias
-    # "from typing import Optional" -> Attribute named "Optional"
-    opt = next((a for a in module.attributes if a.name == "Optional"), None)
+    # "from typing import Optional" is inside MyService, so check the class attributes
+    cls_def = next((c for c in module.classes if c.name == "MyService"), None)
+    assert cls_def is not None
+
+    opt = next((a for a in cls_def.attributes if a.name == "Optional"), None)
     assert opt is not None
     assert opt.alias_target == "typing.Optional"
-    # Location should be None because resolution failed
+    # Location should be None because resolution failed (external import)
     assert opt.location is None

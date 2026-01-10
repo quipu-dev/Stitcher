@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 优化 Alias 处理逻辑并修复副作用", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768051865.7824123, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正集成测试中断言 Alias 位置的逻辑错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768051932.3140862, "duration_ms": 0}}
