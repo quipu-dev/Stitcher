@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 增加 stderr 调试日志以诊断集成测试失败", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768034298.3658457, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(debug): 使用 sys.__stderr__ 绕过 CliRunner 捕获", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768034418.2145674, "duration_ms": 0}}

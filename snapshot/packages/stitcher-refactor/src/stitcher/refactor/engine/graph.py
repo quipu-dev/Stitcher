@@ -196,18 +196,18 @@ class SemanticGraph:
 
     def load_from_workspace(self) -> None:
         import sys
-        print(f"DEBUG: Graph loading from workspace. Search paths: {self.search_paths}", file=sys.stderr)
+        print(f"DEBUG: Graph loading from workspace. Search paths: {self.search_paths}", file=sys.__stderr__)
         # 1. Load all main packages
         for pkg_name in self.workspace.import_to_source_dirs.keys():
-            print(f"DEBUG: Loading package '{pkg_name}'", file=sys.stderr)
+            print(f"DEBUG: Loading package '{pkg_name}'", file=sys.__stderr__)
             try:
                 module = self._griffe_loader.load(pkg_name, submodules=True)
                 if isinstance(module, griffe.Module):
                     self._modules[pkg_name] = module
                 else:
-                    print(f"DEBUG: '{pkg_name}' loaded as {type(module)}, not Module", file=sys.stderr)
+                    print(f"DEBUG: '{pkg_name}' loaded as {type(module)}, not Module", file=sys.__stderr__)
             except Exception as e:
-                print(f"DEBUG: Failed to load package '{pkg_name}': {e}", file=sys.stderr)
+                print(f"DEBUG: Failed to load package '{pkg_name}': {e}", file=sys.__stderr__)
                 raise
 
         # 2. Load all peripheral files/directories
