@@ -21,13 +21,14 @@ dev = [
     "stitcher-stubgen",
     "stitcher-test-utils",
     "stitcher-refactor",
+    "stitcher-index",
 ]
 
 [tool.setuptools.packages.find]
 exclude = ["migrations*"]
 
 [tool.uv.workspace]
-members = ["packages/*", "packages/stitcher-test-utils", "packages/stitcher-python-analysis"]
+members = ["packages/*", "packages/stitcher-test-utils", "packages/stitcher-python-analysis", "packages/stitcher-index"]
 
 [tool.uv.sources]
 pyneedle = { workspace = true }
@@ -43,6 +44,7 @@ stitcher-cli = { workspace = true }
 stitcher-stubgen = { workspace = true }
 stitcher-test-utils = { workspace = true }
 stitcher-refactor = { workspace = true }
+stitcher-index = { workspace = true }
 stitcher-python-analysis = { workspace = true }
 
 [tool.pytest.ini_options]
@@ -50,34 +52,35 @@ addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
 testpaths = ["tests", "packages"]
 norecursedirs = ["tests/fixtures"]
 pythonpath = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
-    "packages/stitcher-scanner/src",
-    "packages/stitcher-io/src",
-    "packages/stitcher-config/src",
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
-    "packages/pyneedle-spec/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-index/src",
+    "packages/stitcher-python-adapter/src",
+    "packages/stitcher-python-analysis/src",
+    "packages/stitcher-refactor/src",
+    "packages/stitcher-spec/src",
+    "packages/stitcher-stubgen/src",
+    "packages/stitcher-test-utils/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-runtime/src",
-    "packages/pyneedle/src",
-    "packages/stitcher-test-utils/src",
-    "packages/stitcher-refactor/src",
-    "packages/stitcher-stubgen/src",
-    "packages/stitcher-python-analysis/src"
+    "packages/pyneedle-spec/src",
 ]
 
 [tool.stitcher.targets.stitcher]
 scan_paths = [
-    "packages/stitcher-spec/src",
-    "packages/stitcher-common/src",
-    "packages/stitcher-scanner/src",
-    "packages/stitcher-io/src",
-    "packages/stitcher-config/src",
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
-    "packages/stitcher-test-utils/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-index/src",
+    "packages/stitcher-python-adapter/src",
+    "packages/stitcher-python-analysis/src",
     "packages/stitcher-refactor/src",
+    "packages/stitcher-spec/src",
+    "packages/stitcher-stubgen/src",
+    "packages/stitcher-test-utils/src",
 ]
 stub_package = "packages/stitcher-stubs"
 
@@ -86,7 +89,6 @@ scan_paths = [
     "packages/pyneedle-spec/src",
     "packages/pyneedle-pointer/src",
     "packages/pyneedle-runtime/src",
-    "packages/pyneedle/src",
 ]
 stub_package = "packages/needle-stubs"
 
@@ -111,4 +113,5 @@ extraPaths = [
     "packages/stitcher-refactor/src",
     "packages/stitcher-stubgen/src",
     "packages/stitcher-python-analysis/src",
+    "packages/stitcher-index/src",
 ]

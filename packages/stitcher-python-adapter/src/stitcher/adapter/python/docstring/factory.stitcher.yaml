@@ -1,0 +1,13 @@
+"RawDocstringRenderer": |-
+  A simple renderer that just dumps the summary.
+  Used for 'raw' mode consistency.
+"get_docstring_codec": |-
+  Factory to get the parser and renderer for a specific docstring style.
+
+  Args:
+      style: "google", "numpy", or "raw".
+
+  Returns:
+      (Parser, Renderer) tuple.
+"get_docstring_serializer": |-
+  Factory to get the serializer for a specific docstring style.

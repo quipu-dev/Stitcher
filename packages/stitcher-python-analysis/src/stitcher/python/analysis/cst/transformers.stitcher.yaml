@@ -1,8 +1,10 @@
-"StripperTransformer": |-
-  A LibCST transformer that removes docstrings from the source code based on a whitelist.
 "InjectorTransformer": |-
   A LibCST transformer that injects docstrings into the source code based on an FQN-to-content map.
-"strip_docstrings": |-
-  Utility to perform docstring stripping on a source string.
+"StripperTransformer": |-
+  A LibCST transformer that removes docstrings from the source code based on a whitelist.
+"StripperTransformer._get_assign_target_name": |-
+  Extracts the target name from a simple assignment node.
 "inject_docstrings": |-
   Utility to perform docstring injection on a source string.
+"strip_docstrings": |-
+  Utility to perform docstring stripping on a source string.

@@ -17,6 +17,7 @@ members = [
     "stitcher-cli",
     "stitcher-common",
     "stitcher-config",
+    "stitcher-index",
     "stitcher-python",
     "stitcher-python-adapter",
     "stitcher-python-analysis",
@@ -685,6 +686,7 @@ dependencies = [
     { name = "pyneedle" },
     { name = "stitcher-common" },
     { name = "stitcher-config" },
+    { name = "stitcher-index" },
     { name = "stitcher-python-adapter" },
     { name = "stitcher-refactor" },
     { name = "stitcher-spec" },
@@ -696,6 +698,7 @@ requires-dist = [
     { name = "pyneedle", editable = "packages/pyneedle" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-config", editable = "packages/stitcher-config" },
+    { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-python-adapter", editable = "packages/stitcher-python-adapter" },
     { name = "stitcher-refactor", editable = "packages/stitcher-refactor" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
@@ -746,6 +749,21 @@ requires-dist = [
 ]
 
 [[package]]
+name = "stitcher-index"
+version = "0.1.0"
+source = { editable = "packages/stitcher-index" }
+dependencies = [
+    { name = "stitcher-common" },
+    { name = "stitcher-spec" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-spec", editable = "packages/stitcher-spec" },
+]
+
+[[package]]
 name = "stitcher-python"
 version = "0.1.0"
 source = { virtual = "." }
@@ -763,6 +781,7 @@ dev = [
     { name = "ruff" },
     { name = "stitcher-application" },
     { name = "stitcher-cli" },
+    { name = "stitcher-index" },
     { name = "stitcher-refactor" },
     { name = "stitcher-stubgen" },
     { name = "stitcher-test-utils" },
@@ -781,6 +800,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "stitcher-application", marker = "extra == 'dev'", editable = "packages/stitcher-application" },
     { name = "stitcher-cli", marker = "extra == 'dev'", editable = "packages/stitcher-cli" },
+    { name = "stitcher-index", marker = "extra == 'dev'", editable = "packages/stitcher-index" },
     { name = "stitcher-refactor", marker = "extra == 'dev'", editable = "packages/stitcher-refactor" },
     { name = "stitcher-stubgen", marker = "extra == 'dev'", editable = "packages/stitcher-stubgen" },
     { name = "stitcher-test-utils", marker = "extra == 'dev'", editable = "packages/stitcher-test-utils" },
@@ -835,6 +855,7 @@ dependencies = [
     { name = "griffe" },
     { name = "libcst" },
     { name = "stitcher-common" },
+    { name = "stitcher-index" },
     { name = "stitcher-python-analysis" },
     { name = "stitcher-spec" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
@@ -845,6 +866,7 @@ requires-dist = [
     { name = "griffe" },
     { name = "libcst" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-python-analysis", editable = "packages/stitcher-python-analysis" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },

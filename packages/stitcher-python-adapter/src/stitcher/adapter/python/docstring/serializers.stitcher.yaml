@@ -1,0 +1,17 @@
+"BaseSerializer": |-
+  Base serializer that handles Addon preservation and common utilities.
+"BaseSerializer._decode_item_value": |-
+  Decodes string value into parts.
+  Since we don't encode types, this just treats the whole string as description.
+"BaseSerializer._encode_item_value": |-
+  Encodes DocstringItem into a string.
+  We deliberately DO NOT encode the type annotation here to avoid Single Source of Truth violation.
+  Types should be derived from the code signature, not stored in YAML.
+"RawSerializer": |-
+  Legacy serializer.
+  Format:
+      "summary string"
+  OR
+      {"Raw": "summary string", "Addon...": ...}
+"StructuredSerializer": |-
+  Base class for Google/NumPy serializers.

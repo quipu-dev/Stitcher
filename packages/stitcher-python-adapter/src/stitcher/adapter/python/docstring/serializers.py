@@ -9,26 +9,13 @@ from stitcher.spec import (
 
 
 class BaseSerializer(DocstringSerializerProtocol):
-    """
-    Base serializer that handles Addon preservation and common utilities.
-    """
-
     def _extract_addons(self, data: Dict[str, Any]) -> Dict[str, Any]:
         return {k: v for k, v in data.items() if k.startswith("Addon.")}
 
     def _encode_item_value(self, item: DocstringItem) -> str:
-        """
-        Encodes DocstringItem into a string.
-        We deliberately DO NOT encode the type annotation here to avoid Single Source of Truth violation.
-        Types should be derived from the code signature, not stored in YAML.
-        """
         return item.description or ""
 
     def _decode_item_value(self, value: str) -> dict:
-        """
-        Decodes string value into parts.
-        Since we don't encode types, this just treats the whole string as description.
-        """
         return {"annotation": None, "description": value}
 
     def to_yaml(self, ir: DocstringIR) -> Dict[str, Any]:
@@ -39,14 +26,6 @@ class BaseSerializer(DocstringSerializerProtocol):
 
 
 class RawSerializer(BaseSerializer):
-    """
-    Legacy serializer.
-    Format:
-        "summary string"
-    OR
-        {"Raw": "summary string", "Addon...": ...}
-    """
-
     def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
         summary = ir.summary or ""
         if ir.addons:
@@ -67,10 +46,6 @@ class RawSerializer(BaseSerializer):
 
 
 class StructuredSerializer(BaseSerializer):
-    """
-    Base class for Google/NumPy serializers.
-    """
-
     # Maps SectionKind -> YAML Key (e.g. PARAMETERS -> Args)
     KIND_TO_KEY: Dict[str, str] = {}
     # Maps YAML Key -> SectionKind (e.g. Args -> PARAMETERS)

@@ -1,0 +1,6 @@
+"DatabaseManager.get_connection": |-
+  Yields a managed connection.
+  Commits on success, rolls back on exception.
+  Closes connection at the end.
+"DatabaseManager.initialize": |-
+  Loads schema.sql and initializes the database tables.

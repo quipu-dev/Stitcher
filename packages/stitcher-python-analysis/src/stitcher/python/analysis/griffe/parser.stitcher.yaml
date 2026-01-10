@@ -1,4 +1,5 @@
 "GriffePythonParser": |-
-  Parser implementation that leverages Griffe for advanced static analysis and IR generation.
+  A Python parser implementation using Griffe.
+  Migrated from stitcher-python-adapter.
 "GriffePythonParser.parse": |-
-  Parses source code into ModuleDef using Griffe's object graph.
+  Parses the given source code into a Stitcher ModuleDef IR using Griffe.

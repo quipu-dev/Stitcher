@@ -1,0 +1,10 @@
+"EntityHasher": |-
+  Protocol for individual hashing strategies.
+"EntityHasher.update": |-
+  Calculate specific hashes and update the fingerprint object.
+"PythonFingerprintStrategy": |-
+  Coordinator that delegates to a list of composable Hashers.
+"SignatureTextHasher": |-
+  Generates the human-readable signature text for diffing.
+"StructureHasher": |-
+  Computes the structural hash (signature shape) of a function.

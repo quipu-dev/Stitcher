@@ -20,7 +20,6 @@ class StripperTransformer(cst.CSTTransformer):
         return isinstance(node, cst.Expr) and isinstance(node.value, cst.SimpleString)
 
     def _get_assign_target_name(self, node: cst.BaseSmallStatement) -> Optional[str]:
-        """Extracts the target name from a simple assignment node."""
         if isinstance(node, cst.Assign):
             # Only handle simple assignment: x = ...
             if len(node.targets) == 1 and isinstance(node.targets[0].target, cst.Name):
