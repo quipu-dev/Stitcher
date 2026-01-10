@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Callable, Optional
+from stitcher.config import StitcherConfig
 
 from stitcher.common import bus
 from needle.pointer import L
@@ -21,13 +22,14 @@ class RefactorRunner:
     def run_apply(
         self,
         migration_script: Path,
+        config: StitcherConfig,
         dry_run: bool = False,
         confirm_callback: Optional[Callable[[int], bool]] = None,
     ) -> bool:
         try:
             # 1. Bootstrap services
             bus.info(L.refactor.run.loading_graph)
-            workspace = Workspace(self.root_path)
+            workspace = Workspace(self.root_path, config)
             bus.debug(
                 L.debug.log.refactor_workspace_paths, paths=workspace.get_search_paths()
             )
