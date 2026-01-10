@@ -130,7 +130,6 @@ class PythonAdapter(LanguageAdapter):
             register_local(func.name)
 
         for cls in module.classes:
-            cls_fqn = register_local(cls.name)
             for method in cls.methods:
                 # Assuming UsageScanVisitor handles attribute lookups,
                 # strictly speaking we might not need to pass method names as locals

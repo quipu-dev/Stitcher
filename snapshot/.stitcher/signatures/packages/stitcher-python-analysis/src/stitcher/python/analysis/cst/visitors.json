@@ -2,6 +2,7 @@
   "IRBuildingVisitor": {
     "baseline_yaml_content_hash": "291e393707efa7e2ef1f5bf5d6ee642a0c50179602804c332eaa3bdb23f32ef2"
   },
+  "IRBuildingVisitor.METADATA_DEPENDENCIES": {},
   "IRBuildingVisitor.__init__": {
     "baseline_code_signature_text": "def __init__(self):",
     "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
@@ -12,6 +13,10 @@
   },
   "IRBuildingVisitor._class_stack": {},
   "IRBuildingVisitor._dummy_module": {},
+  "IRBuildingVisitor._extract_location": {
+    "baseline_code_signature_text": "def _extract_location(self, node: cst.CSTNode) -> SourceLocation:",
+    "baseline_code_structure_hash": "3143a3afcc13a90c7906fa127e1d1385d25bf671e43fcce3f1affb0e986d6d48"
+  },
   "IRBuildingVisitor._parse_parameters": {
     "baseline_code_signature_text": "def _parse_parameters(self, params: cst.Parameters) -> List[Argument]:",
     "baseline_code_structure_hash": "2415da40a88d45a1444e8fd1f8bfaf557ad5e0ad3b2f2b29235dc418cd9ff2fb"

@@ -80,9 +80,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
 
         loc = self._extract_location(node)
         self._add_attribute(
-            Attribute(
-                name=name, annotation=annotation, value=value, location=loc
-            )
+            Attribute(name=name, annotation=annotation, value=value, location=loc)
         )
         return False
 
