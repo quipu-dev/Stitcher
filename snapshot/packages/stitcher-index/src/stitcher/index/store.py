@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Set
 from .db import DatabaseManager
 from .types import FileRecord, SymbolRecord, ReferenceRecord
 
