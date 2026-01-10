@@ -1,4 +1,5 @@
 {
+  "ABC": {},
   "DeleteDirectoryOp": {},
   "DeleteDirectoryOp.describe": {
     "baseline_code_signature_text": "def describe(self) -> str:",
@@ -52,6 +53,8 @@
     "baseline_code_signature_text": "def write_text(self, path: Path, content: str) -> None:",
     "baseline_code_structure_hash": "ba3d96911f7c8b9307afbd6478b9a4369320519af0de273184a4f968185e38a5"
   },
+  "L": {},
+  "List": {},
   "MoveFileOp": {},
   "MoveFileOp.describe": {
     "baseline_code_signature_text": "def describe(self) -> str:",
@@ -62,6 +65,9 @@
     "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
     "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
   },
+  "Optional": {},
+  "Path": {},
+  "Protocol": {},
   "RealFileSystem": {},
   "RealFileSystem.exists": {
     "baseline_code_signature_text": "def exists(self, path: Path) -> bool:",
@@ -126,6 +132,7 @@
     "baseline_code_structure_hash": "42d00325fcbfefbcf799ae9b6e99a8b3ec0774b5ebb718e9d247a8ef8f628ce7"
   },
   "TransactionManager.root_path": {},
+  "Union": {},
   "WriteFileOp": {},
   "WriteFileOp.content": {},
   "WriteFileOp.describe": {
@@ -135,5 +142,9 @@
   "WriteFileOp.execute": {
     "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
     "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
-  }
+  },
+  "abstractmethod": {},
+  "bus": {},
+  "dataclass": {},
+  "shutil": {}
 }

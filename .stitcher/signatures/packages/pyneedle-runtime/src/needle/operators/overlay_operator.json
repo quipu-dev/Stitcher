@@ -1,4 +1,7 @@
 {
+  "Any": {},
+  "List": {},
+  "OperatorProtocol": {},
   "OverlayOperator": {
     "baseline_yaml_content_hash": "2a0fa91d29f459031f6dec043c678f661e7dce4ff7a585ec964b44104e03c1c7"
   },
@@ -12,5 +15,7 @@
     "baseline_code_structure_hash": "b31ecdaf387f76bc9010d3f3c7f405432e5e537a1733bace4ebd5878c058089f",
     "baseline_yaml_content_hash": "0ab977891b65d44ad66d1d2fa25b14af130260527bb7cce07d12226828af8c76"
   },
-  "OverlayOperator.operators": {}
+  "OverlayOperator.operators": {},
+  "SemanticPointerProtocol": {},
+  "Union": {}
 }

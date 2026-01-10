@@ -1,4 +1,10 @@
 {
+  "Any": {},
+  "ConflictType": {},
+  "InteractionContext": {},
+  "L": {},
+  "List": {},
+  "ResolutionAction": {},
   "SemanticMenuOption": {
     "baseline_yaml_content_hash": "094bff150864625cab0566d91126a79165c98e1b19b54794bf90216c0abe867e"
   },
@@ -14,6 +20,7 @@
   "SemanticMenuOption.label_id": {
     "baseline_yaml_content_hash": "ad6dd8e86cd2167dafea1d757136a8dc0beafdac02bc188570027ccf84544364"
   },
+  "SemanticPointer": {},
   "TyperInteractiveRenderer": {
     "baseline_yaml_content_hash": "93692d06cf12324096fb552da6cdcef36aae854a944039ab6d3094420df3b6f6"
   },
@@ -38,5 +45,9 @@
     "baseline_code_signature_text": "def show_summary(self, count: int) -> None:",
     "baseline_code_structure_hash": "28152474c6397aa120c35e5adcae954f425b3530545bc779c541ac04e1c5b97d",
     "baseline_yaml_content_hash": "d1561e8d1ed78c7df789313f68973de7b57dff7b913bbb7fd1e7b904b0249d94"
-  }
+  },
+  "Union": {},
+  "click": {},
+  "dataclass": {},
+  "typer": {}
 }

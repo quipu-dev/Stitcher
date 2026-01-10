@@ -1,4 +1,13 @@
 {
+  "GriffePythonParser": {},
+  "InteractionHandler": {},
+  "Optional": {},
+  "Path": {},
+  "PythonFingerprintStrategy": {},
+  "PythonTransformer": {},
+  "StitcherApp": {},
+  "TyperInteractionHandler": {},
+  "TyperInteractiveRenderer": {},
   "get_project_root": {
     "baseline_code_signature_text": "def get_project_root() -> Path:",
     "baseline_code_structure_hash": "2f4a94d6ffeef80d3d85e7f1812a7cacc3e6bebbe430509a2b960e7a76554691",
@@ -13,5 +22,7 @@
     "baseline_code_signature_text": "def make_interaction_handler(non_interactive: bool = False, auto_resolve_mode: bool = False) -> Optional[InteractionHandler]:",
     "baseline_code_structure_hash": "f3b9a3cbfed6e6ee7fe7a1afc12c46cc232611ef9a6bbae0f248d940c759e3b1",
     "baseline_yaml_content_hash": "222e288c0ff8b44b4b254a7eac46a495945abb360606c1548f60d0c9a705cb3e"
-  }
+  },
+  "nexus": {},
+  "sys": {}
 }

@@ -6,6 +6,7 @@
   "FileRecord.last_mtime": {},
   "FileRecord.last_size": {},
   "FileRecord.path": {},
+  "Optional": {},
   "ReferenceRecord": {},
   "ReferenceRecord.col_offset": {},
   "ReferenceRecord.end_col_offset": {},
@@ -30,5 +31,6 @@
   "SymbolRecord.location_start": {},
   "SymbolRecord.logical_path": {},
   "SymbolRecord.name": {},
-  "SymbolRecord.signature_hash": {}
+  "SymbolRecord.signature_hash": {},
+  "dataclass": {}
 }

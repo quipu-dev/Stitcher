@@ -1,4 +1,7 @@
 {
+  "AbstractOperation": {},
+  "DeleteDirectoryIntent": {},
+  "List": {},
   "MoveDirectoryOperation": {
     "baseline_yaml_content_hash": "6172506e80531470464c4cba619d5b4f70461811bd478af108e20b69f0a2e646"
   },
@@ -24,5 +27,13 @@
     "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625"
   },
   "MoveDirectoryOperation.dest_dir": {},
-  "MoveDirectoryOperation.src_dir": {}
+  "MoveDirectoryOperation.src_dir": {},
+  "MoveFileIntent": {},
+  "Path": {},
+  "RefactorContext": {},
+  "RefactorIntent": {},
+  "RenameIntent": {},
+  "ScaffoldIntent": {},
+  "SidecarUpdateIntent": {},
+  "SidecarUpdateMixin": {}
 }

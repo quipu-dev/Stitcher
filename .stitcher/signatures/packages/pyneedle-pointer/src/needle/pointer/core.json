@@ -1,4 +1,7 @@
 {
+  "Any": {},
+  "Iterable": {},
+  "PointerSetProtocol": {},
   "SemanticPointer": {
     "baseline_yaml_content_hash": "34f396dadf3e550650a5bd63192531a23eeae05c8bc66a87a233bd7eecb5d8f7"
   },
@@ -54,5 +57,8 @@
     "baseline_code_structure_hash": "e178a7e51c5b365c44ff603abd57e617d6711b1b1a8c05bdc0059f537e1efbc9",
     "baseline_yaml_content_hash": "fa213e3bbfb9f5fe3f5194fbf20ebca93fd617a28b6d04df348210f0af63e191"
   },
-  "SemanticPointer._path": {}
+  "SemanticPointer._path": {},
+  "SemanticPointerProtocol": {},
+  "TYPE_CHECKING": {},
+  "Union": {}
 }

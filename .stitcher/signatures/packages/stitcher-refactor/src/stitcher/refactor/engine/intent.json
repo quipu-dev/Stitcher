@@ -15,6 +15,8 @@
   },
   "MoveFileIntent.dest_path": {},
   "MoveFileIntent.src_path": {},
+  "Optional": {},
+  "Path": {},
   "RefactorIntent": {
     "baseline_yaml_content_hash": "ef7ca2a6732bbba66edb3ad7a5669e61856e3cdedb72c54624f616f4484f211d"
   },
@@ -34,5 +36,7 @@
   "SidecarUpdateIntent.module_fqn": {},
   "SidecarUpdateIntent.new_fqn": {},
   "SidecarUpdateIntent.old_fqn": {},
-  "SidecarUpdateIntent.sidecar_path": {}
+  "SidecarUpdateIntent.sidecar_path": {},
+  "annotations": {},
+  "dataclass": {}
 }

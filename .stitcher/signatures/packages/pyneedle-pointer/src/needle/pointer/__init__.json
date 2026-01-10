@@ -2,6 +2,8 @@
   "L": {
     "baseline_yaml_content_hash": "5e55532552577057534a84ad4cd558f486a70c923608b0f42e4ab473e8bf400e"
   },
+  "PointerSet": {},
+  "SemanticPointer": {},
   "__all__": {},
   "__path__": {}
 }

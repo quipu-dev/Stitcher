@@ -1,4 +1,5 @@
 {
+  "Any": {},
   "BaseSerializer": {
     "baseline_yaml_content_hash": "31e956d7edc0216962656c2a80ccb051aa7c36330d8b520464e4645be41e5c73"
   },
@@ -24,6 +25,11 @@
     "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
     "baseline_code_structure_hash": "37a505a9dbfb9e1d452ade2b0eae56b42aec7f2a25d0db0e93dfa22c1fc58e66"
   },
+  "Dict": {},
+  "DocstringIR": {},
+  "DocstringItem": {},
+  "DocstringSection": {},
+  "DocstringSerializerProtocol": {},
   "GoogleSerializer": {},
   "GoogleSerializer.KIND_TO_KEY": {},
   "NumpySerializer": {},
@@ -39,6 +45,7 @@
     "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
     "baseline_code_structure_hash": "37a505a9dbfb9e1d452ade2b0eae56b42aec7f2a25d0db0e93dfa22c1fc58e66"
   },
+  "SectionKind": {},
   "StructuredSerializer": {
     "baseline_yaml_content_hash": "da371d36ee77e1e9bac615a922b9fd0fccf5a2d2d2bde93ce705635615e5885a"
   },
@@ -55,5 +62,6 @@
   "StructuredSerializer.to_yaml": {
     "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "b5da18fb949b3e9ed0d5b8faf353daa30f557fa51afbde3684c5f268aae8a950"
-  }
+  },
+  "Union": {}
 }

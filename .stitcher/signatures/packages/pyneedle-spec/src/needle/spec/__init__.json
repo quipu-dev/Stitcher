@@ -1,4 +1,7 @@
 {
+  "OperatorProtocol": {},
+  "PointerSetProtocol": {},
+  "SemanticPointerProtocol": {},
   "__all__": {},
   "__path__": {}
 }

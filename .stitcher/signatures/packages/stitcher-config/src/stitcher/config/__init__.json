@@ -1,4 +1,8 @@
 {
+  "List": {},
+  "Optional": {},
+  "StitcherConfig": {},
   "__all__": {},
-  "__path__": {}
+  "__path__": {},
+  "load_config_from_path": {}
 }

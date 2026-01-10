@@ -1,4 +1,6 @@
 {
+  "L": {},
+  "bus": {},
   "generate_command": {
     "baseline_code_signature_text": "def generate_command(dry_run: bool = typer.Option(False, '--dry-run', help=(nexus(L.cli.option.refactor_dry_run.help)))):",
     "baseline_code_structure_hash": "c407333c772871bd783de6f8800626a97a9fb23df3a251f8e7de6409e8af01c7",
@@ -14,9 +16,12 @@
     "baseline_code_structure_hash": "b81f9a002fa7135a2d2655799dda4bd62d3c28d5bc6db726d6d7a59afe0ec9bc",
     "baseline_yaml_content_hash": "eb3e766a7dd7951b758cc6016d7401f3dd8adb000dfccbf34df6a1fbd3fd8451"
   },
+  "make_app": {},
+  "nexus": {},
   "strip_command": {
     "baseline_code_signature_text": "def strip_command(dry_run: bool = typer.Option(False, '--dry-run', help=(nexus(L.cli.option.refactor_dry_run.help)))):",
     "baseline_code_structure_hash": "22ac2b9521d64c6646b67b32219fa99a6c7c25210bc1133f0cd7996c69f42904",
     "baseline_yaml_content_hash": "df4fe69bc5bc1d19e2aa53fb8606471ccf836d9c01164d10544c94fc87bd7917"
-  }
+  },
+  "typer": {}
 }

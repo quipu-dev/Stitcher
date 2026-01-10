@@ -35,6 +35,7 @@
   "Attribute": {
     "baseline_yaml_content_hash": "71d4c4ba631412a1e0d9fa5efd09679c5f2447a18ec4eb650fe19da2875141ad"
   },
+  "Attribute.alias_target": {},
   "Attribute.annotation": {
     "baseline_yaml_content_hash": "d587f927611d8ac4dd1289bd738dd7ed05dfaaa44da3f3e6559a82a458d70d1b"
   },
@@ -84,6 +85,8 @@
   "ConflictType.SIGNATURE_DRIFT": {
     "baseline_yaml_content_hash": "b72e4cf26a319796af6aa0aaa9c6bb8a64e12056d4ddf3039650eee2afd1d860"
   },
+  "DocstringIR": {},
+  "Enum": {},
   "FunctionDef": {
     "baseline_yaml_content_hash": "f5cc1f1b62b8e0ba6e18e60c8d1c120c58a03c8f60edf0a9f792f7d71bb3e4b0"
   },
@@ -121,6 +124,7 @@
   "FunctionExecutionPlan.strip_source_docstring": {},
   "FunctionExecutionPlan.update_code_fingerprint": {},
   "FunctionExecutionPlan.update_doc_fingerprint": {},
+  "List": {},
   "ModuleDef": {
     "baseline_yaml_content_hash": "7b44cb86cdeed96153de0246a375ccb4eace928620bac59c14c99d3bcc5c0f7d"
   },
@@ -166,6 +170,7 @@
     "baseline_code_structure_hash": "1a55c9ded7bf45553f63ae27c049594f5faa1245bd0c6ce98f4a0d2d7cd30db7",
     "baseline_yaml_content_hash": "94066c283328e1833f58566531dab3f579f45e6540b5c7485d9ebb41a342fd81"
   },
+  "Optional": {},
   "Resolution": {
     "baseline_yaml_content_hash": "bbfc93e8de4a20f3396fa1d074330b20507a9d08ff60dcf87b3c4288e10e8a5c"
   },
@@ -206,9 +211,12 @@
   "ResolutionPlan.resolutions": {
     "baseline_yaml_content_hash": "1d4214565c02231907947de3c09b5d885ce9d8d74c12263509f0250d80196926"
   },
+  "Set": {},
   "SourceLocation": {},
   "SourceLocation.col_offset": {},
   "SourceLocation.end_col_offset": {},
   "SourceLocation.end_lineno": {},
-  "SourceLocation.lineno": {}
+  "SourceLocation.lineno": {},
+  "dataclass": {},
+  "field": {}
 }

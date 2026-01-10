@@ -1,4 +1,6 @@
 {
+  "Any": {},
+  "Dict": {},
   "FileHandlerProtocol": {},
   "FileHandlerProtocol.load": {
     "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, Any]:",
@@ -11,5 +13,7 @@
   "FileHandlerProtocol.save": {
     "baseline_code_signature_text": "def save(self, path: Path, data: Dict[str, Any]) -> bool:",
     "baseline_code_structure_hash": "9d71fdde26ac2d1bcafdb0b1e71ae9214f95dd6c9d09cad8ca7c7d09fa51ee5b"
-  }
+  },
+  "Path": {},
+  "Protocol": {}
 }

@@ -1,4 +1,12 @@
 {
+  "AbstractOperation": {},
+  "Dict": {},
+  "FileOp": {},
+  "List": {},
+  "NamespaceRenamerTransformer": {},
+  "Path": {},
+  "RefactorContext": {},
+  "ReferenceType": {},
   "RenameNamespaceOperation": {},
   "RenameNamespaceOperation.__init__": {
     "baseline_code_signature_text": "def __init__(self, old_prefix: str, new_prefix: str):",
@@ -9,5 +17,9 @@
     "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1"
   },
   "RenameNamespaceOperation.new_prefix": {},
-  "RenameNamespaceOperation.old_prefix": {}
+  "RenameNamespaceOperation.old_prefix": {},
+  "UsageLocation": {},
+  "WriteFileOp": {},
+  "cst": {},
+  "defaultdict": {}
 }

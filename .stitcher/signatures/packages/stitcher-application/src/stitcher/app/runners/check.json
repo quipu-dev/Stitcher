@@ -46,5 +46,24 @@
     "baseline_code_structure_hash": "7631deb3a7c6081d8588472ea45bec318c84bddc323414ced6cc0e9a21f1fb7a"
   },
   "CheckRunner.scanner": {},
-  "CheckRunner.sig_manager": {}
+  "CheckRunner.sig_manager": {},
+  "ConflictType": {},
+  "Differ": {},
+  "DocumentManager": {},
+  "FileCheckResult": {},
+  "Fingerprint": {},
+  "InteractionContext": {},
+  "InteractionHandler": {},
+  "L": {},
+  "LanguageParserProtocol": {},
+  "List": {},
+  "ModuleDef": {},
+  "NoOpInteractionHandler": {},
+  "Path": {},
+  "ResolutionAction": {},
+  "SignatureManager": {},
+  "Tuple": {},
+  "bus": {},
+  "copy": {},
+  "defaultdict": {}
 }

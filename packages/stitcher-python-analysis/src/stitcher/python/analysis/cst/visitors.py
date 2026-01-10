@@ -307,10 +307,17 @@ def _collect_annotations(module: ModuleDef) -> Set[str]:
 
 
 def _has_unannotated_attributes(module: ModuleDef) -> bool:
-    if any(attr.annotation is None for attr in module.attributes):
+    # Ignore attributes that are aliases (alias_target is set)
+    if any(
+        attr.annotation is None and attr.alias_target is None
+        for attr in module.attributes
+    ):
         return True
     for cls in module.classes:
-        if any(attr.annotation is None for attr in cls.attributes):
+        if any(
+            attr.annotation is None and attr.alias_target is None
+            for attr in cls.attributes
+        ):
             return True
     return False
 

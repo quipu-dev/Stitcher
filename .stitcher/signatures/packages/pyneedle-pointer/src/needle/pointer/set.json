@@ -1,4 +1,5 @@
 {
+  "Any": {},
   "PointerSet": {
     "baseline_yaml_content_hash": "b4c7aaaca949bf6b38142198c1c79b541515027229d191eb73e1735cb7da4f18"
   },
@@ -16,5 +17,11 @@
     "baseline_code_signature_text": "def __truediv__(self, other: Union[str, SemanticPointerProtocol]) -> PointerSet:",
     "baseline_code_structure_hash": "744a00eeec951a45c5125126cbb1bbe7526e71fa5f558c19fa4eb866477b6449",
     "baseline_yaml_content_hash": "c9f1c899f1e02476537f7ad1c453e5079532b71ceca8cb44865422cb1e911eb3"
-  }
+  },
+  "PointerSetProtocol": {},
+  "SemanticPointer": {},
+  "SemanticPointerProtocol": {},
+  "Set": {},
+  "TYPE_CHECKING": {},
+  "Union": {}
 }

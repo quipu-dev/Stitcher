@@ -1,4 +1,5 @@
 {
+  "DocstringIR": {},
   "DocstringMerger": {
     "baseline_yaml_content_hash": "c5541deecd6e5014edd123b9e472f2d8dbeaaaaec81ea6f9aa758d911880a638"
   },
@@ -6,5 +7,7 @@
     "baseline_code_signature_text": "def merge(self, base: Optional[DocstringIR], incoming: DocstringIR) -> DocstringIR:",
     "baseline_code_structure_hash": "f21bcf495ca5c34cbc4698acd7b76780a0035b754862d7d5257e2be60aa396e8",
     "baseline_yaml_content_hash": "98e59ecb6edf9237e17f09d272bc317caa440b29c8d7dcead2fc8c0fd43d377f"
-  }
+  },
+  "Optional": {},
+  "copy": {}
 }

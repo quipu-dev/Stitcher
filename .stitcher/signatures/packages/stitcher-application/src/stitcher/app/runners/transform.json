@@ -1,4 +1,11 @@
 {
+  "DocumentManager": {},
+  "L": {},
+  "LanguageTransformerProtocol": {},
+  "List": {},
+  "ModuleDef": {},
+  "Path": {},
+  "TransactionManager": {},
   "TransformRunner": {},
   "TransformRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, transformer: LanguageTransformerProtocol):",
@@ -19,5 +26,6 @@
     "baseline_code_structure_hash": "5b63ebec37fd4da077d5aad4504e9504798478477360c9a9a6fa64bff30303dd"
   },
   "TransformRunner.scanner": {},
-  "TransformRunner.transformer": {}
+  "TransformRunner.transformer": {},
+  "bus": {}
 }

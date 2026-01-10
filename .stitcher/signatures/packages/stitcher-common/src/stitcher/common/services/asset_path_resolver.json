@@ -17,5 +17,7 @@
     "baseline_yaml_content_hash": "ab2c8499fdda49d14e4a8b9abd32022a6411d8345396be3e6973d91a334462d2"
   },
   "AssetPathResolver.root_path": {},
-  "AssetPathResolver.sig_root": {}
+  "AssetPathResolver.sig_root": {},
+  "Path": {},
+  "Union": {}
 }

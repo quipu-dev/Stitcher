@@ -1,3 +1,7 @@
 {
+  "DictOperator": {},
+  "FileSystemOperator": {},
+  "I18NFactoryOperator": {},
+  "OverlayOperator": {},
   "__all__": {}
 }

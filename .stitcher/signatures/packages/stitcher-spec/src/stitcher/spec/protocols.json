@@ -1,4 +1,8 @@
 {
+  "Any": {},
+  "ClassDef": {},
+  "Dict": {},
+  "DocstringIR": {},
   "DocstringParserProtocol": {},
   "DocstringParserProtocol.parse": {
     "baseline_code_signature_text": "def parse(self, docstring_text: str) -> DocstringIR:",
@@ -18,6 +22,7 @@
     "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
     "baseline_code_structure_hash": "37a505a9dbfb9e1d452ade2b0eae56b42aec7f2a25d0db0e93dfa22c1fc58e66"
   },
+  "Fingerprint": {},
   "FingerprintStrategyProtocol": {
     "baseline_yaml_content_hash": "548744f31aa0f674d6e0fc3ead1e689063fdddc0e0213a3f6d19ac377e985f44"
   },
@@ -26,6 +31,7 @@
     "baseline_code_structure_hash": "256ccdba13895196e98d14eb59d4f59ed77c7cbf590278e1bd62205ac6786445",
     "baseline_yaml_content_hash": "75511827e16a5cbae8b7637274ccb07eecdbacc737f83b41cdfa1ea1d85cb770"
   },
+  "FunctionDef": {},
   "LanguageParserProtocol": {
     "baseline_yaml_content_hash": "731038358df80327e6b0c887d95ed77daefcfc7e10f3cc07c397d64f7a2b39ca"
   },
@@ -47,6 +53,10 @@
     "baseline_code_structure_hash": "9deb2d6943846be9e39bce2b1250a04f53df5ba6dd12e253b2d3c65ba011e5e6",
     "baseline_yaml_content_hash": "c75993ea132ca585aa3f48387d9e38b80e024e4bdfb66904760df0e5b3ccfaec"
   },
+  "List": {},
+  "ModuleDef": {},
+  "Optional": {},
+  "Protocol": {},
   "StubGeneratorProtocol": {
     "baseline_yaml_content_hash": "6d70a575c8266a36af1be6730b09f83ac28b923aaa45a90ce6a0d261550cfcd7"
   },
@@ -54,5 +64,6 @@
     "baseline_code_signature_text": "def generate(self, module: ModuleDef) -> str:",
     "baseline_code_structure_hash": "adacc0cc22b1339cccea480553349f87a33d15a01b47bf8dffc816c42b0cee5a",
     "baseline_yaml_content_hash": "0a8a2fbcfe57549b0c535e801106a8494ca1627641f9e3b1de4b7e8739cf2683"
-  }
+  },
+  "Union": {}
 }

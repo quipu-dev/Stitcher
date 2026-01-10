@@ -1,4 +1,5 @@
 {
+  "ABC": {},
   "AbstractOperation": {},
   "AbstractOperation.analyze": {
     "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
@@ -10,6 +11,13 @@
     "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625",
     "baseline_yaml_content_hash": "258913016fc1a8646b579767d8de94d90931b54d9129f3d91404f43f0a71b13e"
   },
+  "Any": {},
+  "Dict": {},
+  "List": {},
+  "Optional": {},
+  "Path": {},
+  "RefactorContext": {},
+  "RefactorIntent": {},
   "SidecarUpdateMixin": {},
   "SidecarUpdateMixin._path_to_fqn": {
     "baseline_code_signature_text": "def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:",
@@ -18,5 +26,6 @@
   "SidecarUpdateMixin._update_sidecar_data": {
     "baseline_code_signature_text": "def _update_sidecar_data(self, data: Dict[str, Any], module_fqn: Optional[str], old_fqn: str, new_fqn: str) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "90293dbce85734f0498d51c275c62bb7abf8e87a6a147f2ec982ec19bc50bda7"
-  }
+  },
+  "abstractmethod": {}
 }

@@ -2,5 +2,9 @@
   "RefactorContext": {},
   "RefactorContext.graph": {},
   "RefactorContext.sidecar_manager": {},
-  "RefactorContext.workspace": {}
+  "RefactorContext.workspace": {},
+  "SemanticGraph": {},
+  "SidecarManager": {},
+  "Workspace": {},
+  "dataclass": {}
 }

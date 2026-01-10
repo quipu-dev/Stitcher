@@ -5,6 +5,7 @@
   "CoverageResult.missing_symbols": {},
   "CoverageResult.path": {},
   "CoverageResult.total_symbols": {},
+  "Dict": {},
   "FileCheckResult": {},
   "FileCheckResult.auto_reconciled_count": {},
   "FileCheckResult.error_count": {},
@@ -16,7 +17,12 @@
   "FileCheckResult.reconciled_count": {},
   "FileCheckResult.warning_count": {},
   "FileCheckResult.warnings": {},
+  "List": {},
+  "Path": {},
   "PumpResult": {},
   "PumpResult.redundant_files": {},
-  "PumpResult.success": {}
+  "PumpResult.success": {},
+  "dataclass": {},
+  "defaultdict": {},
+  "field": {}
 }

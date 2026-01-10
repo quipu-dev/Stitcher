@@ -111,7 +111,7 @@ import os
 from typing import List, Optional
 import sys as system
 """
-        module = parser.parse(code)
+        module = parser.parse(code, file_path="test_imports.py")
 
         # ast.unparse normalizes output
         expected_imports = [
@@ -131,7 +131,42 @@ import sys as system
 def process_list(items: List[int]) -> None:
     pass
 """
-        module = parser.parse(code)
+        module = parser.parse(code, file_path="test_typing.py")
 
         # Check that the import was added automatically
         assert "from typing import List" in module.imports
+
+    def test_parse_aliases(self, parser):
+        code = """
+import os
+from typing import List
+from . import sibling
+import sys as system
+"""
+        # Griffe treats imports as Aliases if they are members of the module
+        # We must provide a file path so Griffe doesn't treat it as a builtin module error
+        module = parser.parse(code, file_path="test_aliases.py")
+
+        # We expect attributes for these imports now
+        # Note: 'import os' creates an alias 'os' pointing to 'os'
+        # 'from typing import List' creates an alias 'List' pointing to 'typing.List'
+        # 'from . import sibling' creates 'sibling' pointing to '....sibling' (resolved path)
+        # 'import sys as system' creates 'system' pointing to 'sys'
+
+        # Filter attributes that have alias_target
+        aliases = [a for a in module.attributes if a.alias_target]
+
+        # 1. os
+        attr_os = next((a for a in aliases if a.name == "os"), None)
+        assert attr_os is not None
+        assert attr_os.alias_target == "os"
+
+        # 2. List
+        attr_list = next((a for a in aliases if a.name == "List"), None)
+        assert attr_list is not None
+        assert attr_list.alias_target == "typing.List"
+
+        # 3. system
+        attr_sys = next((a for a in aliases if a.name == "system"), None)
+        assert attr_sys is not None
+        assert attr_sys.alias_target == "sys"

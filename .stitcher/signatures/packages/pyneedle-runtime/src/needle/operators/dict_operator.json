@@ -1,4 +1,6 @@
 {
+  "Any": {},
+  "Dict": {},
   "DictOperator": {
     "baseline_yaml_content_hash": "3c74f048245884bbf68e3cc95a578dcefe6a946626b114e9dd7283c8da02c5e5"
   },
@@ -16,5 +18,8 @@
   "DictOperator._flatten": {
     "baseline_code_signature_text": "def _flatten(self, data: Dict[str, Any], prefix: str = '') -> Dict[str, Any]:",
     "baseline_code_structure_hash": "0a3408728fd9d509d7f76c76b28f3a5c310600d04b5a8c4303fdd78f276948d6"
-  }
+  },
+  "OperatorProtocol": {},
+  "SemanticPointerProtocol": {},
+  "Union": {}
 }

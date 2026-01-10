@@ -31,15 +31,24 @@ class PythonAdapter(LanguageAdapter):
         # 2. Parse into ModuleDef
         module_def = self.parser.parse(content, file_path=rel_path)
 
+        # Pre-calculate logical FQN for the module
+        logical_module_fqn = rel_path.replace("/", ".").replace(".py", "")
+        if logical_module_fqn.endswith(".__init__"):
+            logical_module_fqn = logical_module_fqn[: -len(".__init__")]
+
         # 3. Project to Symbols
-        symbols = self._extract_symbols(rel_path, module_def)
+        symbols = self._extract_symbols(rel_path, module_def, logical_module_fqn)
 
         # 4. Project to References
-        references = self._extract_references(rel_path, module_def, content, file_path)
+        references = self._extract_references(
+            rel_path, module_def, content, file_path, logical_module_fqn
+        )
 
         return symbols, references
 
-    def _extract_symbols(self, rel_path: str, module: ModuleDef) -> List[SymbolRecord]:
+    def _extract_symbols(
+        self, rel_path: str, module: ModuleDef, logical_module_fqn: str
+    ) -> List[SymbolRecord]:
         symbols: List[SymbolRecord] = []
 
         # Helper to add symbol
@@ -55,29 +64,34 @@ class PythonAdapter(LanguageAdapter):
             # Compute Hash
             sig_hash = None
             if entity_for_hash:
-                # We reuse the strategy, but we need to adapt it because strategy returns a Fingerprint object
-                # with multiple keys. We probably want 'current_code_structure_hash'.
                 fp = self.hasher.compute(entity_for_hash)  # type: ignore
                 sig_hash = fp.get("current_code_structure_hash")
 
             # Location Handling
-            # We assume entity_for_hash also carries the location info if it is a Def object.
-            # Attribute locations are passed via entity_for_hash if it's an Attribute obj.
-            # But the 'add' signature treats entity_for_hash as Optional[object].
-            # We should check if it has a 'location' attribute.
             loc = getattr(entity_for_hash, "location", None)
+
+            # Alias Handling
+            alias_target_id: Optional[str] = None
+            final_kind = kind
+            alias_target_fqn = getattr(entity_for_hash, "alias_target", None)
+            if alias_target_fqn:
+                final_kind = "alias"
+                alias_target_id = self._guess_suri(
+                    alias_target_fqn, logical_module_fqn, rel_path
+                )
 
             symbols.append(
                 SymbolRecord(
                     id=suri,
                     name=name,
-                    kind=kind,
+                    kind=final_kind,
                     lineno=loc.lineno if loc else 0,
                     col_offset=loc.col_offset if loc else 0,
                     end_lineno=loc.end_lineno if loc else 0,
                     end_col_offset=loc.end_col_offset if loc else 0,
                     logical_path=fragment,  # This is relative logical path in file
                     signature_hash=sig_hash,
+                    alias_target_id=alias_target_id,
                 )
             )
             return fragment
@@ -105,21 +119,27 @@ class PythonAdapter(LanguageAdapter):
         return symbols
 
     def _extract_references(
-        self, rel_path: str, module: ModuleDef, content: str, file_path: Path
+        self,
+        rel_path: str,
+        module: ModuleDef,
+        content: str,
+        file_path: Path,
+        logical_module_fqn: str,
     ) -> List[ReferenceRecord]:
         refs: List[ReferenceRecord] = []
 
         # 1. Build local_symbols map (Name -> FQN)
-        # This helps the visitor distinguish between local usages and globals/builtins
-        # The FQN here is logical (e.g. "pkg.mod.Class")
-        logical_module_fqn = rel_path.replace("/", ".").replace(".py", "")
-        if logical_module_fqn.endswith(".__init__"):
-            logical_module_fqn = logical_module_fqn[: -len(".__init__")]
-
+        # This helps the visitor distinguish between local usages and globals/builtins.
+        # It maps a name visible in the current scope to its fully-qualified name.
         local_symbols = {}
 
-        # Helper to construct logical FQN for local symbols
-        def register_local(name: str, parent_fqn: str = ""):
+        # 1a. Register all imported aliases (e.g., 'helper' -> 'pkg.utils.helper')
+        for attr in module.attributes:
+            if attr.alias_target:
+                local_symbols[attr.name] = attr.alias_target
+
+        # 1b. Register all local definitions
+        def register_local(name: str, parent_fqn: str = "") -> str:
             fqn = (
                 f"{parent_fqn}.{name}" if parent_fqn else f"{logical_module_fqn}.{name}"
             )
@@ -130,12 +150,13 @@ class PythonAdapter(LanguageAdapter):
             register_local(func.name)
 
         for cls in module.classes:
-            for method in cls.methods:
-                # Assuming UsageScanVisitor handles attribute lookups,
-                # strictly speaking we might not need to pass method names as locals
-                # unless they are used unqualified (which they aren't, they are self.x),
-                # but registering top-level classes/funcs is key.
-                pass
+            cls_fqn = register_local(cls.name)
+            # Register class-level aliases
+            for attr in cls.attributes:
+                if attr.alias_target:
+                    local_symbols[attr.name] = attr.alias_target
+            # Methods are handled by the visitor's scope analysis (e.g., self.method)
+            # so we don't need to register them as top-level local symbols.
 
         # 2. Parse CST and Run Visitor
         try:

@@ -1,4 +1,11 @@
 {
+  "GriffePythonParser": {},
+  "InteractionHandler": {},
+  "Optional": {},
+  "Path": {},
+  "PythonFingerprintStrategy": {},
+  "PythonTransformer": {},
+  "StitcherApp": {},
   "create_test_app": {
     "baseline_code_signature_text": "def create_test_app(root_path: Path, interaction_handler: Optional[InteractionHandler] = None) -> StitcherApp:",
     "baseline_code_structure_hash": "8cd8c8f2073c4b229f09496035e473e7d5e14d11360eb63decf815371a63ddbd",
@@ -8,5 +15,6 @@
     "baseline_code_signature_text": "def get_stored_hashes(project_root: Path, file_path: str) -> dict:",
     "baseline_code_structure_hash": "5e2583b2b4d33f059b3a538fe30f7d06a708ae49252aa96e0acb10f5df8936e1",
     "baseline_yaml_content_hash": "bbdc8fb14176ccc3ad0944b115767dc2c925a616641691ce493831cb5dda1045"
-  }
+  },
+  "json": {}
 }

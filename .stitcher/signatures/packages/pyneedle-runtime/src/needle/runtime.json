@@ -1,4 +1,10 @@
 {
+  "L": {},
+  "Optional": {},
+  "OverlayOperator": {},
+  "Path": {},
+  "PointerSet": {},
+  "SemanticPointer": {},
   "__all__": {},
   "_find_project_root": {
     "baseline_code_signature_text": "def _find_project_root(start_dir: Optional[Path] = None) -> Path:",

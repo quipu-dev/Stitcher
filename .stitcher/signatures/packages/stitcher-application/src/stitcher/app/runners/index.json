@@ -1,4 +1,5 @@
 {
+  "DatabaseManager": {},
   "IndexRunner": {},
   "IndexRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, db_manager: DatabaseManager, scanner: WorkspaceScanner):",
@@ -9,5 +10,8 @@
     "baseline_code_signature_text": "def run_build(self) -> bool:",
     "baseline_code_structure_hash": "0fe6c22df3117ff61ebae3d9ce64189c3c1ba4bb46040e3786a1b9ab00bc797f"
   },
-  "IndexRunner.scanner": {}
+  "IndexRunner.scanner": {},
+  "L": {},
+  "WorkspaceScanner": {},
+  "bus": {}
 }

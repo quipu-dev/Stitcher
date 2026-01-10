@@ -1,4 +1,6 @@
 {
+  "Any": {},
+  "Iterable": {},
   "OperatorProtocol": {
     "baseline_yaml_content_hash": "51bcabc5f1a86a70df2c1b8199a97709fbf36dd95af46339259461c0178053c9"
   },
@@ -35,6 +37,7 @@
     "baseline_code_structure_hash": "ed31760c74ba3e1680912f48511ea0f71a03210f2c0f66e02a477df04a20e5d9",
     "baseline_yaml_content_hash": "56333dd4fb587a9da49dad8c84b9a80bfa1aa081d27094464635803b0d206e30"
   },
+  "Protocol": {},
   "SemanticPointerProtocol": {
     "baseline_yaml_content_hash": "fe18d37498b223e7d7233845204c765d67b3235a8196a6a9c7f1a86d85a3087f"
   },
@@ -75,5 +78,7 @@
   },
   "T_Pointer": {
     "baseline_yaml_content_hash": "c6ee5ff8814e8f607c56860162bca85d5d04015d82257889192138c1d4fde1b8"
-  }
+  },
+  "TypeVar": {},
+  "Union": {}
 }

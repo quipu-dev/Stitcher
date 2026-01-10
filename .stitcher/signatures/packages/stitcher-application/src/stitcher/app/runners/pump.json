@@ -1,4 +1,20 @@
 {
+  "ConflictType": {},
+  "Dict": {},
+  "Differ": {},
+  "DocstringMerger": {},
+  "DocumentManager": {},
+  "Fingerprint": {},
+  "FunctionExecutionPlan": {},
+  "InteractionContext": {},
+  "InteractionHandler": {},
+  "L": {},
+  "LanguageTransformerProtocol": {},
+  "List": {},
+  "ModuleDef": {},
+  "NoOpInteractionHandler": {},
+  "Path": {},
+  "PumpResult": {},
   "PumpRunner": {},
   "PumpRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, sig_manager: SignatureManager, transformer: LanguageTransformerProtocol, differ: Differ, merger: DocstringMerger, interaction_handler: InteractionHandler | None):",
@@ -29,5 +45,13 @@
   },
   "PumpRunner.scanner": {},
   "PumpRunner.sig_manager": {},
-  "PumpRunner.transformer": {}
+  "PumpRunner.transformer": {},
+  "ResolutionAction": {},
+  "SignatureManager": {},
+  "StitcherConfig": {},
+  "TransactionManager": {},
+  "bus": {},
+  "copy": {},
+  "defaultdict": {},
+  "json": {}
 }

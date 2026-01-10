@@ -1,4 +1,5 @@
 {
+  "Path": {},
   "StubPackageManager": {},
   "StubPackageManager._get_pep561_logical_path": {
     "baseline_code_signature_text": "def _get_pep561_logical_path(logical_path: Path) -> Path:",
@@ -7,5 +8,7 @@
   "StubPackageManager.scaffold": {
     "baseline_code_signature_text": "def scaffold(self, package_path: Path, source_project_name: str, package_namespace: str, tm: TransactionManager, root_path: Path) -> bool:",
     "baseline_code_structure_hash": "888151e3e9987d43913fbed7a9d419c3d97ec084ffcaa4ec85f1d3a1e87768da"
-  }
+  },
+  "TransactionManager": {},
+  "tomli_w": {}
 }

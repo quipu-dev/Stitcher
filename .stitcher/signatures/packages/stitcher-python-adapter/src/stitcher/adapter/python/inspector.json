@@ -1,4 +1,9 @@
 {
+  "Any": {},
+  "Argument": {},
+  "ArgumentKind": {},
+  "Callable": {},
+  "FunctionDef": {},
   "InspectionError": {},
   "_get_annotation_str": {
     "baseline_code_signature_text": "def _get_annotation_str(annotation: Any) -> str:",
@@ -8,6 +13,8 @@
     "baseline_code_signature_text": "def _map_param_kind(kind: inspect._ParameterKind) -> ArgumentKind:",
     "baseline_code_structure_hash": "3208862cc0b2edaae228cde96d740ac41696f1a658f748571df7b32280a8af86"
   },
+  "importlib": {},
+  "inspect": {},
   "parse_plugin_entry": {
     "baseline_code_signature_text": "def parse_plugin_entry(entry_point_str: str) -> FunctionDef:",
     "baseline_code_structure_hash": "c6f78719e8b36a0e3cba107deda19686ca2b8dc8033e23324e303e33c5d2d9cd"

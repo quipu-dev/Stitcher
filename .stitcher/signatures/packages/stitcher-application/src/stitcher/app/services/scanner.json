@@ -1,4 +1,11 @@
 {
+  "Dict": {},
+  "InspectionError": {},
+  "L": {},
+  "LanguageParserProtocol": {},
+  "List": {},
+  "ModuleDef": {},
+  "Path": {},
   "ScannerService": {},
   "ScannerService.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol):",
@@ -22,5 +29,9 @@
   "ScannerService.scan_files": {
     "baseline_code_signature_text": "def scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:",
     "baseline_code_structure_hash": "9c25fa3899ba90cbf4820f04fee91733aa77fc94a5b0a72d553e3551c36b915c"
-  }
+  },
+  "StitcherConfig": {},
+  "bus": {},
+  "defaultdict": {},
+  "parse_plugin_entry": {}
 }

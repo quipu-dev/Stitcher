@@ -1,4 +1,6 @@
 {
+  "Any": {},
+  "Dict": {},
   "DocumentAdapter": {
     "baseline_yaml_content_hash": "5a086ed7e2069a1800c0d961eeaeff5b7da613065736aed6bb4db87d5ea5242f"
   },
@@ -15,5 +17,7 @@
     "baseline_code_signature_text": "def save(self, path: Path, data: Dict[str, Any]) -> None:",
     "baseline_code_structure_hash": "abd5c271e8c4100dde4968bf3f0ecef31b95cd128a4425acc0a8c89df4993387",
     "baseline_yaml_content_hash": "1a2f19a918cd3dcbe618ae95dfb52f09bb5ff6c2e882d5f56e9d9250426f0bd7"
-  }
+  },
+  "Path": {},
+  "Protocol": {}
 }

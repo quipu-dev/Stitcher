@@ -1,4 +1,10 @@
 {
+  "Dict": {},
+  "FileRecord": {},
+  "IndexStore": {},
+  "LanguageAdapter": {},
+  "Path": {},
+  "Set": {},
   "WorkspaceScanner": {},
   "WorkspaceScanner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, store: IndexStore):",
@@ -27,5 +33,9 @@
     "baseline_yaml_content_hash": "81959a7063f2972b2eddf84f2c47496918dacab6e79029bea41ba16cf6fc9515"
   },
   "WorkspaceScanner.store": {},
-  "log": {}
+  "hashlib": {},
+  "log": {},
+  "logging": {},
+  "os": {},
+  "subprocess": {}
 }

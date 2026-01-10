@@ -1,4 +1,10 @@
 {
+  "Argument": {},
+  "ArgumentKind": {},
+  "Attribute": {},
+  "ClassDef": {},
+  "CodeRange": {},
+  "FunctionDef": {},
   "IRBuildingVisitor": {
     "baseline_yaml_content_hash": "291e393707efa7e2ef1f5bf5d6ee642a0c50179602804c332eaa3bdb23f32ef2"
   },
@@ -54,6 +60,12 @@
     "baseline_code_signature_text": "def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:",
     "baseline_code_structure_hash": "6411074316b481b3fc483e65c19181a4bc33ff0d73c600e6cab13dbac84c74eb"
   },
+  "List": {},
+  "ModuleDef": {},
+  "Optional": {},
+  "PositionProvider": {},
+  "Set": {},
+  "SourceLocation": {},
   "_collect_annotations": {
     "baseline_code_signature_text": "def _collect_annotations(module: ModuleDef) -> Set[str]:",
     "baseline_code_structure_hash": "6a020cc106f92b3d660e77707f34b6eed4be7ea09a678fb7a77c6ddea8989b72"
@@ -67,9 +79,12 @@
     "baseline_code_signature_text": "def _has_unannotated_attributes(module: ModuleDef) -> bool:",
     "baseline_code_structure_hash": "7786ac0ddc22193ab9b3362b82d5ea8f16d372ad2444fb4a7310f4d540b068f4"
   },
+  "cast": {},
+  "cst": {},
   "parse_source_code": {
     "baseline_code_signature_text": "def parse_source_code(source_code: str, file_path: str = '') -> ModuleDef:",
     "baseline_code_structure_hash": "544ac99af006a7e824ae83739504de3c292c175aa7ae4c4a451318eab218386d",
     "baseline_yaml_content_hash": "a276d79063578564dd45c0578064ff727e32761f55f367542e01ffb9bc39ef27"
-  }
+  },
+  "re": {}
 }

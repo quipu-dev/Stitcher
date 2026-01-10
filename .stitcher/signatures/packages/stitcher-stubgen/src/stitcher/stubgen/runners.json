@@ -1,4 +1,7 @@
 {
+  "Dict": {},
+  "DocstringRendererProtocol": {},
+  "DocumentManager": {},
   "GenerateRunner": {},
   "GenerateRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, doc_manager: DocumentManager, stub_pkg_manager: StubPackageManager, generator: StubGeneratorProtocol, transformer: LanguageTransformerProtocol):",
@@ -26,5 +29,17 @@
     "baseline_code_structure_hash": "dbf406fb1ca88903cbc9089be3ba1a9820b10686acdb3b9fc06f8854138f95c9"
   },
   "GenerateRunner.stub_pkg_manager": {},
-  "GenerateRunner.transformer": {}
+  "GenerateRunner.transformer": {},
+  "L": {},
+  "LanguageTransformerProtocol": {},
+  "List": {},
+  "ModuleDef": {},
+  "Optional": {},
+  "Path": {},
+  "ScannerService": {},
+  "StitcherConfig": {},
+  "StubGeneratorProtocol": {},
+  "StubPackageManager": {},
+  "TransactionManager": {},
+  "bus": {}
 }

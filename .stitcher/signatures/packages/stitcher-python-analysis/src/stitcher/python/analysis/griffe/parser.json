@@ -1,10 +1,21 @@
 {
+  "AliasResolutionError": {},
+  "Any": {},
+  "Argument": {},
+  "ArgumentKind": {},
+  "Attribute": {},
+  "ClassDef": {},
+  "FunctionDef": {},
   "GriffePythonParser": {
     "baseline_yaml_content_hash": "45eba255ff2192fe25dd55f3a2069be45ce1e6e6b2b00e2375a8e899c822d935"
   },
   "GriffePythonParser._extract_location": {
     "baseline_code_signature_text": "def _extract_location(self, obj: griffe.Object) -> Optional[SourceLocation]:",
     "baseline_code_structure_hash": "3082de040d57e24c8ce1ff0b58961d7478ca5536b8eefe2a9a8599b69da1d55c"
+  },
+  "GriffePythonParser._map_alias": {
+    "baseline_code_signature_text": "def _map_alias(self, ga: griffe.Alias) -> Attribute:",
+    "baseline_code_structure_hash": "4d68b1d9de228c68a94cc88161cc4cd684d398fa507a65d87fd19cc7fbf78c4f"
   },
   "GriffePythonParser._map_argument": {
     "baseline_code_signature_text": "def _map_argument(self, param: griffe.Parameter) -> Argument:",
@@ -31,6 +42,12 @@
     "baseline_code_structure_hash": "7cdee217ef2d564bf97560e5bc9d2a86ff7385b13fee797305bbe9f202846833",
     "baseline_yaml_content_hash": "eed6b0534885bfa0f6ebcad915f13ac20c456188986a4b2c6c05a74c55fbb58c"
   },
+  "LanguageParserProtocol": {},
+  "List": {},
+  "ModuleDef": {},
+  "Optional": {},
+  "Path": {},
+  "SourceLocation": {},
   "_ImportVisitor": {},
   "_ImportVisitor.__init__": {
     "baseline_code_signature_text": "def __init__(self):",
@@ -44,5 +61,10 @@
   "_ImportVisitor.visit_ImportFrom": {
     "baseline_code_signature_text": "def visit_ImportFrom(self, node: ast.ImportFrom) -> None:",
     "baseline_code_structure_hash": "bc1e23ad33ae8252ae3444fb7fad823144e14754f8b876b51d1793d05c85c1c1"
-  }
+  },
+  "_enrich_typing_imports": {},
+  "ast": {},
+  "cast": {},
+  "griffe": {},
+  "logging": {}
 }

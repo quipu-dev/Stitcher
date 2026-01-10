@@ -6,5 +6,11 @@
     "baseline_code_signature_text": "def parse(self, file_path: Path, content: str) -> Tuple[List[SymbolRecord], List[ReferenceRecord]]:",
     "baseline_code_structure_hash": "7a85bfb042ee6d345c872fa2507503b53e02e0c710dac969b3b14b818c6b13a1",
     "baseline_yaml_content_hash": "7bb7e015d89c8cead409d302c19b08e661e7f8f8f033d6d2f096be671a590cf5"
-  }
+  },
+  "List": {},
+  "Path": {},
+  "Protocol": {},
+  "ReferenceRecord": {},
+  "SymbolRecord": {},
+  "Tuple": {}
 }

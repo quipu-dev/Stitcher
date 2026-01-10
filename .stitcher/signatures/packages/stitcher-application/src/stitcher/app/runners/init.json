@@ -1,4 +1,7 @@
 {
+  "Dict": {},
+  "DocumentManager": {},
+  "Fingerprint": {},
   "InitRunner": {},
   "InitRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, sig_manager: SignatureManager):",
@@ -15,5 +18,11 @@
     "baseline_code_structure_hash": "c1ff6f56f7d26ae7ea8261fb6f0d4edd05d0e48fb94eca8badf0ea5eed760684"
   },
   "InitRunner.scanner": {},
-  "InitRunner.sig_manager": {}
+  "InitRunner.sig_manager": {},
+  "L": {},
+  "List": {},
+  "ModuleDef": {},
+  "Path": {},
+  "SignatureManager": {},
+  "bus": {}
 }

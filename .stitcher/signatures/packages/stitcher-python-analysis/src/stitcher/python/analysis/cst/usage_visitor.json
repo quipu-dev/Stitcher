@@ -1,4 +1,13 @@
 {
+  "CodeRange": {},
+  "DefaultDict": {},
+  "Dict": {},
+  "List": {},
+  "Optional": {},
+  "Path": {},
+  "PositionProvider": {},
+  "ReferenceType": {},
+  "UsageLocation": {},
   "UsageRegistry": {
     "baseline_yaml_content_hash": "484aa8dc6c520a7af91e59d8c888028d4ae0ed452b7263e1224bdd97221391c5"
   },
@@ -58,5 +67,11 @@
   "UsageScanVisitor.visit_Name": {
     "baseline_code_signature_text": "def visit_Name(self, node: cst.Name):",
     "baseline_code_structure_hash": "cd22b676f96a3ec757b09d2c11277d6b56e755f04646f134ed579260699b2a96"
-  }
+  },
+  "cast": {},
+  "cst": {},
+  "defaultdict": {},
+  "get_absolute_module_from_package_for_import": {},
+  "get_full_name_for_node": {},
+  "helpers": {}
 }

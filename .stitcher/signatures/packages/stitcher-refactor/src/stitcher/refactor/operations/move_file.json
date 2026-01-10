@@ -1,4 +1,7 @@
 {
+  "AbstractOperation": {},
+  "List": {},
+  "MoveFileIntent": {},
   "MoveFileOperation": {},
   "MoveFileOperation.__init__": {
     "baseline_code_signature_text": "def __init__(self, src_path: Path, dest_path: Path):",
@@ -22,5 +25,12 @@
     "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625"
   },
   "MoveFileOperation.dest_path": {},
-  "MoveFileOperation.src_path": {}
+  "MoveFileOperation.src_path": {},
+  "Path": {},
+  "RefactorContext": {},
+  "RefactorIntent": {},
+  "RenameIntent": {},
+  "ScaffoldIntent": {},
+  "SidecarUpdateIntent": {},
+  "SidecarUpdateMixin": {}
 }

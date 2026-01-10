@@ -8,5 +8,6 @@
     "baseline_code_signature_text": "def parse_docstring(raw_docstring: str) -> str:",
     "baseline_code_structure_hash": "da1e60e151db151bdf5b638dbcc584cb098473e7fb35ca75b525880471e29f65",
     "baseline_yaml_content_hash": "6a6bb488a11088e6af0b6e15ee19845bcf17f831978a578d7168d5d17ef19df3"
-  }
+  },
+  "textwrap": {}
 }

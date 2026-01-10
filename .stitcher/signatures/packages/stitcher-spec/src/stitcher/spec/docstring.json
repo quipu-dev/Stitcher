@@ -1,4 +1,6 @@
 {
+  "Any": {},
+  "Dict": {},
   "DocstringIR": {
     "baseline_yaml_content_hash": "c899e3a111ffc5bcc16858788d8a8167c5bb0fa2492bee2b9611c98147d060b9"
   },
@@ -20,6 +22,9 @@
   "DocstringSection.content": {},
   "DocstringSection.kind": {},
   "DocstringSection.title": {},
+  "Enum": {},
+  "List": {},
+  "Optional": {},
   "SectionKind": {},
   "SectionKind.ADMONITION": {},
   "SectionKind.ATTRIBUTES": {},
@@ -31,5 +36,8 @@
   "SectionKind.SEE_ALSO": {},
   "SectionKind.TEXT": {},
   "SectionKind.WARNING": {},
-  "SectionKind.YIELDS": {}
+  "SectionKind.YIELDS": {},
+  "Union": {},
+  "dataclass": {},
+  "field": {}
 }

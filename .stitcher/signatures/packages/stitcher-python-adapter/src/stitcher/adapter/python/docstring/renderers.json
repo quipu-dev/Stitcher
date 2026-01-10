@@ -20,6 +20,12 @@
     "baseline_code_signature_text": "def render(self, docstring_ir: DocstringIR, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]] = None) -> str:",
     "baseline_code_structure_hash": "771c150ad2e54877bc0e41f243f0eed5594c46fd2dad4d3bd2743c6b296999f0"
   },
+  "ClassDef": {},
+  "DocstringIR": {},
+  "DocstringItem": {},
+  "DocstringRendererProtocol": {},
+  "DocstringSection": {},
+  "FunctionDef": {},
   "GoogleDocstringRenderer": {},
   "GoogleDocstringRenderer._get_default_title": {
     "baseline_code_signature_text": "def _get_default_title(self, kind: str) -> str:",
@@ -29,6 +35,8 @@
     "baseline_code_signature_text": "def _render_section(self, section: DocstringSection, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> str:",
     "baseline_code_structure_hash": "ba947518f1f0b9c59a54d2e2d2bfe123d8999b0e7631df8b4d1c0a63815ef43c"
   },
+  "List": {},
+  "ModuleDef": {},
   "NumpyDocstringRenderer": {},
   "NumpyDocstringRenderer._get_default_title": {
     "baseline_code_signature_text": "def _get_default_title(self, kind: str) -> str:",
@@ -37,5 +45,9 @@
   "NumpyDocstringRenderer._render_section": {
     "baseline_code_signature_text": "def _render_section(self, section: DocstringSection, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> str:",
     "baseline_code_structure_hash": "ba947518f1f0b9c59a54d2e2d2bfe123d8999b0e7631df8b4d1c0a63815ef43c"
-  }
+  },
+  "Optional": {},
+  "SectionKind": {},
+  "Union": {},
+  "cast": {}
 }

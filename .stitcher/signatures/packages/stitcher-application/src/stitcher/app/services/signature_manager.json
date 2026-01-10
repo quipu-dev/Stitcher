@@ -1,4 +1,11 @@
 {
+  "AssetPathResolver": {},
+  "Dict": {},
+  "Fingerprint": {},
+  "FingerprintStrategyProtocol": {},
+  "InvalidFingerprintKeyError": {},
+  "ModuleDef": {},
+  "Path": {},
   "SignatureManager": {
     "baseline_yaml_content_hash": "2b1ded155d40063ba0e25ab309dbb16b66ac1ad6cc38ffe1dd6b1a9649a317b3"
   },
@@ -42,5 +49,6 @@
     "baseline_code_structure_hash": "fca68e3422f35a2ad2f84b8066d951ef5852dbc2ae7b4f0a306783a30c2f320e",
     "baseline_yaml_content_hash": "30caad024d2d53643b9d324c6dfa4f47b456afcfcfb48d2c39f1ca64be4cb73d"
   },
-  "SignatureManager.sig_root": {}
+  "SignatureManager.sig_root": {},
+  "json": {}
 }

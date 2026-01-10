@@ -1,4 +1,12 @@
 {
+  "Any": {},
+  "AssetPathResolver": {},
+  "ClassDef": {},
+  "Dict": {},
+  "DocstringIR": {},
+  "DocstringParserProtocol": {},
+  "DocstringSerializerProtocol": {},
+  "DocumentAdapter": {},
   "DocumentManager": {
     "baseline_yaml_content_hash": "5ad8f647cc1d900dfd03553f9f9136ddb6cc0ecf43ee8bbc1db947814211e271"
   },
@@ -97,5 +105,15 @@
     "baseline_code_signature_text": "def set_strategy(self, parser: DocstringParserProtocol, serializer: DocstringSerializerProtocol):",
     "baseline_code_structure_hash": "b9800de0282d3f7b7a216cc4fc1e457a5de9dff7c4c29bf5d4018b08cb47f2cf",
     "baseline_yaml_content_hash": "0cff586d15ad7c0811defd1ec5212ab1c6bd75d7413abc32d53b54da34794e48"
-  }
+  },
+  "FunctionDef": {},
+  "ModuleDef": {},
+  "Optional": {},
+  "Path": {},
+  "RawDocstringParser": {},
+  "RawSerializer": {},
+  "Union": {},
+  "YamlAdapter": {},
+  "hashlib": {},
+  "json": {}
 }

@@ -1,3 +1,8 @@
 {
-  "__all__": {}
+  "SpyBus": {},
+  "VenvHarness": {},
+  "WorkspaceFactory": {},
+  "__all__": {},
+  "create_test_app": {},
+  "get_stored_hashes": {}
 }

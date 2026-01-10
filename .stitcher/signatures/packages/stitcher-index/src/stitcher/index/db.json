@@ -19,5 +19,11 @@
     "baseline_code_structure_hash": "e36fa6cfdacc0a16a73991ac1c1abede9d31bda0075ecf8a043ac766d3ce4893",
     "baseline_yaml_content_hash": "e436d30be4ffa94c6c96df11489319423e096a74edced58568e99a460aa0bf27"
   },
-  "log": {}
+  "Generator": {},
+  "Path": {},
+  "contextmanager": {},
+  "files": {},
+  "log": {},
+  "logging": {},
+  "sqlite3": {}
 }

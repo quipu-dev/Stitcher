@@ -1,4 +1,12 @@
 {
+  "ConflictType": {},
+  "InteractionContext": {},
+  "InteractionHandler": {},
+  "L": {},
+  "List": {},
+  "Optional": {},
+  "ResolutionAction": {},
+  "SemanticMenuOption": {},
   "TyperInteractionHandler": {
     "baseline_yaml_content_hash": "6420f1db09b70cf040706006dc6843f8c4a510f5d8670ea9ceea0aa48d3e5b83"
   },
@@ -13,5 +21,7 @@
   },
   "TyperInteractionHandler.renderer": {
     "baseline_yaml_content_hash": "ad1def1908ca2ce89f8f7c5e8731322ef08406ddacd8475bac716986388abff1"
-  }
+  },
+  "TyperInteractiveRenderer": {},
+  "sys": {}
 }

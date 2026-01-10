@@ -1,4 +1,10 @@
 {
+  "Dict": {},
+  "List": {},
+  "Optional": {},
+  "Path": {},
+  "Set": {},
+  "StitcherConfig": {},
   "Workspace": {},
   "Workspace.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, config: Optional[StitcherConfig] = None):",
@@ -37,5 +43,8 @@
   },
   "Workspace.peripheral_source_dirs": {},
   "Workspace.root_path": {},
-  "log": {}
+  "defaultdict": {},
+  "log": {},
+  "logging": {},
+  "tomllib": {}
 }

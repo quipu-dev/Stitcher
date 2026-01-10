@@ -1,3 +1,12 @@
 {
-  "__all__": {}
+  "GoogleDocstringRenderer": {},
+  "GoogleSerializer": {},
+  "GriffeDocstringParser": {},
+  "NumpyDocstringRenderer": {},
+  "NumpySerializer": {},
+  "RawDocstringParser": {},
+  "RawSerializer": {},
+  "__all__": {},
+  "get_docstring_codec": {},
+  "get_docstring_serializer": {}
 }

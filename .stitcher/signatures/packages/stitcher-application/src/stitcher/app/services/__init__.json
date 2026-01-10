@@ -1,3 +1,8 @@
 {
+  "Differ": {},
+  "DocstringMerger": {},
+  "DocumentManager": {},
+  "ScannerService": {},
+  "SignatureManager": {},
   "__all__": {}
 }

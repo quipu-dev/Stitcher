@@ -1,7 +1,9 @@
 {
+  "ModuleDef": {},
   "PythonParser": {},
   "PythonParser.parse": {
     "baseline_code_signature_text": "def parse(self, source_code: str, file_path: str = '') -> ModuleDef:",
     "baseline_code_structure_hash": "7cdee217ef2d564bf97560e5bc9d2a86ff7385b13fee797305bbe9f202846833"
-  }
+  },
+  "parse_source_code": {}
 }

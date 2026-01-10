@@ -1,4 +1,5 @@
 {
+  "FileSystemOperator": {},
   "I18NFactoryOperator": {
     "baseline_yaml_content_hash": "7fe490754ed1396bba8ae9aabd2c89c8a7694e3659d0660a5773427e2334b2d9"
   },
@@ -12,5 +13,9 @@
     "baseline_code_structure_hash": "8f9fc74d038585ffd10ac7ef2746c50ed1d900bcef571916d7548ad16e0eecb8",
     "baseline_yaml_content_hash": "7032146d618fc45a99e2f8786f420005e344b9a4030fc6488d43a412630cb5ec"
   },
-  "I18NFactoryOperator.assets_root": {}
+  "I18NFactoryOperator.assets_root": {},
+  "OperatorProtocol": {},
+  "Path": {},
+  "SemanticPointerProtocol": {},
+  "Union": {}
 }

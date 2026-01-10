@@ -1,4 +1,6 @@
 {
+  "Any": {},
+  "Dict": {},
   "DocUpdater": {},
   "DocUpdater.dump": {
     "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",
@@ -12,6 +14,7 @@
     "baseline_code_signature_text": "def rename_key(self, data: Dict[str, Any], old_key: str, new_key: str) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "d26b2e159389ba3881e44a300acd071151de2e546892345d596199932ef1b760"
   },
+  "Path": {},
   "SigUpdater": {},
   "SigUpdater.dump": {
     "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",
@@ -24,5 +27,7 @@
   "SigUpdater.rename_key": {
     "baseline_code_signature_text": "def rename_key(self, data: Dict[str, Any], old_key: str, new_key: str) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "d26b2e159389ba3881e44a300acd071151de2e546892345d596199932ef1b760"
-  }
+  },
+  "json": {},
+  "yaml": {}
 }

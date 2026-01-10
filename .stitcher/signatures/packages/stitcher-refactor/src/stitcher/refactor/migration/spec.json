@@ -1,4 +1,7 @@
 {
+  "AbstractOperation": {},
+  "Dict": {},
+  "List": {},
   "MigrationSpec": {
     "baseline_yaml_content_hash": "db9c7b20aa79d098af8370ab21d3856f991ddc3d93f2964770006491b1f5305c"
   },
@@ -22,5 +25,9 @@
   },
   "Move": {},
   "MoveDir": {},
-  "Rename": {}
+  "MoveDirectoryOperation": {},
+  "MoveFileOperation": {},
+  "Rename": {},
+  "RenameSymbolOperation": {},
+  "TypeAlias": {}
 }

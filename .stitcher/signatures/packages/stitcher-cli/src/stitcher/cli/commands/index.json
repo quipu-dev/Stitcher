@@ -2,5 +2,6 @@
   "index_build_command": {
     "baseline_code_signature_text": "def index_build_command():",
     "baseline_code_structure_hash": "def0f3ae8e08718f8d54ec93747e88dee09f90a83c1de906431b6d9cc831cff8"
-  }
+  },
+  "make_app": {}
 }

@@ -1,4 +1,8 @@
 {
+  "Dict": {},
+  "List": {},
+  "Optional": {},
+  "Path": {},
   "ReferenceType": {},
   "ReferenceType.IMPORT_PATH": {},
   "ReferenceType.SYMBOL": {},
@@ -44,6 +48,7 @@
   "SemanticGraph.root_path": {},
   "SemanticGraph.search_paths": {},
   "SemanticGraph.workspace": {},
+  "Set": {},
   "SymbolNode": {
     "baseline_yaml_content_hash": "4900ac88eeb806545cd45ed7908a5b05093c43924866887b710ab2f65adc727f"
   },
@@ -73,6 +78,8 @@
     "baseline_code_signature_text": "def register(self, target_fqn: str, location: UsageLocation):",
     "baseline_code_structure_hash": "205b208dafd47aeb0946fd69a75d55b5e752676fdcd5d104eeff837e807159a5"
   },
+  "UsageScanVisitor": {},
+  "Workspace": {},
   "_UsageVisitor": {},
   "_UsageVisitor.METADATA_DEPENDENCIES": {},
   "_UsageVisitor.__init__": {
@@ -118,5 +125,9 @@
     "baseline_code_signature_text": "def visit_Name(self, node: cst.Name):",
     "baseline_code_structure_hash": "cd22b676f96a3ec757b09d2c11277d6b56e755f04646f134ed579260699b2a96"
   },
-  "log": {}
+  "cst": {},
+  "dataclass": {},
+  "griffe": {},
+  "log": {},
+  "logging": {}
 }

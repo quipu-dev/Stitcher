@@ -1,4 +1,6 @@
 {
+  "AssetPathResolver": {},
+  "Path": {},
   "SidecarManager": {},
   "SidecarManager.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path):",

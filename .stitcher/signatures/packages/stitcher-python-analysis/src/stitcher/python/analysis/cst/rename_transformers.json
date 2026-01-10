@@ -1,4 +1,7 @@
 {
+  "CodeRange": {},
+  "Dict": {},
+  "List": {},
   "NamespaceRenamerTransformer": {
     "baseline_yaml_content_hash": "561fe244b21a6bd27862288b50bc1906470c61b7473b0bd457f1992e8775d1d7"
   },
@@ -26,6 +29,9 @@
   "NamespaceRenamerTransformer.locations": {},
   "NamespaceRenamerTransformer.new_prefix": {},
   "NamespaceRenamerTransformer.old_prefix": {},
+  "Optional": {},
+  "PositionProvider": {},
+  "ReferenceType": {},
   "SymbolRenamerTransformer": {
     "baseline_yaml_content_hash": "9a252f0d96c5665d3c35dfe215b2fcf80a1661ce5f6a0926b0d6ab2a40ef5c72"
   },
@@ -59,5 +65,9 @@
     "baseline_code_signature_text": "def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.BaseExpression:",
     "baseline_code_structure_hash": "359a7b7d03fd4c22322b79587ce2f48c68c764ee80795ad2766698ab49ff3fef"
   },
-  "SymbolRenamerTransformer.rename_map": {}
+  "SymbolRenamerTransformer.rename_map": {},
+  "Tuple": {},
+  "UsageLocation": {},
+  "cast": {},
+  "cst": {}
 }

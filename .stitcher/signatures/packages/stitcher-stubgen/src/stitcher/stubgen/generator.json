@@ -1,4 +1,11 @@
 {
+  "Argument": {},
+  "ArgumentKind": {},
+  "Attribute": {},
+  "ClassDef": {},
+  "FunctionDef": {},
+  "List": {},
+  "ModuleDef": {},
   "PythonStubGenerator": {},
   "PythonStubGenerator.__init__": {
     "baseline_code_signature_text": "def __init__(self, indent_spaces: int = 4):",

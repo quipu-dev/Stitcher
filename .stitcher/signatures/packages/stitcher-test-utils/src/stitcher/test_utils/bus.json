@@ -1,9 +1,15 @@
 {
+  "Any": {},
+  "Dict": {},
+  "List": {},
+  "Optional": {},
   "PatchedMessageBus": {},
   "PatchedMessageBus._render": {
     "baseline_code_signature_text": "def _render(self, level: str, msg_id: SemanticPointer, **kwargs: Any) -> None:",
     "baseline_code_structure_hash": "c4bd9c9ec0f179608166809f641b3bd7cc5a38407df738140affd35448eacfad"
   },
+  "Renderer": {},
+  "SemanticPointer": {},
   "SpyBus": {
     "baseline_yaml_content_hash": "224acf2bccb0081bcf7889ed8cf35ae91333493fe3d01ec3f394d13af8cd5e69"
   },
@@ -46,5 +52,8 @@
     "baseline_code_signature_text": "def render(self, message: str, level: str) -> None:",
     "baseline_code_structure_hash": "5ee01c65ceae57a45c16a7c14d696ccdbefeca3e86709a97c1f828eeae4eedec",
     "baseline_yaml_content_hash": "ac368e82bf66516dd24182300dac2becaecca2f62c2041e01596114afec6cb01"
-  }
+  },
+  "Union": {},
+  "contextmanager": {},
+  "stitcher": {}
 }

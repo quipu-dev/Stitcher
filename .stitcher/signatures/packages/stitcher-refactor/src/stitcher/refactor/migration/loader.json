@@ -4,5 +4,9 @@
     "baseline_code_signature_text": "def load_from_path(self, path: Path) -> MigrationSpec:",
     "baseline_code_structure_hash": "f06271fbb6ce68d8a56c11be554a4b00971bd1bd3107a1789e6f5c2bd8dd0508",
     "baseline_yaml_content_hash": "5aa84055d272930645ff69d1f0cb2173b8c037ed49d111473b491ff6a6458e8f"
-  }
+  },
+  "MigrationScriptError": {},
+  "MigrationSpec": {},
+  "Path": {},
+  "importlib": {}
 }

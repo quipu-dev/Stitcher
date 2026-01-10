@@ -1,3 +1,10 @@
 {
+  "MigrationError": {},
+  "MigrationLoader": {},
+  "MigrationScriptError": {},
+  "MigrationSpec": {},
+  "Move": {},
+  "MoveDir": {},
+  "Rename": {},
   "__all__": {}
 }

@@ -1,4 +1,6 @@
 {
+  "ArgumentKind": {},
+  "ClassDef": {},
   "EntityHasher": {
     "baseline_yaml_content_hash": "a594e3e6e3cf1eeed5456fba28c82afd8c9490a8a6cf08ebec403e96decfe062"
   },
@@ -7,6 +9,10 @@
     "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713",
     "baseline_yaml_content_hash": "3474205bfcc1930346b0c5175cbb1149dfc61510cce5330bc71f2eb976092d5d"
   },
+  "Fingerprint": {},
+  "FunctionDef": {},
+  "List": {},
+  "Protocol": {},
   "PythonFingerprintStrategy": {
     "baseline_yaml_content_hash": "5510039501752c6a8ad7042442829ee0031f807b324bf3287f5fd3f76f438bd3"
   },
@@ -40,5 +46,7 @@
   "StructureHasher.update": {
     "baseline_code_signature_text": "def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:",
     "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713"
-  }
+  },
+  "Union": {},
+  "hashlib": {}
 }

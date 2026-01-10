@@ -1,16 +1,22 @@
 {
+  "GriffePythonParser": {},
+  "LanguageAdapter": {},
+  "List": {},
+  "ModuleDef": {},
+  "Optional": {},
+  "Path": {},
   "PythonAdapter": {},
   "PythonAdapter.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path):",
     "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
   },
   "PythonAdapter._extract_references": {
-    "baseline_code_signature_text": "def _extract_references(self, rel_path: str, module: ModuleDef, content: str, file_path: Path) -> List[ReferenceRecord]:",
-    "baseline_code_structure_hash": "0b4ed72357142db4054087983c394b0ad938ebb838bc63dc2679de598f7eff76"
+    "baseline_code_signature_text": "def _extract_references(self, rel_path: str, module: ModuleDef, content: str, file_path: Path, logical_module_fqn: str) -> List[ReferenceRecord]:",
+    "baseline_code_structure_hash": "04b8ba8c616421b8b7e3662b6b71c7a96f9eb0b4cacd3e870a9884b725e66ca6"
   },
   "PythonAdapter._extract_symbols": {
-    "baseline_code_signature_text": "def _extract_symbols(self, rel_path: str, module: ModuleDef) -> List[SymbolRecord]:",
-    "baseline_code_structure_hash": "b4280ff9bc1e7d6ce28e75f5cfa0af25c332344151284aeab55a59a1510aff58"
+    "baseline_code_signature_text": "def _extract_symbols(self, rel_path: str, module: ModuleDef, logical_module_fqn: str) -> List[SymbolRecord]:",
+    "baseline_code_structure_hash": "b6f598cf11c19e2acd045107a20edfc716bd9502710a061c554d784ce438f105"
   },
   "PythonAdapter._guess_suri": {
     "baseline_code_signature_text": "def _guess_suri(self, fqn: str, current_module_fqn: str, current_rel_path: str) -> str:",
@@ -23,5 +29,13 @@
     "baseline_code_structure_hash": "7a85bfb042ee6d345c872fa2507503b53e02e0c710dac969b3b14b818c6b13a1"
   },
   "PythonAdapter.parser": {},
-  "PythonAdapter.root_path": {}
+  "PythonAdapter.root_path": {},
+  "PythonFingerprintStrategy": {},
+  "ReferenceRecord": {},
+  "SURIGenerator": {},
+  "SymbolRecord": {},
+  "Tuple": {},
+  "UsageRegistry": {},
+  "UsageScanVisitor": {},
+  "cst": {}
 }

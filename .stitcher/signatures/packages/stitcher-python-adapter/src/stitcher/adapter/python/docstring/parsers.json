@@ -1,4 +1,16 @@
 {
+  "Docstring": {},
+  "DocstringIR": {},
+  "DocstringItem": {},
+  "DocstringParserProtocol": {},
+  "DocstringSection": {},
+  "DocstringSectionAdmonition": {},
+  "DocstringSectionAttributes": {},
+  "DocstringSectionParameters": {},
+  "DocstringSectionRaises": {},
+  "DocstringSectionReturns": {},
+  "DocstringSectionText": {},
+  "DocstringSectionYields": {},
   "GriffeDocstringParser": {
     "baseline_yaml_content_hash": "569a5709448b4cd5200d52ed2498f0de9e0466391b9eb8de6d93bdbcc6d0f557"
   },
@@ -15,11 +27,16 @@
     "baseline_code_structure_hash": "aa78df2873a9da3428776ed13d1c38d4a292b62b7107d0560002ff94181e5170"
   },
   "GriffeDocstringParser.style": {},
+  "GriffeSection": {},
+  "List": {},
+  "Parser": {},
   "RawDocstringParser": {
     "baseline_yaml_content_hash": "5922122cccf14467e0934dd9547315cb778235d0a04be4d7da717da318741a1b"
   },
   "RawDocstringParser.parse": {
     "baseline_code_signature_text": "def parse(self, docstring_text: str) -> DocstringIR:",
     "baseline_code_structure_hash": "aa78df2873a9da3428776ed13d1c38d4a292b62b7107d0560002ff94181e5170"
-  }
+  },
+  "Union": {},
+  "griffe": {}
 }

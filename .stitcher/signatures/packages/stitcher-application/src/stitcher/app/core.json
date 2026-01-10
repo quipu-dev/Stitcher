@@ -1,4 +1,12 @@
 {
+  "Callable": {},
+  "CheckRunner": {},
+  "CoverageResult": {},
+  "CoverageRunner": {},
+  "DatabaseManager": {},
+  "Differ": {},
+  "DocstringMerger": {},
+  "DocumentManager": {},
   "FileCheckResult": {},
   "FileCheckResult.auto_reconciled_count": {},
   "FileCheckResult.error_count": {
@@ -26,9 +34,26 @@
     "baseline_yaml_content_hash": "d7f2634e2871aa3cb1129ae9711e63a42eab6cd69f513c3a9390d819dcd44e77"
   },
   "FileCheckResult.warnings": {},
+  "FingerprintStrategyProtocol": {},
+  "IndexRunner": {},
+  "IndexStore": {},
+  "InitRunner": {},
+  "InteractionHandler": {},
+  "L": {},
+  "LanguageParserProtocol": {},
+  "LanguageTransformerProtocol": {},
+  "List": {},
+  "ModuleDef": {},
+  "Optional": {},
+  "Path": {},
   "PumpResult": {},
   "PumpResult.redundant_files": {},
   "PumpResult.success": {},
+  "PumpRunner": {},
+  "PythonAdapter": {},
+  "RefactorRunner": {},
+  "ScannerService": {},
+  "SignatureManager": {},
   "StitcherApp": {
     "baseline_yaml_content_hash": "56ba56645ae8bc442c435ee789bb3cfbddd0eaefc0e0a33b11b20ba6d391dc55"
   },
@@ -144,5 +169,15 @@
   "StitcherApp.stub_pkg_manager": {},
   "StitcherApp.stubgen_service": {},
   "StitcherApp.transform_runner": {},
-  "StitcherApp.workspace_scanner": {}
+  "StitcherApp.workspace_scanner": {},
+  "StitcherConfig": {},
+  "StubgenService": {},
+  "TransactionManager": {},
+  "TransformRunner": {},
+  "Tuple": {},
+  "WorkspaceScanner": {},
+  "bus": {},
+  "get_docstring_codec": {},
+  "get_docstring_serializer": {},
+  "load_config_from_path": {}
 }

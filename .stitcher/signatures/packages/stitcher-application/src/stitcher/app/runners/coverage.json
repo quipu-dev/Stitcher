@@ -1,4 +1,5 @@
 {
+  "CoverageResult": {},
   "CoverageRunner": {},
   "CoverageRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager):",
@@ -26,5 +27,10 @@
     "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef]) -> List[CoverageResult]:",
     "baseline_code_structure_hash": "963606d2fa671e837956ce272a0eb73904a44910317c9ed931157fee805fba62"
   },
-  "CoverageRunner.scanner": {}
+  "CoverageRunner.scanner": {},
+  "DocumentManager": {},
+  "List": {},
+  "ModuleDef": {},
+  "Path": {},
+  "typer": {}
 }

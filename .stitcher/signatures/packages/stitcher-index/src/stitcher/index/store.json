@@ -1,4 +1,6 @@
 {
+  "DatabaseManager": {},
+  "FileRecord": {},
   "IndexStore": {},
   "IndexStore.__init__": {
     "baseline_code_signature_text": "def __init__(self, db_manager: DatabaseManager):",
@@ -36,5 +38,10 @@
     "baseline_code_signature_text": "def update_analysis(self, file_id: int, symbols: List[SymbolRecord], references: List[ReferenceRecord]) -> None:",
     "baseline_code_structure_hash": "a6f3ba80f7345a9a7a2a9d4cc1bd0bc8cee2eb896d35896ffb977a48d342fdb4",
     "baseline_yaml_content_hash": "5ddcfe8b685880333187b38e97f76f37507b92712c2c539b2f3aff1bbea66442"
-  }
+  },
+  "List": {},
+  "Optional": {},
+  "ReferenceRecord": {},
+  "SymbolRecord": {},
+  "Tuple": {}
 }

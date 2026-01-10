@@ -1,4 +1,13 @@
 {
+  "DocstringParserProtocol": {},
+  "DocstringRendererProtocol": {},
+  "DocstringSerializerProtocol": {},
+  "GoogleDocstringRenderer": {},
+  "GoogleSerializer": {},
+  "GriffeDocstringParser": {},
+  "NumpyDocstringRenderer": {},
+  "NumpySerializer": {},
+  "RawDocstringParser": {},
   "RawDocstringRenderer": {
     "baseline_yaml_content_hash": "e2284613d2f2e71a59697187e735c9ab1510e8c777c341c2b78ef8fa2370e066"
   },
@@ -6,6 +15,8 @@
     "baseline_code_signature_text": "def render(self, docstring_ir, context = None) -> str:",
     "baseline_code_structure_hash": "05a6e5ca4fcb5739f798bac0a20de58eaa96be177a23c5e223e6945dc9665efb"
   },
+  "RawSerializer": {},
+  "Tuple": {},
   "get_docstring_codec": {
     "baseline_code_signature_text": "def get_docstring_codec(style: str) -> Tuple[DocstringParserProtocol, DocstringRendererProtocol]:",
     "baseline_code_structure_hash": "7d811b0c7b02af76f198ac44d0ad399905b0da9d8edad4b6a3587aa3ab3aa7e0",

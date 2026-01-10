@@ -1,4 +1,6 @@
 {
+  "Any": {},
+  "Callable": {},
   "FeedbackBus": {
     "baseline_yaml_content_hash": "72c2336022bfddbd67fe59611c469d6ea53844027063137f71aad3a2f37a4634"
   },
@@ -47,5 +49,9 @@
     "baseline_code_signature_text": "def warning(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
     "baseline_code_structure_hash": "651c2c0ba80fe486d970ac50dcb73eed32e7f6693bcda46f1444cb5564847723",
     "baseline_yaml_content_hash": "9544f3f112ad20455d4cad24942bceac10be5fdd581c785a4e1c679ed2fbcd63"
-  }
+  },
+  "Optional": {},
+  "Renderer": {},
+  "SemanticPointer": {},
+  "Union": {}
 }

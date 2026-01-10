@@ -1,4 +1,6 @@
 {
+  "Any": {},
+  "Dict": {},
   "FINGERPRINT_KEY_PATTERN": {
     "baseline_yaml_content_hash": "6e003b6a50c3543bc79b4b07c26fa711a0365b5778ec8ddb472c30a116392e9d"
   },
@@ -56,5 +58,9 @@
   "InvalidFingerprintKeyError.__init__": {
     "baseline_code_signature_text": "def __init__(self, key: str):",
     "baseline_code_structure_hash": "0b79d35297e9da839f000220d4cb995e30f9d8d93a27c9fc82a10af2ac4c7c93"
-  }
+  },
+  "Optional": {},
+  "dataclass": {},
+  "field": {},
+  "re": {}
 }

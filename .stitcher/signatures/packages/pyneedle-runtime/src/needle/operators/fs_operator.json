@@ -1,4 +1,5 @@
 {
+  "Dict": {},
   "FileSystemOperator": {
     "baseline_yaml_content_hash": "4742e47b9eae2db18de72d278fbc548742abf4a1f12878261b9c6d6b54e5d0bb"
   },
@@ -22,5 +23,12 @@
     "baseline_code_signature_text": "def _scan_root(self, root_path: Path) -> Dict[str, str]:",
     "baseline_code_structure_hash": "fb9ef3c3c3741d0c06aee7dccb75e99081d27b2641f485ea82402fad884998c8"
   },
-  "FileSystemOperator.root": {}
+  "FileSystemOperator.root": {},
+  "JsonHandler": {},
+  "OperatorProtocol": {},
+  "Optional": {},
+  "Path": {},
+  "SemanticPointerProtocol": {},
+  "Union": {},
+  "os": {}
 }

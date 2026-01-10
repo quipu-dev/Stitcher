@@ -1,4 +1,12 @@
 {
+  "Callable": {},
+  "L": {},
+  "MigrationError": {},
+  "MigrationLoader": {},
+  "Optional": {},
+  "Path": {},
+  "Planner": {},
+  "RefactorContext": {},
   "RefactorRunner": {},
   "RefactorRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path):",
@@ -8,5 +16,11 @@
   "RefactorRunner.run_apply": {
     "baseline_code_signature_text": "def run_apply(self, migration_script: Path, config: StitcherConfig, dry_run: bool = False, confirm_callback: Optional[Callable[[int], bool]] = None) -> bool:",
     "baseline_code_structure_hash": "f4c8ec05521cba7b1380ddd595a6ea806690da985365733d874bae3403bccd4b"
-  }
+  },
+  "SemanticGraph": {},
+  "SidecarManager": {},
+  "StitcherConfig": {},
+  "TransactionManager": {},
+  "Workspace": {},
+  "bus": {}
 }

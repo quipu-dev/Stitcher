@@ -1,4 +1,7 @@
 {
+  "Dict": {},
+  "List": {},
+  "Optional": {},
   "PythonTransformer": {},
   "PythonTransformer.inject": {
     "baseline_code_signature_text": "def inject(self, source_code: str, docs: Dict[str, str]) -> str:",
@@ -7,5 +10,7 @@
   "PythonTransformer.strip": {
     "baseline_code_signature_text": "def strip(self, source_code: str, whitelist: Optional[List[str]] = None) -> str:",
     "baseline_code_structure_hash": "9deb2d6943846be9e39bce2b1250a04f53df5ba6dd12e253b2d3c65ba011e5e6"
-  }
+  },
+  "inject_docstrings": {},
+  "strip_docstrings": {}
 }

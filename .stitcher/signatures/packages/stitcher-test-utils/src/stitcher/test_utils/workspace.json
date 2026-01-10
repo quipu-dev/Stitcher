@@ -1,4 +1,8 @@
 {
+  "Any": {},
+  "Dict": {},
+  "List": {},
+  "Path": {},
   "WorkspaceFactory": {
     "baseline_yaml_content_hash": "822171b027459a36fd88cd48999a3fda535c18af058a7e89ba6ea0d4ccee99a3"
   },
@@ -52,5 +56,9 @@
     "baseline_code_signature_text": "def with_source(self, path: str, content: str) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "4231b100542176367e7ccc6879eb0bbb2119ecb797141bd39a83766aedfde7b0",
     "baseline_yaml_content_hash": "207cbff581589c62a759786a59fa2c1d43b4d125ba5716697e38c157e3065f92"
-  }
+  },
+  "dedent": {},
+  "subprocess": {},
+  "tomli_w": {},
+  "yaml": {}
 }

@@ -1,4 +1,10 @@
 {
+  "AbstractOperation": {},
+  "List": {},
+  "Optional": {},
+  "RefactorContext": {},
+  "RefactorIntent": {},
+  "RenameIntent": {},
   "RenameSymbolOperation": {},
   "RenameSymbolOperation.__init__": {
     "baseline_code_signature_text": "def __init__(self, old_fqn: str, new_fqn: str):",
@@ -30,5 +36,8 @@
     "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625"
   },
   "RenameSymbolOperation.new_fqn": {},
-  "RenameSymbolOperation.old_fqn": {}
+  "RenameSymbolOperation.old_fqn": {},
+  "SidecarUpdateIntent": {},
+  "SidecarUpdateMixin": {},
+  "SymbolNode": {}
 }

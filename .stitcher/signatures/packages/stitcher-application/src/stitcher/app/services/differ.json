@@ -6,5 +6,6 @@
     "baseline_code_signature_text": "def generate_text_diff(self, a: str, b: str, label_a: str = 'old', label_b: str = 'new') -> str:",
     "baseline_code_structure_hash": "e506f5d6070ea3a706c5599b7738785e8872c0ee2b8d3e091c8b546f341c3fad",
     "baseline_yaml_content_hash": "51d44d161645e1dca5be7a03dd8936b165668ed549ec79a1d7c77dd1757a6a6f"
-  }
+  },
+  "difflib": {}
 }
