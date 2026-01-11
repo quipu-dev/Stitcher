@@ -1,0 +1,3 @@
+"PumpRunner._get_dirty_source_docs": |-
+  Compares docstring hashes in the index against the baseline to find changes.
+  Returns a map of source docstrings only for the FQNs that have changed.

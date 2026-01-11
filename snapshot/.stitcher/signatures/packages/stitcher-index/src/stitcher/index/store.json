@@ -42,6 +42,10 @@
     "baseline_code_signature_text": "def get_symbols_by_file(self, file_id: int) -> List[SymbolRecord]:",
     "baseline_code_structure_hash": "36a970bc36c460f9391405a471a26d664ab4b00840b9c835d26d5970d57b10b0"
   },
+  "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_symbols_by_file_path": {
+    "baseline_code_signature_text": "def get_symbols_by_file_path(self, file_path: str) -> List[SymbolRecord]:",
+    "baseline_code_structure_hash": "e68bf15c3abab873819d8ab9be5972e24abb9a7609b7845df9adff73c5ee692d"
+  },
   "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.sync_file": {
     "baseline_code_signature_text": "def sync_file(self, path: str, content_hash: str, mtime: float, size: int) -> Tuple[int, bool]:",
     "baseline_code_structure_hash": "f316c8367aea45698054f617eaa3d5ada9f0902f6da70ad475c9a867ca0e91d7",

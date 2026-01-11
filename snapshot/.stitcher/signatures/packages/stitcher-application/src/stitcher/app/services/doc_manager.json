@@ -77,8 +77,8 @@
     "baseline_yaml_content_hash": "89f431b2c76878b80efef2a6d92fef633fab317702b4368dbf495fb0e64982d4"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.hydrate_module": {
-    "baseline_code_signature_text": "def hydrate_module(self, module: ModuleDef, force: bool = False, reconcile: bool = False, resolution_map: Optional[Dict[str, Any]] = None, dry_run: bool = False) -> Dict[str, Any]:",
-    "baseline_code_structure_hash": "5ad031b9c1bbecacc97bac10b79873165a17d2924a88b6ed7c1f49a24f2a7cdd"
+    "baseline_code_signature_text": "def hydrate_module(self, module: ModuleDef, force: bool = False, reconcile: bool = False, resolution_map: Optional[Dict[str, Any]] = None, dry_run: bool = False, source_docs_override: Optional[Dict[str, DocstringIR]] = None) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "34847454462aa9ad659ca6a579ac881b349c8956579d8d025f4406a9728616ec"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.load_docs_for_module": {
     "baseline_code_signature_text": "def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:",
