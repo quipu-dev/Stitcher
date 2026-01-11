@@ -48,7 +48,8 @@ def test_scanner_resolves_aliases_and_references(tmp_path, store):
 
     # 2. Execution: Run the full scanner pipeline
     scanner = WorkspaceScanner(project_root, store)
-    adapter = PythonAdapter(project_root)
+    # Manual search_paths to avoid dependency on Workspace service in pure index tests
+    adapter = PythonAdapter(project_root, [project_root])
     scanner.register_adapter(".py", adapter)
     scanner.scan()
 

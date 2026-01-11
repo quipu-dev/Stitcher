@@ -19,7 +19,7 @@ class Processor:
         pass
 """
     root = Path("/tmp/proj")
-    adapter = PythonAdapter(root)
+    adapter = PythonAdapter(root, [root])
     file_path = root / "src/main.py"
 
     # 执行解析

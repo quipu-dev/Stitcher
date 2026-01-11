@@ -35,6 +35,7 @@ from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
 from stitcher.index.scanner import WorkspaceScanner
 from stitcher.adapter.python import PythonAdapter
+from stitcher.refactor.workspace import Workspace
 from stitcher.adapter.python.docstring import (
     get_docstring_codec,
     get_docstring_serializer,
@@ -51,6 +52,7 @@ class StitcherApp:
         interaction_handler: Optional[InteractionHandler] = None,
     ):
         self.root_path = root_path
+        self.workspace = Workspace(root_path)
         # 1. Core Services
         self.doc_manager = DocumentManager(root_path)
         self.sig_manager = SignatureManager(root_path, fingerprint_strategy)
@@ -95,7 +97,10 @@ class StitcherApp:
 
         # Register Adapters
         # TODO: Load adapters dynamically or via config in future
-        self.workspace_scanner.register_adapter(".py", PythonAdapter(root_path))
+        search_paths = self.workspace.get_search_paths()
+        self.workspace_scanner.register_adapter(
+            ".py", PythonAdapter(root_path, search_paths)
+        )
 
         self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
 
