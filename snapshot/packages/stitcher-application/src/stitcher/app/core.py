@@ -83,6 +83,7 @@ class StitcherApp:
             self.merger,
             interaction_handler,
             fingerprint_strategy=self.fingerprint_strategy,
+            index_store=self.index_store,
         )
         self.init_runner = InitRunner(
             root_path,

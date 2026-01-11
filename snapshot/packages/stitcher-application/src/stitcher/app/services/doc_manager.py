@@ -191,10 +191,15 @@ class DocumentManager:
         reconcile: bool = False,
         resolution_map: Optional[Dict[str, Any]] = None,
         dry_run: bool = False,
+        source_docs_override: Optional[Dict[str, DocstringIR]] = None,
     ) -> Dict[str, Any]:
         resolution_map = resolution_map or {}
 
-        source_docs = self.flatten_module_docs(module)
+        source_docs = (
+            source_docs_override
+            if source_docs_override is not None
+            else self.flatten_module_docs(module)
+        )
         if not source_docs:
             return {
                 "success": True,

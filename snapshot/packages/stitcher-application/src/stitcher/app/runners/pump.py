@@ -13,6 +13,7 @@ from stitcher.spec import (
     FunctionExecutionPlan,
     LanguageTransformerProtocol,
     FingerprintStrategyProtocol,
+    DocstringIR,
 )
 from stitcher.config import StitcherConfig
 from stitcher.app.services import (
@@ -24,6 +25,8 @@ from stitcher.app.services import (
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import PumpResult
+from stitcher.index.store import IndexStore
+
 
 from stitcher.common.transaction import TransactionManager
 
@@ -39,6 +42,7 @@ class PumpRunner:
         merger: DocstringMerger,
         interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
+        index_store: IndexStore,
     ):
         self.root_path = root_path
         self.doc_manager = doc_manager
@@ -48,6 +52,46 @@ class PumpRunner:
         self.merger = merger
         self.interaction_handler = interaction_handler
         self.fingerprint_strategy = fingerprint_strategy
+        self.index_store = index_store
+
+    def _get_dirty_source_docs(self, module: ModuleDef) -> Dict[str, DocstringIR]:
+        """
+        Compares docstring hashes in the index against the baseline to find changes.
+        Returns a map of source docstrings only for the FQNs that have changed.
+        """
+        actual_symbols = self.index_store.get_symbols_by_file_path(module.file_path)
+        actual_map = {
+            s.logical_path: s for s in actual_symbols if s.logical_path is not None
+        }
+
+        baseline_hashes = self.sig_manager.load_composite_hashes(module.file_path)
+
+        dirty_fqns: set[str] = set()
+        all_fqns = set(actual_map.keys()) | set(baseline_hashes.keys())
+
+        for fqn in all_fqns:
+            actual = actual_map.get(fqn)
+            baseline = baseline_hashes.get(fqn)
+
+            # A docstring is dirty if the hash has changed, or if it's a new symbol with a docstring.
+            actual_hash = actual.docstring_hash if actual else None
+            baseline_hash = (
+                baseline.get("baseline_code_docstring_hash") if baseline else None
+            )
+
+            if actual_hash != baseline_hash:
+                dirty_fqns.add(fqn)
+
+        # If no symbols are dirty, we don't need to parse the AST for docs at all.
+        if not dirty_fqns:
+            return {}
+
+        # Now, extract from the ModuleDef AST only for dirty fqns
+        all_source_docs = self.doc_manager.flatten_module_docs(module)
+        dirty_source_docs = {
+            fqn: doc for fqn, doc in all_source_docs.items() if fqn in dirty_fqns
+        }
+        return dirty_source_docs
 
     def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
         fingerprints: Dict[str, Fingerprint] = {}
@@ -66,9 +110,9 @@ class PumpRunner:
         module: ModuleDef,
         decisions: Dict[str, ResolutionAction],
         strip_requested: bool,
+        source_docs: Dict[str, DocstringIR],
     ) -> Dict[str, FunctionExecutionPlan]:
         plan: Dict[str, FunctionExecutionPlan] = {}
-        source_docs = self.doc_manager.flatten_module_docs(module)
 
         for fqn in module.get_all_fqns():
             decision = decisions.get(fqn)
@@ -104,13 +148,23 @@ class PumpRunner:
         reconcile: bool = False,
     ) -> PumpResult:
         all_conflicts: List[InteractionContext] = []
+        dirty_docs_cache: Dict[str, Dict[str, DocstringIR]] = {}
 
         # --- Phase 1: Analysis ---
         for module in modules:
+            dirty_docs = self._get_dirty_source_docs(module)
+            dirty_docs_cache[module.file_path] = dirty_docs
+
             res = self.doc_manager.hydrate_module(
-                module, force=False, reconcile=False, dry_run=True
+                module,
+                force=False,
+                reconcile=False,
+                dry_run=True,
+                source_docs_override=dirty_docs,
             )
             if not res["success"]:
+                # The expensive full parse is now deferred to here, when a conflict
+                # is actually detected and we need to show a diff to the user.
                 source_docs = self.doc_manager.flatten_module_docs(module)
                 yaml_docs = self.doc_manager.load_docs_for_module(module)
                 for key in res["conflicts"]:
@@ -154,9 +208,11 @@ class PumpRunner:
         unresolved_conflicts_count = 0
 
         for module in modules:
-            file_plan = self._generate_execution_plan(module, decisions, strip)
+            source_docs = dirty_docs_cache.get(module.file_path, {})
+            file_plan = self._generate_execution_plan(
+                module, decisions, strip, source_docs
+            )
 
-            source_docs = self.doc_manager.flatten_module_docs(module)
             current_yaml_docs = self.doc_manager.load_docs_for_module(module)
             stored_hashes = self.sig_manager.load_composite_hashes(module.file_path)
             current_fingerprints = self._compute_fingerprints(module)

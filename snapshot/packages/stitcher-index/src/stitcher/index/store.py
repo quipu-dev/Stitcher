@@ -142,6 +142,19 @@ class IndexStore:
             ).fetchall()
             return [SymbolRecord(**dict(row)) for row in rows]
 
+    def get_symbols_by_file_path(self, file_path: str) -> List[SymbolRecord]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT s.*
+                FROM symbols s
+                JOIN files f ON s.file_id = f.id
+                WHERE f.path = ?
+                """,
+                (file_path,),
+            ).fetchall()
+            return [SymbolRecord(**dict(row)) for row in rows]
+
     def get_references_by_file(self, file_id: int) -> List[ReferenceRecord]:
         with self.db.get_connection() as conn:
             rows = conn.execute(
