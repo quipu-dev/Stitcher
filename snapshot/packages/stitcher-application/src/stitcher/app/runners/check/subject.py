@@ -63,7 +63,9 @@ class IndexCheckSubjectAdapter(CheckSubject):
         for sym in symbols_from_db:
             if sym.kind == "module":
                 module_symbol = sym
-            elif sym.logical_path:
+            # CRITICAL: Only consider symbols that are definitions within this file,
+            # not aliases (imports).
+            elif sym.logical_path and sym.kind != "alias":
                 symbol_map[sym.logical_path] = sym
 
         # 3. Aggregate all unique FQNs
