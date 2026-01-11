@@ -13,6 +13,7 @@ from stitcher.spec import (
     Fingerprint,
     FunctionExecutionPlan,
     LanguageTransformerProtocol,
+    FingerprintStrategyProtocol,
 )
 from stitcher.config import StitcherConfig
 from stitcher.app.services import (
@@ -38,6 +39,7 @@ class PumpRunner:
         differ: Differ,
         merger: DocstringMerger,
         interaction_handler: InteractionHandler | None,
+        fingerprint_strategy: FingerprintStrategyProtocol,
     ):
         self.root_path = root_path
         self.doc_manager = doc_manager
@@ -46,6 +48,17 @@ class PumpRunner:
         self.differ = differ
         self.merger = merger
         self.interaction_handler = interaction_handler
+        self.fingerprint_strategy = fingerprint_strategy
+
+    def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
+        fingerprints: Dict[str, Fingerprint] = {}
+        for func in module.functions:
+            fingerprints[func.name] = self.fingerprint_strategy.compute(func)
+        for cls in module.classes:
+            for method in cls.methods:
+                fqn = f"{cls.name}.{method.name}"
+                fingerprints[fqn] = self.fingerprint_strategy.compute(method)
+        return fingerprints
 
     def _generate_execution_plan(
         self,
@@ -144,8 +157,8 @@ class PumpRunner:
 
             source_docs = self.doc_manager.flatten_module_docs(module)
             current_yaml_docs = self.doc_manager.load_docs_for_module(module)
-            stored_hashes = self.sig_manager.load_composite_hashes(module)
-            current_fingerprints = self.sig_manager.compute_fingerprints(module)
+            stored_hashes = self.sig_manager.load_composite_hashes(module.file_path)
+            current_fingerprints = self._compute_fingerprints(module)
 
             new_yaml_docs = current_yaml_docs.copy()
             new_hashes = copy.deepcopy(stored_hashes)
@@ -231,19 +244,25 @@ class PumpRunner:
                     )
 
                 if signatures_need_save:
-                    sig_path = self.sig_manager.get_sig_path(module)
                     if not new_hashes:
+                        sig_path = self.sig_manager._get_sig_path(module.file_path)
                         if sig_path.exists():
                             tm.add_delete_file(
                                 str(sig_path.relative_to(self.root_path))
                             )
                     else:
+                        self.sig_manager.save_composite_hashes(
+                            module.file_path, new_hashes
+                        )
+                        # The save logic is complex, let's defer to the manager.
+                        # We need to write the content via the TM.
                         serialized_data = {
                             fqn: fp.to_dict() for fqn, fp in new_hashes.items()
                         }
                         sig_content = json.dumps(
                             serialized_data, indent=2, sort_keys=True
                         )
+                        sig_path = self.sig_manager._get_sig_path(module.file_path)
                         tm.add_write(
                             str(sig_path.relative_to(self.root_path)), sig_content
                         )

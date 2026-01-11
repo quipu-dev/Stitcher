@@ -53,9 +53,10 @@ class StitcherApp:
     ):
         self.root_path = root_path
         self.workspace = Workspace(root_path)
+        self.fingerprint_strategy = fingerprint_strategy
         # 1. Core Services
         self.doc_manager = DocumentManager(root_path)
-        self.sig_manager = SignatureManager(root_path, fingerprint_strategy)
+        self.sig_manager = SignatureManager(root_path)
         self.scanner = ScannerService(root_path, parser)
         self.differ = Differ()
         self.merger = DocstringMerger()
@@ -71,6 +72,7 @@ class StitcherApp:
             self.sig_manager,
             self.differ,
             interaction_handler,
+            fingerprint_strategy=self.fingerprint_strategy,
         )
         self.pump_runner = PumpRunner(
             root_path,
@@ -80,8 +82,14 @@ class StitcherApp:
             self.differ,
             self.merger,
             interaction_handler,
+            fingerprint_strategy=self.fingerprint_strategy,
         )
-        self.init_runner = InitRunner(root_path, self.doc_manager, self.sig_manager)
+        self.init_runner = InitRunner(
+            root_path,
+            self.doc_manager,
+            self.sig_manager,
+            fingerprint_strategy=self.fingerprint_strategy,
+        )
         self.transform_runner = TransformRunner(
             root_path, self.doc_manager, transformer
         )

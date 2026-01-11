@@ -3,7 +3,8 @@ from pathlib import Path
 
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.spec import Fingerprint, ModuleDef
+from typing import Dict
+from stitcher.spec import Fingerprint, ModuleDef, FingerprintStrategyProtocol
 from stitcher.app.services import DocumentManager, SignatureManager
 
 
@@ -13,10 +14,22 @@ class InitRunner:
         root_path: Path,
         doc_manager: DocumentManager,
         sig_manager: SignatureManager,
+        fingerprint_strategy: FingerprintStrategyProtocol,
     ):
         self.root_path = root_path
         self.doc_manager = doc_manager
         self.sig_manager = sig_manager
+        self.fingerprint_strategy = fingerprint_strategy
+
+    def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
+        fingerprints: Dict[str, Fingerprint] = {}
+        for func in module.functions:
+            fingerprints[func.name] = self.fingerprint_strategy.compute(func)
+        for cls in module.classes:
+            for method in cls.methods:
+                fqn = f"{cls.name}.{method.name}"
+                fingerprints[fqn] = self.fingerprint_strategy.compute(method)
+        return fingerprints
 
     def run_batch(self, modules: List[ModuleDef]) -> List[Path]:
         created_files: List[Path] = []
@@ -24,7 +37,7 @@ class InitRunner:
             output_path = self.doc_manager.save_docs_for_module(module)
 
             # Use the new unified compute method
-            computed_fingerprints = self.sig_manager.compute_fingerprints(module)
+            computed_fingerprints = self._compute_fingerprints(module)
             yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
 
             combined: Dict[str, Fingerprint] = {}
@@ -52,7 +65,7 @@ class InitRunner:
 
                 combined[fqn] = fp
 
-            self.sig_manager.save_composite_hashes(module, combined)
+            self.sig_manager.save_composite_hashes(module.file_path, combined)
             if output_path and output_path.name:
                 relative_path = output_path.relative_to(self.root_path)
                 bus.success(L.init.file.created, path=relative_path)

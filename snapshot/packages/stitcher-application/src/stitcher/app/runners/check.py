@@ -11,6 +11,7 @@ from stitcher.spec import (
     ResolutionAction,
     Fingerprint,
     LanguageParserProtocol,
+    FingerprintStrategyProtocol,
 )
 from stitcher.app.services import (
     DocumentManager,
@@ -31,6 +32,7 @@ class CheckRunner:
         sig_manager: SignatureManager,
         differ: Differ,
         interaction_handler: InteractionHandler | None,
+        fingerprint_strategy: FingerprintStrategyProtocol,
     ):
         self.root_path = root_path
         self.parser = parser
@@ -38,6 +40,17 @@ class CheckRunner:
         self.sig_manager = sig_manager
         self.differ = differ
         self.interaction_handler = interaction_handler
+        self.fingerprint_strategy = fingerprint_strategy
+
+    def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
+        fingerprints: Dict[str, Fingerprint] = {}
+        for func in module.functions:
+            fingerprints[func.name] = self.fingerprint_strategy.compute(func)
+        for cls in module.classes:
+            for method in cls.methods:
+                fqn = f"{cls.name}.{method.name}"
+                fingerprints[fqn] = self.fingerprint_strategy.compute(method)
+        return fingerprints
 
     def _analyze_file(
         self, module: ModuleDef
@@ -62,9 +75,9 @@ class CheckRunner:
             (self.root_path / module.file_path).with_suffix(".stitcher.yaml").exists()
         )
 
-        computed_fingerprints = self.sig_manager.compute_fingerprints(module)
+        computed_fingerprints = self._compute_fingerprints(module)
         current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module)
-        stored_hashes_map = self.sig_manager.load_composite_hashes(module)
+        stored_hashes_map = self.sig_manager.load_composite_hashes(module.file_path)
 
         all_fqns = set(computed_fingerprints.keys()) | set(stored_hashes_map.keys())
 
@@ -144,16 +157,13 @@ class CheckRunner:
 
         # Apply signature updates
         for file_path, fqn_actions in sig_updates_by_file.items():
-            module_def = ModuleDef(file_path=file_path)
-            stored_hashes = self.sig_manager.load_composite_hashes(module_def)
+            stored_hashes = self.sig_manager.load_composite_hashes(file_path)
             new_hashes = copy.deepcopy(stored_hashes)
 
             full_module_def = self.parser.parse(
                 (self.root_path / file_path).read_text("utf-8"), file_path
             )
-            computed_fingerprints = self.sig_manager.compute_fingerprints(
-                full_module_def
-            )
+            computed_fingerprints = self._compute_fingerprints(full_module_def)
             current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
                 full_module_def
             )
@@ -176,7 +186,7 @@ class CheckRunner:
                             )
 
             if new_hashes != stored_hashes:
-                self.sig_manager.save_composite_hashes(module_def, new_hashes)
+                self.sig_manager.save_composite_hashes(file_path, new_hashes)
 
         # Apply doc purges
         for file_path, fqns_to_purge in purges_by_file.items():
@@ -219,7 +229,9 @@ class CheckRunner:
                 if not module_def:
                     continue
 
-                stored_hashes = self.sig_manager.load_composite_hashes(module_def)
+                stored_hashes = self.sig_manager.load_composite_hashes(
+                    module_def.file_path
+                )
                 new_hashes = copy.deepcopy(stored_hashes)
                 current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
                     module_def
@@ -236,7 +248,9 @@ class CheckRunner:
                             del new_hashes[fqn]["baseline_yaml_content_hash"]
 
                 if new_hashes != stored_hashes:
-                    self.sig_manager.save_composite_hashes(module_def, new_hashes)
+                    self.sig_manager.save_composite_hashes(
+                        module_def.file_path, new_hashes
+                    )
 
     def resolve_conflicts(
         self,
@@ -337,7 +351,7 @@ class CheckRunner:
         bus.info(L.check.run.reformatting)
         for module in modules:
             self.doc_manager.reformat_docs_for_module(module)
-            self.sig_manager.reformat_hashes_for_module(module)
+            self.sig_manager.reformat_hashes_for_file(module.file_path)
 
     def report(self, results: List[FileCheckResult]) -> bool:
         global_failed_files = 0
