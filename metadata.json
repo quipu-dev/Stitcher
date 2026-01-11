@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(app): 集成自动索引更新机制", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768122502.8914652, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M test_end_to_end.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768122672.7284582, "duration_ms": 0}}

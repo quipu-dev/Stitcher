@@ -74,7 +74,7 @@ def test_app_run_from_config_with_source_files(tmp_path, monkeypatch):
 
     success_messages = [m for m in spy_bus.get_messages() if m["level"] == "success"]
     # 2 files generated (main.py, helpers.py), 1 run complete message
-    assert len(success_messages) == 3
+    assert len(success_messages) == 4
 
 
 def test_app_run_multi_target(tmp_path, monkeypatch):
@@ -188,7 +188,7 @@ def test_app_generates_stubs_for_plugins_and_sources(tmp_path, monkeypatch):
             m for m in spy_bus.get_messages() if m["level"] == "success"
         ]
         # 3 files generated (src/main, dynamic/utils, dynamic/__init__), 1 run complete
-        assert len(success_messages) == 4
+        assert len(success_messages) == 5
 
     finally:
         # Cleanup sys.path
