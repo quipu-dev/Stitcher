@@ -1,13 +1,10 @@
-import pytest
 from needle.pointer import L
 from pathlib import Path
 
 from stitcher.test_utils import WorkspaceFactory, SpyBus, create_test_app
 
 
-def test_check_does_not_report_imports_as_missing_docs(
-    tmp_path: Path, monkeypatch
-):
+def test_check_does_not_report_imports_as_missing_docs(tmp_path: Path, monkeypatch):
     """
     Verifies that 'stitcher check' does not incorrectly flag imported symbols
     as missing documentation. It should only flag symbols defined within the
@@ -43,7 +40,8 @@ class MyPublicClass:
     with spy_bus.patch(monkeypatch):
         # run_check returns True (success) if there are only warnings.
         success = app.run_check()
-        
+
+    assert success
     # 3. Assertion & Visibility
     messages = spy_bus.get_messages()
 
@@ -62,18 +60,20 @@ class MyPublicClass:
     print(f"Reported Keys for Missing Docs: {reported_keys}")
 
     # Assert that our defined symbols ARE reported
-    assert "my_public_function" in reported_keys, "Locally defined function missing from report"
+    assert "my_public_function" in reported_keys, (
+        "Locally defined function missing from report"
+    )
     assert "MyPublicClass" in reported_keys, "Locally defined class missing from report"
 
     # Assert that imported symbols are NOT reported
     imported_symbols = {"os", "logging", "Path", "Optional", "List"}
     for symbol in imported_symbols:
-        assert (
-            symbol not in reported_keys
-        ), f"Imported symbol '{symbol}' was incorrectly reported as missing docs"
-    
+        assert symbol not in reported_keys, (
+            f"Imported symbol '{symbol}' was incorrectly reported as missing docs"
+        )
+
     # Verify we found exactly what we expected (local definitions only)
     # Note: If there are other symbols (like __doc__ module level), adjust expectation.
-    # The current setup creates a file with a module docstring (implied empty?), 
+    # The current setup creates a file with a module docstring (implied empty?),
     # but 'missing' check usually skips __doc__.
     # Let's stick to checking our specific targets.

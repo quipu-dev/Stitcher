@@ -1,4 +1,3 @@
-import pytest
 from needle.pointer import L
 from pathlib import Path
 
@@ -46,12 +45,11 @@ def my_local_function():
 
     # 3. Assertion: Verify the output from the bus
     messages = spy_bus.get_messages()
-    
+
     print("\n=== Captured Bus Messages ===")
     for msg in messages:
         print(f"[{msg['level'].upper()}] {msg['id']}: {msg.get('params', {})}")
     print("=============================")
-
 
     missing_doc_warnings = [
         msg for msg in messages if msg["id"] == str(L.check.issue.missing)
@@ -65,25 +63,27 @@ def my_local_function():
     untracked_missing_warnings = [
         msg for msg in messages if msg["id"] == str(L.check.issue.untracked_missing_key)
     ]
-    reported_untracked_keys = {msg["params"]["key"] for msg in untracked_missing_warnings}
+    reported_untracked_keys = {
+        msg["params"]["key"] for msg in untracked_missing_warnings
+    }
 
     all_reported_keys = reported_keys.union(reported_untracked_keys)
 
     # Assert that the locally defined function IS reported as missing
-    assert (
-        "my_local_function" in all_reported_keys
-    ), "Local function was not reported as missing."
+    assert "my_local_function" in all_reported_keys, (
+        "Local function was not reported as missing."
+    )
 
     # Assert that standard imports and re-exports are NOT reported
-    assert (
-        "Dict" not in all_reported_keys
-    ), "Standard import 'Dict' was incorrectly reported."
-    
-    assert (
-        "MyDefinedClass" not in all_reported_keys
-    ), "Re-exported class 'MyDefinedClass' was incorrectly reported."
+    assert "Dict" not in all_reported_keys, (
+        "Standard import 'Dict' was incorrectly reported."
+    )
+
+    assert "MyDefinedClass" not in all_reported_keys, (
+        "Re-exported class 'MyDefinedClass' was incorrectly reported."
+    )
 
     # Assert that the total number of missing doc warnings is exactly 1
-    assert (
-        len(all_reported_keys) == 1
-    ), f"Expected 1 missing doc warning, but found {len(all_reported_keys)}: {all_reported_keys}"
+    assert len(all_reported_keys) == 1, (
+        f"Expected 1 missing doc warning, but found {len(all_reported_keys)}: {all_reported_keys}"
+    )
