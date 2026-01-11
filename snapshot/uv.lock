@@ -904,6 +904,7 @@ dependencies = [
     { name = "pyneedle" },
     { name = "pyyaml" },
     { name = "stitcher-application" },
+    { name = "stitcher-index" },
     { name = "stitcher-python-adapter" },
     { name = "tomli-w" },
 ]
@@ -913,6 +914,7 @@ requires-dist = [
     { name = "pyneedle", editable = "packages/pyneedle" },
     { name = "pyyaml" },
     { name = "stitcher-application", editable = "packages/stitcher-application" },
+    { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-python-adapter", editable = "packages/stitcher-python-adapter" },
     { name = "tomli-w" },
 ]
