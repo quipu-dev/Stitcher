@@ -5,9 +5,6 @@ from stitcher.test_utils.workspace import WorkspaceFactory
 
 import pytest
 
-# 这会跳过整个文件中的所有测试用例
-pytestmark = pytest.mark.skip(reason="该文件暂未完成")
-
 
 def test_scanner_resolves_aliases_and_references(tmp_path, store):
     """

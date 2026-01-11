@@ -8,6 +8,7 @@ from typing import Dict, Set
 from .store import IndexStore
 from .types import FileRecord
 from .protocols import LanguageAdapter
+from .linker import Linker
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class WorkspaceScanner:
         self.root_path = root_path
         self.store = store
         self.adapters: Dict[str, LanguageAdapter] = {}
+        self.linker = Linker(store.db)
 
     def register_adapter(self, extension: str, adapter: LanguageAdapter):
         self.adapters[extension] = adapter
@@ -101,6 +103,11 @@ class WorkspaceScanner:
 
             # --- Phase 4: Parsing (Semantic Extraction) ---
             self._process_file_content(file_id, abs_path, content_bytes)
+
+        # --- Phase 5: Linking ---
+        # Now that all files are parsed and symbols/references are in DB,
+        # we can resolve the links.
+        self.linker.link()
 
         return stats
 
