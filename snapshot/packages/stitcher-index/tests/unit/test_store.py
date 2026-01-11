@@ -44,7 +44,7 @@ def test_analysis_update(store):
     references = [
         ReferenceRecord(
             target_fqn="src.other.func",
-            target_id="py://src/other.py#func",
+            target_id=None,  # This is the key change: Scan phase produces unresolved IDs.
             kind="import",
             lineno=6,
             col_offset=0,
@@ -68,7 +68,8 @@ def test_analysis_update(store):
     # Verify references
     saved_refs = store.get_references_by_file(fid)
     assert len(saved_refs) == 1
-    assert saved_refs[0].target_id == "py://src/other.py#func"
+    assert saved_refs[0].target_fqn == "src.other.func"
+    assert saved_refs[0].target_id is None  # Verify that the unresolved state was saved
 
 
 def test_analysis_replacement(store):
