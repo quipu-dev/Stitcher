@@ -74,7 +74,7 @@ class PythonAdapter(LanguageAdapter):
             # Alias Handling
             alias_target_fqn: Optional[str] = None
             final_kind = kind
-            
+
             # Check for alias target in the entity
             target_attr = getattr(entity_for_hash, "alias_target", None)
             if target_attr:
@@ -159,7 +159,7 @@ class PythonAdapter(LanguageAdapter):
                     refs.append(
                         ReferenceRecord(
                             target_fqn=target_fqn,  # Store the logical intent directly
-                            target_id=None,         # Decoupled: Linker will fill this
+                            target_id=None,  # Decoupled: Linker will fill this
                             kind=loc.ref_type.value,
                             lineno=loc.lineno,
                             col_offset=loc.col_offset,

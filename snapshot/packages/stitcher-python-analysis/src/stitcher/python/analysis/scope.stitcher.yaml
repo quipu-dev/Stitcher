@@ -1,0 +1,3 @@
+"ScopeAnalyzer.build_from_ir": |-
+  Builds a local symbol map (name -> FQN) from a Stitcher ModuleDef IR.
+  This map is used by UsageScanVisitor to resolve names in a file's scope.

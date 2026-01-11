@@ -33,9 +33,11 @@
   "PythonFingerprintStrategy": {},
   "ReferenceRecord": {},
   "SURIGenerator": {},
+  "ScopeAnalyzer": {},
   "SymbolRecord": {},
   "Tuple": {},
   "UsageRegistry": {},
   "UsageScanVisitor": {},
-  "cst": {}
+  "cst": {},
+  "path_to_logical_fqn": {}
 }

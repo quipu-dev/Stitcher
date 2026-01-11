@@ -27,5 +27,6 @@
     "baseline_code_signature_text": "def _update_sidecar_data(self, data: Dict[str, Any], module_fqn: Optional[str], old_fqn: str, new_fqn: str) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "90293dbce85734f0498d51c275c62bb7abf8e87a6a147f2ec982ec19bc50bda7"
   },
-  "abstractmethod": {}
+  "abstractmethod": {},
+  "path_to_logical_fqn": {}
 }

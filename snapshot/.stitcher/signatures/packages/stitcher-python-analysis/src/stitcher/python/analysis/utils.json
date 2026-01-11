@@ -1,0 +1,7 @@
+{
+  "path_to_logical_fqn": {
+    "baseline_code_signature_text": "def path_to_logical_fqn(rel_path_str: str) -> str:",
+    "baseline_code_structure_hash": "d967413538a5926a6505d74b337575b43f49adb8d36a485566a2339b5e2a5b8d",
+    "baseline_yaml_content_hash": "cadd3dcf436affe7724f62cf68080a04bb75e33c0e1dd3f23555b76584f8dc3d"
+  }
+}

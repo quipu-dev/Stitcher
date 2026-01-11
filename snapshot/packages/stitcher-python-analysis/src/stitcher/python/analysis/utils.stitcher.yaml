@@ -1,0 +1,5 @@
+"path_to_logical_fqn": |-
+  Converts a relative file path string into a Python Fully Qualified Name (FQN).
+
+  - 'src/my_pkg/module.py' -> 'my_pkg.module'
+  - 'my_pkg/__init__.py' -> 'my_pkg'

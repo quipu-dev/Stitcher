@@ -16,6 +16,10 @@
     "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
   },
   "UsageRegistry._index": {},
+  "UsageRegistry.get_all_usages": {
+    "baseline_code_signature_text": "def get_all_usages(self) -> Dict[str, List[UsageLocation]]:",
+    "baseline_code_structure_hash": "b7203e521df0bc35e23335da0e29437750a078f365b8d3d7db370c048229df5f"
+  },
   "UsageRegistry.get_usages": {
     "baseline_code_signature_text": "def get_usages(self, target_fqn: str) -> List[UsageLocation]:",
     "baseline_code_structure_hash": "8d9cf5121b7f7836d779ac0f49bea25a8bd7e38d8ad447861c8d0f9686b140e8"

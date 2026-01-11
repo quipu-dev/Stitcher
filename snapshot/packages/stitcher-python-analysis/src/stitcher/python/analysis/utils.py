@@ -1,10 +1,4 @@
 def path_to_logical_fqn(rel_path_str: str) -> str:
-    """
-    Converts a relative file path string into a Python Fully Qualified Name (FQN).
-
-    - 'src/my_pkg/module.py' -> 'my_pkg.module'
-    - 'my_pkg/__init__.py' -> 'my_pkg'
-    """
     # Normalize path separators to dots
     fqn = rel_path_str.replace("/", ".")
 
