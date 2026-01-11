@@ -49,6 +49,8 @@ class ASTCheckSubjectAdapter(CheckSubject):
         yaml_docs = self._doc_manager.load_docs_for_module(self._module)
         public_fqns = self._module.get_public_documentable_fqns()
         code_fqns = set(self._module.get_all_fqns())
+        if self._module.is_documentable():
+            code_fqns.add("__doc__")
 
         fingerprints = self._compute_fingerprints()
         yaml_hashes = self._doc_manager.compute_yaml_content_hashes(self._module)

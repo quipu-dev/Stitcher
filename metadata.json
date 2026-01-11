@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(check): 修正 ASTCheckSubjectAdapter 的状态构建逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768130115.8292694, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(check): 修正 AST 适配器对 `__doc__` 符号存在性的判断", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768130188.4588928, "duration_ms": 0}}
