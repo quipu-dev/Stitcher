@@ -5,7 +5,7 @@
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager):",
-    "baseline_code_structure_hash": "9eefd734286e0c4793c61cac684e57ceb57d5c1983858fe0cbd4d543dfcd4966"
+    "baseline_code_structure_hash": "2f2eb0adc83200e83462720ee062866f175077f56b799fd5930bcb5ae2163c65"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner._analyze_module_coverage": {
     "baseline_code_signature_text": "def _analyze_module_coverage(self, module: ModuleDef) -> CoverageResult:",
@@ -19,6 +19,6 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.root_path": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.run_batch": {
     "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef]) -> List[CoverageResult]:",
-    "baseline_code_structure_hash": "963606d2fa671e837956ce272a0eb73904a44910317c9ed931157fee805fba62"
+    "baseline_code_structure_hash": "06f64ff5f65005809b3f27845894928f8cb0a7c0d772f316a97f30a6cfa5a89d"
   }
 }
