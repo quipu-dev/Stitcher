@@ -38,6 +38,8 @@ def upgrade(spec: MigrationSpec):
         )
 
     # 3. Assert
+    print(result.stdout)
+    print(result.stderr)
     assert result.exit_code == 0, result.stdout
     spy_bus.assert_id_called(L.refactor.run.success)
 
@@ -77,6 +79,8 @@ def upgrade(spec: MigrationSpec):
         )
 
     # 3. Assert
+    print(result.stdout)
+    print(result.stderr)
     assert result.exit_code == 0, result.stdout
     spy_bus.assert_id_called(L.refactor.run.preview_header)
 
