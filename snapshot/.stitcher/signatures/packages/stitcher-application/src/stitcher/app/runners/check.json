@@ -1,8 +1,8 @@
 {
   "CheckRunner": {},
   "CheckRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, differ: Differ, interaction_handler: InteractionHandler | None):",
-    "baseline_code_structure_hash": "828d05f0b65d607bca99ccc8e312b1fafaabd7eb6ed116010e8f60dd3e3b9c7e"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, differ: Differ, interaction_handler: InteractionHandler | None, fingerprint_strategy: FingerprintStrategyProtocol):",
+    "baseline_code_structure_hash": "90a2750f4e45ca8d7c6f082f579f445ea4041a3a01af5eba2b5b6e48831bd97b"
   },
   "CheckRunner._analyze_file": {
     "baseline_code_signature_text": "def _analyze_file(self, module: ModuleDef) -> Tuple[FileCheckResult, List[InteractionContext]]:",
@@ -11,6 +11,10 @@
   "CheckRunner._apply_resolutions": {
     "baseline_code_signature_text": "def _apply_resolutions(self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]):",
     "baseline_code_structure_hash": "5a10cfb2b48149d205274fbe089baca395860335fc1e68ed6b71989b33d6a8d5"
+  },
+  "CheckRunner._compute_fingerprints": {
+    "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
+    "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
   },
   "CheckRunner._generate_diff": {
     "baseline_code_signature_text": "def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:",
@@ -26,6 +30,7 @@
   },
   "CheckRunner.differ": {},
   "CheckRunner.doc_manager": {},
+  "CheckRunner.fingerprint_strategy": {},
   "CheckRunner.interaction_handler": {},
   "CheckRunner.parser": {},
   "CheckRunner.reformat_all": {
@@ -48,10 +53,12 @@
   "CheckRunner.scanner": {},
   "CheckRunner.sig_manager": {},
   "ConflictType": {},
+  "Dict": {},
   "Differ": {},
   "DocumentManager": {},
   "FileCheckResult": {},
   "Fingerprint": {},
+  "FingerprintStrategyProtocol": {},
   "InteractionContext": {},
   "InteractionHandler": {},
   "L": {},

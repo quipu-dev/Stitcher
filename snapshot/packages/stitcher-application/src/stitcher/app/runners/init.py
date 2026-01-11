@@ -3,7 +3,6 @@ from pathlib import Path
 
 from stitcher.common import bus
 from needle.pointer import L
-from typing import Dict
 from stitcher.spec import Fingerprint, ModuleDef, FingerprintStrategyProtocol
 from stitcher.app.services import DocumentManager, SignatureManager
 

@@ -2,12 +2,18 @@
   "Dict": {},
   "DocumentManager": {},
   "Fingerprint": {},
+  "FingerprintStrategyProtocol": {},
   "InitRunner": {},
   "InitRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, sig_manager: SignatureManager):",
-    "baseline_code_structure_hash": "577037f442923bf72e634314756b6311c1f816920cc3c9aedcc2f47c16079d84"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, sig_manager: SignatureManager, fingerprint_strategy: FingerprintStrategyProtocol):",
+    "baseline_code_structure_hash": "2ff6f18aac36507c127b252247a2ae14087466883d694d1bb8414a9fdd7cff0d"
+  },
+  "InitRunner._compute_fingerprints": {
+    "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
+    "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
   },
   "InitRunner.doc_manager": {},
+  "InitRunner.fingerprint_strategy": {},
   "InitRunner.root_path": {},
   "InitRunner.run": {
     "baseline_code_signature_text": "def run(self) -> List[Path]:",

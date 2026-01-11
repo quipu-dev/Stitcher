@@ -5,6 +5,7 @@
   "DocstringMerger": {},
   "DocumentManager": {},
   "Fingerprint": {},
+  "FingerprintStrategyProtocol": {},
   "FunctionExecutionPlan": {},
   "InteractionContext": {},
   "InteractionHandler": {},
@@ -17,8 +18,12 @@
   "PumpResult": {},
   "PumpRunner": {},
   "PumpRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, sig_manager: SignatureManager, transformer: LanguageTransformerProtocol, differ: Differ, merger: DocstringMerger, interaction_handler: InteractionHandler | None):",
-    "baseline_code_structure_hash": "50334d7b427fa6eed57f984e2349f96e65afbbf6a1602f04509c1d06e7bd8e5e"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, sig_manager: SignatureManager, transformer: LanguageTransformerProtocol, differ: Differ, merger: DocstringMerger, interaction_handler: InteractionHandler | None, fingerprint_strategy: FingerprintStrategyProtocol):",
+    "baseline_code_structure_hash": "dbc50cf7495a02ef749184236af870bf8647d93c6807c647e1cee806585c477b"
+  },
+  "PumpRunner._compute_fingerprints": {
+    "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
+    "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
   },
   "PumpRunner._generate_diff": {
     "baseline_code_signature_text": "def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:",
@@ -26,11 +31,11 @@
   },
   "PumpRunner._generate_execution_plan": {
     "baseline_code_signature_text": "def _generate_execution_plan(self, module: ModuleDef, decisions: Dict[str, ResolutionAction], strip_requested: bool) -> Dict[str, FunctionExecutionPlan]:",
-    "baseline_code_structure_hash": "c599468497a324893d71ada59c115f03bc36d7e4aa7b7dc191bac64d9576295e",
-    "baseline_yaml_content_hash": "cbf69f638415d6a86cafdba400d9ba2409d9b0743f0aace0bf9a561c233f8556"
+    "baseline_code_structure_hash": "c599468497a324893d71ada59c115f03bc36d7e4aa7b7dc191bac64d9576295e"
   },
   "PumpRunner.differ": {},
   "PumpRunner.doc_manager": {},
+  "PumpRunner.fingerprint_strategy": {},
   "PumpRunner.interaction_handler": {},
   "PumpRunner.merger": {},
   "PumpRunner.parser": {},

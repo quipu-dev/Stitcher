@@ -10,13 +10,12 @@
     "baseline_yaml_content_hash": "2b1ded155d40063ba0e25ab309dbb16b66ac1ad6cc38ffe1dd6b1a9649a317b3"
   },
   "SignatureManager.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, fingerprint_strategy: FingerprintStrategyProtocol):",
-    "baseline_code_structure_hash": "52b5547e8ef5e24d9e05015a30bbcf9c5f33a16cb9cf89bcbd0cdd49970f24df"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path):",
+    "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
   },
   "SignatureManager._get_sig_path": {
-    "baseline_code_signature_text": "def _get_sig_path(self, module: ModuleDef) -> Path:",
-    "baseline_code_structure_hash": "d89618b33da1097394c0dab8b1de2a5b71a445d8a0e61990bbf89607c5461639",
-    "baseline_yaml_content_hash": "b0ead96395f67f9fa60b9dba88f4c474d89f3a8e3296fd9a024d77a6ea4f6770"
+    "baseline_code_signature_text": "def _get_sig_path(self, file_path: str) -> Path:",
+    "baseline_code_structure_hash": "0a29a82a7da0ca3cfebe2ff7ca3719ba5ac9199b4c6a734154a50b678c5b6f46"
   },
   "SignatureManager.compute_fingerprints": {
     "baseline_code_signature_text": "def compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
@@ -31,9 +30,13 @@
     "baseline_code_structure_hash": "d10c95b93a6e9d837089e66f9916026dd8ae1fbb00257389b574640619fa8b9d"
   },
   "SignatureManager.load_composite_hashes": {
-    "baseline_code_signature_text": "def load_composite_hashes(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
-    "baseline_code_structure_hash": "88cd00d2adf0bca45c697e80267630aecc18c387c67701063560498e655d11f5",
+    "baseline_code_signature_text": "def load_composite_hashes(self, file_path: str) -> Dict[str, Fingerprint]:",
+    "baseline_code_structure_hash": "97662998174f7e041e067768e1906ca97e1c556b4b49953c08aca3ccaac2055e",
     "baseline_yaml_content_hash": "4e3f2fd8ba10f2201a6214e9f3b8cca3ceedc0225867f28f8b645b86afc2f54a"
+  },
+  "SignatureManager.reformat_hashes_for_file": {
+    "baseline_code_signature_text": "def reformat_hashes_for_file(self, file_path: str) -> bool:",
+    "baseline_code_structure_hash": "acb68352d2b56ba3a78a1fadc28aa8d47b464ebb023f6950cc747dd5fbfd672c"
   },
   "SignatureManager.reformat_hashes_for_module": {
     "baseline_code_signature_text": "def reformat_hashes_for_module(self, module: ModuleDef) -> bool:",
@@ -45,8 +48,8 @@
     "baseline_yaml_content_hash": "ae19ba5d58eb34b77c99f67a28ec6605bbb661b4d7092fa36d9d0c9fc6eb7e9a"
   },
   "SignatureManager.save_composite_hashes": {
-    "baseline_code_signature_text": "def save_composite_hashes(self, module: ModuleDef, hashes: Dict[str, Fingerprint]) -> None:",
-    "baseline_code_structure_hash": "fca68e3422f35a2ad2f84b8066d951ef5852dbc2ae7b4f0a306783a30c2f320e",
+    "baseline_code_signature_text": "def save_composite_hashes(self, file_path: str, hashes: Dict[str, Fingerprint]) -> None:",
+    "baseline_code_structure_hash": "8bd48766ddbfa4d4877f589222afb24fe195d930861a98cac130f1f5ad4a6c0f",
     "baseline_yaml_content_hash": "30caad024d2d53643b9d324c6dfa4f47b456afcfcfb48d2c39f1ca64be4cb73d"
   },
   "SignatureManager.sig_root": {},

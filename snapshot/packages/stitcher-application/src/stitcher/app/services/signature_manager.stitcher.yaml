@@ -1,15 +1,7 @@
 "SignatureManager": |-
   Manages the persistence of composite hashes (signature and document).
-"SignatureManager.compute_fingerprints": |-
-  Computes the complete fingerprints for all entities in the module
-  using the injected strategy.
-"SignatureManager.fingerprint_strategy": |-
-  The strategy used to compute fingerprints.
 "SignatureManager.load_composite_hashes": |-
   Loads the composite hash map for a module.
-"SignatureManager.reformat_hashes_for_module": |-
-  Re-formats an existing signature file to enforce canonical styling.
-  Returns True if the file was reformatted, False otherwise.
 "SignatureManager.root_path": |-
   The root path of the project.
 "SignatureManager.save_composite_hashes": |-
