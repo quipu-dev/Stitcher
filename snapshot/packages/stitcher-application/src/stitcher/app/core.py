@@ -79,7 +79,7 @@ class StitcherApp:
         # 3. Runners (Command Handlers)
         self.check_runner = CheckRunner(
             root_path,
-            parser,
+            self.index_store,
             self.doc_manager,
             self.sig_manager,
             self.differ,
@@ -197,7 +197,14 @@ class StitcherApp:
         self.ensure_index_fresh()
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
-        all_modules: List[ModuleDef] = []
+        
+        # We need all file paths, but Scanner returns modules.
+        # We can extract paths from modules or use Scanner to just get paths.
+        # For consistency with current flow, let's extract paths from scanned modules
+        # (This still parses, but CheckRunner won't use the parsed objects except for paths)
+        # OPTIMIZATION TODO: Scanner should have a mode to just return paths.
+        
+        all_file_paths: List[str] = []
 
         self.scanner.had_errors = False
 
@@ -205,19 +212,21 @@ class StitcherApp:
             modules = self._configure_and_scan(config)
             if not modules:
                 continue
-            all_modules.extend(modules)
+            
+            file_paths = [m.file_path for m in modules]
+            all_file_paths.extend(file_paths)
 
-            results, conflicts = self.check_runner.analyze_batch(modules)
+            results, conflicts = self.check_runner.analyze_batch(file_paths)
             all_results.extend(results)
 
-            self.check_runner.auto_reconcile_docs(results, modules)
+            self.check_runner.auto_reconcile_docs(results, file_paths)
 
             if not self.check_runner.resolve_conflicts(
                 results, conflicts, force_relink, reconcile
             ):
                 return False
 
-        self.check_runner.reformat_all(all_modules)
+        self.check_runner.reformat_all(all_file_paths)
         report_success = self.check_runner.report(all_results)
         return report_success and not self.scanner.had_errors
 
