@@ -15,6 +15,7 @@ from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
 from stitcher.index.indexer import FileIndexer
 from stitcher.adapter.python.index_adapter import PythonAdapter
+from stitcher.app.services import SignatureManager
 
 
 def create_populated_index(root_path: Path) -> IndexStore:
@@ -54,10 +55,6 @@ def create_test_app(
 
 
 def get_stored_hashes(project_root: Path, file_path: str) -> dict:
-    sig_file = (
-        project_root / ".stitcher/signatures" / Path(file_path).with_suffix(".json")
-    )
-    if not sig_file.exists():
-        return {}
-    with sig_file.open("r") as f:
-        return json.load(f)
+    manager = SignatureManager(root_path=project_root)
+    fingerprints = manager.load_composite_hashes(file_path)
+    return {fqn: fp.to_dict() for fqn, fp in fingerprints.items()}

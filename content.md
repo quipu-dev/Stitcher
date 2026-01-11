@@ -1,133 +1,207 @@
-好的，我们正式进入实施路线图的第二阶段。
+好的，我来修复这些测试失败。
 
-此阶段的核心是将作为“基准”的签名存档 (`.stitcher/signatures/*.json`) 与作为“现状”的索引库 (`.stitcher/index/index.db`) 在核心标识符和数据结构上完全对齐。
+## [WIP] fix(tests): 更新测试套件以适配 SURI 格式的签名文件
 
-## [WIP] refactor(application): 对齐 SignatureManager 与 SURI 标识符
+### 错误分析
+测试失败的根本原因在于上一步的重构。我将 `SignatureManager` 保存的 `.json` 签名文件中的字典键从简单的 FQN 片段（如 `func`）更改为了全局唯一的 SURI 字符串（如 `py://src/app.py#func`）。
+
+然而，大量的集成测试依赖于一个名为 `get_stored_hashes` 的测试辅助函数来读取这些签名文件，而这个函数并未同步更新。它仍然只是简单地加载 JSON，导致测试代码在尝试用旧的、简单的键（`func`）访问字典时，因找不到键而抛出 `KeyError`。
+
+此外，`SignatureManager` 自己的单元测试也存在一个问题：它直接检查了写入磁盘的 JSON 文件的内容，但其断言部分没有更新为使用新的 SURI 键，因此也失败了。
 
 ### 用户需求
-根据 [Stitcher 2.0 确定性链接实施路线图：Index-First 架构](Stitcher%202.0%20确定性链接实施路线图：Index-First%20架构.md)，需要重构 `SignatureManager`，以实现以下目标：
-1.  将 `.json` 基准文件中的字典键（Key）从局部的 FQN 片段（fragment）升级为全局唯一的 SURI (Stitcher Uniform Resource Identifier)。
-2.  使其能够存储和加载新增的基准哈希字段：`baseline_code_signature_text` 和 `baseline_code_docstring_hash`。
+修复所有因 `KeyError` 导致的测试失败，使测试套件能够正确理解和处理 SURI 格式的签名文件。
 
 ### 评论
-这是迈向“Query-First”架构的关键一步。通过将基准存档的 Key 切换为 SURI，我们彻底消除了标识符的歧义性。一个 SURI 同时包含了文件的物理路径和符号的逻辑路径，使得基准文件成为一个完全自包含的、可移植的“真理快照”。
+这是一个典型的“实现与测试脱节”的例子。修复这个问题的关键是让测试基础设施（辅助函数）与被测试的组件（`SignatureManager`）遵循相同的协议。通过将 SURI 解析逻辑集中到 `SignatureManager` 并让测试工具调用它，我们不仅修复了当前的 Bug，还提高了代码的健壮性和可维护性。
 
 ### 目标
-1.  修改 `SignatureManager.save_composite_hashes` 方法，在序列化到 JSON 时，将 FQN 片段转换为完整的 SURI 字符串作为 Key。
-2.  修改 `SignatureManager.load_composite_hashes` 方法，在从 JSON 反序列化时，能解析 SURI Key 并提取出 FQN 片段，以维持其返回 `Dict[str, Fingerprint]` 的接口契约。
-3.  `Fingerprint` 类本身的设计已支持新字段，无需修改。
+1.  **修复核心测试辅助函数**: 修改 `stitcher-test-utils` 包中的 `get_stored_hashes` 函数，使其通过 `SignatureManager` 加载签名，而不是直接读取 JSON。
+2.  **修复单元测试**: 更新 `test_signature_manager.py` 中直接检查文件内容的断言，使其能够识别并使用 SURI 键。
 
 ### 基本原理
-我们将利用在 `stitcher-python-adapter` 中已经实现的 `SURIGenerator` 工具来完成 SURI 的生成和解析。
--   **写入时**: 对每一个 FQN，结合其所属的 `file_path`，调用 `SURIGenerator.for_symbol()` 来生成 `py://path/to/file.py#ClassName.method` 格式的 Key。
--   **读取时**: 遍历 JSON 的所有 Key，对每一个 Key 调用 `SURIGenerator.parse()`，提取出 `#` 后的 fragment 作为返回字典的 Key。
+我们将把解析 SURI 的责任完全交给 `SignatureManager`。测试辅助函数 `get_stored_hashes` 将不再关心 JSON 的内部格式，而是委托 `SignatureManager.load_composite_hashes` 来加载和解析签名。由于 `load_composite_hashes` 的返回值（`Dict[str, Fingerprint]`）的键已经是 FQN 片段，因此所有依赖 `get_stored_hashes` 的上层测试代码无需任何改动即可恢复正常工作。对于单元测试，我们将直接在断言中使用 SURI 字符串来验证文件的写入是否正确。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/application #concept/state #scope/api #ai/instruct #task/domain/storage #task/object/stitcher-index #task/action/upgrade-schema #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/tests #concept/state #scope/dx #ai/instruct #task/domain/storage #task/object/stitcher-index #task/action/upgrade-schema #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 导入 SURI 生成器
+#### Acts 1: 修复核心测试辅助函数 `get_stored_hashes`
 
-首先，我们需要在 `signature_manager.py` 中导入 `SURIGenerator`。
+我们将修改 `stitcher-test-utils` 中的 `helpers.py`，让 `get_stored_hashes` 使用 `SignatureManager` 来加载数据，从而正确处理 SURI 键。
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/services/signature_manager.py
+packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py
 ~~~~~
 ~~~~~python.old
-from stitcher.spec import (
-    Fingerprint,
-    InvalidFingerprintKeyError,
+import json
+from pathlib import Path
+from typing import Optional
+
+from stitcher.app import StitcherApp
+from stitcher.app.protocols import InteractionHandler
+from stitcher.adapter.python import (
+    PythonTransformer,
+    PythonFingerprintStrategy,
 )
-from stitcher.common.services import AssetPathResolver
+from stitcher.workspace import Workspace
+
+from stitcher.adapter.python.griffe_parser import GriffePythonParser
+from stitcher.index.db import DatabaseManager
+from stitcher.index.store import IndexStore
+from stitcher.index.indexer import FileIndexer
+from stitcher.adapter.python.index_adapter import PythonAdapter
+
+
+def create_populated_index(root_path: Path) -> IndexStore:
+    db_path = root_path / ".stitcher" / "index" / "index.db"
+
+    db_manager = DatabaseManager(db_path)
+    db_manager.initialize()
+    store = IndexStore(db_manager)
+
+    # The indexer needs a workspace-aware adapter.
+    workspace = Workspace(root_path)
+    search_paths = workspace.get_search_paths()
+
+    # Discover files first, then index them.
+    files_to_index = workspace.discover_files()
+
+    indexer = FileIndexer(root_path, store)
+    indexer.register_adapter(".py", PythonAdapter(root_path, search_paths))
+    indexer.index_files(files_to_index)
+
+    return store
+
+
+def create_test_app(
+    root_path: Path, interaction_handler: Optional[InteractionHandler] = None
+) -> StitcherApp:
+    parser = GriffePythonParser()
+    transformer = PythonTransformer()
+    strategy = PythonFingerprintStrategy()
+    return StitcherApp(
+        root_path=root_path,
+        parser=parser,
+        transformer=transformer,
+        fingerprint_strategy=strategy,
+        interaction_handler=interaction_handler,
+    )
+
+
+def get_stored_hashes(project_root: Path, file_path: str) -> dict:
+    sig_file = (
+        project_root / ".stitcher/signatures" / Path(file_path).with_suffix(".json")
+    )
+    if not sig_file.exists():
+        return {}
+    with sig_file.open("r") as f:
+        return json.load(f)
 ~~~~~
 ~~~~~python.new
 import json
 from pathlib import Path
-from typing import Dict
+from typing import Optional
 
-from stitcher.spec import (
-    Fingerprint,
-    InvalidFingerprintKeyError,
+from stitcher.app import StitcherApp
+from stitcher.app.protocols import InteractionHandler
+from stitcher.adapter.python import (
+    PythonTransformer,
+    PythonFingerprintStrategy,
 )
-from stitcher.common.services import AssetPathResolver
-from stitcher.adapter.python.uri import SURIGenerator
+from stitcher.workspace import Workspace
+
+from stitcher.adapter.python.griffe_parser import GriffePythonParser
+from stitcher.index.db import DatabaseManager
+from stitcher.index.store import IndexStore
+from stitcher.index.indexer import FileIndexer
+from stitcher.adapter.python.index_adapter import PythonAdapter
+from stitcher.app.services import SignatureManager
+
+
+def create_populated_index(root_path: Path) -> IndexStore:
+    db_path = root_path / ".stitcher" / "index" / "index.db"
+
+    db_manager = DatabaseManager(db_path)
+    db_manager.initialize()
+    store = IndexStore(db_manager)
+
+    # The indexer needs a workspace-aware adapter.
+    workspace = Workspace(root_path)
+    search_paths = workspace.get_search_paths()
+
+    # Discover files first, then index them.
+    files_to_index = workspace.discover_files()
+
+    indexer = FileIndexer(root_path, store)
+    indexer.register_adapter(".py", PythonAdapter(root_path, search_paths))
+    indexer.index_files(files_to_index)
+
+    return store
+
+
+def create_test_app(
+    root_path: Path, interaction_handler: Optional[InteractionHandler] = None
+) -> StitcherApp:
+    parser = GriffePythonParser()
+    transformer = PythonTransformer()
+    strategy = PythonFingerprintStrategy()
+    return StitcherApp(
+        root_path=root_path,
+        parser=parser,
+        transformer=transformer,
+        fingerprint_strategy=strategy,
+        interaction_handler=interaction_handler,
+    )
+
+
+def get_stored_hashes(project_root: Path, file_path: str) -> dict:
+    manager = SignatureManager(root_path=project_root)
+    fingerprints = manager.load_composite_hashes(file_path)
+    return {fqn: fp.to_dict() for fqn, fp in fingerprints.items()}
 ~~~~~
 
-#### Acts 2: 更新保存逻辑以使用 SURI Key
+#### Acts 2: 修复 `SignatureManager` 的单元测试
 
-修改 `save_composite_hashes` 方法，将 FQN 转换为 SURI 作为 JSON 的键。
+现在修复 `test_signature_manager.py`，使其在直接检查文件内容时使用正确的 SURI 键进行断言。
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/services/signature_manager.py
+packages/stitcher-application/tests/unit/test_signature_manager.py
 ~~~~~
 ~~~~~python.old
-        sig_path = self._get_sig_path(file_path)
-        sig_path.parent.mkdir(parents=True, exist_ok=True)
+    with sig_path.open("r") as f:
+        data = json.load(f)
+        assert data["foo"]["baseline_code_structure_hash"] == "abc"
+        assert data["foo"]["baseline_yaml_content_hash"] == "def"
+        assert data["bar"]["baseline_code_structure_hash"] == "123"
+        # Since it was None, the key should be absent in the serialized JSON
+        assert "baseline_yaml_content_hash" not in data["bar"]
 
-        serialized_data = {fqn: fp.to_dict() for fqn, fp in hashes.items()}
-
-        with sig_path.open("w", encoding="utf-8") as f:
-            json.dump(serialized_data, f, indent=2, sort_keys=True)
+    # Act: Load
+    loaded = manager.load_composite_hashes(module.file_path)
 ~~~~~
 ~~~~~python.new
-        sig_path = self._get_sig_path(file_path)
-        sig_path.parent.mkdir(parents=True, exist_ok=True)
+    with sig_path.open("r") as f:
+        data = json.load(f)
+        suri_foo = "py://src/main.py#foo"
+        suri_bar = "py://src/main.py#bar"
+        assert data[suri_foo]["baseline_code_structure_hash"] == "abc"
+        assert data[suri_foo]["baseline_yaml_content_hash"] == "def"
+        assert data[suri_bar]["baseline_code_structure_hash"] == "123"
+        # Since it was None, the key should be absent in the serialized JSON
+        assert "baseline_yaml_content_hash" not in data[suri_bar]
 
-        serialized_data = {
-            SURIGenerator.for_symbol(file_path, fqn): fp.to_dict()
-            for fqn, fp in hashes.items()
-        }
-
-        with sig_path.open("w", encoding="utf-8") as f:
-            json.dump(serialized_data, f, indent=2, sort_keys=True)
-~~~~~
-
-#### Acts 3: 更新加载逻辑以解析 SURI Key
-
-修改 `load_composite_hashes` 方法，使其能够解析 SURI 键并提取 FQN。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/services/signature_manager.py
-~~~~~
-~~~~~python.old
-            with sig_path.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-                if not isinstance(data, dict):
-                    return {}
-                result = {}
-                for fqn, fp_data in data.items():
-                    result[fqn] = Fingerprint.from_dict(fp_data)
-                return result
-        except (json.JSONDecodeError, OSError, InvalidFingerprintKeyError):
-            return {}
-~~~~~
-~~~~~python.new
-            with sig_path.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-                if not isinstance(data, dict):
-                    return {}
-                result = {}
-                for suri, fp_data in data.items():
-                    try:
-                        _path, fragment = SURIGenerator.parse(suri)
-                        if fragment:
-                            result[fragment] = Fingerprint.from_dict(fp_data)
-                    except (ValueError, InvalidFingerprintKeyError):
-                        # Gracefully skip malformed SURIs or invalid fingerprint data
-                        continue
-                return result
-        except (json.JSONDecodeError, OSError):
-            return {}
+    # Act: Load
+    loaded = manager.load_composite_hashes(module.file_path)
 ~~~~~
 
 ### 下一步建议
 
-我们已经成功地升级了基准存档的格式。现在，基准 (`.json`) 和现状 (`.db`) 都拥有了进行精确、高性能比对所需的所有信息。
+测试套件现在应该可以全部通过了。我们已经完成了阶段 2 的核心任务。
 
-接下来的任务是 **阶段 3：逻辑驱动重构**，我们将重构 `CheckRunner`，使其完全抛弃实时 AST 解析，转而使用全新的 "Query-First" 模式，即直接在内存中比对从索引库查询出的 `Actual` 状态和从签名文件加载的 `Baseline` 状态。这将是新架构带来性能飞跃的第一次真正体现。
+现在，我们可以满怀信心地进入**阶段 3：逻辑驱动重构**。我将准备一个计划来重构 `CheckRunner`，使其完全切换到高性能的 "Query-First" 模式，这将是新架构价值的首次兑现。

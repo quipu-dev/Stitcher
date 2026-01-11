@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(application): 对齐 SignatureManager 与 SURI 标识符", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768124421.1879961, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 更新测试套件以适配 SURI 格式的签名文件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768124522.0735605, "duration_ms": 0}}
