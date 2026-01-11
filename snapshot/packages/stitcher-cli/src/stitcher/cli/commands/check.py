@@ -2,6 +2,7 @@ import typer
 from stitcher.common import bus, stitcher_operator as nexus
 from needle.pointer import L
 from stitcher.cli.factories import make_app, make_interaction_handler
+from collections import defaultdict
 
 
 def check_command(

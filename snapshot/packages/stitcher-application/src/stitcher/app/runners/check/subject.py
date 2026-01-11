@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from stitcher.spec import (
     ModuleDef,
     Fingerprint,

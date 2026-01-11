@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(perf): 实施批量符号检索与路径解析优化", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768140150.084758, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M subject.json, M subject.py, M check.py ... and 1 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768140265.0153017, "duration_ms": 0}}

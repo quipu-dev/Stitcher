@@ -31,7 +31,7 @@
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter.__init__": {
     "baseline_code_signature_text": "def __init__(self, file_path: str, index_store: IndexStore, doc_manager: DocumentManager, sig_manager: SignatureManager):",
-    "baseline_code_structure_hash": "ae6239348ffa6a4dec3190dd0fb75f1b9dc632258c15104c8104d576d2196b03"
+    "baseline_code_structure_hash": "ddb663e6e96bdadc072ba37f189bc4f12ec17df19a442d299ddbd4207ac97ec1"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._doc_manager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._file_path": {},

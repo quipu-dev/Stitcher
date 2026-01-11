@@ -1,7 +1,7 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 from .db import DatabaseManager
 from .types import FileRecord, SymbolRecord, ReferenceRecord
-
+from collections import defaultdict
 
 class IndexStore:
     def __init__(self, db_manager: DatabaseManager):
