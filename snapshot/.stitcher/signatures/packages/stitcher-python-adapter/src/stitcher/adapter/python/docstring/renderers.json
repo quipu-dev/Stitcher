@@ -1,5 +1,8 @@
 {
-  "BaseStructuredRenderer": {},
+  "BaseStructuredRenderer": {
+    "baseline_code_signature_text": "class BaseStructuredRenderer(DocstringRendererProtocol):",
+    "baseline_code_structure_hash": "ce29b1740a00fd2da5df0c3ada9369a76075ae7cebfaddd26825b9c360c1ebad"
+  },
   "BaseStructuredRenderer._get_default_title": {
     "baseline_code_signature_text": "def _get_default_title(self, kind: str) -> str:",
     "baseline_code_structure_hash": "3f9f914f1df4a6095996e0eaa333a7c61beb2b120a2eb47e8c7e23c8d12cb927"
@@ -26,7 +29,10 @@
   "DocstringRendererProtocol": {},
   "DocstringSection": {},
   "FunctionDef": {},
-  "GoogleDocstringRenderer": {},
+  "GoogleDocstringRenderer": {
+    "baseline_code_signature_text": "class GoogleDocstringRenderer(BaseStructuredRenderer):",
+    "baseline_code_structure_hash": "c99127f093311c0f4b755263d042b8b2d20286ae10b9af87f3d14b98122f96e2"
+  },
   "GoogleDocstringRenderer._get_default_title": {
     "baseline_code_signature_text": "def _get_default_title(self, kind: str) -> str:",
     "baseline_code_structure_hash": "3f9f914f1df4a6095996e0eaa333a7c61beb2b120a2eb47e8c7e23c8d12cb927"
@@ -37,7 +43,10 @@
   },
   "List": {},
   "ModuleDef": {},
-  "NumpyDocstringRenderer": {},
+  "NumpyDocstringRenderer": {
+    "baseline_code_signature_text": "class NumpyDocstringRenderer(BaseStructuredRenderer):",
+    "baseline_code_structure_hash": "ec3dcbd638b015e7a40d151b6f5df7fc67da84dc5e11518dedf1049408cbef22"
+  },
   "NumpyDocstringRenderer._get_default_title": {
     "baseline_code_signature_text": "def _get_default_title(self, kind: str) -> str:",
     "baseline_code_structure_hash": "3f9f914f1df4a6095996e0eaa333a7c61beb2b120a2eb47e8c7e23c8d12cb927"

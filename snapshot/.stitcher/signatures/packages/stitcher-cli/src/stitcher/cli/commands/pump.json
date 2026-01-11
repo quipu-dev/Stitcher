@@ -6,8 +6,7 @@
   "nexus": {},
   "pump_command": {
     "baseline_code_signature_text": "def pump_command(strip: bool = typer.Option(False, '--strip', help=(nexus(L.cli.option.strip.help))), force: bool = typer.Option(False, '--force', help=(nexus(L.cli.option.force.help))), reconcile: bool = typer.Option(False, '--reconcile', help=(nexus(L.cli.option.reconcile.help))), non_interactive: bool = typer.Option(False, '--non-interactive', help=(nexus(L.cli.option.non_interactive.help))), dry_run: bool = typer.Option(False, '--dry-run', help=(nexus(L.cli.option.refactor_dry_run.help)))):",
-    "baseline_code_structure_hash": "d4c0b6c8dee8ca25c7d04e2940f25908563ddee8151389445d85ccb0e7e3bbb2",
-    "baseline_yaml_content_hash": "be1526669e3efa3cd3761c5a755991449e51f64c5e493ca7ef7bafedd3e2e806"
+    "baseline_code_structure_hash": "d4c0b6c8dee8ca25c7d04e2940f25908563ddee8151389445d85ccb0e7e3bbb2"
   },
   "typer": {}
 }

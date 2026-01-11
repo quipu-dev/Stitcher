@@ -2,7 +2,8 @@
   "Dict": {},
   "HasBody": {},
   "InjectorTransformer": {
-    "baseline_yaml_content_hash": "62ec1461af34159aabcd57d59b1836ec31fd6d275eaf013a6ff5448a4e02eef8"
+    "baseline_code_signature_text": "class InjectorTransformer(cst.CSTTransformer):",
+    "baseline_code_structure_hash": "195ed31498ddb6616574a228db36a7067e5c68c4aaf1449c6e9888d408a252a2"
   },
   "InjectorTransformer.__init__": {
     "baseline_code_signature_text": "def __init__(self, docs: Dict[str, str]):",
@@ -47,7 +48,8 @@
   "Optional": {},
   "Sequence": {},
   "StripperTransformer": {
-    "baseline_yaml_content_hash": "5da167776195f91cd86b7fa52c8bb32b0eccdc8bcd1a66283c86fe51bff757b2"
+    "baseline_code_signature_text": "class StripperTransformer(cst.CSTTransformer):",
+    "baseline_code_structure_hash": "82eaa4c53de6bd2bc7b8afdea75a7b3e2050c8c220b3b052bec4ec5829d9acd4"
   },
   "StripperTransformer.__init__": {
     "baseline_code_signature_text": "def __init__(self, whitelist: Optional[List[str]] = None):",
@@ -55,8 +57,7 @@
   },
   "StripperTransformer._get_assign_target_name": {
     "baseline_code_signature_text": "def _get_assign_target_name(self, node: cst.BaseSmallStatement) -> Optional[str]:",
-    "baseline_code_structure_hash": "bc02f181e6f90e04e0879d08eabb342fd1a92a80b39f2cbc1ab495bc8ba0d15a",
-    "baseline_yaml_content_hash": "fa52271c5870df81fc6816b51121c7c9c8a9ed0f35ed5b2bda772338ec417cc9"
+    "baseline_code_structure_hash": "bc02f181e6f90e04e0879d08eabb342fd1a92a80b39f2cbc1ab495bc8ba0d15a"
   },
   "StripperTransformer._is_docstring": {
     "baseline_code_signature_text": "def _is_docstring(self, node: cst.BaseSmallStatement) -> bool:",
@@ -98,12 +99,10 @@
   "format_docstring": {},
   "inject_docstrings": {
     "baseline_code_signature_text": "def inject_docstrings(source_code: str, docs: Dict[str, str]) -> str:",
-    "baseline_code_structure_hash": "612603f2aeaa56fda779309e316bd525eea334148f47d8491ec67cc6503189dc",
-    "baseline_yaml_content_hash": "0eb0eab733eebf79d21d2e1de840545cc39bd2e75ba19734ff40f8e625cc521e"
+    "baseline_code_structure_hash": "612603f2aeaa56fda779309e316bd525eea334148f47d8491ec67cc6503189dc"
   },
   "strip_docstrings": {
     "baseline_code_signature_text": "def strip_docstrings(source_code: str, whitelist: Optional[List[str]] = None) -> str:",
-    "baseline_code_structure_hash": "fa209506e5a6891af24f6b1281daf077c780d4ed93ff384174cd502838cfc280",
-    "baseline_yaml_content_hash": "2e838da2d92c38e68a351440cc2806be9056020aca4bef1225240a736d799a07"
+    "baseline_code_structure_hash": "fa209506e5a6891af24f6b1281daf077c780d4ed93ff384174cd502838cfc280"
   }
 }

@@ -1,12 +1,18 @@
 {
-  "CoverageResult": {},
+  "CoverageResult": {
+    "baseline_code_signature_text": "class CoverageResult:",
+    "baseline_code_structure_hash": "6d0d2ab4caaf9c892009eb613a423ecd9e97edd5cb2b8837898dd630287b3740"
+  },
   "CoverageResult.coverage": {},
   "CoverageResult.documented_symbols": {},
   "CoverageResult.missing_symbols": {},
   "CoverageResult.path": {},
   "CoverageResult.total_symbols": {},
   "Dict": {},
-  "FileCheckResult": {},
+  "FileCheckResult": {
+    "baseline_code_signature_text": "class FileCheckResult:",
+    "baseline_code_structure_hash": "940b2e27886084680096f4401391b1f5783b784152f324908c17a72a57b587ee"
+  },
   "FileCheckResult.auto_reconciled_count": {},
   "FileCheckResult.error_count": {},
   "FileCheckResult.errors": {},
@@ -19,7 +25,10 @@
   "FileCheckResult.warnings": {},
   "List": {},
   "Path": {},
-  "PumpResult": {},
+  "PumpResult": {
+    "baseline_code_signature_text": "class PumpResult:",
+    "baseline_code_structure_hash": "498bd3b553b95d825a1cee32bf6ec60588676ef7053d5adb031521f744693151"
+  },
   "PumpResult.redundant_files": {},
   "PumpResult.success": {},
   "dataclass": {},

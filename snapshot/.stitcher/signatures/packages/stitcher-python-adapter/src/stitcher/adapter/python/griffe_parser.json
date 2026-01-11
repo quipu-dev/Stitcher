@@ -6,7 +6,10 @@
   "Attribute": {},
   "ClassDef": {},
   "FunctionDef": {},
-  "GriffePythonParser": {},
+  "GriffePythonParser": {
+    "baseline_code_signature_text": "class GriffePythonParser(LanguageParserProtocol):",
+    "baseline_code_structure_hash": "f01866fbe93950584b5afbc51d693ed6d33e6113f88d7276d13271bd6e1efc49"
+  },
   "GriffePythonParser._extract_location": {
     "baseline_code_signature_text": "def _extract_location(self, obj: Union[griffe.Object, griffe.Alias]) -> Optional[SourceLocation]:",
     "baseline_code_structure_hash": "77349a5756bc73ed8b63cd187e14b010ee9a7f9c95302015692fdf2e9db31f8a"
@@ -46,7 +49,10 @@
   "Path": {},
   "SourceLocation": {},
   "Union": {},
-  "_ImportVisitor": {},
+  "_ImportVisitor": {
+    "baseline_code_signature_text": "class _ImportVisitor(ast.NodeVisitor):",
+    "baseline_code_structure_hash": "adbb1a6bd96facdd49a5f881651e3680e996f415f5031189a1e6fa9a756ab90c"
+  },
   "_ImportVisitor.__init__": {
     "baseline_code_signature_text": "def __init__(self):",
     "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
@@ -60,7 +66,6 @@
     "baseline_code_signature_text": "def visit_ImportFrom(self, node: ast.ImportFrom) -> None:",
     "baseline_code_structure_hash": "bc1e23ad33ae8252ae3444fb7fad823144e14754f8b876b51d1793d05c85c1c1"
   },
-  "__all__": {},
   "_enrich_typing_imports": {},
   "ast": {},
   "cast": {},

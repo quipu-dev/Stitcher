@@ -6,7 +6,10 @@
   "List": {},
   "ModuleDef": {},
   "Path": {},
-  "ScannerService": {},
+  "ScannerService": {
+    "baseline_code_signature_text": "class ScannerService:",
+    "baseline_code_structure_hash": "9beda3a2a9bfc873fc967152732dec7d0a63a4435327a70bd129b0bdee8322cc"
+  },
   "ScannerService.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol):",
     "baseline_code_structure_hash": "fed09da8b7efbec03b7f522e6ddd99733a43992a11c845e7441a3e16a63ccf79"

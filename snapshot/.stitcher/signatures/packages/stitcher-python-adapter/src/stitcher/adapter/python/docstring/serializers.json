@@ -1,17 +1,16 @@
 {
   "Any": {},
   "BaseSerializer": {
-    "baseline_yaml_content_hash": "31e956d7edc0216962656c2a80ccb051aa7c36330d8b520464e4645be41e5c73"
+    "baseline_code_signature_text": "class BaseSerializer(DocstringSerializerProtocol):",
+    "baseline_code_structure_hash": "e1c6726260f4828438cf13853a23ac433c18c3380e3c5857aa3b5a5885a060c5"
   },
   "BaseSerializer._decode_item_value": {
     "baseline_code_signature_text": "def _decode_item_value(self, value: str) -> dict:",
-    "baseline_code_structure_hash": "af3e631ca59e653d21798b8d50ebaa0fad012739b7eceace04bd77bccde4d8e0",
-    "baseline_yaml_content_hash": "f3b92d73848c68904c9416ba1996ba122de0dda5dba988be46343cd6ab7f8806"
+    "baseline_code_structure_hash": "af3e631ca59e653d21798b8d50ebaa0fad012739b7eceace04bd77bccde4d8e0"
   },
   "BaseSerializer._encode_item_value": {
     "baseline_code_signature_text": "def _encode_item_value(self, item: DocstringItem) -> str:",
-    "baseline_code_structure_hash": "f70ce8e0edb44b79237a4fb50d579ac3b5dcef6016f85d5eeb3f6092998f42b7",
-    "baseline_yaml_content_hash": "9f6d5f5c7c25d1f61f7061d0ec621551d16cf1ab84c52de9c4be7ce9dbbddbfd"
+    "baseline_code_structure_hash": "f70ce8e0edb44b79237a4fb50d579ac3b5dcef6016f85d5eeb3f6092998f42b7"
   },
   "BaseSerializer._extract_addons": {
     "baseline_code_signature_text": "def _extract_addons(self, data: Dict[str, Any]) -> Dict[str, Any]:",
@@ -30,12 +29,19 @@
   "DocstringItem": {},
   "DocstringSection": {},
   "DocstringSerializerProtocol": {},
-  "GoogleSerializer": {},
+  "GoogleSerializer": {
+    "baseline_code_signature_text": "class GoogleSerializer(StructuredSerializer):",
+    "baseline_code_structure_hash": "1505dbc295839ec4d1048726411c214d0d3ede363a44bdad8a73fa9a69c04dca"
+  },
   "GoogleSerializer.KIND_TO_KEY": {},
-  "NumpySerializer": {},
+  "NumpySerializer": {
+    "baseline_code_signature_text": "class NumpySerializer(StructuredSerializer):",
+    "baseline_code_structure_hash": "3a24c39a594a08b5a4690c258014a2233df0230f1fe36cd4cca3ef31e1ec64f8"
+  },
   "NumpySerializer.KIND_TO_KEY": {},
   "RawSerializer": {
-    "baseline_yaml_content_hash": "3e07c0be53e3ee1c1c5f4360ff0205e31a80ca9b95ff53dc29035f4add1b6bba"
+    "baseline_code_signature_text": "class RawSerializer(BaseSerializer):",
+    "baseline_code_structure_hash": "164638ce79ddf4dc44b7a060b676fca3fe9f4191557b3676864d4ae0c51418e9"
   },
   "RawSerializer.from_yaml": {
     "baseline_code_signature_text": "def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:",
@@ -47,7 +53,8 @@
   },
   "SectionKind": {},
   "StructuredSerializer": {
-    "baseline_yaml_content_hash": "da371d36ee77e1e9bac615a922b9fd0fccf5a2d2d2bde93ce705635615e5885a"
+    "baseline_code_signature_text": "class StructuredSerializer(BaseSerializer):",
+    "baseline_code_structure_hash": "d0d8c888ba4fdf5123ca4e41ec001a977a00423256d12beef01a99e90c65523c"
   },
   "StructuredSerializer.KEY_TO_KIND": {},
   "StructuredSerializer.KIND_TO_KEY": {},

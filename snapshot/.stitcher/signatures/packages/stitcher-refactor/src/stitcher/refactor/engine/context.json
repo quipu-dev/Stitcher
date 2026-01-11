@@ -1,6 +1,9 @@
 {
   "IndexStore": {},
-  "RefactorContext": {},
+  "RefactorContext": {
+    "baseline_code_signature_text": "class RefactorContext:",
+    "baseline_code_structure_hash": "ee382f8aff665f15d490297eb9ff9581918f78a5c11248fe83c60938f55965d3"
+  },
   "RefactorContext.graph": {},
   "RefactorContext.index_store": {},
   "RefactorContext.sidecar_manager": {},

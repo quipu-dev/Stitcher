@@ -10,7 +10,10 @@
   "Planner": {},
   "PythonAdapter": {},
   "RefactorContext": {},
-  "RefactorRunner": {},
+  "RefactorRunner": {
+    "baseline_code_signature_text": "class RefactorRunner:",
+    "baseline_code_structure_hash": "3fdfdc7d87145f7a37995377a7eb2abd5cceb75b9e0b8b07f4e628980020cd4b"
+  },
   "RefactorRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, index_store: IndexStore, file_indexer: FileIndexer):",
     "baseline_code_structure_hash": "6b8cd6353a2e7edc339f93808686a08b8a26e3e83047719532e37973dc2078f3"

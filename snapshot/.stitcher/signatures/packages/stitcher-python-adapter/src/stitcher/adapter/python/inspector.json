@@ -4,7 +4,10 @@
   "ArgumentKind": {},
   "Callable": {},
   "FunctionDef": {},
-  "InspectionError": {},
+  "InspectionError": {
+    "baseline_code_signature_text": "class InspectionError(Exception):",
+    "baseline_code_structure_hash": "35eb0d9f8c1b5ea850b6fc8f5e88a334036a3ac1c09bf782d18716ee88a92c28"
+  },
   "_get_annotation_str": {
     "baseline_code_signature_text": "def _get_annotation_str(annotation: Any) -> str:",
     "baseline_code_structure_hash": "26972582713636ddc29f381130477a033a2a448dde86e7fc3bea65b8c5a1eab7"

@@ -1,5 +1,8 @@
 {
-  "DatabaseManager": {},
+  "DatabaseManager": {
+    "baseline_code_signature_text": "class DatabaseManager:",
+    "baseline_code_structure_hash": "8e8e7c1774353ebabd34334d9c3d41fc898978cc27a5240e76db6667462b6333"
+  },
   "DatabaseManager.__init__": {
     "baseline_code_signature_text": "def __init__(self, db_path: Path):",
     "baseline_code_structure_hash": "cf4985b042007ee812049afa8df4871d7409ba0dd6877ee45ef7f5cfb32edeaa"
@@ -11,13 +14,11 @@
   "DatabaseManager.db_path": {},
   "DatabaseManager.get_connection": {
     "baseline_code_signature_text": "def get_connection(self) -> Generator[sqlite3.Connection, None, None]:",
-    "baseline_code_structure_hash": "b59cf6b3c452497dfe97d723ccb692d383e55ccb602491b83cf81fb339587d1e",
-    "baseline_yaml_content_hash": "1d5d8552f486836f5d6754885e5a4cf5265c7d80f74e2e33062cc15157c0b51e"
+    "baseline_code_structure_hash": "b59cf6b3c452497dfe97d723ccb692d383e55ccb602491b83cf81fb339587d1e"
   },
   "DatabaseManager.initialize": {
     "baseline_code_signature_text": "def initialize(self) -> None:",
-    "baseline_code_structure_hash": "e36fa6cfdacc0a16a73991ac1c1abede9d31bda0075ecf8a043ac766d3ce4893",
-    "baseline_yaml_content_hash": "e436d30be4ffa94c6c96df11489319423e096a74edced58568e99a460aa0bf27"
+    "baseline_code_structure_hash": "e36fa6cfdacc0a16a73991ac1c1abede9d31bda0075ecf8a043ac766d3ce4893"
   },
   "Generator": {},
   "Path": {},

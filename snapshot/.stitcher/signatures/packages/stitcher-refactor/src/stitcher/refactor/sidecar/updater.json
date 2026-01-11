@@ -1,7 +1,10 @@
 {
   "Any": {},
   "Dict": {},
-  "DocUpdater": {},
+  "DocUpdater": {
+    "baseline_code_signature_text": "class DocUpdater:",
+    "baseline_code_structure_hash": "0c842ba650e1e54502db21cee749a696210512737ced33c52cc29059bab7dd48"
+  },
   "DocUpdater.dump": {
     "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",
     "baseline_code_structure_hash": "bf3c79fc5426bd31a175e5837167fc630501321737ae4e06135bb40ea9e742af"
@@ -15,7 +18,10 @@
     "baseline_code_structure_hash": "d26b2e159389ba3881e44a300acd071151de2e546892345d596199932ef1b760"
   },
   "Path": {},
-  "SigUpdater": {},
+  "SigUpdater": {
+    "baseline_code_signature_text": "class SigUpdater:",
+    "baseline_code_structure_hash": "d6e53053e258ceae80e8b7db01b4e15a1fa0955c5dedaa3ef37c6486536015df"
+  },
   "SigUpdater.dump": {
     "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",
     "baseline_code_structure_hash": "bf3c79fc5426bd31a175e5837167fc630501321737ae4e06135bb40ea9e742af"

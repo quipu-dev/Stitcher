@@ -5,7 +5,10 @@
   "Path": {},
   "Set": {},
   "StitcherConfig": {},
-  "Workspace": {},
+  "Workspace": {
+    "baseline_code_signature_text": "class Workspace:",
+    "baseline_code_structure_hash": "b2a5fc0b2fb82e14bbb08d8b2421510009a0a42f1a6ee7780a11acfdaf371480"
+  },
   "Workspace.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, config: Optional[StitcherConfig] = None):",
     "baseline_code_structure_hash": "01adb170bd677800d033ff7fad6b7b53d4ee617df0b7440f21842904fe64228a"

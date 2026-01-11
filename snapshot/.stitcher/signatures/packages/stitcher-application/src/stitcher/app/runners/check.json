@@ -1,5 +1,8 @@
 {
-  "CheckRunner": {},
+  "CheckRunner": {
+    "baseline_code_signature_text": "class CheckRunner:",
+    "baseline_code_structure_hash": "51cb9a01b6a0263aeb242f78835ea5fd9cced46725a16807875266497033e248"
+  },
   "CheckRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, differ: Differ, interaction_handler: InteractionHandler | None, fingerprint_strategy: FingerprintStrategyProtocol):",
     "baseline_code_structure_hash": "90a2750f4e45ca8d7c6f082f579f445ea4041a3a01af5eba2b5b6e48831bd97b"
@@ -15,10 +18,6 @@
   "CheckRunner._compute_fingerprints": {
     "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
     "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
-  },
-  "CheckRunner._generate_diff": {
-    "baseline_code_signature_text": "def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:",
-    "baseline_code_structure_hash": "62016244a2fa1e685039c4248ad132dc2bdf55fb5b67eabda296c12fb9f79b73"
   },
   "CheckRunner.analyze_batch": {
     "baseline_code_signature_text": "def analyze_batch(self, modules: List[ModuleDef]) -> Tuple[List[FileCheckResult], List[InteractionContext]]:",
@@ -46,11 +45,6 @@
     "baseline_code_structure_hash": "7c312fb41ba8a7400e0883713391a167220fa568d784e32a0b58963a346d7366"
   },
   "CheckRunner.root_path": {},
-  "CheckRunner.run": {
-    "baseline_code_signature_text": "def run(self, force_relink: bool = False, reconcile: bool = False) -> bool:",
-    "baseline_code_structure_hash": "7631deb3a7c6081d8588472ea45bec318c84bddc323414ced6cc0e9a21f1fb7a"
-  },
-  "CheckRunner.scanner": {},
   "CheckRunner.sig_manager": {},
   "ConflictType": {},
   "Dict": {},

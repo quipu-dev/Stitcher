@@ -1,5 +1,8 @@
 {
-  "FileRecord": {},
+  "FileRecord": {
+    "baseline_code_signature_text": "class FileRecord:",
+    "baseline_code_structure_hash": "dfddf0c8f6f70406a4c0f5a20737392568d211dd8affe8cfbedc2fa04b78b385"
+  },
   "FileRecord.content_hash": {},
   "FileRecord.id": {},
   "FileRecord.indexing_status": {},
@@ -7,33 +10,37 @@
   "FileRecord.last_size": {},
   "FileRecord.path": {},
   "Optional": {},
-  "ReferenceRecord": {},
+  "ReferenceRecord": {
+    "baseline_code_signature_text": "class ReferenceRecord:",
+    "baseline_code_structure_hash": "aa81b38d08c23c700cb7e90b38d9f83c13f2a4e5433b1398d663a1425f4be09f"
+  },
   "ReferenceRecord.col_offset": {},
   "ReferenceRecord.end_col_offset": {},
   "ReferenceRecord.end_lineno": {},
   "ReferenceRecord.id": {},
   "ReferenceRecord.kind": {},
   "ReferenceRecord.lineno": {},
-  "ReferenceRecord.location_end": {},
-  "ReferenceRecord.location_start": {},
   "ReferenceRecord.source_file_id": {},
   "ReferenceRecord.target_fqn": {},
   "ReferenceRecord.target_id": {},
-  "SymbolRecord": {},
+  "SymbolRecord": {
+    "baseline_code_signature_text": "class SymbolRecord:",
+    "baseline_code_structure_hash": "907e5635f81f972257b98aee11eb43a66d261ee50846689937ea4a84b7e82c85"
+  },
   "SymbolRecord.alias_target_fqn": {},
   "SymbolRecord.alias_target_id": {},
   "SymbolRecord.canonical_fqn": {},
   "SymbolRecord.col_offset": {},
+  "SymbolRecord.docstring_hash": {},
   "SymbolRecord.end_col_offset": {},
   "SymbolRecord.end_lineno": {},
   "SymbolRecord.file_id": {},
   "SymbolRecord.id": {},
   "SymbolRecord.kind": {},
   "SymbolRecord.lineno": {},
-  "SymbolRecord.location_end": {},
-  "SymbolRecord.location_start": {},
   "SymbolRecord.logical_path": {},
   "SymbolRecord.name": {},
   "SymbolRecord.signature_hash": {},
+  "SymbolRecord.signature_text": {},
   "dataclass": {}
 }

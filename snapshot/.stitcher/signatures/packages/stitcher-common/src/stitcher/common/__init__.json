@@ -19,20 +19,16 @@
   "_operator_cache": {},
   "_project_root": {},
   "_user_factory": {},
-  "bus": {
-    "baseline_yaml_content_hash": "4f1c69f6a0eeb6dd83463e36fa5744c82a2dc63985560db0f65d7e12d1a2357b"
-  },
+  "bus": {},
   "format_docstring": {},
   "get_current_renderer": {
     "baseline_code_signature_text": "def get_current_renderer() -> OverlayOperator:",
-    "baseline_code_structure_hash": "28a0e399d8cdbf153ce3f23f754d24686ed9a00f302833703e079fe0a4e2fd5a",
-    "baseline_yaml_content_hash": "b3227ed74c8be57d33cf0066d95e91694846b596eb2bdee23f2cc1c328b4b35f"
+    "baseline_code_structure_hash": "28a0e399d8cdbf153ce3f23f754d24686ed9a00f302833703e079fe0a4e2fd5a"
   },
   "os": {},
   "parse_docstring": {},
   "stitcher_operator": {
     "baseline_code_signature_text": "def stitcher_operator(key):",
-    "baseline_code_structure_hash": "c2101eaed3099b1b4efdf16190b79f922dada8a3ba21572db182e6cb87ccb9c0",
-    "baseline_yaml_content_hash": "05ff8cc82109124877fa1dc7586154851bb6a8ba2073c03b7bfeaccc83e6d7da"
+    "baseline_code_structure_hash": "c2101eaed3099b1b4efdf16190b79f922dada8a3ba21572db182e6cb87ccb9c0"
   }
 }

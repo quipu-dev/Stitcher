@@ -11,7 +11,10 @@
   "ScannerService": {},
   "StitcherConfig": {},
   "StubPackageManager": {},
-  "StubgenService": {},
+  "StubgenService": {
+    "baseline_code_signature_text": "class StubgenService:",
+    "baseline_code_structure_hash": "b8bf0fdab788c4c6f42c78b58fb260c1198c8ca8e00a37e50ae6618b65618da0"
+  },
   "StubgenService.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, doc_manager: DocumentManager, transformer: LanguageTransformerProtocol):",
     "baseline_code_structure_hash": "e53d7571623762b36138adefa9ef3ca5f09ee2e98c54209bf8afdd656266ac65"

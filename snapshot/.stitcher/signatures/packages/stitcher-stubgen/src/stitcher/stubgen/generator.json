@@ -6,7 +6,10 @@
   "FunctionDef": {},
   "List": {},
   "ModuleDef": {},
-  "PythonStubGenerator": {},
+  "PythonStubGenerator": {
+    "baseline_code_signature_text": "class PythonStubGenerator:",
+    "baseline_code_structure_hash": "9393624344dc73a81d48f00f2ae3e0e32a7775eb62e8ce4fb8e62b4bb9ef40ac"
+  },
   "PythonStubGenerator.__init__": {
     "baseline_code_signature_text": "def __init__(self, indent_spaces: int = 4):",
     "baseline_code_structure_hash": "bf3773335a05535d9bdecfaf1badb06bd290c625387a20b51b5162be7272c020"

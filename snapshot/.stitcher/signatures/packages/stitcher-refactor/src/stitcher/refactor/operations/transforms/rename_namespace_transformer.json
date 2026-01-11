@@ -1,28 +1,4 @@
 {
   "NamespaceRenamerTransformer": {},
-  "NamespaceRenamerTransformer.METADATA_DEPENDENCIES": {},
-  "NamespaceRenamerTransformer.__init__": {
-    "baseline_code_signature_text": "def __init__(self, old_prefix: str, new_prefix: str, locations: Dict[Tuple[int, int], UsageLocation]):",
-    "baseline_code_structure_hash": "11acfbb3705f94e997f724481e78a2f0e26b13c058002402da465d6415b630d6"
-  },
-  "NamespaceRenamerTransformer._create_node_from_fqn": {
-    "baseline_code_signature_text": "def _create_node_from_fqn(self, fqn: str) -> cst.BaseExpression:",
-    "baseline_code_structure_hash": "201e0533220c702d4063c62258bfb4dbdd80bc5ff8e5781c16c91c331f05c9a7"
-  },
-  "NamespaceRenamerTransformer._get_import_path_fqn": {
-    "baseline_code_signature_text": "def _get_import_path_fqn(self, node: cst.CSTNode) -> Optional[str]:",
-    "baseline_code_structure_hash": "d04bc664a7a0634c3774608301cc55489e4d0532c62a05fcd18b6b5a2dae1f46"
-  },
-  "NamespaceRenamerTransformer.leave_Attribute": {
-    "baseline_code_signature_text": "def leave_Attribute(self, original_node: cst.Attribute, updated_node: cst.Attribute) -> cst.BaseExpression:",
-    "baseline_code_structure_hash": "a0c35a5060a2bf8004956dcf0f382747c7f681a914d629ea45eea47ef6c4f004"
-  },
-  "NamespaceRenamerTransformer.leave_Name": {
-    "baseline_code_signature_text": "def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.BaseExpression:",
-    "baseline_code_structure_hash": "359a7b7d03fd4c22322b79587ce2f48c68c764ee80795ad2766698ab49ff3fef"
-  },
-  "NamespaceRenamerTransformer.locations": {},
-  "NamespaceRenamerTransformer.new_prefix": {},
-  "NamespaceRenamerTransformer.old_prefix": {},
   "__all__": {}
 }

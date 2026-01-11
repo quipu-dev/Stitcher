@@ -2,7 +2,10 @@
   "Dict": {},
   "DocstringRendererProtocol": {},
   "DocumentManager": {},
-  "GenerateRunner": {},
+  "GenerateRunner": {
+    "baseline_code_signature_text": "class GenerateRunner:",
+    "baseline_code_structure_hash": "70b16df5bba9a5b9159ba25b70d6972c38342f9441ec98a36f99d2f381f7ba2f"
+  },
   "GenerateRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, scanner: ScannerService, doc_manager: DocumentManager, stub_pkg_manager: StubPackageManager, generator: StubGeneratorProtocol, transformer: LanguageTransformerProtocol):",
     "baseline_code_structure_hash": "bbf9f2f6ec536c4d3bd7713e79f463ac1720679fee2166a20b3903dc7620680e"

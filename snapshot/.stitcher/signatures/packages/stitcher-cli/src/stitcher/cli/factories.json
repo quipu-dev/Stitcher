@@ -10,18 +10,15 @@
   "TyperInteractiveRenderer": {},
   "get_project_root": {
     "baseline_code_signature_text": "def get_project_root() -> Path:",
-    "baseline_code_structure_hash": "2f4a94d6ffeef80d3d85e7f1812a7cacc3e6bebbe430509a2b960e7a76554691",
-    "baseline_yaml_content_hash": "cbe9a611867feeb35f4cee6991f69ce208de9bb4132595e2bfba962d534329a6"
+    "baseline_code_structure_hash": "2f4a94d6ffeef80d3d85e7f1812a7cacc3e6bebbe430509a2b960e7a76554691"
   },
   "make_app": {
     "baseline_code_signature_text": "def make_app(handler: Optional[InteractionHandler] = None) -> StitcherApp:",
-    "baseline_code_structure_hash": "60b4b9545d7848e87858a23ed1898379829d589f2a205b0899bb050f82d12782",
-    "baseline_yaml_content_hash": "1b212af51c64064b07c3ce68d79945b9b3dabc3a34fc1902bb7f77631acc121e"
+    "baseline_code_structure_hash": "60b4b9545d7848e87858a23ed1898379829d589f2a205b0899bb050f82d12782"
   },
   "make_interaction_handler": {
     "baseline_code_signature_text": "def make_interaction_handler(non_interactive: bool = False, auto_resolve_mode: bool = False) -> Optional[InteractionHandler]:",
-    "baseline_code_structure_hash": "f3b9a3cbfed6e6ee7fe7a1afc12c46cc232611ef9a6bbae0f248d940c759e3b1",
-    "baseline_yaml_content_hash": "222e288c0ff8b44b4b254a7eac46a495945abb360606c1548f60d0c9a705cb3e"
+    "baseline_code_structure_hash": "f3b9a3cbfed6e6ee7fe7a1afc12c46cc232611ef9a6bbae0f248d940c759e3b1"
   },
   "nexus": {},
   "sys": {}

@@ -1,15 +1,12 @@
 {
   "ABC": {},
-  "AbstractOperation": {},
-  "AbstractOperation.analyze": {
-    "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
-    "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1",
-    "baseline_yaml_content_hash": "b784ec87513350954be88fcbf01b0991e7d99769bc2981bd544cd68034f786f1"
+  "AbstractOperation": {
+    "baseline_code_signature_text": "class AbstractOperation(ABC):",
+    "baseline_code_structure_hash": "c4d3e87e888e6b8c170744b680f20a8c794f378dcc94c2ca553b10f25e99b038"
   },
   "AbstractOperation.collect_intents": {
     "baseline_code_signature_text": "def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:",
-    "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625",
-    "baseline_yaml_content_hash": "258913016fc1a8646b579767d8de94d90931b54d9129f3d91404f43f0a71b13e"
+    "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625"
   },
   "Any": {},
   "Dict": {},
@@ -18,7 +15,10 @@
   "Path": {},
   "RefactorContext": {},
   "RefactorIntent": {},
-  "SidecarUpdateMixin": {},
+  "SidecarUpdateMixin": {
+    "baseline_code_signature_text": "class SidecarUpdateMixin:",
+    "baseline_code_structure_hash": "07af38ae94be83594c9f020270b6c83d944cf64a7538d3267ceda5587eaa96d1"
+  },
   "SidecarUpdateMixin._path_to_fqn": {
     "baseline_code_signature_text": "def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:",
     "baseline_code_structure_hash": "9d8e022c26c3b25ea32b82b16b0cf737974daed449b0ad2bee3dcdcedc3c9988"

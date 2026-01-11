@@ -6,17 +6,16 @@
   "ModuleDef": {},
   "Path": {},
   "TransactionManager": {},
-  "TransformRunner": {},
+  "TransformRunner": {
+    "baseline_code_signature_text": "class TransformRunner:",
+    "baseline_code_structure_hash": "8f26048a25c09e9b90fefe3c9c895e8713966c5018c405c95387d0bba5e62bf5"
+  },
   "TransformRunner.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManager, transformer: LanguageTransformerProtocol):",
     "baseline_code_structure_hash": "a5e35a2a079423bac8f344713e81151b10740b54ba9d6e09be4a00b46839a2d8"
   },
   "TransformRunner.doc_manager": {},
   "TransformRunner.root_path": {},
-  "TransformRunner.run_inject": {
-    "baseline_code_signature_text": "def run_inject(self) -> List[Path]:",
-    "baseline_code_structure_hash": "c3eccd0304a6e04a22b2ac1857ba9c4400031be4b1e2309ccc7a7d4160acfb02"
-  },
   "TransformRunner.run_inject_batch": {
     "baseline_code_signature_text": "def run_inject_batch(self, modules: List[ModuleDef], tm: TransactionManager) -> List[Path]:",
     "baseline_code_structure_hash": "3e9cdf94f103f92a980983e12b6a866619bcb2f1d4603887ce664b69741e6336"
@@ -25,7 +24,6 @@
     "baseline_code_signature_text": "def run_strip(self, files: List[Path], tm: TransactionManager) -> List[Path]:",
     "baseline_code_structure_hash": "5b63ebec37fd4da077d5aad4504e9504798478477360c9a9a6fa64bff30303dd"
   },
-  "TransformRunner.scanner": {},
   "TransformRunner.transformer": {},
   "bus": {}
 }

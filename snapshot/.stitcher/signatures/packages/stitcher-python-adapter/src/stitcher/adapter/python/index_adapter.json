@@ -5,7 +5,10 @@
   "ModuleDef": {},
   "Optional": {},
   "Path": {},
-  "PythonAdapter": {},
+  "PythonAdapter": {
+    "baseline_code_signature_text": "class PythonAdapter(LanguageAdapter):",
+    "baseline_code_structure_hash": "816ffb64743f42cc526b9ca5a37b81acdf1224278ef1a602fc2fc3780383b72a"
+  },
   "PythonAdapter.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, search_paths: List[Path]):",
     "baseline_code_structure_hash": "f64b32116fed69a603031d2a1958bf6e93ed6ec4ae06d18f85a05ff028d1718f"
@@ -20,13 +23,7 @@
   },
   "PythonAdapter._get_source_root_for_file": {
     "baseline_code_signature_text": "def _get_source_root_for_file(self, file_path: Path) -> Path:",
-    "baseline_code_structure_hash": "31afd06d3b5a743c6e7e13a2a36f682cc3898199689e88f1efc91833d7a06c28",
-    "baseline_yaml_content_hash": "9720fc1e5fb6b2522dc5d28c6ff9e5ecae58106d26f2b6b36e5dd2511f27048e"
-  },
-  "PythonAdapter._guess_suri": {
-    "baseline_code_signature_text": "def _guess_suri(self, fqn: str, current_module_fqn: str, current_rel_path: str) -> str:",
-    "baseline_code_structure_hash": "05bedff15bcd92ccc5d8bced77eaaa0d3a7ccbfac3c2e93929f38749678140da",
-    "baseline_yaml_content_hash": "73205f1faeabbe824ff21983d368ae1554dd0e3f8bd00d21b0aa43be488731bb"
+    "baseline_code_structure_hash": "31afd06d3b5a743c6e7e13a2a36f682cc3898199689e88f1efc91833d7a06c28"
   },
   "PythonAdapter.hasher": {},
   "PythonAdapter.parse": {

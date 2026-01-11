@@ -3,24 +3,16 @@
   "DeleteDirectoryIntent": {},
   "List": {},
   "MoveDirectoryOperation": {
-    "baseline_yaml_content_hash": "6172506e80531470464c4cba619d5b4f70461811bd478af108e20b69f0a2e646"
+    "baseline_code_signature_text": "class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):",
+    "baseline_code_structure_hash": "1c60a2362a0be611c1bc5d817f15fc98aa340b12e9de20c888a008f2118e7a18"
   },
   "MoveDirectoryOperation.__init__": {
     "baseline_code_signature_text": "def __init__(self, src_dir: Path, dest_dir: Path):",
     "baseline_code_structure_hash": "e2b53fd555bb7146fd21de7a0c04128afb9b1a8ba7005dfd50c00d5b0ed495cc"
   },
-  "MoveDirectoryOperation._path_to_fqn": {
-    "baseline_code_signature_text": "def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:",
-    "baseline_code_structure_hash": "9d8e022c26c3b25ea32b82b16b0cf737974daed449b0ad2bee3dcdcedc3c9988"
-  },
   "MoveDirectoryOperation._scaffold_init_intents": {
     "baseline_code_signature_text": "def _scaffold_init_intents(self, directory_path: Path, ctx: RefactorContext) -> List[ScaffoldIntent]:",
     "baseline_code_structure_hash": "64f78da4f2493f0c56785d398d86624c31fbc35cecf4eb18a205ade8d5456f07"
-  },
-  "MoveDirectoryOperation.analyze": {
-    "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
-    "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1",
-    "baseline_yaml_content_hash": "5d331e06e2f157e46f19e7ba07144d68954dcd77dc0174264b39db66c9771453"
   },
   "MoveDirectoryOperation.collect_intents": {
     "baseline_code_signature_text": "def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:",

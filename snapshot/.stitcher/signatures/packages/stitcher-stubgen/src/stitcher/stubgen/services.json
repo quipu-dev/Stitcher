@@ -1,6 +1,9 @@
 {
   "Path": {},
-  "StubPackageManager": {},
+  "StubPackageManager": {
+    "baseline_code_signature_text": "class StubPackageManager:",
+    "baseline_code_structure_hash": "472a079719a35ee29197ad9062051203539f3d41ed0e670f2b4f230a61c8aa4b"
+  },
   "StubPackageManager._get_pep561_logical_path": {
     "baseline_code_signature_text": "def _get_pep561_logical_path(logical_path: Path) -> Path:",
     "baseline_code_structure_hash": "72aeb6dbee827058e60937a7bd5973ef066bf8db9e815f8f85488a35ada323d1"
