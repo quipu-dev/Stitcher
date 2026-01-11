@@ -1,240 +1,228 @@
-[简要回答]
-好的，我将重构 `DocumentManager`，解除其对 `ModuleDef` AST 的强依赖，并添加基于文件路径和索引符号的文档一致性检查方法。
+您完全正确。您的否决是基于“高保真工程公理协议 (HFEA)”的体现，特别是“资源丰饶公理”——我们不应因为对存储空间的微小吝啬而牺牲架构的纯洁性。
 
-## [WIP] refactor: 解耦 DocumentManager 并支持 Index-First 检查
+将 Docstring 内容存入索引是本体论上正确的解决方案。它将索引从一个“元数据摘要”提升为一个“高保真代码镜像”，从而彻底解耦了状态检测和源码 I/O。这使得所有依赖索引的下游工具（如 `CheckRunner`）都能在完全不触碰文件系统的情况下，获取其决策所需的一切信息。
+
+我将立即执行这个战略方向，对索引系统进行升级。
+
+## [WIP] feat(index): 在语义索引中存储原始 Docstring 内容
 
 ### 用户需求
-为了实现 Stitcher 2.0 的 Index-First 架构，`DocumentManager` 需要能够独立于昂贵的 AST 解析（`ModuleDef`）运行。它需要能够直接通过文件路径加载 YAML 文档，并使用来自 `stitcher-index` 的 `SymbolRecord` 列表来进行结构一致性检查（Missing/Extra）。
+
+用户否决了在 `CheckRunner` 中进行“即时 (JIT)”文件读取以生成诊断信息的方案，并要求将原始的 Docstring 文本内容直接存储在 SQLite 索引的 `symbols` 表中。
 
 ### 评论
-这是架构转型的关键一步。通过解除对 `ModuleDef` 的依赖，我们将能够构建出无需读取和解析所有 Python 源代码即可运行的 `CheckRunner`，从而大幅提升性能。
+
+这是一个卓越的架构决策。它通过增加可接受的存储成本，换取了系统设计的巨大简化和纯粹性。这使得索引成为代码状态的、无需二次回源的“唯一事实来源 (SSoT)”，完全符合我们的核心工程哲学。此变更将使后续 `CheckRunner` 的重构变得极为简单和高效。
 
 ### 目标
-1.  在 `DocumentManager` 中添加 `load_docs_for_path` 方法。
-2.  在 `DocumentManager` 中添加 `compute_yaml_hashes_for_path` 方法。
-3.  在 `DocumentManager` 中添加 `check_consistency_with_symbols` 方法，利用 `SymbolRecord` 列表替代 `ModuleDef` 进行结构检查。
+
+1.  **升级数据库 Schema**：修改 `packages/stitcher-index/src/stitcher/index/schema.sql`，在 `symbols` 表中添加 `docstring_content TEXT` 列。
+2.  **更新数据模型**：在 `packages/stitcher-index/src/stitcher/index/types.py` 的 `SymbolRecord` 数据类中添加相应的 `docstring_content` 字段。
+3.  **升级数据持久化层**：修改 `packages/stitcher-index/src/stitcher/index/store.py` 中的 `INSERT` 和 `SELECT` 语句，以支持新列的读写。
+4.  **增强数据采集器**：修改 `packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py`，在解析代码时提取原始 Docstring 并填充到 `SymbolRecord` 中。
 
 ### 基本原理
-目前的 `DocumentManager` API 均要求传入 `ModuleDef` 对象，这迫使调用者（如 `CheckRunner`）必须先进行源码解析。通过重构，我们将允许通过更轻量的 `file_path` 和数据库记录来进行操作。这符合 Index-First 的 "Query-First" 设计原则。
+
+由于索引器在构建索引时已经完整地解析了每个源文件的抽象语法树 (AST)，因此提取 Docstring 文本的边际成本几乎为零。将这些文本与符号元数据一同存入数据库，可以一劳永逸地解决所有需要“诊断级信息”的场景，避免了任何形式的重复文件 I/O，并强化了索引作为系统核心信息总线的地位。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/application #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/doc-manager #task/action/refactor #task/state/begin
+
+#intent/build #flow/ready #priority/critical #comp/index #comp/python-adapter #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/semantic-index #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 DocumentManager
+#### Acts 1: 更新数据库 Schema
 
-我们将修改 `doc_manager.py`，添加支持路径和符号列表的新方法，并让旧方法复用新逻辑以保持兼容性。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/services/doc_manager.py
-~~~~~
-~~~~~python.old
-from typing import Dict, Optional, Any, Union
-
-from stitcher.spec import (
-    ModuleDef,
-    ClassDef,
-    FunctionDef,
-    DocstringIR,
-    DocstringParserProtocol,
-    DocstringSerializerProtocol,
-)
-from stitcher.common import DocumentAdapter, YamlAdapter
-from stitcher.adapter.python import RawDocstringParser, RawSerializer
-from stitcher.common.services import AssetPathResolver
-
-
-class DocumentManager:
-    def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):
-~~~~~
-~~~~~python.new
-from typing import Dict, Optional, Any, Union, List, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from stitcher.index.types import SymbolRecord
-
-from stitcher.spec import (
-    ModuleDef,
-    ClassDef,
-    FunctionDef,
-    DocstringIR,
-    DocstringParserProtocol,
-    DocstringSerializerProtocol,
-)
-from stitcher.common import DocumentAdapter, YamlAdapter
-from stitcher.adapter.python import RawDocstringParser, RawSerializer
-from stitcher.common.services import AssetPathResolver
-
-
-class DocumentManager:
-    def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):
-~~~~~
+首先，我们在 `symbols` 表中添加 `docstring_content` 列。
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/services/doc_manager.py
+packages/stitcher-index/src/stitcher/index/schema.sql
 ~~~~~
-~~~~~python.old
-    def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:
-        if not module.file_path:
-            return {}
-        module_path = self.root_path / module.file_path
-        doc_path = self.resolver.get_doc_path(module_path)
+~~~~~sql.old
+    -- The SHA256 hash of the docstring content
+    docstring_hash TEXT,
 
-        raw_data = self.adapter.load(doc_path)  # returns Dict[str, Any] now ideally
-
-        # Adapter.load is typed to return Dict[str, str], but YamlAdapter actually returns parsed YAML.
-        # We assume YamlAdapter can return Dict[str, Union[str, Dict]]
-
-        return {fqn: self._deserialize_ir(val) for fqn, val in raw_data.items()}
-
-    def _apply_to_function(
+    FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
 ~~~~~
-~~~~~python.new
-    def load_docs_for_path(self, file_path: str) -> Dict[str, DocstringIR]:
-        if not file_path:
-            return {}
-        module_path = self.root_path / file_path
-        doc_path = self.resolver.get_doc_path(module_path)
+~~~~~sql.new
+    -- The SHA256 hash of the docstring content
+    docstring_hash TEXT,
+    
+    -- The raw, unprocessed docstring content
+    docstring_content TEXT,
 
-        raw_data = self.adapter.load(doc_path)
-        return {fqn: self._deserialize_ir(val) for fqn, val in raw_data.items()}
-
-    def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:
-        return self.load_docs_for_path(module.file_path)
-
-    def _apply_to_function(
+    FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
 ~~~~~
+
+#### Acts 2: 更新数据传输对象 (DTO)
+
+接下来，更新 `SymbolRecord` 数据类以包含新字段。
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/services/doc_manager.py
+packages/stitcher-index/src/stitcher/index/types.py
 ~~~~~
 ~~~~~python.old
-        return {
-            "extra": extra,
-            "missing": missing_doc,
-            "pending": pending_hydration,
-            "redundant": redundant_doc,
-            "conflict": doc_conflict,
-        }
-
-    def hydrate_module(
+    signature_hash: Optional[str] = None
+    signature_text: Optional[str] = None
+    docstring_hash: Optional[str] = None
 ~~~~~
 ~~~~~python.new
-        return {
-            "extra": extra,
-            "missing": missing_doc,
-            "pending": pending_hydration,
-            "redundant": redundant_doc,
-            "conflict": doc_conflict,
-        }
+    signature_hash: Optional[str] = None
+    signature_text: Optional[str] = None
+    docstring_hash: Optional[str] = None
+    docstring_content: Optional[str] = None
+~~~~~
 
-    def check_consistency_with_symbols(
-        self, file_path: str, actual_symbols: List["SymbolRecord"]
-    ) -> Dict[str, set]:
-        """
-        Performs structural consistency check using Index Symbols instead of AST.
-        Note: This does NOT check for content conflicts (doc_conflict) or redundancy,
-        as that requires source content. It focuses on Missing and Extra keys.
-        """
-        # 1. Extract keys from symbols
-        all_keys = set()
-        public_keys = set()
+#### Acts 3: 更新索引持久化层
 
-        for sym in actual_symbols:
-            key = None
-            if sym.kind == "module":
-                key = "__doc__"
-            elif sym.logical_path:
-                key = sym.logical_path
+现在，修改 `IndexStore` 以处理新列的写入和读取。我们将 `INSERT` 语句更新为包含 `docstring_content`，并使 `SELECT` 语句更加明确。
 
-            if key:
-                all_keys.add(key)
-                # Check for visibility (simple underscore check on components)
-                # logical_path 'A.B._c' -> parts ['A', 'B', '_c']
-                parts = key.split(".")
-                if not any(p.startswith("_") and p != "__doc__" for p in parts):
-                    public_keys.add(key)
+~~~~~act
+patch_file
+packages/stitcher-index/src/stitcher/index/store.py
+~~~~~
+~~~~~python.old
+            if symbols:
+                conn.executemany(
+                    """
+                    INSERT INTO symbols (
+                        id, file_id, name, logical_path, kind, 
+                        canonical_fqn, alias_target_fqn, alias_target_id,
+                        lineno, col_offset, end_lineno, end_col_offset, signature_hash,
+                        signature_text, docstring_hash
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        (
+                            s.id,
+                            file_id,
+                            s.name,
+                            s.logical_path,
+                            s.kind,
+                            s.canonical_fqn,
+                            s.alias_target_fqn,
+                            s.alias_target_id,
+                            s.lineno,
+                            s.col_offset,
+                            s.end_lineno,
+                            s.end_col_offset,
+                            s.signature_hash,
+                            s.signature_text,
+                            s.docstring_hash,
+                        )
+                        for s in symbols
+                    ],
+                )
+~~~~~
+~~~~~python.new
+            if symbols:
+                conn.executemany(
+                    """
+                    INSERT INTO symbols (
+                        id, file_id, name, logical_path, kind, 
+                        canonical_fqn, alias_target_fqn, alias_target_id,
+                        lineno, col_offset, end_lineno, end_col_offset, signature_hash,
+                        signature_text, docstring_hash, docstring_content
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        (
+                            s.id,
+                            file_id,
+                            s.name,
+                            s.logical_path,
+                            s.kind,
+                            s.canonical_fqn,
+                            s.alias_target_fqn,
+                            s.alias_target_id,
+                            s.lineno,
+                            s.col_offset,
+                            s.end_lineno,
+                            s.end_col_offset,
+                            s.signature_hash,
+                            s.signature_text,
+                            s.docstring_hash,
+                            s.docstring_content,
+                        )
+                        for s in symbols
+                    ],
+                )
+~~~~~
 
-        # 2. Load YAML keys
-        yaml_docs = self.load_docs_for_path(file_path)
-        yaml_keys = set(yaml_docs.keys())
+#### Acts 4: 更新语言适配器以提取 Docstring
 
-        # 3. Compare
-        extra = yaml_keys - all_keys
-        extra.discard("__doc__")  # __doc__ in yaml is fine even if not explicitly tracked sometimes?
-        # Actually, if it's in yaml but not in code (e.g. empty file?), it is extra.
-        # But 'module' symbol usually exists.
+最后，我们让 `PythonAdapter` 在解析代码时提取原始 Docstring 内容并填充到 `SymbolRecord` 中。
 
-        missing_doc = set()
+~~~~~act
+patch_file
+packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py
+~~~~~
+~~~~~python.old
+            sig_hash = None
+            sig_text = None
+            doc_hash = None
 
-        for key in all_keys:
-            if key in public_keys and key not in yaml_keys:
-                missing_doc.add(key)
+            if entity_for_hash:
+                fp = self.hasher.compute(entity_for_hash)  # type: ignore
+                sig_hash = fp.get("current_code_structure_hash")
+                sig_text = fp.get("current_code_signature_text")
+                doc_hash = fp.get("current_code_docstring_hash")
 
-        return {
-            "extra": extra,
-            "missing": missing_doc,
-            # Pending/Redundant/Conflict require source content comparison, skipped here.
-            "pending": set(),
-            "redundant": set(),
-            "conflict": set(),
-        }
+            # Location Handling
+            loc = getattr(entity_for_hash, "location", None)
+~~~~~
+~~~~~python.new
+            sig_hash = None
+            sig_text = None
+            doc_hash = None
+            doc_content = None
 
-    def hydrate_module(
+            if entity_for_hash:
+                fp = self.hasher.compute(entity_for_hash)  # type: ignore
+                sig_hash = fp.get("current_code_structure_hash")
+                sig_text = fp.get("current_code_signature_text")
+                doc_hash = fp.get("current_code_docstring_hash")
+                doc_content = getattr(entity_for_hash, "docstring", None)
+
+            # Location Handling
+            loc = getattr(entity_for_hash, "location", None)
 ~~~~~
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/services/doc_manager.py
+packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py
 ~~~~~
 ~~~~~python.old
-        return hashlib.sha256(b"").hexdigest()
-
-    def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:
-        # We need raw data here to compute the hash exactly as it is stored
-        # But load_docs_for_module returns IRs.
-        # We should load raw data directly from adapter for hashing.
-
-        if not module.file_path:
-            return {}
-        module_path = self.root_path / module.file_path
-        doc_path = self.resolver.get_doc_path(module_path)
-
-        # Load raw dict from YAML
-        raw_data = self.adapter.load(doc_path)
-
-        return {
-            fqn: self.compute_yaml_content_hash(val) for fqn, val in raw_data.items()
-        }
-
-    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
+                    alias_target_id=None,  # Decoupled: Linker will fill this
+                    signature_hash=sig_hash,
+                    signature_text=sig_text,
+                    docstring_hash=doc_hash,
+                )
+            )
+            return fragment
 ~~~~~
 ~~~~~python.new
-        return hashlib.sha256(b"").hexdigest()
-
-    def compute_yaml_hashes_for_path(self, file_path: str) -> Dict[str, str]:
-        if not file_path:
-            return {}
-        module_path = self.root_path / file_path
-        doc_path = self.resolver.get_doc_path(module_path)
-
-        raw_data = self.adapter.load(doc_path)
-
-        return {
-            fqn: self.compute_yaml_content_hash(val) for fqn, val in raw_data.items()
-        }
-
-    def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:
-        return self.compute_yaml_hashes_for_path(module.file_path)
-
-    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
+                    alias_target_id=None,  # Decoupled: Linker will fill this
+                    signature_hash=sig_hash,
+                    signature_text=sig_text,
+                    docstring_hash=doc_hash,
+                    docstring_content=doc_content,
+                )
+            )
+            return fragment
 ~~~~~
 
 ### 下一步建议
-现在 `DocumentManager` 已经具备了独立工作的能力。下一步，我们将重写 `CheckRunner`，使其不再扫描 AST，而是从 `stitcher-index` 获取数据，并调用这些新方法执行检查。
+
+基础架构现已升级。下一步是将 `CheckRunner` 的逻辑迁移到完全依赖此索引。我将提出一个新计划来执行以下操作：
+
+1.  重构 `CheckRunner._analyze_file` 方法。
+2.  移除所有对 `doc_manager.check_module` 的调用和对 AST `ModuleDef` 的依赖。
+3.  实现一个新的、基于 `IndexStore` 查询的纯哈希比较状态机。
+4.  当检测到 `DOC_CONTENT_CONFLICT` 时，直接从 `SymbolRecord.docstring_content` 和 `DocumentManager.load_docs_for_path` 加载的 YAML IR 中获取双方内容来生成 Diff，**不再需要读取和解析 .py 文件**。
+
+这将彻底完成我们本次的战略重构。

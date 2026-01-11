@@ -108,12 +108,14 @@ class PythonAdapter(LanguageAdapter):
             sig_hash = None
             sig_text = None
             doc_hash = None
+            doc_content = None
 
             if entity_for_hash:
                 fp = self.hasher.compute(entity_for_hash)  # type: ignore
                 sig_hash = fp.get("current_code_structure_hash")
                 sig_text = fp.get("current_code_signature_text")
                 doc_hash = fp.get("current_code_docstring_hash")
+                doc_content = getattr(entity_for_hash, "docstring", None)
 
             # Location Handling
             loc = getattr(entity_for_hash, "location", None)
@@ -144,6 +146,7 @@ class PythonAdapter(LanguageAdapter):
                     signature_hash=sig_hash,
                     signature_text=sig_text,
                     docstring_hash=doc_hash,
+                    docstring_content=doc_content,
                 )
             )
             return fragment

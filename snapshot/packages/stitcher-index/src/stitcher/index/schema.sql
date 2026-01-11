@@ -49,6 +49,9 @@ CREATE TABLE IF NOT EXISTS symbols (
     
     -- The SHA256 hash of the docstring content
     docstring_hash TEXT,
+    
+    -- The raw, unprocessed docstring content
+    docstring_content TEXT,
 
     FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
     FOREIGN KEY (alias_target_id) REFERENCES symbols(id) ON DELETE SET NULL

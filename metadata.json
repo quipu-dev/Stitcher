@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 解耦 DocumentManager 并支持 Index-First 检查", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768127468.7566466, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(index): 在语义索引中存储原始 Docstring 内容", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768128122.9879575, "duration_ms": 0}}

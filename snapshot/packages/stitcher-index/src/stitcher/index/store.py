@@ -81,8 +81,8 @@ class IndexStore:
                         id, file_id, name, logical_path, kind, 
                         canonical_fqn, alias_target_fqn, alias_target_id,
                         lineno, col_offset, end_lineno, end_col_offset, signature_hash,
-                        signature_text, docstring_hash
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        signature_text, docstring_hash, docstring_content
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     [
                         (
@@ -101,6 +101,7 @@ class IndexStore:
                             s.signature_hash,
                             s.signature_text,
                             s.docstring_hash,
+                            s.docstring_content,
                         )
                         for s in symbols
                     ],

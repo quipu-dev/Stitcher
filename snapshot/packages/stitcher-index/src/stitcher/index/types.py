@@ -29,6 +29,7 @@ class SymbolRecord:
     signature_hash: Optional[str] = None
     signature_text: Optional[str] = None
     docstring_hash: Optional[str] = None
+    docstring_content: Optional[str] = None
 
 
 @dataclass
