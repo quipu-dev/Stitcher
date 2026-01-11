@@ -122,7 +122,8 @@ class StitcherApp:
         return load_config_from_path(self.root_path)
 
     def ensure_index_fresh(self) -> bool:
-        return self.index_runner.run_build(self.workspace)
+        with self.db_manager.session():
+            return self.index_runner.run_build(self.workspace)
 
     def _configure_and_scan(self, config: StitcherConfig) -> List[ModuleDef]:
         if config.name != "default":
@@ -205,7 +206,9 @@ class StitcherApp:
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
 
-        for config in configs:
+        # We wrap the entire multi-target check process in a single DB session
+        with self.db_manager.session():
+            for config in configs:
             if config.name != "default":
                 bus.info(L.generate.target.processing, name=config.name)
 
@@ -276,7 +279,8 @@ class StitcherApp:
         global_success = True
         all_redundant: List[Path] = []
 
-        for config in configs:
+        with self.db_manager.session():
+            for config in configs:
             modules = self._configure_and_scan(config)
             if not modules:
                 continue
@@ -374,9 +378,10 @@ class StitcherApp:
             return False
         config_to_use = configs[0]
 
-        return self.refactor_runner.run_apply(
-            migration_script, config_to_use, dry_run, confirm_callback
-        )
+        with self.db_manager.session():
+            return self.refactor_runner.run_apply(
+                migration_script, config_to_use, dry_run, confirm_callback
+            )
 
     def run_index_build(self) -> bool:
         return self.index_runner.run_build(self.workspace)
