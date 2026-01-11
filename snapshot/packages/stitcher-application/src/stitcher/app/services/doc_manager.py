@@ -189,11 +189,6 @@ class DocumentManager:
     def check_consistency_with_symbols(
         self, file_path: str, actual_symbols: List["SymbolRecord"]
     ) -> Dict[str, set]:
-        """
-        Performs structural consistency check using Index Symbols instead of AST.
-        Note: This does NOT check for content conflicts (doc_conflict) or redundancy,
-        as that requires source content. It focuses on Missing and Extra keys.
-        """
         # 1. Extract keys from symbols
         all_keys = set()
         public_keys = set()
@@ -219,7 +214,9 @@ class DocumentManager:
 
         # 3. Compare
         extra = yaml_keys - all_keys
-        extra.discard("__doc__")  # __doc__ in yaml is fine even if not explicitly tracked sometimes?
+        extra.discard(
+            "__doc__"
+        )  # __doc__ in yaml is fine even if not explicitly tracked sometimes?
         # Actually, if it's in yaml but not in code (e.g. empty file?), it is extra.
         # But 'module' symbol usually exists.
 

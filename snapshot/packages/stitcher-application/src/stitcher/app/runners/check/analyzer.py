@@ -19,11 +19,13 @@ class CheckAnalyzer:
         result = FileCheckResult(path=subject.file_path)
         unresolved_conflicts: List[InteractionContext] = []
 
-        is_tracked = (self.root_path / subject.file_path).with_suffix(".stitcher.yaml").exists()
+        is_tracked = (
+            (self.root_path / subject.file_path).with_suffix(".stitcher.yaml").exists()
+        )
 
         for fqn, state in subject.get_all_symbol_states().items():
             # --- State Machine Logic ---
-            
+
             # 1. Content Checks
             if state.exists_in_code and state.exists_in_yaml:
                 if state.source_doc_content and state.yaml_doc_ir:
@@ -43,18 +45,22 @@ class CheckAnalyzer:
 
             elif not state.exists_in_code and state.exists_in_yaml:
                 unresolved_conflicts.append(
-                    InteractionContext(subject.file_path, fqn, ConflictType.DANGLING_DOC)
+                    InteractionContext(
+                        subject.file_path, fqn, ConflictType.DANGLING_DOC
+                    )
                 )
 
             # 2. Signature Checks
             code_hash = state.signature_hash
             baseline_code_hash = state.baseline_signature_hash
-            
-            if code_hash and not baseline_code_hash: # New symbol, skip
+
+            if code_hash and not baseline_code_hash:  # New symbol, skip
                 continue
-            if not code_hash and baseline_code_hash: # Deleted symbol, handled by DANGLING_DOC
+            if (
+                not code_hash and baseline_code_hash
+            ):  # Deleted symbol, handled by DANGLING_DOC
                 continue
-            
+
             code_matches = code_hash == baseline_code_hash
             yaml_matches = state.yaml_content_hash == state.baseline_yaml_content_hash
 
@@ -67,7 +73,7 @@ class CheckAnalyzer:
                     "baseline",
                     "current",
                 )
-                
+
                 conflict_type = (
                     ConflictType.SIGNATURE_DRIFT
                     if yaml_matches

@@ -66,12 +66,12 @@ class CheckRunner:
                 self.sig_manager,
                 self.fingerprint_strategy,
             )
-            
+
             # Analyze using the subject
             result, conflicts = self.analyzer.analyze_subject(subject)
             all_results.append(result)
             all_conflicts.extend(conflicts)
-            
+
         return all_results, all_conflicts
 
     def auto_reconcile_docs(

@@ -16,6 +16,10 @@
 "DocumentManager.apply_docs_to_module": |-
   Loads external docs and applies them to the ModuleDef IR in-place.
   Prioritizes external docs over existing source docs.
+"DocumentManager.check_consistency_with_symbols": |-
+  Performs structural consistency check using Index Symbols instead of AST.
+  Note: This does NOT check for content conflicts (doc_conflict) or redundancy,
+  as that requires source content. It focuses on Missing and Extra keys.
 "DocumentManager.check_module": |-
   Compares module structure against external docs.
   Returns a dict of issues: {'missing': set(...), 'extra': set(...), 'conflict': set(...)}

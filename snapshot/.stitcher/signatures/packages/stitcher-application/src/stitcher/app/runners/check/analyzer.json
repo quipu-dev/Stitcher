@@ -1,0 +1,24 @@
+{
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckAnalyzer": {
+    "baseline_code_signature_text": "class CheckAnalyzer:",
+    "baseline_code_structure_hash": "58b576791e9e883fe9c77a96fd6c8b7bc3ded2a1b033c535aeb8bcf617bc8456"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckAnalyzer.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, differ: Differ):",
+    "baseline_code_structure_hash": "bce29fd3357f0c162f5a997fe8da8b5a5fdff89f0d5081bd07156d8e80558475"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckAnalyzer.analyze_subject": {
+    "baseline_code_signature_text": "def analyze_subject(self, subject: CheckSubject) -> Tuple[FileCheckResult, List[InteractionContext]]:",
+    "baseline_code_structure_hash": "310625567e6cfa0d95d6b57c838bb6784216ed3f0423806434a4c07b5c11b045"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckAnalyzer.differ": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckAnalyzer.root_path": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckSubject": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#ConflictType": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#Differ": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#FileCheckResult": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#InteractionContext": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#List": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#Path": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#Tuple": {}
+}

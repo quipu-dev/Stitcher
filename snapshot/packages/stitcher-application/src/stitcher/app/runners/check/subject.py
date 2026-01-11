@@ -9,11 +9,6 @@ from .protocols import SymbolState, CheckSubject
 
 
 class ASTCheckSubjectAdapter(CheckSubject):
-    """
-    An adapter that provides a CheckSubject interface backed by
-    a live-parsed AST (ModuleDef).
-    """
-
     def __init__(
         self,
         module_def: ModuleDef,

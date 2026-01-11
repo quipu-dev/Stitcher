@@ -13,7 +13,7 @@ class CheckReporter:
             # 1. Info / Success Messages
             for key in sorted(res.infos["doc_improvement"]):
                 bus.info(L.check.state.doc_updated, key=key)
-            
+
             if res.is_clean:
                 continue
 
@@ -67,7 +67,7 @@ class CheckReporter:
             bus.warning(L.check.issue.redundant, key=key)
         for key in sorted(res.warnings["untracked_key"]):
             bus.warning(L.check.state.untracked_code, key=key)
-        
+
         if "untracked_detailed" in res.warnings:
             keys = res.warnings["untracked_detailed"]
             bus.warning(
