@@ -1,17 +1,4 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#DefaultDict": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#DeleteDirectoryIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#DeleteDirectoryOp": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#DeleteFileIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#DeleteFileOp": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#Dict": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#FileOp": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#GlobalBatchRenamer": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#List": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#MigrationSpec": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#MoveFileIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#MoveFileOp": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#Path": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#Planner": {
     "baseline_code_signature_text": "class Planner(SidecarUpdateMixin):",
     "baseline_code_structure_hash": "07ca38386aa86bfb756a5fe4483cf6cfd6a09acd5da6820c5710d4902e2a8489"
@@ -20,16 +7,5 @@
     "baseline_code_signature_text": "def plan(self, spec: MigrationSpec, ctx: RefactorContext) -> List[FileOp]:",
     "baseline_code_structure_hash": "72dc3053b5cfd34b3a825bd3839e7bfed5ada512449052d279a3b9f195f05503",
     "baseline_yaml_content_hash": "b88570f84c36ee70a60e0d2ba7ef7f8b9ed4e3f67d391da44c85db567f5462c5"
-  },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#RefactorContext": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#RefactorIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#RenameIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#ScaffoldIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#SidecarUpdateIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#SidecarUpdateMixin": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#TYPE_CHECKING": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#WriteFileOp": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#YamlAdapter": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#defaultdict": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#json": {}
+  }
 }

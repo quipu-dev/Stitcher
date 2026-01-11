@@ -22,11 +22,5 @@
     "baseline_code_structure_hash": "e36fa6cfdacc0a16a73991ac1c1abede9d31bda0075ecf8a043ac766d3ce4893",
     "baseline_yaml_content_hash": "e436d30be4ffa94c6c96df11489319423e096a74edced58568e99a460aa0bf27"
   },
-  "py://packages/stitcher-index/src/stitcher/index/db.py#Generator": {},
-  "py://packages/stitcher-index/src/stitcher/index/db.py#Path": {},
-  "py://packages/stitcher-index/src/stitcher/index/db.py#contextmanager": {},
-  "py://packages/stitcher-index/src/stitcher/index/db.py#files": {},
-  "py://packages/stitcher-index/src/stitcher/index/db.py#log": {},
-  "py://packages/stitcher-index/src/stitcher/index/db.py#logging": {},
-  "py://packages/stitcher-index/src/stitcher/index/db.py#sqlite3": {}
+  "py://packages/stitcher-index/src/stitcher/index/db.py#log": {}
 }

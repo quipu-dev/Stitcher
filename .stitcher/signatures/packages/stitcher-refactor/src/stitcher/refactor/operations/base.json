@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#ABC": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#AbstractOperation": {
     "baseline_code_signature_text": "class AbstractOperation(ABC):",
     "baseline_code_structure_hash": "c4d3e87e888e6b8c170744b680f20a8c794f378dcc94c2ca553b10f25e99b038"
@@ -9,13 +8,6 @@
     "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625",
     "baseline_yaml_content_hash": "258913016fc1a8646b579767d8de94d90931b54d9129f3d91404f43f0a71b13e"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#Any": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#Dict": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#List": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#Optional": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#Path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#RefactorContext": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#RefactorIntent": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#SidecarUpdateMixin": {
     "baseline_code_signature_text": "class SidecarUpdateMixin:",
     "baseline_code_structure_hash": "07af38ae94be83594c9f020270b6c83d944cf64a7538d3267ceda5587eaa96d1"
@@ -27,7 +19,5 @@
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#SidecarUpdateMixin._update_sidecar_data": {
     "baseline_code_signature_text": "def _update_sidecar_data(self, data: Dict[str, Any], module_fqn: Optional[str], old_fqn: str, new_fqn: str) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "90293dbce85734f0498d51c275c62bb7abf8e87a6a147f2ec982ec19bc50bda7"
-  },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#abstractmethod": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#path_to_logical_fqn": {}
+  }
 }

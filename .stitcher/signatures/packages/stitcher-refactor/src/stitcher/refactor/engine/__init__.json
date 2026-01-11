@@ -1,15 +1,3 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#DeleteDirectoryIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#DeleteFileIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#FileSystemIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#MoveFileIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#Planner": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#RefactorContext": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#RefactorIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#RenameIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#ScaffoldIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#SemanticGraph": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#SidecarUpdateIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#TransactionManager": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/__init__.py#__all__": {}
 }

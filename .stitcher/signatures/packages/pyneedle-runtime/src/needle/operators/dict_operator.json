@@ -1,6 +1,4 @@
 {
-  "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#Any": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#Dict": {},
   "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#DictOperator": {
     "baseline_code_signature_text": "class DictOperator(OperatorProtocol):",
     "baseline_code_structure_hash": "2423c63b00b3558e4658c8b478b31364bfb7d9c6c1f049fde1edf628e764182d",
@@ -20,8 +18,5 @@
   "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#DictOperator._flatten": {
     "baseline_code_signature_text": "def _flatten(self, data: Dict[str, Any], prefix: str = '') -> Dict[str, Any]:",
     "baseline_code_structure_hash": "0a3408728fd9d509d7f76c76b28f3a5c310600d04b5a8c4303fdd78f276948d6"
-  },
-  "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#OperatorProtocol": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#SemanticPointerProtocol": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#Union": {}
+  }
 }

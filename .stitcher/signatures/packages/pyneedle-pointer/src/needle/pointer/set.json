@@ -1,5 +1,4 @@
 {
-  "py://packages/pyneedle-pointer/src/needle/pointer/set.py#Any": {},
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#PointerSet": {
     "baseline_code_signature_text": "class PointerSet(Set['SemanticPointer'], PointerSetProtocol):",
     "baseline_code_structure_hash": "6116b41284a6f83c519354c991afa7278f922abae74e2723e88baef9bf982834",
@@ -19,11 +18,5 @@
     "baseline_code_signature_text": "def __truediv__(self, other: Union[str, SemanticPointerProtocol]) -> PointerSet:",
     "baseline_code_structure_hash": "744a00eeec951a45c5125126cbb1bbe7526e71fa5f558c19fa4eb866477b6449",
     "baseline_yaml_content_hash": "c9f1c899f1e02476537f7ad1c453e5079532b71ceca8cb44865422cb1e911eb3"
-  },
-  "py://packages/pyneedle-pointer/src/needle/pointer/set.py#PointerSetProtocol": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/set.py#SemanticPointer": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/set.py#SemanticPointerProtocol": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/set.py#Set": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/set.py#TYPE_CHECKING": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/set.py#Union": {}
+  }
 }

@@ -1,12 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#Any": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#AssetPathResolver": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#ClassDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#Dict": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocstringIR": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocstringParserProtocol": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocstringSerializerProtocol": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentAdapter": {},
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager": {
     "baseline_code_signature_text": "class DocumentManager:",
     "baseline_code_structure_hash": "6d0f45ae24fed508e17a32aa16ba0a6cc850bcf356d04fa6431eae4775d44793",
@@ -120,18 +112,5 @@
     "baseline_code_signature_text": "def set_strategy(self, parser: DocstringParserProtocol, serializer: DocstringSerializerProtocol):",
     "baseline_code_structure_hash": "b9800de0282d3f7b7a216cc4fc1e457a5de9dff7c4c29bf5d4018b08cb47f2cf",
     "baseline_yaml_content_hash": "0cff586d15ad7c0811defd1ec5212ab1c6bd75d7413abc32d53b54da34794e48"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#FunctionDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#ModuleDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#Optional": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#Path": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#RawDocstringParser": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#RawSerializer": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#SymbolRecord": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#TYPE_CHECKING": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#Union": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#YamlAdapter": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#hashlib": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#json": {}
+  }
 }

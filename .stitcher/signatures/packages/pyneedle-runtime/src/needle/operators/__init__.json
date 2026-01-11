@@ -1,7 +1,3 @@
 {
-  "py://packages/pyneedle-runtime/src/needle/operators/__init__.py#DictOperator": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/__init__.py#FileSystemOperator": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/__init__.py#I18NFactoryOperator": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/__init__.py#OverlayOperator": {},
   "py://packages/pyneedle-runtime/src/needle/operators/__init__.py#__all__": {}
 }

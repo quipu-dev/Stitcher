@@ -23,8 +23,6 @@
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#MoveFileIntent.dest_path": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#MoveFileIntent.src_path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#Optional": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#Path": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#RefactorIntent": {
     "baseline_code_signature_text": "class RefactorIntent:",
     "baseline_code_structure_hash": "74bd76c16de8f53d7b2e8b676082e8cac7ac1b80b541bd6d9dc2a28f42ef1084",
@@ -52,7 +50,5 @@
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.module_fqn": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.new_fqn": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.old_fqn": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.sidecar_path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#annotations": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#dataclass": {}
+  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.sidecar_path": {}
 }

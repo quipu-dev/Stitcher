@@ -1,10 +1,3 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#MigrationError": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#MigrationLoader": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#MigrationScriptError": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#MigrationSpec": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#Move": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#MoveDir": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#Rename": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#__all__": {}
 }

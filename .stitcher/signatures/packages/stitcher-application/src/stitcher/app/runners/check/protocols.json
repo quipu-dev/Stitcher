@@ -15,10 +15,6 @@
     "baseline_code_structure_hash": "1a55c9ded7bf45553f63ae27c049594f5faa1245bd0c6ce98f4a0d2d7cd30db7",
     "baseline_yaml_content_hash": "14a3e03d5bc439d577ff543431f04a6d49118be3b7ede97434545550008f998c"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#Dict": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#DocstringIR": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#Optional": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#Protocol": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#SymbolState": {
     "baseline_code_signature_text": "class SymbolState:",
     "baseline_code_structure_hash": "092696e4a3fb6cbeaaf5d78cf9d54184fcb297c2d65327d401f5341accfd918b",
@@ -35,6 +31,5 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#SymbolState.signature_text": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#SymbolState.source_doc_content": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#SymbolState.yaml_content_hash": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#SymbolState.yaml_doc_ir": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#dataclass": {}
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#SymbolState.yaml_doc_ir": {}
 }

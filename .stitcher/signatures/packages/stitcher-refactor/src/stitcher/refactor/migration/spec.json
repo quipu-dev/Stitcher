@@ -1,7 +1,4 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#AbstractOperation": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#Dict": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#List": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#MigrationSpec": {
     "baseline_code_signature_text": "class MigrationSpec:",
     "baseline_code_structure_hash": "de835ddfb68014ae24f25a9367f10f51e5a3368c26c1c87e5a28e0109b2dccc0",
@@ -27,9 +24,5 @@
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#Move": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#MoveDir": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#MoveDirectoryOperation": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#MoveFileOperation": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#Rename": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#RenameSymbolOperation": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#TypeAlias": {}
+  "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#Rename": {}
 }

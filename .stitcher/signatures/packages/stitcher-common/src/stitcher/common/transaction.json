@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#ABC": {},
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#DeleteDirectoryOp": {
     "baseline_code_signature_text": "class DeleteDirectoryOp(FileOp):",
     "baseline_code_structure_hash": "bdab578d64aff01b70b394c4f51fa8baf095999ca974f67b55edc2d99a4eebe3"
@@ -65,8 +64,6 @@
     "baseline_code_signature_text": "def write_text(self, path: Path, content: str) -> None:",
     "baseline_code_structure_hash": "ba3d96911f7c8b9307afbd6478b9a4369320519af0de273184a4f968185e38a5"
   },
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#L": {},
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#List": {},
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#MoveFileOp": {
     "baseline_code_signature_text": "class MoveFileOp(FileOp):",
     "baseline_code_structure_hash": "09cec0661ccc42d6c6d5a9c062bef8fde37a891ef2a2482c4328f5f00dd14613"
@@ -80,9 +77,6 @@
     "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
     "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
   },
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#Optional": {},
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#Path": {},
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#Protocol": {},
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#RealFileSystem": {
     "baseline_code_signature_text": "class RealFileSystem:",
     "baseline_code_structure_hash": "8aba41996f6c8906c3e34d3d3ac7c27fd6571f51d92a921bcd007029399d3ddf"
@@ -153,7 +147,6 @@
     "baseline_code_structure_hash": "42d00325fcbfefbcf799ae9b6e99a8b3ec0774b5ebb718e9d247a8ef8f628ce7"
   },
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.root_path": {},
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#Union": {},
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#WriteFileOp": {
     "baseline_code_signature_text": "class WriteFileOp(FileOp):",
     "baseline_code_structure_hash": "9d5446c64dadb6dae708274c6d57198b3d6131771215bbed13bf6644586b4469"
@@ -166,9 +159,5 @@
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#WriteFileOp.execute": {
     "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
     "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
-  },
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#abstractmethod": {},
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#bus": {},
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#dataclass": {},
-  "py://packages/stitcher-common/src/stitcher/common/transaction.py#shutil": {}
+  }
 }

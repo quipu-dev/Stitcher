@@ -19,7 +19,5 @@
     "baseline_yaml_content_hash": "ab2c8499fdda49d14e4a8b9abd32022a6411d8345396be3e6973d91a334462d2"
   },
   "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.root_path": {},
-  "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.sig_root": {},
-  "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#Path": {},
-  "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#Union": {}
+  "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.sig_root": {}
 }

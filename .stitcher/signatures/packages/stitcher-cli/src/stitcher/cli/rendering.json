@@ -15,7 +15,5 @@
   },
   "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#CliRenderer.verbose": {
     "baseline_yaml_content_hash": "336ebcdcedb0fe0d1aab3d423edfa41d1678808c65335e3556d7d0bc4fb0487e"
-  },
-  "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#protocols": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#typer": {}
+  }
 }

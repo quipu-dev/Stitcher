@@ -1,5 +1,4 @@
 {
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#Dict": {},
   "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator": {
     "baseline_code_signature_text": "class FileSystemOperator(OperatorProtocol):",
     "baseline_code_structure_hash": "3dd024de64043e1862c5c3d238a4d93750c877292125bb8264d0530767cfea64",
@@ -25,12 +24,5 @@
     "baseline_code_signature_text": "def _scan_root(self, root_path: Path) -> Dict[str, str]:",
     "baseline_code_structure_hash": "fb9ef3c3c3741d0c06aee7dccb75e99081d27b2641f485ea82402fad884998c8"
   },
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator.root": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#JsonHandler": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#OperatorProtocol": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#Optional": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#Path": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#SemanticPointerProtocol": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#Union": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#os": {}
+  "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator.root": {}
 }

@@ -10,9 +10,5 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter.report": {
     "baseline_code_signature_text": "def report(self, results: List[FileCheckResult]) -> bool:",
     "baseline_code_structure_hash": "3b154b57774cb70599d76bad8a376720541936fda6490637a561551c556354f4"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#FileCheckResult": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#L": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#bus": {}
+  }
 }

@@ -1,6 +1,4 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/manager.py#AssetPathResolver": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/manager.py#Path": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/manager.py#SidecarManager": {
     "baseline_code_signature_text": "class SidecarManager:",
     "baseline_code_structure_hash": "993087b4b3e1ec096c336b00e53b09c1fcaceb19ec218dcccd060ef955cba17b"

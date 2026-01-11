@@ -1,6 +1,4 @@
 {
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#Any": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#Dict": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringIR": {
     "baseline_code_signature_text": "class DocstringIR:",
     "baseline_code_structure_hash": "5dd576b77e6ba3f5c1ddeb7fe826814a48fa703f3e1528101678bbf6d313194f",
@@ -28,9 +26,6 @@
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringSection.content": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringSection.kind": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringSection.title": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#Enum": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#List": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#Optional": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#SectionKind": {
     "baseline_code_signature_text": "class SectionKind(str, Enum):",
     "baseline_code_structure_hash": "daf638dfe03042085a9a2f96aa541af96d0d78215c5baa6e4e772722ba639527"
@@ -45,8 +40,5 @@
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#SectionKind.SEE_ALSO": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#SectionKind.TEXT": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#SectionKind.WARNING": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#SectionKind.YIELDS": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#Union": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#dataclass": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#field": {}
+  "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#SectionKind.YIELDS": {}
 }

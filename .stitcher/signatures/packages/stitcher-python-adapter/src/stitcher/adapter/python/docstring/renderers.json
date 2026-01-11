@@ -23,12 +23,6 @@
     "baseline_code_signature_text": "def render(self, docstring_ir: DocstringIR, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]] = None) -> str:",
     "baseline_code_structure_hash": "771c150ad2e54877bc0e41f243f0eed5594c46fd2dad4d3bd2743c6b296999f0"
   },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#ClassDef": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#DocstringIR": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#DocstringItem": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#DocstringRendererProtocol": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#DocstringSection": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#FunctionDef": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#GoogleDocstringRenderer": {
     "baseline_code_signature_text": "class GoogleDocstringRenderer(BaseStructuredRenderer):",
     "baseline_code_structure_hash": "c99127f093311c0f4b755263d042b8b2d20286ae10b9af87f3d14b98122f96e2"
@@ -41,8 +35,6 @@
     "baseline_code_signature_text": "def _render_section(self, section: DocstringSection, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> str:",
     "baseline_code_structure_hash": "ba947518f1f0b9c59a54d2e2d2bfe123d8999b0e7631df8b4d1c0a63815ef43c"
   },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#List": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#ModuleDef": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#NumpyDocstringRenderer": {
     "baseline_code_signature_text": "class NumpyDocstringRenderer(BaseStructuredRenderer):",
     "baseline_code_structure_hash": "ec3dcbd638b015e7a40d151b6f5df7fc67da84dc5e11518dedf1049408cbef22"
@@ -54,9 +46,5 @@
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#NumpyDocstringRenderer._render_section": {
     "baseline_code_signature_text": "def _render_section(self, section: DocstringSection, context: Optional[Union[FunctionDef, ClassDef, ModuleDef]]) -> str:",
     "baseline_code_structure_hash": "ba947518f1f0b9c59a54d2e2d2bfe123d8999b0e7631df8b4d1c0a63815ef43c"
-  },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#Optional": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#SectionKind": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#Union": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/renderers.py#cast": {}
+  }
 }

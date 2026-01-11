@@ -1,17 +1,4 @@
 {
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#DatabaseManager": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#FileIndexer": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#GriffePythonParser": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#IndexStore": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#InteractionHandler": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#Optional": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#Path": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#PythonAdapter": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#PythonFingerprintStrategy": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#PythonTransformer": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#SignatureManager": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#StitcherApp": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#Workspace": {},
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#create_populated_index": {
     "baseline_code_signature_text": "def create_populated_index(root_path: Path) -> IndexStore:",
     "baseline_code_structure_hash": "b24b71a81748dd1ce36d2b0c407650da3d14aa3337a70b15ab2168cda74e2afd",

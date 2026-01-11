@@ -12,13 +12,5 @@
     "baseline_code_structure_hash": "310625567e6cfa0d95d6b57c838bb6784216ed3f0423806434a4c07b5c11b045"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckAnalyzer.differ": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckAnalyzer.root_path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckSubject": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#ConflictType": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#Differ": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#FileCheckResult": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#InteractionContext": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#Path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#Tuple": {}
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py#CheckAnalyzer.root_path": {}
 }

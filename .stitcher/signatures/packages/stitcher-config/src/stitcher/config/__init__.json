@@ -1,8 +1,4 @@
 {
-  "py://packages/stitcher-config/src/stitcher/config/__init__.py#List": {},
-  "py://packages/stitcher-config/src/stitcher/config/__init__.py#Optional": {},
-  "py://packages/stitcher-config/src/stitcher/config/__init__.py#StitcherConfig": {},
   "py://packages/stitcher-config/src/stitcher/config/__init__.py#__all__": {},
-  "py://packages/stitcher-config/src/stitcher/config/__init__.py#__path__": {},
-  "py://packages/stitcher-config/src/stitcher/config/__init__.py#load_config_from_path": {}
+  "py://packages/stitcher-config/src/stitcher/config/__init__.py#__path__": {}
 }

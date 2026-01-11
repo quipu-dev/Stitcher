@@ -1,6 +1,4 @@
 {
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/scope.py#Dict": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/scope.py#ModuleDef": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/scope.py#ScopeAnalyzer": {
     "baseline_code_signature_text": "class ScopeAnalyzer:",
     "baseline_code_structure_hash": "a419e2fbe68856a3324fecc12bdb00cff9c9c25a1b2572ae0a01cc77a35937f8"

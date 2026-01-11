@@ -1,6 +1,4 @@
 {
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/uri.py#Optional": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/uri.py#Path": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/uri.py#SURIGenerator": {
     "baseline_code_signature_text": "class SURIGenerator:",
     "baseline_code_structure_hash": "1b5e412f41cb8b7aedb37e107b31e8a53c93193ef6eee857c22c42f53cb2cb61",

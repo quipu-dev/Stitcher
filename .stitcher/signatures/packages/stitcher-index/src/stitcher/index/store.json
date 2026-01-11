@@ -1,6 +1,4 @@
 {
-  "py://packages/stitcher-index/src/stitcher/index/store.py#DatabaseManager": {},
-  "py://packages/stitcher-index/src/stitcher/index/store.py#FileRecord": {},
   "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore": {
     "baseline_code_signature_text": "class IndexStore:",
     "baseline_code_structure_hash": "57c9e19555d831cd072e27805f6d84a1548ae24283f22ffdaa03da34c45940f3"
@@ -55,10 +53,5 @@
     "baseline_code_signature_text": "def update_analysis(self, file_id: int, symbols: List[SymbolRecord], references: List[ReferenceRecord]) -> None:",
     "baseline_code_structure_hash": "a6f3ba80f7345a9a7a2a9d4cc1bd0bc8cee2eb896d35896ffb977a48d342fdb4",
     "baseline_yaml_content_hash": "5ddcfe8b685880333187b38e97f76f37507b92712c2c539b2f3aff1bbea66442"
-  },
-  "py://packages/stitcher-index/src/stitcher/index/store.py#List": {},
-  "py://packages/stitcher-index/src/stitcher/index/store.py#Optional": {},
-  "py://packages/stitcher-index/src/stitcher/index/store.py#ReferenceRecord": {},
-  "py://packages/stitcher-index/src/stitcher/index/store.py#SymbolRecord": {},
-  "py://packages/stitcher-index/src/stitcher/index/store.py#Tuple": {}
+  }
 }

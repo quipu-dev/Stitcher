@@ -1,9 +1,3 @@
 {
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#SpyBus": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#VenvHarness": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#WorkspaceFactory": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#__all__": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#create_populated_index": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#create_test_app": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#get_stored_hashes": {}
+  "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#__all__": {}
 }

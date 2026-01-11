@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#Any": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#BaseSerializer": {
     "baseline_code_signature_text": "class BaseSerializer(DocstringSerializerProtocol):",
     "baseline_code_structure_hash": "e1c6726260f4828438cf13853a23ac433c18c3380e3c5857aa3b5a5885a060c5",
@@ -27,11 +26,6 @@
     "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
     "baseline_code_structure_hash": "37a505a9dbfb9e1d452ade2b0eae56b42aec7f2a25d0db0e93dfa22c1fc58e66"
   },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#Dict": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#DocstringIR": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#DocstringItem": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#DocstringSection": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#DocstringSerializerProtocol": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#GoogleSerializer": {
     "baseline_code_signature_text": "class GoogleSerializer(StructuredSerializer):",
     "baseline_code_structure_hash": "1505dbc295839ec4d1048726411c214d0d3ede363a44bdad8a73fa9a69c04dca"
@@ -55,7 +49,6 @@
     "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
     "baseline_code_structure_hash": "37a505a9dbfb9e1d452ade2b0eae56b42aec7f2a25d0db0e93dfa22c1fc58e66"
   },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#SectionKind": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#StructuredSerializer": {
     "baseline_code_signature_text": "class StructuredSerializer(BaseSerializer):",
     "baseline_code_structure_hash": "d0d8c888ba4fdf5123ca4e41ec001a977a00423256d12beef01a99e90c65523c",
@@ -74,6 +67,5 @@
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#StructuredSerializer.to_yaml": {
     "baseline_code_signature_text": "def to_yaml(self, ir: DocstringIR) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "b5da18fb949b3e9ed0d5b8faf353daa30f557fa51afbde3684c5f268aae8a950"
-  },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/serializers.py#Union": {}
+  }
 }

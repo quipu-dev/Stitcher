@@ -8,7 +8,6 @@
   "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult.missing_symbols": {},
   "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult.path": {},
   "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult.total_symbols": {},
-  "py://packages/stitcher-application/src/stitcher/app/types.py#Dict": {},
   "py://packages/stitcher-application/src/stitcher/app/types.py#FileCheckResult": {
     "baseline_code_signature_text": "class FileCheckResult:",
     "baseline_code_structure_hash": "940b2e27886084680096f4401391b1f5783b784152f324908c17a72a57b587ee"
@@ -23,15 +22,10 @@
   "py://packages/stitcher-application/src/stitcher/app/types.py#FileCheckResult.reconciled_count": {},
   "py://packages/stitcher-application/src/stitcher/app/types.py#FileCheckResult.warning_count": {},
   "py://packages/stitcher-application/src/stitcher/app/types.py#FileCheckResult.warnings": {},
-  "py://packages/stitcher-application/src/stitcher/app/types.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/types.py#Path": {},
   "py://packages/stitcher-application/src/stitcher/app/types.py#PumpResult": {
     "baseline_code_signature_text": "class PumpResult:",
     "baseline_code_structure_hash": "498bd3b553b95d825a1cee32bf6ec60588676ef7053d5adb031521f744693151"
   },
   "py://packages/stitcher-application/src/stitcher/app/types.py#PumpResult.redundant_files": {},
-  "py://packages/stitcher-application/src/stitcher/app/types.py#PumpResult.success": {},
-  "py://packages/stitcher-application/src/stitcher/app/types.py#dataclass": {},
-  "py://packages/stitcher-application/src/stitcher/app/types.py#defaultdict": {},
-  "py://packages/stitcher-application/src/stitcher/app/types.py#field": {}
+  "py://packages/stitcher-application/src/stitcher/app/types.py#PumpResult.success": {}
 }

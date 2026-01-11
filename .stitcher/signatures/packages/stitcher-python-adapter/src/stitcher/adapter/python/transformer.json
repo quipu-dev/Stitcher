@@ -1,7 +1,4 @@
 {
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/transformer.py#Dict": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/transformer.py#List": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/transformer.py#Optional": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/transformer.py#PythonTransformer": {
     "baseline_code_signature_text": "class PythonTransformer:",
     "baseline_code_structure_hash": "76718dbf70731fa609fc4686bcf1292dc3e44932bb559a5a210a670ce95014b5"
@@ -13,7 +10,5 @@
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/transformer.py#PythonTransformer.strip": {
     "baseline_code_signature_text": "def strip(self, source_code: str, whitelist: Optional[List[str]] = None) -> str:",
     "baseline_code_structure_hash": "9deb2d6943846be9e39bce2b1250a04f53df5ba6dd12e253b2d3c65ba011e5e6"
-  },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/transformer.py#inject_docstrings": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/transformer.py#strip_docstrings": {}
+  }
 }

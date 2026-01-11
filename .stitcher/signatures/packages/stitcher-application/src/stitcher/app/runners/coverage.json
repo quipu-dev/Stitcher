@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageResult": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner": {
     "baseline_code_signature_text": "class CoverageRunner:",
     "baseline_code_structure_hash": "2cb38a2ee50eaf9fe54610e0cb4b1479bb0eecae8257bf4f4fdbb2c413eba011"
@@ -21,10 +20,5 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.run_batch": {
     "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef]) -> List[CoverageResult]:",
     "baseline_code_structure_hash": "963606d2fa671e837956ce272a0eb73904a44910317c9ed931157fee805fba62"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#DocumentManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#ModuleDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#Path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#typer": {}
+  }
 }

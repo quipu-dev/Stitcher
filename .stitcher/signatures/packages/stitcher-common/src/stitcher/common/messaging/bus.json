@@ -1,6 +1,4 @@
 {
-  "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#Any": {},
-  "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#Callable": {},
   "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus": {
     "baseline_code_signature_text": "class FeedbackBus:",
     "baseline_code_structure_hash": "7deb756b2b17cf076baa1237a420d12b6f6eb487e0522b17991cdaa36fcd3782",
@@ -51,9 +49,5 @@
     "baseline_code_signature_text": "def warning(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
     "baseline_code_structure_hash": "651c2c0ba80fe486d970ac50dcb73eed32e7f6693bcda46f1444cb5564847723",
     "baseline_yaml_content_hash": "9544f3f112ad20455d4cad24942bceac10be5fdd581c785a4e1c679ed2fbcd63"
-  },
-  "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#Optional": {},
-  "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#Renderer": {},
-  "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#SemanticPointer": {},
-  "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#Union": {}
+  }
 }

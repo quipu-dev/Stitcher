@@ -1,6 +1,4 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/updater.py#Any": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/updater.py#Dict": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/updater.py#DocUpdater": {
     "baseline_code_signature_text": "class DocUpdater:",
     "baseline_code_structure_hash": "0c842ba650e1e54502db21cee749a696210512737ced33c52cc29059bab7dd48"
@@ -17,7 +15,6 @@
     "baseline_code_signature_text": "def rename_key(self, data: Dict[str, Any], old_key: str, new_key: str) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "d26b2e159389ba3881e44a300acd071151de2e546892345d596199932ef1b760"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/updater.py#Path": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/updater.py#SigUpdater": {
     "baseline_code_signature_text": "class SigUpdater:",
     "baseline_code_structure_hash": "d6e53053e258ceae80e8b7db01b4e15a1fa0955c5dedaa3ef37c6486536015df"
@@ -33,7 +30,5 @@
   "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/updater.py#SigUpdater.rename_key": {
     "baseline_code_signature_text": "def rename_key(self, data: Dict[str, Any], old_key: str, new_key: str) -> Dict[str, Any]:",
     "baseline_code_structure_hash": "d26b2e159389ba3881e44a300acd071151de2e546892345d596199932ef1b760"
-  },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/updater.py#json": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/sidecar/updater.py#yaml": {}
+  }
 }

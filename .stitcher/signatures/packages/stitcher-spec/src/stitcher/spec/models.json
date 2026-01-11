@@ -95,8 +95,6 @@
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ConflictType.SIGNATURE_DRIFT": {
     "baseline_yaml_content_hash": "b72e4cf26a319796af6aa0aaa9c6bb8a64e12056d4ddf3039650eee2afd1d860"
   },
-  "py://packages/stitcher-spec/src/stitcher/spec/models.py#DocstringIR": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/models.py#Enum": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionDef": {
     "baseline_code_signature_text": "class FunctionDef:",
     "baseline_code_structure_hash": "46e5b535bd4d5678b9fdf741e627db423f3afa7a92ca714255aa687db129b565",
@@ -138,7 +136,6 @@
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionExecutionPlan.strip_source_docstring": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionExecutionPlan.update_code_fingerprint": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionExecutionPlan.update_doc_fingerprint": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/models.py#List": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ModuleDef": {
     "baseline_code_signature_text": "class ModuleDef:",
     "baseline_code_structure_hash": "9579442d48d5179ec7af3a3597c9b895a97483e81ec5c65fe3b1fa8e7300b2bb",
@@ -186,7 +183,6 @@
     "baseline_code_structure_hash": "1a55c9ded7bf45553f63ae27c049594f5faa1245bd0c6ce98f4a0d2d7cd30db7",
     "baseline_yaml_content_hash": "94066c283328e1833f58566531dab3f579f45e6540b5c7485d9ebb41a342fd81"
   },
-  "py://packages/stitcher-spec/src/stitcher/spec/models.py#Optional": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Resolution": {
     "baseline_code_signature_text": "class Resolution:",
     "baseline_code_structure_hash": "f59ab4e2f7dbec8f9e224082c3976b65a5623994d4d41be1559615fef0429d27",
@@ -233,7 +229,6 @@
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ResolutionPlan.resolutions": {
     "baseline_yaml_content_hash": "1d4214565c02231907947de3c09b5d885ce9d8d74c12263509f0250d80196926"
   },
-  "py://packages/stitcher-spec/src/stitcher/spec/models.py#Set": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#SourceLocation": {
     "baseline_code_signature_text": "class SourceLocation:",
     "baseline_code_structure_hash": "5840025b44a30ed80d42a5d93df59d2c3c33e5a1c7c7ea74c734e8205c57163a"
@@ -241,7 +236,5 @@
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#SourceLocation.col_offset": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#SourceLocation.end_col_offset": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#SourceLocation.end_lineno": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/models.py#SourceLocation.lineno": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/models.py#dataclass": {},
-  "py://packages/stitcher-spec/src/stitcher/spec/models.py#field": {}
+  "py://packages/stitcher-spec/src/stitcher/spec/models.py#SourceLocation.lineno": {}
 }

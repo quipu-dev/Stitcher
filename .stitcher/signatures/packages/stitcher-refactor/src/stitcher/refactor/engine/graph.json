@@ -1,10 +1,4 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#Dict": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#IndexStore": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#List": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#Optional": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#Path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#ReferenceType": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph": {
     "baseline_code_signature_text": "class SemanticGraph:",
     "baseline_code_structure_hash": "9e1213c21037609f2accea4aa157f6c45646652d68fd7d8837a9dcadb2a1c3a2",
@@ -54,10 +48,5 @@
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SymbolNode.fqn": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SymbolNode.kind": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SymbolNode.path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#UsageLocation": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#Workspace": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#dataclass": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#griffe": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#log": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#logging": {}
+  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#log": {}
 }

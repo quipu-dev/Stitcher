@@ -1,16 +1,4 @@
 {
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#DocstringRendererProtocol": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#DocumentManager": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#GenerateRunner": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#LanguageTransformerProtocol": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#List": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#ModuleDef": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#Optional": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#Path": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#PythonStubGenerator": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#ScannerService": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#StitcherConfig": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#StubPackageManager": {},
   "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#StubgenService": {
     "baseline_code_signature_text": "class StubgenService:",
     "baseline_code_structure_hash": "b8bf0fdab788c4c6f42c78b58fb260c1198c8ca8e00a37e50ae6618b65618da0"
@@ -30,7 +18,6 @@
     "baseline_code_signature_text": "def set_renderer(self, renderer: DocstringRendererProtocol) -> None:",
     "baseline_code_structure_hash": "dbf406fb1ca88903cbc9089be3ba1a9820b10686acdb3b9fc06f8854138f95c9"
   },
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#TransactionManager": {},
   "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#__all__": {},
   "py://packages/stitcher-stubgen/src/stitcher/stubgen/__init__.py#__path__": {}
 }

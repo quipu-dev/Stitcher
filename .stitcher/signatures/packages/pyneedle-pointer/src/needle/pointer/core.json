@@ -1,7 +1,4 @@
 {
-  "py://packages/pyneedle-pointer/src/needle/pointer/core.py#Any": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/core.py#Iterable": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/core.py#PointerSetProtocol": {},
   "py://packages/pyneedle-pointer/src/needle/pointer/core.py#SemanticPointer": {
     "baseline_code_signature_text": "class SemanticPointer(SemanticPointerProtocol):",
     "baseline_code_structure_hash": "ca374b159ff512b21c4c536fc1a93ef2ac02a7d975516ecb917c56a5b3e3774c",
@@ -59,8 +56,5 @@
     "baseline_code_structure_hash": "e178a7e51c5b365c44ff603abd57e617d6711b1b1a8c05bdc0059f537e1efbc9",
     "baseline_yaml_content_hash": "fa213e3bbfb9f5fe3f5194fbf20ebca93fd617a28b6d04df348210f0af63e191"
   },
-  "py://packages/pyneedle-pointer/src/needle/pointer/core.py#SemanticPointer._path": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/core.py#SemanticPointerProtocol": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/core.py#TYPE_CHECKING": {},
-  "py://packages/pyneedle-pointer/src/needle/pointer/core.py#Union": {}
+  "py://packages/pyneedle-pointer/src/needle/pointer/core.py#SemanticPointer._path": {}
 }

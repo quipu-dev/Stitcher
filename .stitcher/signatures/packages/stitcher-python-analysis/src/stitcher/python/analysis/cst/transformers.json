@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#Dict": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#HasBody": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#InjectorTransformer": {
     "baseline_code_signature_text": "class InjectorTransformer(cst.CSTTransformer):",
@@ -45,9 +44,6 @@
     "baseline_code_signature_text": "def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:",
     "baseline_code_structure_hash": "228968f6587b436c7b0f5d338ef420bd2a0181aa51a282b48c30ae9d5367b2fc"
   },
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#List": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#Optional": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#Sequence": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#StripperTransformer": {
     "baseline_code_signature_text": "class StripperTransformer(cst.CSTTransformer):",
     "baseline_code_structure_hash": "82eaa4c53de6bd2bc7b8afdea75a7b3e2050c8c220b3b052bec4ec5829d9acd4",
@@ -96,10 +92,6 @@
     "baseline_code_structure_hash": "228968f6587b436c7b0f5d338ef420bd2a0181aa51a282b48c30ae9d5367b2fc"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#StripperTransformer.whitelist": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#Union": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#cast": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#cst": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#format_docstring": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#inject_docstrings": {
     "baseline_code_signature_text": "def inject_docstrings(source_code: str, docs: Dict[str, str]) -> str:",
     "baseline_code_structure_hash": "612603f2aeaa56fda779309e316bd525eea334148f47d8491ec67cc6503189dc",

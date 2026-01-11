@@ -1,8 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#Dict": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#DocumentManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#Fingerprint": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#FingerprintStrategyProtocol": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner": {
     "baseline_code_signature_text": "class InitRunner:",
     "baseline_code_structure_hash": "2c9d7163f28330dc5e1c14fa5300d8b3725c6d953ff8552efa180f159a6d83e6"
@@ -22,11 +18,5 @@
     "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef]) -> List[Path]:",
     "baseline_code_structure_hash": "c1ff6f56f7d26ae7ea8261fb6f0d4edd05d0e48fb94eca8badf0ea5eed760684"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.sig_manager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#L": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#ModuleDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#Path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#SignatureManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#bus": {}
+  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.sig_manager": {}
 }
