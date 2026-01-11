@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修正集成测试中 func_alias 的断言", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768107855.7032242, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(index): 实现确定性链接器并闭合语义解析环路", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768107921.1010902, "duration_ms": 0}}
