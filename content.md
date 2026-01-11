@@ -1,219 +1,163 @@
-好的，我们立即开始实施第二阶段。
-
-此阶段的目标是重构 `CheckRunner`，使其能够直接处理文件路径列表，而不是强制依赖于内存中的 `ModuleDef` AST 对象。这将是实现 Zero-IO Check 的核心驱动逻辑变更。
-
-我将修改 `CheckRunner` 以接受 `IndexStore` 作为新的依赖，并添加一个 `analyze_paths` 方法。同时，我也会更新 `StitcherApp` 来注入这个新的依赖。
-
-## [WIP] feat: 重构 CheckRunner 以支持基于路径的 Zero-IO 分析
+## [WIP] feat: 升级 StitcherApp 实现 Zero-IO Check 流程
 
 ### 用户需求
 
-根据 Zero-IO Check 路线图的第二阶段，需要重构 `CheckRunner`，为其添加一个新的、基于文件路径列表 (`List[str]`) 的分析入口点 `analyze_paths`。这个新方法应使用在第一阶段创建的 `IndexCheckSubjectAdapter` 来执行分析，从而摆脱对 `ModuleDef` 对象的依赖。
+完成 Zero-IO Check 路线图的第三阶段：在 `StitcherApp` 层面重构 `run_check` 命令的执行逻辑。目标是利用预先构建的索引和 `CheckRunner.analyze_paths` 接口来执行检查，从而避免在检查前解析所有源文件的 AST。
 
 ### 评论
 
-这是将 Zero-IO 潜力转化为现实的关键一步。通过为 `CheckRunner` 提供一个直接处理路径的“快速通道”，我们正在解耦检查流程与重量级的 AST 解析步骤。这使得上游调用者（`StitcherApp`）可以将“扫描文件”和“分析文件”两个阶段彻底分开，为第三阶段实现端到端的 Zero-IO 流程铺平了道路。
+这是 Zero-IO Check 的最后一块拼图。通过重构 `run_check`，我们将把之前的底层优化串联起来，真正实现性能的飞跃。我们将采用一种混合策略：对于物理文件，使用基于路径的 Zero-IO 分析；对于虚拟插件，保留基于 AST 的分析。为了保持与现有后处理逻辑（如文档调和及重格式化）的兼容性，我们将为物理文件构造轻量级的 `ModuleDef` 存根（仅包含路径信息），这是一种优雅的过渡方案，避免了大规模重构下游代码。
 
 ### 目标
 
-1.  向 `CheckRunner` 的构造函数 `__init__` 中添加 `index_store: IndexStore` 作为新的依赖项。
-2.  更新 `StitcherApp` 的构造逻辑，将 `self.index_store` 实例注入到 `CheckRunner` 中。
-3.  在 `CheckRunner` 中实现一个新的公共方法 `analyze_paths`，它接收一个文件路径列表。
-4.  确保 `analyze_paths` 方法为每个路径实例化 `IndexCheckSubjectAdapter`，并调用 `self.analyzer` 来执行检查。
+1.  修改 `StitcherApp.run_check` 方法。
+2.  不再调用 `_configure_and_scan`（该方法会强制解析 AST）。
+3.  改为手动调用 `self.scanner.get_files_from_config` 获取文件路径，并调用 `self.scanner.process_plugins` 获取插件模块。
+4.  使用 `check_runner.analyze_paths` 处理物理文件路径。
+5.  使用 `check_runner.analyze_batch` 处理插件模块。
+6.  构造轻量级 `ModuleDef` 对象（仅填充 `file_path`）来代表物理文件，以便复用现有的 `auto_reconcile_docs` 和 `reformat_all` 逻辑。
 
 ### 基本原理
 
-为了让 `CheckRunner` 能够使用 `IndexCheckSubjectAdapter`，它必须能够访问 `IndexStore`。因此，第一步是进行依赖注入，将 `IndexStore` 从 `StitcherApp` 传递给 `CheckRunner`。
+当前的 `run_check` 流程是“先解析一切，再检查一切”。新流程是“先索引（已由 `ensure_index_fresh` 保证），然后直接查询索引”。
 
-一旦依赖关系建立，我们就可以创建一个新的 `analyze_paths` 方法。这个方法将成为未来 `check` 命令的主要工作流。它遍历文件路径，为每个路径创建一个轻量级的 `IndexCheckSubjectAdapter`，然后将其传递给现有的、未被修改的 `CheckAnalyzer`。由于 `CheckAnalyzer` 是面向协议 (`CheckSubject`) 编程的，它根本不知道数据是来自 AST 还是数据库，从而实现了完美的逻辑复用和关注点分离。
-
-现有的 `analyze_batch(modules: List[ModuleDef])` 方法将被保留，以处理那些无法或不适合使用持久化索引的场景（例如，对动态生成的插件进行检查）。
+-   **物理文件**：我们只需要它们的路径。`IndexCheckSubjectAdapter` 会根据路径去 SQLite 查询数据。因此，我们跳过 `ScannerService.scan_files`。
+-   **插件**：它们不存在于文件系统中，也没有索引。因此我们保留原有的处理方式，解析为 AST (`ModuleDef`) 并使用 `analyze_batch`。
+-   **后处理兼容性**：`CheckRunner` 的后续步骤（如 `auto_reconcile_docs`）需要 `ModuleDef` 对象列表来获取文件路径。为了避免为了这个简单的需求而去解析 AST，我们只需创建一个只有 `file_path` 属性的 `ModuleDef` 实例即可满足接口契约。
 
 ### 标签
 
 #intent/refine #flow/ready #priority/high
 #comp/engine #concept/state #scope/core
 #ai/instruct
-#task/domain/testing #task/object/zero-io-check #task/action/implementation #task/state/continue
+#task/domain/testing #task/object/zero-io-check #task/action/implementation #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `CheckRunner` 以接受 `IndexStore`
+#### Acts 1: 重构 StitcherApp.run_check
 
-首先，我将修改 `CheckRunner` 的 `__init__` 方法，添加 `index_store` 依赖。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/check/runner.py
-~~~~~
-~~~~~python.old
-from stitcher.spec import (
-    ModuleDef,
-    LanguageParserProtocol,
-    FingerprintStrategyProtocol,
-)
-from stitcher.app.services import (
-    DocumentManager,
-    SignatureManager,
-    Differ,
-)
-from stitcher.app.protocols import InteractionHandler, InteractionContext
-from stitcher.app.types import FileCheckResult
-
-from .analyzer import CheckAnalyzer
-from .resolver import CheckResolver
-from .reporter import CheckReporter
-
-
-from .subject import ASTCheckSubjectAdapter
-
-
-class CheckRunner:
-    def __init__(
-        self,
-        root_path: Path,
-        parser: LanguageParserProtocol,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
-        differ: Differ,
-        interaction_handler: InteractionHandler | None,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-    ):
-        # Keep services needed by both adapter and resolver
-        self.root_path = root_path
-        self.parser = parser
-        self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
-        self.fingerprint_strategy = fingerprint_strategy
-
-        # Inject dependencies into sub-components
-~~~~~
-~~~~~python.new
-from pathlib import Path
-from typing import List, Tuple
-
-from stitcher.spec import (
-    ModuleDef,
-    LanguageParserProtocol,
-    FingerprintStrategyProtocol,
-)
-from stitcher.app.services import (
-    DocumentManager,
-    SignatureManager,
-    Differ,
-)
-from stitcher.app.protocols import InteractionHandler, InteractionContext
-from stitcher.app.types import FileCheckResult
-from stitcher.index.store import IndexStore
-
-from .analyzer import CheckAnalyzer
-from .resolver import CheckResolver
-from .reporter import CheckReporter
-
-
-from .subject import ASTCheckSubjectAdapter, IndexCheckSubjectAdapter
-
-
-class CheckRunner:
-    def __init__(
-        self,
-        root_path: Path,
-        parser: LanguageParserProtocol,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
-        differ: Differ,
-        interaction_handler: InteractionHandler | None,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-        index_store: IndexStore,
-    ):
-        # Keep services needed by both adapter and resolver
-        self.root_path = root_path
-        self.parser = parser
-        self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
-        self.fingerprint_strategy = fingerprint_strategy
-        self.index_store = index_store
-
-        # Inject dependencies into sub-components
-~~~~~
-
-#### Acts 2: 在 `StitcherApp` 中注入 `IndexStore`
-
-现在，我将更新 `StitcherApp`，将 `index_store` 传递给 `CheckRunner` 的构造函数。
+我将修改 `packages/stitcher-application/src/stitcher/app/core.py` 中的 `run_check` 方法。
 
 ~~~~~act
 patch_file
 packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
 ~~~~~python.old
-        self.check_runner = CheckRunner(
-            root_path,
-            parser,
-            self.doc_manager,
-            self.sig_manager,
-            self.differ,
-            interaction_handler,
-            fingerprint_strategy=self.fingerprint_strategy,
-        )
-~~~~~
-~~~~~python.new
-        self.check_runner = CheckRunner(
-            root_path,
-            parser,
-            self.doc_manager,
-            self.sig_manager,
-            self.differ,
-            interaction_handler,
-            fingerprint_strategy=self.fingerprint_strategy,
-            index_store=self.index_store,
-        )
-~~~~~
-
-#### Acts 3: 在 `CheckRunner` 中实现 `analyze_paths` 方法
-
-最后，我将在 `CheckRunner` 中添加新的 `analyze_paths` 方法。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/check/runner.py
-~~~~~
-~~~~~python.old
-        self.reporter = CheckReporter()
-
-    def analyze_batch(
-        self, modules: List[ModuleDef]
-    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
-~~~~~
-~~~~~python.new
-        self.reporter = CheckReporter()
-
-    def analyze_paths(
-        self, file_paths: List[str]
-    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
+    def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
+        self.ensure_index_fresh()
+        configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
-        all_conflicts: List[InteractionContext] = []
+        all_modules: List[ModuleDef] = []
 
-        for file_path in file_paths:
-            subject = IndexCheckSubjectAdapter(
-                file_path, self.index_store, self.doc_manager, self.sig_manager
-            )
-            result, conflicts = self.analyzer.analyze_subject(subject)
-            all_results.append(result)
-            all_conflicts.extend(conflicts)
+        self.scanner.had_errors = False
 
-        return all_results, all_conflicts
+        for config in configs:
+            modules = self._configure_and_scan(config)
+            if not modules:
+                continue
+            all_modules.extend(modules)
 
-    def analyze_batch(
-        self, modules: List[ModuleDef]
-    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
+            results, conflicts = self.check_runner.analyze_batch(modules)
+            all_results.extend(results)
+
+            self.check_runner.auto_reconcile_docs(results, modules)
+
+            if not self.check_runner.resolve_conflicts(
+                results, conflicts, force_relink, reconcile
+            ):
+                return False
+
+        self.check_runner.reformat_all(all_modules)
+        report_success = self.check_runner.report(all_results)
+        return report_success and not self.scanner.had_errors
+~~~~~
+~~~~~python.new
+    def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
+        self.ensure_index_fresh()
+        configs, _ = self._load_configs()
+        all_results: List[FileCheckResult] = []
+        all_modules_for_post_processing: List[ModuleDef] = []
+
+        self.scanner.had_errors = False
+
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
+
+            # 1. Config Strategy
+            parser, renderer = get_docstring_codec(config.docstring_style)
+            serializer = get_docstring_serializer(config.docstring_style)
+            self.doc_manager.set_strategy(parser, serializer)
+
+            # 2. Get Files (Physical) - Zero-IO Path
+            # We skip full AST parsing for physical files
+            files = self.scanner.get_files_from_config(config)
+            # Convert to relative paths as expected by the system
+            rel_paths = [
+                f.relative_to(self.root_path).as_posix() for f in files
+            ]
+            
+            # 3. Get Plugins (Virtual) - AST Path
+            # Plugins must still be parsed as they don't exist in the index
+            plugin_modules = self.scanner.process_plugins(config.plugins)
+
+            if not rel_paths and not plugin_modules:
+                continue
+
+            # 4. Analyze
+            batch_results: List[FileCheckResult] = []
+            batch_conflicts: List[InteractionContext] = []
+
+            # 4a. Analyze Physical Files using Index
+            if rel_paths:
+                f_res, f_conflicts = self.check_runner.analyze_paths(rel_paths)
+                batch_results.extend(f_res)
+                batch_conflicts.extend(f_conflicts)
+
+            # 4b. Analyze Plugins using AST
+            if plugin_modules:
+                p_res, p_conflicts = self.check_runner.analyze_batch(plugin_modules)
+                batch_results.extend(p_res)
+                batch_conflicts.extend(p_conflicts)
+            
+            all_results.extend(batch_results)
+
+            # 5. Prepare ModuleDefs for Post-Processing (Reconcile/Reformat)
+            # For physical files, we create lightweight stubs to avoid parsing.
+            # Post-processors only need file_path.
+            file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
+            batch_modules = file_module_stubs + plugin_modules
+            all_modules_for_post_processing.extend(batch_modules)
+
+            # 6. Auto-Reconcile Docs (e.g. hash updates)
+            self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
+
+            # 7. Resolve Conflicts (Interactive/Automatic)
+            if not self.check_runner.resolve_conflicts(
+                batch_results, batch_conflicts, force_relink, reconcile
+            ):
+                return False
+
+        # 8. Final Reformat & Report
+        self.check_runner.reformat_all(all_modules_for_post_processing)
+        report_success = self.check_runner.report(all_results)
+        return report_success and not self.scanner.had_errors
 ~~~~~
 
 ### 下一步建议
 
-第二阶段已成功完成。`CheckRunner` 现在拥有了处理文件路径列表的能力，并能利用 `IndexCheckSubjectAdapter` 从数据库获取信息。
+我们已经完成了 Zero-IO Check 路线图的所有核心实施步骤！
+1.  **阶段一**：实现了 `IndexCheckSubjectAdapter`，打通了从 SQLite 获取检查数据的能力。
+2.  **阶段二**：重构了 `CheckRunner`，增加了直接处理文件路径的 `analyze_paths` 入口。
+3.  **阶段三**：升级了 `StitcherApp.run_check`，将默认工作流切换为“索引优先”，仅在必要时（插件）回退到 AST 解析。
 
-接下来的工作是路线图的**第三阶段：升级顶层编排逻辑 (`StitcherApp`)**。我将修改 `StitcherApp.run_check` 方法，使其调用我们刚刚创建的 `check_runner.analyze_paths`。这将是实现 Zero-IO 流程的临门一脚，因为它将彻底改变 `check` 命令的工作流，从“解析所有文件”变为“直接从索引分析”。
+现在，`stitcher check` 命令应该具有极快的启动速度，特别是在大型项目中。
 
-如果你同意，我将开始制定第三阶段的计划。
+接下来的建议步骤是**验证与清理**：
+1.  运行现有的测试套件，确保没有回归。由于我们改变了核心数据流，这是必须的。
+2.  特别是检查涉及 `stitcher check` 的集成测试。
+3.  如果测试通过，我们可以考虑清理 `ASTCheckSubjectAdapter` 中可能不再被 `check` 命令直接使用的代码，或者保留它作为备用/测试对照。
+
+目前，我建议先运行测试。
