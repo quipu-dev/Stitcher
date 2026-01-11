@@ -1,190 +1,149 @@
 简要回答
-好的，我们将启动 Phase 2。本计划将实现核心的 `Linker` 组件，将其集成到扫描流程中，并启用此前跳过的集成测试以验证“引用-定义”闭环。
+我们遇到了两个问题：一是 `ScopeAnalyzer` 漏掉了类名本身的注册导致 `KeyError`，二是 Linker 无法解析指向“模块”本身的引用（因为此前适配器没有为模块文件本身生成符号记录），且测试期望的 SURI 与文件系统实际布局不符。
 
-## [WIP] feat: 实现 Linker 组件并闭合引用解析环路
+本计划将修复这两个问题：首先修复作用域分析，其次增强 Python 适配器以生成模块级符号，最后修正集成测试的断言。
+
+## [WIP] fix: 修复 ScopeAnalyzer 类注册并增强模块符号生成
+
+### 错误分析
+1.  **`KeyError: 'MyClass'`**:
+    在 `packages/stitcher-python-analysis/src/stitcher/python/analysis/scope.py` 中，注册类的代码行 `# cls_fqn = register_local(cls.name)` 被注释掉了。这导致类名没有被添加到本地符号表中，后续查询时抛出错误。
+2.  **`AssertionError: assert None == 'py://pkg.py'`**:
+    *   **原因 1 (机制缺失)**: Linker 依赖 `symbols` 表来解析引用。之前 `PythonAdapter` 只提取了模块内部的函数/类/变量，没有为“模块本身”生成一条符号记录。因此，当代码 `import pkg` 时，Linker 找不到 `canonical_fqn="pkg"` 的符号。
+    *   **原因 2 (测试错误)**: 测试环境创建了 `pkg/__init__.py`，但断言期望解析为 `py://pkg.py`。正确的 SURI 应该是 `py://pkg/__init__.py`。
 
 ### 用户需求
-1.  在 `stitcher-index` 中创建一个 `Linker` 类，负责通过 SQL 批量更新将引用 (`references`) 和别名 (`symbols`) 链接到它们的定义 (`symbols`)。
-2.  在 `WorkspaceScanner.scan()` 流程的最后阶段集成 `Linker.link()` 调用。
-3.  启用并验证 `tests/integration/test_scanner_aliases.py`，确保跨文件引用解析正确工作。
+1.  修复 `ScopeAnalyzer` 以正确处理类定义。
+2.  更新 `PythonAdapter`，使其在解析文件时，额外生成一条代表“模块/文件本身”的符号记录，以便 Linker 能解析模块导入。
+3.  修正 `test_scanner_aliases.py` 中的断言。
 
 ### 评论
-这是将 Stitcher 从简单的“符号提取器”转变为真正的“语义索引”的关键一步。通过在数据库层面进行批量链接，我们避免了在内存中构建庞大图谱的开销，这符合“组件瘦身”的战略方向。
+为模块本身生成符号（Symbol with kind='module'）是建立完整语义图谱的关键补充。这使得 `import numpy` 这样的语句能正确指向 `site-packages/numpy/__init__.py` (如果我们扫描了它) 或项目内的模块文件，消除了“文件”与“符号”之间的概念鸿沟。
 
 ### 目标
-1.  创建 `packages/stitcher-index/src/stitcher/index/linker.py`。
-2.  修改 `packages/stitcher-index/src/stitcher/index/scanner.py` 以使用 Linker。
-3.  移除 `packages/stitcher-index/tests/integration/test_scanner_aliases.py` 中的 `pytest.mark.skip`。
+1.  修改 `scope.py`，取消注释类注册代码。
+2.  修改 `index_adapter.py`，在提取符号列表时，始终添加一个 `kind='module'` 的根符号。
+3.  修改 `test_scanner_aliases.py`，将期望值 `py://pkg.py` 改为 `py://pkg/__init__.py`。
 
 ### 基本原理
-Linker 的核心逻辑是基于 `canonical_fqn` (Phase 1 的成果) 进行精确匹配。虽然 Python 的动态性可能导致某些 FQN 无法静态解析（导致 `target_id` 为 NULL），但对于大多数静态可分析的代码，这种基于 SQL 的确定性链接提供了极高的性能和准确性基线。
+通过在 `symbols` 表中显式记录模块（Module）符号，我们利用现有的 Linker SQL 逻辑（基于 `canonical_fqn` 匹配）自然而然地支持了模块级引用的解析，无需编写特殊的“文件查找”逻辑。这保持了 Linker 的简洁性和统一性。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/index #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/linker #task/action/implementation #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/python-analysis #comp/python-adapter #comp/tests #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/linker #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 Linker 组件
+#### Acts 1: 修复 ScopeAnalyzer
 
-实现 `Linker` 类，包含针对 `references` 表和 `symbols` 表（针对别名）的 UPDATE 逻辑。
-
-~~~~~act
-write_file
-packages/stitcher-index/src/stitcher/index/linker.py
-~~~~~
-~~~~~python
-import logging
-from .db import DatabaseManager
-
-log = logging.getLogger(__name__)
-
-
-class Linker:
-    def __init__(self, db: DatabaseManager):
-        self.db = db
-
-    def link(self) -> None:
-        """
-        Resolves symbolic references and aliases by linking them to their definitions
-        using Canonical FQNs (Fully Qualified Names).
-        """
-        with self.db.get_connection() as conn:
-            # 1. Link References
-            # Strategy: Match references.target_fqn -> symbols.canonical_fqn
-            # We only attempt to link references that remain unresolved (target_id IS NULL).
-            log.debug("Linking references...")
-            cursor = conn.execute(
-                """
-                UPDATE "references"
-                SET target_id = (
-                    SELECT id 
-                    FROM symbols 
-                    WHERE symbols.canonical_fqn = "references".target_fqn 
-                    LIMIT 1
-                )
-                WHERE target_id IS NULL
-                """
-            )
-            if cursor.rowcount > 0:
-                log.debug(f"Linked {cursor.rowcount} references.")
-
-            # 2. Link Aliases
-            # Strategy: Match symbols.alias_target_fqn -> symbols.canonical_fqn
-            # Only for symbols that are aliases (kind='alias') and unresolved.
-            log.debug("Linking aliases...")
-            cursor = conn.execute(
-                """
-                UPDATE symbols
-                SET alias_target_id = (
-                    SELECT id 
-                    FROM symbols AS s2 
-                    WHERE s2.canonical_fqn = symbols.alias_target_fqn 
-                    LIMIT 1
-                )
-                WHERE kind = 'alias' 
-                  AND alias_target_id IS NULL 
-                  AND alias_target_fqn IS NOT NULL
-                """
-            )
-            if cursor.rowcount > 0:
-                log.debug(f"Linked {cursor.rowcount} aliases.")
-~~~~~
-
-#### Acts 2: 将 Linker 集成到 Scanner
-
-修改 `WorkspaceScanner`，在扫描循环结束后初始化并运行 `Linker`。
+取消对类名注册的注释。
 
 ~~~~~act
 patch_file
-packages/stitcher-index/src/stitcher/index/scanner.py
+packages/stitcher-python-analysis/src/stitcher/python/analysis/scope.py
 ~~~~~
 ~~~~~python.old
-from .store import IndexStore
-from .types import FileRecord
-from .protocols import LanguageAdapter
+        for func in module.functions:
+            register_local(func.name)
 
-log = logging.getLogger(__name__)
-
-
-class WorkspaceScanner:
-    def __init__(self, root_path: Path, store: IndexStore):
-        self.root_path = root_path
-        self.store = store
-        self.adapters: Dict[str, LanguageAdapter] = {}
-
-    def register_adapter(self, extension: str, adapter: LanguageAdapter):
+        for cls in module.classes:
+            # cls_fqn = register_local(cls.name)
+            # Register class-level aliases
+            for attr in cls.attributes:
+                if attr.alias_target:
 ~~~~~
 ~~~~~python.new
-from .store import IndexStore
-from .types import FileRecord
-from .protocols import LanguageAdapter
-from .linker import Linker
+        for func in module.functions:
+            register_local(func.name)
 
-log = logging.getLogger(__name__)
-
-
-class WorkspaceScanner:
-    def __init__(self, root_path: Path, store: IndexStore):
-        self.root_path = root_path
-        self.store = store
-        self.adapters: Dict[str, LanguageAdapter] = {}
-        self.linker = Linker(store.db)
-
-    def register_adapter(self, extension: str, adapter: LanguageAdapter):
+        for cls in module.classes:
+            register_local(cls.name)
+            # Register class-level aliases
+            for attr in cls.attributes:
+                if attr.alias_target:
 ~~~~~
+
+#### Acts 2: 增强 PythonAdapter 以生成模块符号
+
+在 `_extract_symbols` 方法开头添加模块自身的符号记录。
 
 ~~~~~act
 patch_file
-packages/stitcher-index/src/stitcher/index/scanner.py
+packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py
 ~~~~~
 ~~~~~python.old
-            # --- Phase 4: Parsing (Semantic Extraction) ---
-            self._process_file_content(file_id, abs_path, content_bytes)
+    def _extract_symbols(
+        self, rel_path: str, module: ModuleDef, logical_module_fqn: str
+    ) -> List[SymbolRecord]:
+        symbols: List[SymbolRecord] = []
 
-        return stats
-
-    def _discover_files(self) -> Set[str]:
+        # Helper to add symbol
+        def add(
+            name: str,
 ~~~~~
 ~~~~~python.new
-            # --- Phase 4: Parsing (Semantic Extraction) ---
-            self._process_file_content(file_id, abs_path, content_bytes)
+    def _extract_symbols(
+        self, rel_path: str, module: ModuleDef, logical_module_fqn: str
+    ) -> List[SymbolRecord]:
+        symbols: List[SymbolRecord] = []
 
-        # --- Phase 5: Linking ---
-        # Now that all files are parsed and symbols/references are in DB,
-        # we can resolve the links.
-        self.linker.link()
+        # 0. Module Symbol (The file/module itself)
+        # This allows other files to import this module.
+        module_name = logical_module_fqn.split(".")[-1]
+        module_suri = SURIGenerator.for_file(rel_path)
+        
+        symbols.append(
+            SymbolRecord(
+                id=module_suri,
+                name=module_name,
+                kind="module",
+                lineno=0,
+                col_offset=0,
+                end_lineno=0,
+                end_col_offset=0,
+                logical_path=None, # Module root has no logical path suffix
+                canonical_fqn=logical_module_fqn,
+                alias_target_fqn=None,
+                alias_target_id=None,
+                signature_hash=None,
+            )
+        )
 
-        return stats
-
-    def _discover_files(self) -> Set[str]:
+        # Helper to add symbol
+        def add(
+            name: str,
 ~~~~~
 
-#### Acts 3: 启用集成测试
+#### Acts 3: 修正集成测试断言
 
-移除 `pytest.mark.skip` 标记，使测试生效。
+将 `py://pkg.py` 修正为 `py://pkg/__init__.py`。
 
 ~~~~~act
 patch_file
 packages/stitcher-index/tests/integration/test_scanner_aliases.py
 ~~~~~
 ~~~~~python.old
-import pytest
+    assert alias_pkg_defs.kind == "alias"
+    # The target of 'import pkg.defs' is the 'pkg' module itself in this context
+    assert alias_pkg_defs.alias_target_id == "py://pkg.py"
 
-# 这会跳过整个文件中的所有测试用例
-pytestmark = pytest.mark.skip(reason="该文件暂未完成")
-
-
-def test_scanner_resolves_aliases_and_references(tmp_path, store):
+    # 3b. Verify References in main.py
+    references = store.get_references_by_file(main_py_record.id)
 ~~~~~
 ~~~~~python.new
-import pytest
+    assert alias_pkg_defs.kind == "alias"
+    # The target of 'import pkg.defs' is the 'pkg' module itself in this context
+    # Note: 'pkg' is a package directory containing __init__.py, so the SURI points to __init__.py
+    assert alias_pkg_defs.alias_target_id == "py://pkg/__init__.py"
 
-
-def test_scanner_resolves_aliases_and_references(tmp_path, store):
+    # 3b. Verify References in main.py
+    references = store.get_references_by_file(main_py_record.id)
 ~~~~~
 
 ### 下一步建议
 
-执行完此计划后，我们将运行 `test_scanner_aliases.py` 以验证 Linker 是否按预期工作。如果测试通过，我们将处于一个极佳的位置来继续 Phase 3（让 Refactor 使用这个强大的索引）。如果测试失败，我们需要检查 `canonical_fqn` 的生成逻辑是否在所有情况下（如 `__init__.py` 或相对导入）都完全对齐。
+重新运行测试。如果通过，我们将完成 Linker 的核心实现。接下来可以考虑：
+1.  性能优化：在 `Linker.link()` 中添加 `BATCH_SIZE` 限制，避免在一个事务中更新过多行。
+2.  死链报告：开发一个工具方法来查询所有 `target_id IS NULL` 的引用，用于诊断。
+3.  开始 Phase 3：设计 Refactor 如何利用 Index DB。

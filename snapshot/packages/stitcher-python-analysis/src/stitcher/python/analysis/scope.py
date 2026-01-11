@@ -25,7 +25,7 @@ class ScopeAnalyzer:
             register_local(func.name)
 
         for cls in module.classes:
-            # cls_fqn = register_local(cls.name)
+            register_local(cls.name)
             # Register class-level aliases
             for attr in cls.attributes:
                 if attr.alias_target:

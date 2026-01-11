@@ -77,7 +77,8 @@ def test_scanner_resolves_aliases_and_references(tmp_path, store):
     assert alias_pkg_defs is not None
     assert alias_pkg_defs.kind == "alias"
     # The target of 'import pkg.defs' is the 'pkg' module itself in this context
-    assert alias_pkg_defs.alias_target_id == "py://pkg.py"
+    # Note: 'pkg' is a package directory containing __init__.py, so the SURI points to __init__.py
+    assert alias_pkg_defs.alias_target_id == "py://pkg/__init__.py"
 
     # 3b. Verify References in main.py
     references = store.get_references_by_file(main_py_record.id)

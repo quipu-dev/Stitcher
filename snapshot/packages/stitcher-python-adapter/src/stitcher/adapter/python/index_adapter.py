@@ -51,6 +51,28 @@ class PythonAdapter(LanguageAdapter):
     ) -> List[SymbolRecord]:
         symbols: List[SymbolRecord] = []
 
+        # 0. Module Symbol (The file/module itself)
+        # This allows other files to import this module.
+        module_name = logical_module_fqn.split(".")[-1]
+        module_suri = SURIGenerator.for_file(rel_path)
+        
+        symbols.append(
+            SymbolRecord(
+                id=module_suri,
+                name=module_name,
+                kind="module",
+                lineno=0,
+                col_offset=0,
+                end_lineno=0,
+                end_col_offset=0,
+                logical_path=None, # Module root has no logical path suffix
+                canonical_fqn=logical_module_fqn,
+                alias_target_fqn=None,
+                alias_target_id=None,
+                signature_hash=None,
+            )
+        )
+
         # Helper to add symbol
         def add(
             name: str,
