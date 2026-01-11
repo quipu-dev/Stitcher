@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 传播 PythonAdapter API 变更至应用层", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768114992.787027, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复重构引擎的索引依赖与 API 误用", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768115209.2829092, "duration_ms": 0}}

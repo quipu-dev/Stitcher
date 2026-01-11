@@ -4,6 +4,8 @@ from stitcher.config import StitcherConfig
 
 from stitcher.common import bus
 from needle.pointer import L
+from stitcher.index.store import IndexStore
+from stitcher.index.scanner import WorkspaceScanner
 from stitcher.refactor.engine import (
     SemanticGraph,
     RefactorContext,
@@ -16,8 +18,15 @@ from stitcher.refactor.sidecar.manager import SidecarManager
 
 
 class RefactorRunner:
-    def __init__(self, root_path: Path):
+    def __init__(
+        self,
+        root_path: Path,
+        index_store: IndexStore,
+        workspace_scanner: WorkspaceScanner,
+    ):
         self.root_path = root_path
+        self.index_store = index_store
+        self.workspace_scanner = workspace_scanner
 
     def run_apply(
         self,
@@ -27,6 +36,10 @@ class RefactorRunner:
         confirm_callback: Optional[Callable[[int], bool]] = None,
     ) -> bool:
         try:
+            # 0. Ensure index is up to date
+            bus.info(L.index.run.start)
+            self.workspace_scanner.scan()
+
             # 1. Bootstrap services
             bus.info(L.refactor.run.loading_graph)
             workspace = Workspace(self.root_path, config)
@@ -34,13 +47,16 @@ class RefactorRunner:
                 L.debug.log.refactor_workspace_paths, paths=workspace.get_search_paths()
             )
             sidecar_manager = SidecarManager(self.root_path)
-            graph = SemanticGraph(workspace)
+            graph = SemanticGraph(workspace, self.index_store)
 
             # Load all workspace symbols, including main packages and peripherals
             graph.load_from_workspace()
 
             ctx = RefactorContext(
-                workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+                workspace=workspace,
+                graph=graph,
+                sidecar_manager=sidecar_manager,
+                index_store=self.index_store,
             )
 
             # 2. Load and plan the migration

@@ -1,95 +1,184 @@
-你的分析非常准确。这 59 个失败正是架构向更强健、更具感知力演进的“阵痛”。
+你的分析完全正确。最后的这三个失败揭示了重构引擎与新索引系统之间最后的一点“粘连”问题。
 
-通过在 `StitcherApp` 中引入 `Workspace` 实例，我们成功地为整个系统提供了一个统一的项目结构视图。这种模式不仅解决了当前 `PythonAdapter` 的参数缺失问题，也为将来支持多包联动、精确路径解析打下了坚实的基础。
+1.  **确定性缺失 (E2E 失败)**: `RefactorRunner` 在执行重构计划前没有确保索引是最新的。由于重构完全依赖索引来查找引用，如果索引为空（如测试环境中的初始状态），它就找不到任何需要修改的地方，导致断言失败。
+2.  **API 误用 (AttributeError)**: `SemanticGraph` 已经从“内存注册表模式”转向了“持久化索引查询模式”，因此不再持有 `registry` 属性。
 
-我将按照你的计划执行修改，并将这些 API 变更传播到核心逻辑和受影响的测试用例中。
+我将生成一个计划来修复这些问题。
 
-## [WIP] refactor: 传播 PythonAdapter API 变更至应用层
+## [WIP] fix: 修复重构引擎的索引依赖与 API 误用
 
 ### 错误分析
-在上一阶段，我们为了在 `PythonAdapter` 中支持跨包别名解析，修改了其构造函数签名，增加了必需的 `search_paths` 参数。由于这是一个破坏性变更，导致了所有实例化该类但未更新参数的代码点（共 59 处测试失败）出现 `TypeError`。
+1.  **`RefactorRunner` 逻辑缺陷**: 之前的实现中，`RefactorRunner` 实例化 `SemanticGraph` 时漏掉了 `index_store` 参数，且未在分析前执行索引扫描。
+2.  **`test_refactor_internals.py` 坏味道**: 测试代码仍在尝试访问已移除的 `graph.registry`。
 
 ### 用户需求
-将 `PythonAdapter` 的 API 变更正确传播到 `StitcherApp` 核心逻辑以及相关的集成测试中，确保系统恢复正常运行。
+1.  确保 `RefactorRunner` 在运行重构前自动更新索引。
+2.  修复 `RefactorRunner` 对 `SemanticGraph` 的错误实例化调用。
+3.  更新测试代码以使用正确的 `find_usages` API。
 
 ### 评论
-这是一次标准的“涟漪效应”修复。通过在 `StitcherApp` 中引入 `Workspace` 实例，我们不仅解决了当前的问题，还为未来支持更复杂的项目布局提供了架构基础。在测试中，我们通过手动提供 `search_paths` 列表来修复实例化错误，这既符合 API 要求，又避免了在底层包的测试中引入不必要的重构层依赖。
+通过将索引构建集成到重构流程的起点，我们保证了重构操作的“确定性”。这是 ADAP 协议所倡导的：不依赖于“假设索引已经存在”，而是通过“工具照明（执行扫描）”来确保状态的确定性。
 
 ### 目标
-1.  更新 `StitcherApp.__init__` 以持有 `Workspace` 实例。
-2.  更新 `StitcherApp` 中 `PythonAdapter` 的注册逻辑，传入正确的搜索路径。
-3.  更新 `stitcher-index` 和 `stitcher-python-adapter` 中的集成测试，修复实例化错误。
+1.  修改 `RefactorRunner` 构造函数，注入 `index_store` 和 `workspace_scanner`。
+2.  在 `RefactorRunner.run_apply` 中增加索引扫描步骤。
+3.  在 `StitcherApp` 中完成相应的依赖注入。
+4.  修复 `test_refactor_internals.py` 中的断言逻辑。
 
 ### 基本原理
-按照依赖注入和分层架构的原则，我们在 `StitcherApp` 这个组合根（Composition Root）中聚合 `Workspace` 信息并将其提供给底层的 `Adapter`。在测试中，我们手动提供最小化的搜索路径列表以保持测试的简洁性和独立性。
+重构是一个“读-分析-写”的过程。索引系统承担了“读”和“分析”的核心权重。通过强制在重构前进行一次增量扫描，我们确保了重构引擎获取到的符号关系和引用位置是绝对可靠的。
 
 ### 标签
-#intent/refine #flow/ready #priority/high 
-#comp/engine #comp/application #comp/tests
-#scope/core #scope/api
+#intent/fix #flow/ready #priority/high 
+#comp/refactor #comp/application #comp/tests
+#concept/history #concept/executor
+#ai/brainstorm
 #task/domain/architecture
-#task/object/adapter-api
-#task/action/propagation
+#task/object/refactor-engine
+#task/action/fix-dependencies
 #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `StitcherApp` 核心逻辑
+#### Acts 1: 更新 `RefactorRunner` 及其调用逻辑
 
-我们将 `Workspace` 引入 `StitcherApp` 的状态中，并用它来初始化 `PythonAdapter`。
+我们将 `RefactorRunner` 与索引系统正式挂钩，并修复其对 `SemanticGraph` 的调用。
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+packages/stitcher-application/src/stitcher/app/runners/refactor.py
 ~~~~~
 ~~~~~python.old
-from stitcher.index.db import DatabaseManager
-from stitcher.index.store import IndexStore
-from stitcher.index.scanner import WorkspaceScanner
-from stitcher.adapter.python import PythonAdapter
-from stitcher.adapter.python.docstring import (
+from stitcher.common import bus
+from needle.pointer import L
+from stitcher.refactor.engine import (
+    SemanticGraph,
+    RefactorContext,
+    Planner,
+    TransactionManager,
+)
+from stitcher.refactor.migration import MigrationLoader, MigrationError
 ~~~~~
 ~~~~~python.new
-from stitcher.index.db import DatabaseManager
+from stitcher.common import bus
+from needle.pointer import L
 from stitcher.index.store import IndexStore
 from stitcher.index.scanner import WorkspaceScanner
-from stitcher.adapter.python import PythonAdapter
-from stitcher.refactor.workspace import Workspace
-from stitcher.adapter.python.docstring import (
+from stitcher.refactor.engine import (
+    SemanticGraph,
+    RefactorContext,
+    Planner,
+    TransactionManager,
+)
+from stitcher.refactor.migration import MigrationLoader, MigrationError
 ~~~~~
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+packages/stitcher-application/src/stitcher/app/runners/refactor.py
 ~~~~~
 ~~~~~python.old
+class RefactorRunner:
+    def __init__(self, root_path: Path):
+        self.root_path = root_path
+
+    def run_apply(
+~~~~~
+~~~~~python.new
+class RefactorRunner:
     def __init__(
         self,
         root_path: Path,
-        parser: LanguageParserProtocol,
-        transformer: LanguageTransformerProtocol,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-        interaction_handler: Optional[InteractionHandler] = None,
+        index_store: IndexStore,
+        workspace_scanner: WorkspaceScanner,
     ):
         self.root_path = root_path
-        # 1. Core Services
-        self.doc_manager = DocumentManager(root_path)
+        self.index_store = index_store
+        self.workspace_scanner = workspace_scanner
+
+    def run_apply(
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/refactor.py
+~~~~~
+~~~~~python.old
+    def run_apply(
+        self,
+        migration_script: Path,
+        config: StitcherConfig,
+        dry_run: bool = False,
+        confirm_callback: Optional[Callable[[int], bool]] = None,
+    ) -> bool:
+        try:
+            # 1. Bootstrap services
+            bus.info(L.refactor.run.loading_graph)
+            workspace = Workspace(self.root_path, config)
+            bus.debug(
+                L.debug.log.refactor_workspace_paths, paths=workspace.get_search_paths()
+            )
+            sidecar_manager = SidecarManager(self.root_path)
+            graph = SemanticGraph(workspace)
+
+            # Load all workspace symbols, including main packages and peripherals
+            graph.load_from_workspace()
+
+            ctx = RefactorContext(
+                workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+            )
 ~~~~~
 ~~~~~python.new
-    def __init__(
+    def run_apply(
         self,
-        root_path: Path,
-        parser: LanguageParserProtocol,
-        transformer: LanguageTransformerProtocol,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-        interaction_handler: Optional[InteractionHandler] = None,
-    ):
-        self.root_path = root_path
-        self.workspace = Workspace(root_path)
-        # 1. Core Services
-        self.doc_manager = DocumentManager(root_path)
+        migration_script: Path,
+        config: StitcherConfig,
+        dry_run: bool = False,
+        confirm_callback: Optional[Callable[[int], bool]] = None,
+    ) -> bool:
+        try:
+            # 0. Ensure index is up to date
+            bus.info(L.index.run.start)
+            self.workspace_scanner.scan()
+
+            # 1. Bootstrap services
+            bus.info(L.refactor.run.loading_graph)
+            workspace = Workspace(self.root_path, config)
+            bus.debug(
+                L.debug.log.refactor_workspace_paths, paths=workspace.get_search_paths()
+            )
+            sidecar_manager = SidecarManager(self.root_path)
+            graph = SemanticGraph(workspace, self.index_store)
+
+            # Load all workspace symbols, including main packages and peripherals
+            graph.load_from_workspace()
+
+            ctx = RefactorContext(
+                workspace=workspace,
+                graph=graph,
+                sidecar_manager=sidecar_manager,
+                index_store=self.index_store,
+            )
+~~~~~
+
+#### Acts 2: 更新 `StitcherApp` 以注入依赖
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+        self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
+        self.refactor_runner = RefactorRunner(root_path)
+
+        # 3. Indexing Subsystem
+~~~~~
+~~~~~python.new
+        self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
+
+        # 3. Indexing Subsystem
 ~~~~~
 
 ~~~~~act
@@ -97,90 +186,83 @@ patch_file
 packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
 ~~~~~python.old
-        self.index_store = IndexStore(self.db_manager)
-        self.workspace_scanner = WorkspaceScanner(root_path, self.index_store)
-
-        # Register Adapters
-        # TODO: Load adapters dynamically or via config in future
-        self.workspace_scanner.register_adapter(".py", PythonAdapter(root_path))
-
-        self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
-~~~~~
-~~~~~python.new
-        self.index_store = IndexStore(self.db_manager)
-        self.workspace_scanner = WorkspaceScanner(root_path, self.index_store)
-
-        # Register Adapters
-        # TODO: Load adapters dynamically or via config in future
-        search_paths = self.workspace.get_search_paths()
         self.workspace_scanner.register_adapter(
             ".py", PythonAdapter(root_path, search_paths)
         )
 
         self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
 ~~~~~
+~~~~~python.new
+        self.workspace_scanner.register_adapter(
+            ".py", PythonAdapter(root_path, search_paths)
+        )
 
-#### Acts 2: 修复集成测试中的实例化错误
+        self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
 
-在这些测试中，我们手动传入包含项目根目录的列表作为 `search_paths`，以满足 `PythonAdapter` 的构造要求。
+        # 4. Refactor Runner (depends on Indexing)
+        self.refactor_runner = RefactorRunner(
+            root_path, self.index_store, self.workspace_scanner
+        )
+~~~~~
+
+#### Acts 3: 修复测试用例 `test_refactor_internals.py`
 
 ~~~~~act
 patch_file
-packages/stitcher-index/tests/integration/test_scanner_aliases.py
+packages/stitcher-cli/tests/integration/test_refactor_internals.py
 ~~~~~
 ~~~~~python.old
-    # 2. Execution: Run the full scanner pipeline
-    scanner = WorkspaceScanner(project_root, store)
-    adapter = PythonAdapter(project_root)
-    scanner.register_adapter(".py", adapter)
-    scanner.scan()
+    for pkg_name in pkg_names:
+        graph.load(pkg_name)
+
+    # 3. Assert: Check the internal state of the SemanticGraph's registry
+    # Assert that the definition of the class itself is found and registered as a "usage"
+    usages_of_definition = [
+        u
+        for u in graph.registry.get_usages("mypkg.core.Old")
+        if u.file_path.name == "core.py"
+    ]
+    assert len(usages_of_definition) > 0, (
+        "Graph should find the definition of mypkg.core.Old"
+    )
+
+    # Assert that the usage in another file is found
+    usages_in_app = [
+        u
+        for u in graph.registry.get_usages("mypkg.core.Old")
+        if u.file_path.name == "app.py"
+    ]
+    assert len(usages_in_app) > 0, (
+        "Graph should find the usage of mypkg.core.Old in app.py"
+    )
 ~~~~~
 ~~~~~python.new
-    # 2. Execution: Run the full scanner pipeline
-    scanner = WorkspaceScanner(project_root, store)
-    # Manual search_paths to avoid dependency on Workspace service in pure index tests
-    adapter = PythonAdapter(project_root, [project_root])
-    scanner.register_adapter(".py", adapter)
-    scanner.scan()
-~~~~~
+    for pkg_name in pkg_names:
+        graph.load(pkg_name)
 
-~~~~~act
-patch_file
-packages/stitcher-python-adapter/tests/integration/test_index_adapter.py
-~~~~~
-~~~~~python.old
-def test_python_adapter_symbol_extraction(tmp_path):
-    root = tmp_path
-    adapter = PythonAdapter(root)
+    # 3. Assert: Check the internal state of the SemanticGraph's usage discovery
+    # Assert that the definition of the class itself is found and registered as a "usage"
+    usages_of_definition = [
+        u
+        for u in graph.find_usages("mypkg.core.Old")
+        if u.file_path.name == "core.py"
+    ]
+    assert len(usages_of_definition) > 0, (
+        "Graph should find the definition of mypkg.core.Old"
+    )
 
-    code = """
-~~~~~
-~~~~~python.new
-def test_python_adapter_symbol_extraction(tmp_path):
-    root = tmp_path
-    adapter = PythonAdapter(root, [root])
-
-    code = """
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-python-adapter/tests/integration/test_index_adapter_references.py
-~~~~~
-~~~~~python.old
-"""
-    root = Path("/tmp/proj")
-    adapter = PythonAdapter(root)
-    file_path = root / "src/main.py"
-~~~~~
-~~~~~python.new
-"""
-    root = Path("/tmp/proj")
-    adapter = PythonAdapter(root, [root])
-    file_path = root / "src/main.py"
+    # Assert that the usage in another file is found
+    usages_in_app = [
+        u
+        for u in graph.find_usages("mypkg.core.Old")
+        if u.file_path.name == "app.py"
+    ]
+    assert len(usages_in_app) > 0, (
+        "Graph should find the usage of mypkg.core.Old in app.py"
+    )
 ~~~~~
 
 ### 下一步建议
-我们已经完成了代码和测试的同步更新。现在你可以运行 `pytest` 来验证所有 59 个失败是否已经消失。如果测试通过，意味着我们的跨包别名解析功能已经完全集成并投入使用。
+现在，你可以再次运行测试。如果一切顺利，这次我们应该能看到令人欣慰的绿色。
 
-如果在后续测试中发现特定的重构逻辑仍然存在异常，我们可以通过检查索引库中存储的 SURI 路径来进一步排查。
+一旦测试通过，我们就可以说 Stitcher 已经完成了从“单文件解析”到“全项目语义感知”的重大跃迁。我们可以考虑下一步：如何利用这个新建立的语义索引来提供更强大的功能，比如跨包的代码跳转文档，或者更智能的冗余文档清理。

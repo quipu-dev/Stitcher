@@ -86,7 +86,6 @@ class StitcherApp:
             root_path, self.doc_manager, transformer
         )
         self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
-        self.refactor_runner = RefactorRunner(root_path)
 
         # 3. Indexing Subsystem
         # Hardcoded path for architectural consistency
@@ -103,6 +102,11 @@ class StitcherApp:
         )
 
         self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
+
+        # 4. Refactor Runner (depends on Indexing)
+        self.refactor_runner = RefactorRunner(
+            root_path, self.index_store, self.workspace_scanner
+        )
 
     def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:
         return load_config_from_path(self.root_path)
