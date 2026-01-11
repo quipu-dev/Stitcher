@@ -1,6 +1,8 @@
 {
+  "IndexStore": {},
   "RefactorContext": {},
   "RefactorContext.graph": {},
+  "RefactorContext.index_store": {},
   "RefactorContext.sidecar_manager": {},
   "RefactorContext.workspace": {},
   "SemanticGraph": {},

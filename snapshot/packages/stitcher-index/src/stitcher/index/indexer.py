@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Dict, Set, List
+from typing import Dict, Set
 
 from .store import IndexStore
 from .types import FileRecord

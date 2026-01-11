@@ -1,0 +1,2 @@
+"PythonAdapter._get_source_root_for_file": |-
+  Finds the deepest matching source root for a given file.

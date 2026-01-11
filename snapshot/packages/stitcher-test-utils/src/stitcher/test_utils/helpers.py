@@ -18,7 +18,6 @@ from stitcher.adapter.python.index_adapter import PythonAdapter
 
 
 def create_populated_index(root_path: Path) -> IndexStore:
-    """Creates a temporary IndexStore and performs a full scan."""
     db_path = root_path / ".stitcher" / "index" / "index.db"
 
     db_manager = DatabaseManager(db_path)

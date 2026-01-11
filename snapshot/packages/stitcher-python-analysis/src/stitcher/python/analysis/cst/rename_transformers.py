@@ -22,9 +22,7 @@ class SymbolRenamerTransformer(cst.CSTTransformer):
             index[key] = loc
         return index
 
-    def _get_rename_for_node(
-        self, node: cst.CSTNode
-    ) -> Optional[Tuple[str, str]]:
+    def _get_rename_for_node(self, node: cst.CSTNode) -> Optional[Tuple[str, str]]:
         pos = cast(CodeRange, self.get_metadata(PositionProvider, node))
         key = (pos.start.line, pos.start.column)
         loc = self._location_index.get(key)

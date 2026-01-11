@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional, Set
+from typing import List, Dict, Optional
 import logging
 import griffe
 from stitcher.workspace import Workspace
@@ -63,10 +63,6 @@ class SemanticGraph:
         self._griffe_loader.resolve_aliases()
 
     def find_usages(self, target_fqn: str) -> List[UsageLocation]:
-        """
-        Query the Index DB for ALL occurrences of an FQN, including its
-        definition and all references. Maps DB records to UsageLocation objects.
-        """
         usages = []
 
         # 1. Find all references (usages)

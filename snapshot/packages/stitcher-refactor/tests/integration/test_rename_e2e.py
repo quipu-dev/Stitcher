@@ -67,7 +67,10 @@ def test_rename_symbol_end_to_end(tmp_path):
     graph.load("mypkg")
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager, index_store=index_store
+        workspace=workspace,
+        graph=graph,
+        sidecar_manager=sidecar_manager,
+        index_store=index_store,
     )
 
     # 3. Planning Phase

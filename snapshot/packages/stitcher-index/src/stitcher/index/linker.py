@@ -9,10 +9,6 @@ class Linker:
         self.db = db
 
     def link(self) -> None:
-        """
-        Resolves symbolic references and aliases by linking them to their definitions
-        using Canonical FQNs (Fully Qualified Names).
-        """
         with self.db.get_connection() as conn:
             # 1. Link References
             # Strategy: Match references.target_fqn -> symbols.canonical_fqn

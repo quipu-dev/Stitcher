@@ -9,6 +9,7 @@
   "Workspace": {},
   "WorkspaceFactory": {},
   "WriteFileOp": {},
+  "create_populated_index": {},
   "test_repro_sidecar_keys_should_remain_short_names_after_directory_move": {
     "baseline_code_signature_text": "def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_path):",
     "baseline_code_structure_hash": "72d440c3b2cb5885ea53bbcf4627916c29b0aabbd8f84142fad7ef26448de00d",

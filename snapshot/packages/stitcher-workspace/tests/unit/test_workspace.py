@@ -21,9 +21,9 @@ def test_discover_files_git(tmp_path):
     assert "untracked.py" in files
     assert ".gitignore" in files
     assert "src/pkg_a/data.txt" not in files, "Should be gitignored"
-    assert (
-        ".stitcher/signatures/src/pkg_a/mod1.json" not in files
-    ), "Should ignore .stitcher dir"
+    assert ".stitcher/signatures/src/pkg_a/mod1.json" not in files, (
+        "Should ignore .stitcher dir"
+    )
 
 
 def test_discover_files_os_walk(tmp_path):

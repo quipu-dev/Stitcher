@@ -1,17 +1,20 @@
 {
   "DatabaseManager": {},
+  "FileIndexer": {},
   "IndexRunner": {},
   "IndexRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, db_manager: DatabaseManager, scanner: WorkspaceScanner):",
-    "baseline_code_structure_hash": "ce365d40963a7a10cc035e7a49db8edf26c42b11966899eb0fb51730c0ee603b"
+    "baseline_code_signature_text": "def __init__(self, db_manager: DatabaseManager, indexer: FileIndexer):",
+    "baseline_code_structure_hash": "e99918cc8c6395b4f362f72986e9f71a713281fbc03969e3b118748270f9c7fd"
   },
   "IndexRunner.db_manager": {},
+  "IndexRunner.indexer": {},
   "IndexRunner.run_build": {
-    "baseline_code_signature_text": "def run_build(self) -> bool:",
-    "baseline_code_structure_hash": "0fe6c22df3117ff61ebae3d9ce64189c3c1ba4bb46040e3786a1b9ab00bc797f"
+    "baseline_code_signature_text": "def run_build(self, workspace: Workspace) -> bool:",
+    "baseline_code_structure_hash": "8fbb503bf6bb2e039d1f4ad3307977405eed953bd022ba12e8ca89378ace8c6a"
   },
   "IndexRunner.scanner": {},
   "L": {},
+  "Workspace": {},
   "WorkspaceScanner": {},
   "bus": {}
 }

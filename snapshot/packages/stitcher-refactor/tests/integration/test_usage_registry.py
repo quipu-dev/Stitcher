@@ -2,6 +2,7 @@ from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.workspace import Workspace
 from stitcher.test_utils import create_populated_index
 
+
 def test_usage_query_via_index(tmp_path):
     """验证 SemanticGraph.find_usages 正确从 Index DB 获取引用。"""
     # 1. ARRANGE
@@ -28,10 +29,10 @@ def test_usage_query_via_index(tmp_path):
     # 我们期望找到：
     # 1. app.py 中的导入：'Helper' as H (ReferenceRecord)
     # 2. app.py 中的使用：'H()'
-    
+
     app_usages = [u for u in usages if u.file_path.name == "app.py"]
     assert len(app_usages) >= 2
-    
+
     # 验证位置信息是否正确
     call_usage = next(u for u in app_usages if u.lineno == 4)
-    assert call_usage.col_offset == 10 # H()
+    assert call_usage.col_offset == 10  # H()

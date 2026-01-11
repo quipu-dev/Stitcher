@@ -1,0 +1,34 @@
+{
+  "Dict": {},
+  "FileIndexer": {},
+  "FileIndexer.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, store: IndexStore):",
+    "baseline_code_structure_hash": "d70efa7425fcf910431ea7898a3909fba4d8d02a58b5ef86d97db68d96d9f2d8"
+  },
+  "FileIndexer._process_file_content": {
+    "baseline_code_signature_text": "def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes):",
+    "baseline_code_structure_hash": "8d17d1545901bf0a8c24e42e7c2f7f5bcc909f3ac105fa11ece60804ea8ed53d"
+  },
+  "FileIndexer.adapters": {},
+  "FileIndexer.index_files": {
+    "baseline_code_signature_text": "def index_files(self, discovered_paths: Set[str]) -> Dict[str, int]:",
+    "baseline_code_structure_hash": "4e2e65f687754bfa9aa76a8d8ef291072cdab5686f7078a13971e14b34312ff6"
+  },
+  "FileIndexer.linker": {},
+  "FileIndexer.register_adapter": {
+    "baseline_code_signature_text": "def register_adapter(self, extension: str, adapter: LanguageAdapter):",
+    "baseline_code_structure_hash": "612e1c336b757d75155c780601835ef353ecd9c299c6913ab522e9d625132706"
+  },
+  "FileIndexer.root_path": {},
+  "FileIndexer.store": {},
+  "FileRecord": {},
+  "IndexStore": {},
+  "LanguageAdapter": {},
+  "Linker": {},
+  "List": {},
+  "Path": {},
+  "Set": {},
+  "hashlib": {},
+  "log": {},
+  "logging": {}
+}

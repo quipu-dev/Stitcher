@@ -6,6 +6,7 @@ from stitcher.test_utils import WorkspaceFactory
 from unittest.mock import MagicMock
 from stitcher.index.store import IndexStore
 
+
 def test_semantic_graph_get_module_nested_lookup(tmp_path):
     """
     Verifies that get_module can navigate the module tree to find submodules.

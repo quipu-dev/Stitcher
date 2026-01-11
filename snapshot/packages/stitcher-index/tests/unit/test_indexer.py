@@ -89,7 +89,7 @@ def test_index_files_binary_file(tmp_path, store):
     workspace = Workspace(tmp_path)
     indexer = FileIndexer(tmp_path, store)
     indexer.register_adapter(".png", MockAdapter())
-    
+
     stats = indexer.index_files(workspace.discover_files())
     assert stats["added"] == 1
 

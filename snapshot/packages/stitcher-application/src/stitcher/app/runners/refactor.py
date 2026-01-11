@@ -43,6 +43,7 @@ class RefactorRunner:
 
             # Ensure the database schema is initialized before indexing.
             from stitcher.index.db import DatabaseManager
+
             db_manager = DatabaseManager(
                 self.root_path / ".stitcher" / "index" / "index.db"
             )

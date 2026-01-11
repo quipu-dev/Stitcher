@@ -102,7 +102,9 @@ def test_planner_handles_move_and_rename_on_same_file(mock_context: RefactorCont
     original_content = "class OldClass: pass"
 
     # Define operations
-    move_op = MoveFileOperation(src_path_abs, mock_context.graph.root_path / dest_path_rel)
+    move_op = MoveFileOperation(
+        src_path_abs, mock_context.graph.root_path / dest_path_rel
+    )
     rename_op = RenameSymbolOperation("app.OldClass", "new_app.NewClass")
     spec = MigrationSpec().add(move_op).add(rename_op)
 

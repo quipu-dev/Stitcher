@@ -9,5 +9,5 @@ __all__ = [
     "VenvHarness",
     "get_stored_hashes",
     "create_test_app",
-    "create_populated_index"
+    "create_populated_index",
 ]

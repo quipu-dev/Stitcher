@@ -1,5 +1,6 @@
 {
   "Dict": {},
+  "IndexStore": {},
   "List": {},
   "Optional": {},
   "Path": {},
@@ -10,8 +11,8 @@
     "baseline_yaml_content_hash": "107d9d8ce7f48e351911bdc4c4aa8d442967c10b114179df109ff56a3e7c8f43"
   },
   "SemanticGraph.__init__": {
-    "baseline_code_signature_text": "def __init__(self, workspace: Workspace):",
-    "baseline_code_structure_hash": "db0b79e74ddbded80772fc4f235e1067d97beaedc46f490a78067f739cd3e5f4"
+    "baseline_code_signature_text": "def __init__(self, workspace: Workspace, index_store: IndexStore):",
+    "baseline_code_structure_hash": "ff4d5b5e1497bd4432fa7e4c4511f6736a7ab179385ff4aa84cc221dadfa3fa7"
   },
   "SemanticGraph._build_registry": {
     "baseline_code_signature_text": "def _build_registry(self, module: griffe.Module, visited: Optional[Set[str]] = None):",
@@ -27,10 +28,16 @@
     "baseline_code_signature_text": "def find_symbol(self, fqn: str) -> Optional[SymbolNode]:",
     "baseline_code_structure_hash": "0e54ff0ca01f3a1035db618129357de8cbfa7995704b7785fd18aa6ca23b6162"
   },
+  "SemanticGraph.find_usages": {
+    "baseline_code_signature_text": "def find_usages(self, target_fqn: str) -> List[UsageLocation]:",
+    "baseline_code_structure_hash": "db4b93331a7212b63f08ad11b022cab1bb71f7d41801009e7d7368c3e24d563e",
+    "baseline_yaml_content_hash": "5ff7743a7823ca76b9d36d51350261b0383274a1fada56c1c9b520167e9107a9"
+  },
   "SemanticGraph.get_module": {
     "baseline_code_signature_text": "def get_module(self, package_name: str) -> Optional[griffe.Module]:",
     "baseline_code_structure_hash": "7c7c46478e42f9acb9374bb4612a99c58463121f0329adc05887ba617de4cc67"
   },
+  "SemanticGraph.index_store": {},
   "SemanticGraph.iter_members": {
     "baseline_code_signature_text": "def iter_members(self, package_name: str) -> List[SymbolNode]:",
     "baseline_code_structure_hash": "36087388280955b4f0deca49ec8cae4e14e5978b4431bb2e67865bea169a2a56"

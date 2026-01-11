@@ -3,6 +3,7 @@
   "VenvHarness": {},
   "WorkspaceFactory": {},
   "__all__": {},
+  "create_populated_index": {},
   "create_test_app": {},
   "get_stored_hashes": {}
 }

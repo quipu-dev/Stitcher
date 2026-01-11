@@ -157,13 +157,7 @@ class IndexStore:
         with self.db.get_connection() as conn:
             conn.execute("DELETE FROM files WHERE id = ?", (file_id,))
 
-    def find_symbol_by_fqn(
-        self, target_fqn: str
-    ) -> Optional[Tuple[SymbolRecord, str]]:
-        """
-        Finds a symbol definition by its canonical FQN.
-        Returns a (SymbolRecord, file_path_str) tuple or None.
-        """
+    def find_symbol_by_fqn(self, target_fqn: str) -> Optional[Tuple[SymbolRecord, str]]:
         with self.db.get_connection() as conn:
             row = conn.execute(
                 """
@@ -177,23 +171,13 @@ class IndexStore:
             if row:
                 return (
                     SymbolRecord(
-                        **{
-                            k: v
-                            for k, v in dict(row).items()
-                            if k != "file_path"
-                        }
+                        **{k: v for k, v in dict(row).items() if k != "file_path"}
                     ),
                     row["file_path"],
                 )
         return None
 
-    def find_references(
-        self, target_fqn: str
-    ) -> List[Tuple[ReferenceRecord, str]]:
-        """
-        Finds all references to a specific FQN.
-        Returns a list of (ReferenceRecord, file_path_str) tuples.
-        """
+    def find_references(self, target_fqn: str) -> List[Tuple[ReferenceRecord, str]]:
         with self.db.get_connection() as conn:
             # Join references with files to get the path
             rows = conn.execute(
@@ -206,6 +190,11 @@ class IndexStore:
                 (target_fqn,),
             ).fetchall()
             return [
-                (ReferenceRecord(**{k: v for k, v in dict(row).items() if k != "file_path"}), row["file_path"])
+                (
+                    ReferenceRecord(
+                        **{k: v for k, v in dict(row).items() if k != "file_path"}
+                    ),
+                    row["file_path"],
+                )
                 for row in rows
             ]

@@ -4,7 +4,6 @@ from stitcher.adapter.python.index_adapter import PythonAdapter
 from stitcher.test_utils.workspace import WorkspaceFactory
 from stitcher.workspace import Workspace
 
-import pytest
 
 
 def test_indexer_resolves_aliases_and_references(tmp_path, store):

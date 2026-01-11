@@ -22,7 +22,6 @@ class PythonAdapter(LanguageAdapter):
         self.hasher = PythonFingerprintStrategy()
 
     def _get_source_root_for_file(self, file_path: Path) -> Path:
-        """Finds the deepest matching source root for a given file."""
         longest_match: Optional[Path] = None
         for root in self.search_paths:
             try:

@@ -9,6 +9,7 @@ from stitcher.refactor.engine.intent import RefactorIntent
 
 from stitcher.index.store import IndexStore
 
+
 def test_planner_collects_intents_from_operations():
     # 1. Arrange
     mock_index = Mock(spec=IndexStore)
