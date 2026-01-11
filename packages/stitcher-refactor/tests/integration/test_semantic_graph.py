@@ -1,5 +1,6 @@
 from stitcher.refactor.engine.graph import SemanticGraph
-from stitcher.refactor.workspace import Workspace
+from stitcher.workspace import Workspace
+from stitcher.test_utils import create_populated_index
 
 
 def test_semantic_graph_load_package(tmp_path):
@@ -18,8 +19,9 @@ def test_semantic_graph_load_package(tmp_path):
     )
 
     # 2. Execute: Load into SemanticGraph
+    index_store = create_populated_index(tmp_path)
     workspace = Workspace(root_path=tmp_path)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
 
     # 3. Verify: Check if modules are loaded

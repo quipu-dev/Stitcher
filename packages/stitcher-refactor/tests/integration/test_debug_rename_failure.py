@@ -6,8 +6,8 @@ from stitcher.refactor.engine.context import RefactorContext
 from stitcher.common.transaction import TransactionManager
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
+from stitcher.workspace import Workspace
+from stitcher.test_utils import WorkspaceFactory, create_populated_index
 from stitcher.common.transaction import WriteFileOp
 
 # Injected real content of bus.py to match production environment exactly
@@ -133,14 +133,18 @@ def test_debug_rename_failure_analysis(tmp_path):
     )
 
     # 2. LOAD GRAPH
+    index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("stitcher")
 
     # 3. EXECUTE REFACTOR
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+        workspace=workspace,
+        graph=graph,
+        sidecar_manager=sidecar_manager,
+        index_store=index_store,
     )
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner

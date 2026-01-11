@@ -1,5 +1,49 @@
-from stitcher.refactor.workspace import Workspace
+from stitcher.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
+
+
+def test_discover_files_git(tmp_path):
+    # Arrange
+    factory = WorkspaceFactory(tmp_path).init_git()
+    factory.with_source("src/pkg_a/mod1.py", "pass")
+    factory.with_source("src/pkg_a/data.txt", "data")
+    factory.with_source("untracked.py", "pass")
+    factory.with_raw_file(".gitignore", "*.txt\n.stitcher/")
+    factory.with_source(".stitcher/signatures/src/pkg_a/mod1.json", "{}")
+    project_root = factory.build()
+
+    # Act
+    workspace = Workspace(project_root)
+    files = workspace.discover_files()
+
+    # Assert
+    assert "src/pkg_a/mod1.py" in files
+    assert "untracked.py" in files
+    assert ".gitignore" in files
+    assert "src/pkg_a/data.txt" not in files, "Should be gitignored"
+    assert ".stitcher/signatures/src/pkg_a/mod1.json" not in files, (
+        "Should ignore .stitcher dir"
+    )
+
+
+def test_discover_files_os_walk(tmp_path):
+    # Arrange
+    factory = WorkspaceFactory(tmp_path)  # No git
+    factory.with_source("src/pkg_a/mod1.py", "pass")
+    factory.with_source("src/pkg_a/data.txt", "data")
+    factory.with_source(".hidden/file.py", "pass")
+    factory.with_source(".stitcher/config.json", "{}")
+    project_root = factory.build()
+
+    # Act
+    workspace = Workspace(project_root)
+    files = workspace.discover_files()
+
+    # Assert
+    assert "src/pkg_a/mod1.py" in files
+    assert "src/pkg_a/data.txt" in files
+    assert ".hidden/file.py" not in files, "Should ignore hidden directories"
+    assert ".stitcher/config.json" not in files, "Should ignore .stitcher directory"
 
 
 def test_workspace_standard_src_layout(tmp_path):
@@ -34,13 +78,12 @@ def test_workspace_flat_layout(tmp_path):
     workspace = Workspace(project_root)
 
     # ASSERT
-    # For flat layout, the source dir is the directory containing the package
     assert workspace.import_to_source_dirs["pkgb_lib"] == {pkg_b_root}
     assert sorted(workspace.get_search_paths()) == sorted([project_root, pkg_b_root])
 
 
 def test_workspace_namespace_package(tmp_path):
-    # ARRANGE: Simulate two distributions contributing to the 'cascade' namespace
+    # ARRANGE
     factory = (
         WorkspaceFactory(tmp_path)
         .with_pyproject("cascade-engine")

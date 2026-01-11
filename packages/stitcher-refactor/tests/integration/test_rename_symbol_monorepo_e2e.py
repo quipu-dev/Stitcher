@@ -5,8 +5,8 @@ from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.common.transaction import TransactionManager, WriteFileOp
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
+from stitcher.workspace import Workspace
+from stitcher.test_utils import WorkspaceFactory, create_populated_index
 
 
 def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path):
@@ -57,15 +57,19 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     )
 
     # 2. ACT
+    index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("pkga_lib")
     graph.load("pkgb_app")
     graph.load("test_core")
     graph.load("integration")
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+        workspace=workspace,
+        graph=graph,
+        sidecar_manager=sidecar_manager,
+        index_store=index_store,
     )
 
     from stitcher.refactor.migration import MigrationSpec

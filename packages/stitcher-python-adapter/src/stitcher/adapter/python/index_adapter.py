@@ -15,33 +15,53 @@ from .uri import SURIGenerator
 
 
 class PythonAdapter(LanguageAdapter):
-    def __init__(self, root_path: Path):
+    def __init__(self, root_path: Path, search_paths: List[Path]):
         self.root_path = root_path
+        self.search_paths = search_paths
         self.parser = GriffePythonParser()
         self.hasher = PythonFingerprintStrategy()
+
+    def _get_source_root_for_file(self, file_path: Path) -> Path:
+        longest_match: Optional[Path] = None
+        for root in self.search_paths:
+            try:
+                if file_path.is_relative_to(root):
+                    if longest_match is None or len(root.parts) > len(
+                        longest_match.parts
+                    ):
+                        longest_match = root
+            except ValueError:  # For Python < 3.9 compatibility
+                if str(file_path).startswith(str(root)):
+                    if longest_match is None or len(root.parts) > len(
+                        longest_match.parts
+                    ):
+                        longest_match = root
+        return longest_match or self.root_path
 
     def parse(
         self, file_path: Path, content: str
     ) -> Tuple[List[SymbolRecord], List[ReferenceRecord]]:
-        # 1. Calculate relative path for SURI
-        try:
-            rel_path = file_path.relative_to(self.root_path).as_posix()
-        except ValueError:
-            # Fallback if file is not in root (should not happen in normal scan)
-            rel_path = file_path.name
+        # 1. Determine the correct source root and calculate relative path for FQN
+        source_root = self._get_source_root_for_file(file_path)
+        fqn_rel_path = file_path.relative_to(source_root).as_posix()
+
+        # Physical rel_path for SURI should always be from project root
+        physical_rel_path = file_path.relative_to(self.root_path).as_posix()
 
         # 2. Parse into ModuleDef
-        module_def = self.parser.parse(content, file_path=rel_path)
+        module_def = self.parser.parse(content, file_path=physical_rel_path)
 
-        # Pre-calculate logical FQN for the module
-        logical_module_fqn = path_to_logical_fqn(rel_path)
+        # Pre-calculate logical FQN for the module using the correct relative path
+        logical_module_fqn = path_to_logical_fqn(fqn_rel_path)
 
         # 3. Project to Symbols
-        symbols = self._extract_symbols(rel_path, module_def, logical_module_fqn)
+        symbols = self._extract_symbols(
+            physical_rel_path, module_def, logical_module_fqn
+        )
 
         # 4. Project to References
         references = self._extract_references(
-            rel_path, module_def, content, file_path, logical_module_fqn
+            physical_rel_path, module_def, content, file_path, logical_module_fqn
         )
 
         return symbols, references
@@ -55,7 +75,7 @@ class PythonAdapter(LanguageAdapter):
         # This allows other files to import this module.
         module_name = logical_module_fqn.split(".")[-1]
         module_suri = SURIGenerator.for_file(rel_path)
-        
+
         symbols.append(
             SymbolRecord(
                 id=module_suri,
@@ -65,7 +85,7 @@ class PythonAdapter(LanguageAdapter):
                 col_offset=0,
                 end_lineno=0,
                 end_col_offset=0,
-                logical_path=None, # Module root has no logical path suffix
+                logical_path=None,  # Module root has no logical path suffix
                 canonical_fqn=logical_module_fqn,
                 alias_target_fqn=None,
                 alias_target_id=None,
@@ -155,9 +175,6 @@ class PythonAdapter(LanguageAdapter):
 
         # 1. Build local_symbols map using the centralized analyzer
         analyzer = ScopeAnalyzer()
-        # Note: ScopeAnalyzer returns a map of {local_name: target_fqn}
-        # We don't need to manually use it here because UsageScanVisitor uses it internally?
-        # Wait, UsageScanVisitor takes local_symbols as input.
         local_symbols = analyzer.build_from_ir(module, logical_module_fqn)
 
         # 2. Parse CST and Run Visitor
@@ -175,13 +192,12 @@ class PythonAdapter(LanguageAdapter):
             wrapper.visit(visitor)
 
             # 3. Convert Registry to ReferenceRecords
-            # UsageRegistry structure: { target_fqn: [UsageLocation, ...] }
             for target_fqn, locations in registry.get_all_usages().items():
                 for loc in locations:
                     refs.append(
                         ReferenceRecord(
-                            target_fqn=target_fqn,  # Store the logical intent directly
-                            target_id=None,  # Decoupled: Linker will fill this
+                            target_fqn=target_fqn,
+                            target_id=None,
                             kind=loc.ref_type.value,
                             lineno=loc.lineno,
                             col_offset=loc.col_offset,

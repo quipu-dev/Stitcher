@@ -156,3 +156,45 @@ class IndexStore:
     def delete_file(self, file_id: int) -> None:
         with self.db.get_connection() as conn:
             conn.execute("DELETE FROM files WHERE id = ?", (file_id,))
+
+    def find_symbol_by_fqn(self, target_fqn: str) -> Optional[Tuple[SymbolRecord, str]]:
+        with self.db.get_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT s.*, f.path as file_path
+                FROM symbols s
+                JOIN files f ON s.file_id = f.id
+                WHERE s.canonical_fqn = ?
+                """,
+                (target_fqn,),
+            ).fetchone()
+            if row:
+                return (
+                    SymbolRecord(
+                        **{k: v for k, v in dict(row).items() if k != "file_path"}
+                    ),
+                    row["file_path"],
+                )
+        return None
+
+    def find_references(self, target_fqn: str) -> List[Tuple[ReferenceRecord, str]]:
+        with self.db.get_connection() as conn:
+            # Join references with files to get the path
+            rows = conn.execute(
+                """
+                SELECT r.*, f.path as file_path
+                FROM "references" r
+                JOIN files f ON r.source_file_id = f.id
+                WHERE r.target_fqn = ?
+                """,
+                (target_fqn,),
+            ).fetchall()
+            return [
+                (
+                    ReferenceRecord(
+                        **{k: v for k, v in dict(row).items() if k != "file_path"}
+                    ),
+                    row["file_path"],
+                )
+                for row in rows
+            ]

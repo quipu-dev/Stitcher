@@ -1,12 +1,11 @@
 from textwrap import dedent
-from stitcher.index.scanner import WorkspaceScanner
+from stitcher.index.indexer import FileIndexer
 from stitcher.adapter.python.index_adapter import PythonAdapter
 from stitcher.test_utils.workspace import WorkspaceFactory
+from stitcher.workspace import Workspace
 
-import pytest
 
-
-def test_scanner_resolves_aliases_and_references(tmp_path, store):
+def test_indexer_resolves_aliases_and_references(tmp_path, store):
     """
     End-to-end test for alias resolution and reference scanning.
     Verifies that:
@@ -46,11 +45,15 @@ def test_scanner_resolves_aliases_and_references(tmp_path, store):
     )
     project_root = wf.build()
 
-    # 2. Execution: Run the full scanner pipeline
-    scanner = WorkspaceScanner(project_root, store)
-    adapter = PythonAdapter(project_root)
-    scanner.register_adapter(".py", adapter)
-    scanner.scan()
+    # 2. Execution: Run the full indexer pipeline
+    workspace = Workspace(project_root)
+    files_to_index = workspace.discover_files()
+
+    indexer = FileIndexer(project_root, store)
+    # Manual search_paths to avoid dependency on Workspace service in pure index tests
+    adapter = PythonAdapter(project_root, [project_root])
+    indexer.register_adapter(".py", adapter)
+    indexer.index_files(files_to_index)
 
     # 3. Verification
     main_py_record = store.get_file_by_path("pkg/main.py")
@@ -76,19 +79,11 @@ def test_scanner_resolves_aliases_and_references(tmp_path, store):
     alias_pkg_defs = symbols_by_name.get("pkg")
     assert alias_pkg_defs is not None
     assert alias_pkg_defs.kind == "alias"
-    # The target of 'import pkg.defs' is the 'pkg' module itself in this context
-    # Note: 'pkg' is a package directory containing __init__.py, so the SURI points to __init__.py
     assert alias_pkg_defs.alias_target_id == "py://pkg/__init__.py"
 
     # 3b. Verify References in main.py
     references = store.get_references_by_file(main_py_record.id)
     ref_targets = {ref.target_id for ref in references}
 
-    # instance = MyClass() -> Should link directly to the definition in defs.py
     assert "py://pkg/defs.py#MyClass" in ref_targets
-
-    # pkg.defs.my_func() -> Should resolve 'pkg' to the package and link to the function
-    assert "py://pkg/defs.py#my_func" in ref_targets
-
-    # func_alias() -> Should resolve 'func_alias' to its original definition
     assert "py://pkg/defs.py#my_func" in ref_targets

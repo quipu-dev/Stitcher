@@ -33,8 +33,9 @@ from typing import Callable
 from .types import PumpResult, FileCheckResult, CoverageResult
 from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
-from stitcher.index.scanner import WorkspaceScanner
+from stitcher.index.indexer import FileIndexer
 from stitcher.adapter.python import PythonAdapter
+from stitcher.workspace import Workspace
 from stitcher.adapter.python.docstring import (
     get_docstring_codec,
     get_docstring_serializer,
@@ -51,6 +52,7 @@ class StitcherApp:
         interaction_handler: Optional[InteractionHandler] = None,
     ):
         self.root_path = root_path
+        self.workspace = Workspace(root_path)
         # 1. Core Services
         self.doc_manager = DocumentManager(root_path)
         self.sig_manager = SignatureManager(root_path, fingerprint_strategy)
@@ -84,20 +86,25 @@ class StitcherApp:
             root_path, self.doc_manager, transformer
         )
         self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
-        self.refactor_runner = RefactorRunner(root_path)
 
         # 3. Indexing Subsystem
-        # Hardcoded path for architectural consistency
         index_db_path = root_path / ".stitcher" / "index" / "index.db"
         self.db_manager = DatabaseManager(index_db_path)
         self.index_store = IndexStore(self.db_manager)
-        self.workspace_scanner = WorkspaceScanner(root_path, self.index_store)
+        self.file_indexer = FileIndexer(root_path, self.index_store)
 
         # Register Adapters
-        # TODO: Load adapters dynamically or via config in future
-        self.workspace_scanner.register_adapter(".py", PythonAdapter(root_path))
+        search_paths = self.workspace.get_search_paths()
+        self.file_indexer.register_adapter(
+            ".py", PythonAdapter(root_path, search_paths)
+        )
 
-        self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
+        self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
+
+        # 4. Refactor Runner (depends on Indexing)
+        self.refactor_runner = RefactorRunner(
+            root_path, self.index_store, self.file_indexer
+        )
 
     def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:
         return load_config_from_path(self.root_path)
@@ -123,8 +130,6 @@ class StitcherApp:
 
         all_modules = source_modules + plugin_modules
         if not all_modules:
-            # We don't warn here per config, but maybe we should?
-            # Original logic warned if ALL configs yielded nothing.
             pass
 
         return all_modules
@@ -190,27 +195,16 @@ class StitcherApp:
             all_modules.extend(modules)
 
             results, conflicts = self.check_runner.analyze_batch(modules)
-
-            # Interactive resolution is tricky across batches if we want to support 'abort'.
-            # But typically we resolve per batch or resolve all at once.
-            # Original logic resolved ALL at once.
-            # Let's aggregate first.
             all_results.extend(results)
 
-            # Auto-reconcile docs (infos) immediately per batch or globally?
-            # Modules are needed for re-saving.
             self.check_runner.auto_reconcile_docs(results, modules)
 
-            # Resolve conflicts for this batch
             if not self.check_runner.resolve_conflicts(
                 results, conflicts, force_relink, reconcile
             ):
                 return False
 
-        # Reformat All
         self.check_runner.reformat_all(all_modules)
-
-        # Final Report
         report_success = self.check_runner.report(all_results)
         return report_success and not self.scanner.had_errors
 
@@ -274,9 +268,6 @@ class StitcherApp:
             modules = self._configure_and_scan(config)
             if not modules:
                 continue
-
-            # We assume if modules exist, docs might exist.
-            # Transform runner will check doc existence.
             modified = self.transform_runner.run_inject_batch(modules, tm)
             if modified:
                 found_any_docs = True
@@ -313,9 +304,6 @@ class StitcherApp:
         if not configs:
             bus.error(L.error.config.not_found)
             return False
-
-        # For refactoring, we use the first available config.
-        # This could be extended in the future to allow target selection via CLI.
         config_to_use = configs[0]
 
         return self.refactor_runner.run_apply(
@@ -323,4 +311,4 @@ class StitcherApp:
         )
 
     def run_index_build(self) -> bool:
-        return self.index_runner.run_build()
+        return self.index_runner.run_build(self.workspace)

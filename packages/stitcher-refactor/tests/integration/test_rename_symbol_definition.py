@@ -7,17 +7,16 @@ from stitcher.common.transaction import (
 )
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
+from stitcher.workspace import Workspace
+from stitcher.test_utils import WorkspaceFactory, create_populated_index
 
 
-def test_rename_fails_to_update_definition_leading_to_import_error(tmp_path):
+def test_rename_operation_succeeds_in_renaming_symbol_definition_simple(tmp_path):
     """
-    This test reproduces a critical bug where RenameSymbolOperation renames
-    an import usage of a symbol but fails to rename the class definition itself,
-    leading to a broken state and subsequent ImportErrors.
+    This test verifies that RenameSymbolOperation successfully renames both
+    the definition and a simple import usage of a symbol.
     """
-    # 1. ARRANGE: Create a project structure mirroring the bug scenario.
+    # 1. ARRANGE: Create a project structure mirroring the scenario.
     # common/
     #   __init__.py -> from .messaging.bus import MessageBus
     #   messaging/
@@ -33,12 +32,16 @@ def test_rename_fails_to_update_definition_leading_to_import_error(tmp_path):
     usage_file = project_root / "common/__init__.py"
 
     # 2. ACT: Run the refactoring operation.
+    index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("common")
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+        workspace=workspace,
+        graph=graph,
+        sidecar_manager=sidecar_manager,
+        index_store=index_store,
     )
 
     from stitcher.refactor.migration import MigrationSpec
@@ -59,19 +62,18 @@ def test_rename_fails_to_update_definition_leading_to_import_error(tmp_path):
             tm.add_write(fop.path, fop.content)
     tm.commit()
 
-    # 3. ASSERT: Verify the incomplete refactoring.
+    # 3. ASSERT: Verify the complete refactoring.
     # The usage in __init__.py should be updated.
     updated_usage_code = usage_file.read_text()
     assert "from .messaging.bus import FeedbackBus" in updated_usage_code
     assert "from .messaging.bus import MessageBus" not in updated_usage_code
 
-    # CRITICAL: The definition in bus.py should ALSO have been updated,
-    # but the bug causes it to be missed. We assert this failure case.
+    # CRITICAL: The definition in bus.py should now be correctly updated.
     definition_code = definition_file.read_text()
-    assert "class MessageBus: pass" in definition_code, (
+    assert "class FeedbackBus: pass" in definition_code, (
         "The class definition was not renamed!"
     )
-    assert "class FeedbackBus: pass" not in definition_code
+    assert "class MessageBus: pass" not in definition_code
 
 
 def test_rename_operation_succeeds_in_renaming_symbol_definition(tmp_path):
@@ -94,12 +96,16 @@ def test_rename_operation_succeeds_in_renaming_symbol_definition(tmp_path):
     usage_file = project_root / "mypkg/app.py"
 
     # 2. ACT: Run the refactoring operation.
+    index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+        workspace=workspace,
+        graph=graph,
+        sidecar_manager=sidecar_manager,
+        index_store=index_store,
     )
 
     from stitcher.refactor.migration import MigrationSpec

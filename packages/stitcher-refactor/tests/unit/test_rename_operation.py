@@ -3,21 +3,21 @@ from pathlib import Path
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.graph import (
     SemanticGraph,
-    UsageRegistry,
     SymbolNode,
 )
+from stitcher.index.store import IndexStore
 from stitcher.python.analysis.models import UsageLocation, ReferenceType
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.common.transaction import WriteFileOp
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
+from stitcher.workspace import Workspace
 
 
 def test_rename_symbol_analyze_orchestration():
     # 1. Setup Mocks
-    mock_registry = Mock(spec=UsageRegistry)
+    mock_index = Mock(spec=IndexStore)
     mock_graph = Mock(spec=SemanticGraph)
-    mock_graph.registry = mock_registry
+    # mock_graph.registry is gone, the renamer now calls graph.find_usages
 
     tmp_path = Path("/tmp/fake_project")  # conceptual
     mock_graph.root_path = tmp_path
@@ -32,6 +32,7 @@ def test_rename_symbol_analyze_orchestration():
         graph=mock_graph,
         workspace=mock_workspace,
         sidecar_manager=mock_sidecar_manager,
+        index_store=mock_index,
     )
 
     # 2. Define Test Data
@@ -77,7 +78,7 @@ def test_rename_symbol_analyze_orchestration():
         ),
     ]
 
-    mock_registry.get_usages.return_value = locations
+    mock_graph.find_usages.return_value = locations
 
     # Configure the mock graph for the _find_definition_node logic
     mock_graph._modules = {"mypkg": Mock()}
@@ -111,7 +112,7 @@ def test_rename_symbol_analyze_orchestration():
     # 4. Verify
     # The planner will get usages for the old_fqn and potentially its prefixes.
     # We can check that it was called with the specific FQN.
-    mock_registry.get_usages.assert_any_call(old_fqn)
+    mock_graph.find_usages.assert_any_call(old_fqn)
 
     # We expect 2 code change ops + potentially sidecar ops
     # Since we mocked .exists() to False, we expect only the 2 code ops.

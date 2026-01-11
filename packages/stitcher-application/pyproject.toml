@@ -13,7 +13,7 @@ dependencies = [
     "stitcher-config",
     "stitcher-python-adapter",
     "stitcher-stubgen",
-    "stitcher-refactor",
+    "stitcher-workspace",
     "stitcher-index",
     "pyneedle",
 ]
@@ -27,6 +27,6 @@ stitcher-common = { workspace = true }
 stitcher-config = { workspace = true }
 stitcher-python-adapter = { workspace = true }
 stitcher-stubgen = { workspace = true }
-stitcher-refactor = { workspace = true }
+stitcher-workspace = { workspace = true }
 stitcher-index = { workspace = true }
 pyneedle = { workspace = true }

@@ -7,9 +7,14 @@ from stitcher.refactor.operations.base import AbstractOperation
 from stitcher.refactor.engine.intent import RefactorIntent
 
 
+from stitcher.index.store import IndexStore
+
+
 def test_planner_collects_intents_from_operations():
     # 1. Arrange
+    mock_index = Mock(spec=IndexStore)
     mock_ctx = Mock(spec=RefactorContext)
+    mock_ctx.index_store = mock_index
     mock_spec = Mock(spec=MigrationSpec)
 
     # Mock operations and their collect_intents results

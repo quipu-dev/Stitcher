@@ -8,8 +8,34 @@ from stitcher.adapter.python import (
     PythonTransformer,
     PythonFingerprintStrategy,
 )
+from stitcher.workspace import Workspace
 
 from stitcher.adapter.python.griffe_parser import GriffePythonParser
+from stitcher.index.db import DatabaseManager
+from stitcher.index.store import IndexStore
+from stitcher.index.indexer import FileIndexer
+from stitcher.adapter.python.index_adapter import PythonAdapter
+
+
+def create_populated_index(root_path: Path) -> IndexStore:
+    db_path = root_path / ".stitcher" / "index" / "index.db"
+
+    db_manager = DatabaseManager(db_path)
+    db_manager.initialize()
+    store = IndexStore(db_manager)
+
+    # The indexer needs a workspace-aware adapter.
+    workspace = Workspace(root_path)
+    search_paths = workspace.get_search_paths()
+
+    # Discover files first, then index them.
+    files_to_index = workspace.discover_files()
+
+    indexer = FileIndexer(root_path, store)
+    indexer.register_adapter(".py", PythonAdapter(root_path, search_paths))
+    indexer.index_files(files_to_index)
+
+    return store
 
 
 def create_test_app(

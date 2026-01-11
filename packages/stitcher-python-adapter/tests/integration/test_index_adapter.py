@@ -3,7 +3,7 @@ from stitcher.adapter.python.index_adapter import PythonAdapter
 
 def test_python_adapter_symbol_extraction(tmp_path):
     root = tmp_path
-    adapter = PythonAdapter(root)
+    adapter = PythonAdapter(root, [root])
 
     code = """
 class MyClass:

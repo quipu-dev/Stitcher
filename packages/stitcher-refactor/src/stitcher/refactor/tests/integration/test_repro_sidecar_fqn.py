@@ -9,8 +9,8 @@ from stitcher.common.transaction import (
 )
 from stitcher.refactor.operations.move_directory import MoveDirectoryOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
+from stitcher.workspace import Workspace
+from stitcher.test_utils import WorkspaceFactory, create_populated_index
 
 
 def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_path):
@@ -32,14 +32,18 @@ def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_p
     dest_dir = project_root / "mypkg/moved_section"
 
     # 2. ACT
+    index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     # Load top level to ensure graph coverage
     graph.load("mypkg")
 
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+        workspace=workspace,
+        graph=graph,
+        sidecar_manager=sidecar_manager,
+        index_store=index_store,
     )
 
     from stitcher.refactor.migration import MigrationSpec

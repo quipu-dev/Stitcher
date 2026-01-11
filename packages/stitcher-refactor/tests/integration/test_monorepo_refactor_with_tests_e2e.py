@@ -7,8 +7,8 @@ from stitcher.common.transaction import (
 )
 from stitcher.refactor.operations.move_file import MoveFileOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
+from stitcher.workspace import Workspace
+from stitcher.test_utils import WorkspaceFactory, create_populated_index
 
 
 def test_move_file_in_monorepo_updates_tests_and_cross_package_imports(tmp_path):
@@ -48,8 +48,9 @@ def test_move_file_in_monorepo_updates_tests_and_cross_package_imports(tmp_path)
     top_level_test_path = project_root / "tests/integration/test_full_system.py"
 
     # 2. ACT
+    index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     # Verify that all source and test roots were discovered
     assert project_root / "packages/pkg_a/src" in graph.search_paths
     assert project_root / "packages/pkg_a/tests" in graph.search_paths
@@ -65,7 +66,10 @@ def test_move_file_in_monorepo_updates_tests_and_cross_package_imports(tmp_path)
 
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+        workspace=workspace,
+        graph=graph,
+        sidecar_manager=sidecar_manager,
+        index_store=index_store,
     )
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner

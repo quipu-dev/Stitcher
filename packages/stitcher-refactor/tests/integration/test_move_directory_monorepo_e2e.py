@@ -11,8 +11,8 @@ from stitcher.common.transaction import (
 )
 from stitcher.refactor.operations.move_directory import MoveDirectoryOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
+from stitcher.workspace import Workspace
+from stitcher.test_utils import WorkspaceFactory, create_populated_index
 
 
 def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
@@ -58,14 +58,18 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
     consumer_path = project_root / "cascade-runtime/src/cascade/runtime/app.py"
 
     # 2. ACT
+    index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     # Load the top-level namespace package. Griffe will discover all its parts
     # from the search paths provided by the Workspace.
     graph.load("cascade")
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
+        workspace=workspace,
+        graph=graph,
+        sidecar_manager=sidecar_manager,
+        index_store=index_store,
     )
 
     from stitcher.refactor.migration import MigrationSpec

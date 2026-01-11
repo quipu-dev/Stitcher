@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from stitcher.test_utils import WorkspaceFactory
+from stitcher.test_utils import WorkspaceFactory, create_populated_index
 from stitcher.config import load_config_from_path
-from stitcher.refactor.workspace import Workspace
+from stitcher.workspace import Workspace
 from stitcher.refactor.engine import SemanticGraph
 
 
@@ -26,8 +26,11 @@ def test_graph_can_find_symbol_after_workspace_refactor(tmp_path: Path):
     assert configs, "Config should be loaded"
     config = configs[0]
 
+    # Create and populate index
+    index_store = create_populated_index(tmp_path)
+
     workspace = Workspace(root_path=tmp_path, config=config)
-    graph = SemanticGraph(workspace)
+    graph = SemanticGraph(workspace, index_store)
 
     # The key action performed by RefactorRunner
     pkg_names = list(workspace.import_to_source_dirs.keys())
@@ -36,12 +39,10 @@ def test_graph_can_find_symbol_after_workspace_refactor(tmp_path: Path):
     for pkg_name in pkg_names:
         graph.load(pkg_name)
 
-    # 3. Assert: Check the internal state of the SemanticGraph's registry
+    # 3. Assert: Check the internal state of the SemanticGraph's usage discovery
     # Assert that the definition of the class itself is found and registered as a "usage"
     usages_of_definition = [
-        u
-        for u in graph.registry.get_usages("mypkg.core.Old")
-        if u.file_path.name == "core.py"
+        u for u in graph.find_usages("mypkg.core.Old") if u.file_path.name == "core.py"
     ]
     assert len(usages_of_definition) > 0, (
         "Graph should find the definition of mypkg.core.Old"
@@ -49,9 +50,7 @@ def test_graph_can_find_symbol_after_workspace_refactor(tmp_path: Path):
 
     # Assert that the usage in another file is found
     usages_in_app = [
-        u
-        for u in graph.registry.get_usages("mypkg.core.Old")
-        if u.file_path.name == "app.py"
+        u for u in graph.find_usages("mypkg.core.Old") if u.file_path.name == "app.py"
     ]
     assert len(usages_in_app) > 0, (
         "Graph should find the usage of mypkg.core.Old in app.py"

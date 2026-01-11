@@ -1,0 +1,3 @@
+"Linker.link": |-
+  Resolves symbolic references and aliases by linking them to their definitions
+  using Canonical FQNs (Fully Qualified Names).

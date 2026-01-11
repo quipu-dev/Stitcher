@@ -1,4 +1,4 @@
-from stitcher.refactor.workspace import Workspace
+from stitcher.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory
 from pathlib import Path
 

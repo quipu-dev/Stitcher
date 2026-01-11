@@ -1,4 +1,6 @@
 import logging
+import os
+import subprocess
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Set, Optional
@@ -117,3 +119,44 @@ class Workspace:
             except ValueError:
                 continue
         return False
+
+    def discover_files(self) -> Set[str]:
+        paths: Set[str] = set()
+        used_git = False
+
+        # Strategy 1: Git
+        if (self.root_path / ".git").exists():
+            try:
+                # ls-files --cached (tracked) --others (untracked) --exclude-standard (respect .gitignore)
+                result = subprocess.run(
+                    ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+                    cwd=self.root_path,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                paths = set(
+                    line.strip() for line in result.stdout.splitlines() if line.strip()
+                )
+                used_git = True
+            except subprocess.CalledProcessError:
+                log.warning("Git discovery failed, falling back to OS walk.")
+
+        # Strategy 2: Fallback OS Walk
+        if not used_git:
+            for root, dirs, files in os.walk(self.root_path):
+                # Skip hidden dirs
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
+
+                for file in files:
+                    if file.startswith("."):
+                        continue
+                    abs_path = Path(root) / file
+                    rel_path = abs_path.relative_to(self.root_path).as_posix()
+                    paths.add(rel_path)
+
+        # Global Filter: Exclude .stitcher directory
+        final_paths = {
+            p for p in paths if not p.startswith(".stitcher/") and p != ".stitcher"
+        }
+        return final_paths

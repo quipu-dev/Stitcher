@@ -22,7 +22,7 @@ class GlobalBatchRenamer:
 
         # 1. Collect all usages for all renames and group by file
         for old_fqn in self.rename_map.keys():
-            usages = self.ctx.graph.registry.get_usages(old_fqn)
+            usages = self.ctx.graph.find_usages(old_fqn)
             for usage in usages:
                 usages_by_file[usage.file_path].append(usage)
 

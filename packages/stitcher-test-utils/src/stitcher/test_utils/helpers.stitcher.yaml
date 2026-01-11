@@ -1,3 +1,5 @@
+"create_populated_index": |-
+  Creates a temporary IndexStore and performs a full scan.
 "create_test_app": |-
   Factory to create a StitcherApp instance with Python adapters pre-configured for testing.
 "get_stored_hashes": |-

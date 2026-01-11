@@ -1,11 +1,11 @@
-import libcst as cst
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional, Set
+from typing import List, Dict, Optional
 import logging
 import griffe
-from stitcher.refactor.workspace import Workspace
-from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
+from stitcher.workspace import Workspace
+from stitcher.index.store import IndexStore
+from stitcher.python.analysis.models import UsageLocation, ReferenceType
 
 log = logging.getLogger(__name__)
 
@@ -18,13 +18,13 @@ class SymbolNode:
 
 
 class SemanticGraph:
-    def __init__(self, workspace: Workspace):
+    def __init__(self, workspace: Workspace, index_store: IndexStore):
         self.workspace = workspace
         self.root_path = workspace.root_path
+        self.index_store = index_store
         self.search_paths = self.workspace.get_search_paths()
         self._griffe_loader = griffe.GriffeLoader(search_paths=self.search_paths)
         self._modules: Dict[str, griffe.Module] = {}
-        self.registry = UsageRegistry()
 
     def load(self, package_name: str, submodules: bool = True) -> None:
         module = self._griffe_loader.load(package_name, submodules=submodules)
@@ -32,7 +32,6 @@ class SemanticGraph:
         if isinstance(module, griffe.Module):
             self._modules[package_name] = module
             self._griffe_loader.resolve_aliases()
-            self._build_registry(module)
 
     def load_from_workspace(self) -> None:
         # 1. Load all main packages
@@ -63,60 +62,48 @@ class SemanticGraph:
         # 3. Resolve all aliases now that everything is loaded
         self._griffe_loader.resolve_aliases()
 
-        # 4. Build usage registry for everything
-        # Fix: ModulesCollection does not have .values(), we must access .members
-        for module in self._griffe_loader.modules_collection.members.values():
-            self._build_registry(module)
+    def find_usages(self, target_fqn: str) -> List[UsageLocation]:
+        usages = []
 
-    def _build_registry(
-        self, module: griffe.Module, visited: Optional[Set[str]] = None
-    ):
-        if visited is None:
-            visited = set()
-
-        if module.path in visited:
-            return
-        visited.add(module.path)
-
-        for member in module.members.values():
-            if isinstance(member, griffe.Module):
-                self._build_registry(member, visited)
-
-        # module.filepath can be a list for namespace packages; we only scan single files
-        if module.filepath and isinstance(module.filepath, Path):
-            self._scan_module_usages(module)
-
-    def _scan_module_usages(self, module: griffe.Module):
-        # We assume module.filepath is a Path here, checked by caller
-        if not isinstance(module.filepath, Path):
-            return
-
-        local_symbols: Dict[str, str] = {}
-        for name, member in module.members.items():
+        # 1. Find all references (usages)
+        db_refs = self.index_store.find_references(target_fqn)
+        for ref, file_path_str in db_refs:
+            abs_path = self.root_path / file_path_str
             try:
-                if isinstance(member, griffe.Alias):
-                    target_fqn = member.target_path
-                else:
-                    target_fqn = member.path
-                local_symbols[name] = target_fqn
-            except Exception as e:
-                log.warning(f"Failed to resolve symbol '{name}' in {module.path}: {e}")
+                ref_type = ReferenceType(ref.kind)
+            except ValueError:
+                ref_type = ReferenceType.SYMBOL  # Fallback
 
-        try:
-            source = module.filepath.read_text(encoding="utf-8")
-            wrapper = cst.MetadataWrapper(cst.parse_module(source))
-            is_init = module.filepath.name == "__init__.py"
-            visitor = UsageScanVisitor(
-                module.filepath,
-                local_symbols,
-                self.registry,
-                current_module_fqn=module.path,
-                is_init_file=is_init,
+            usages.append(
+                UsageLocation(
+                    file_path=abs_path,
+                    lineno=ref.lineno,
+                    col_offset=ref.col_offset,
+                    end_lineno=ref.end_lineno,
+                    end_col_offset=ref.end_col_offset,
+                    ref_type=ref_type,
+                    target_node_fqn=ref.target_fqn,
+                )
             )
-            wrapper.visit(visitor)
-        except Exception as e:
-            log.error(f"Failed to scan usages in {module.filepath}: {e}")
-            raise  # Re-raise to ensure tests fail if scanning fails
+
+        # 2. Find the definition itself and treat it as a usage site
+        definition_result = self.index_store.find_symbol_by_fqn(target_fqn)
+        if definition_result:
+            symbol, file_path_str = definition_result
+            abs_path = self.root_path / file_path_str
+            usages.append(
+                UsageLocation(
+                    file_path=abs_path,
+                    lineno=symbol.lineno,
+                    col_offset=symbol.col_offset,
+                    end_lineno=symbol.end_lineno,
+                    end_col_offset=symbol.end_col_offset,
+                    ref_type=ReferenceType.SYMBOL,  # A definition is a symbol site
+                    target_node_fqn=symbol.canonical_fqn or target_fqn,
+                )
+            )
+
+        return usages
 
     def get_module(self, package_name: str) -> Optional[griffe.Module]:
         if package_name in self._modules:

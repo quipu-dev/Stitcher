@@ -1,6 +1,9 @@
 "SemanticGraph": |-
   A project-wide graph representing the relationships between Python symbols.
   Leverages Griffe for structure and UsageScanVisitor for cross-references.
+"SemanticGraph.find_usages": |-
+  Query the Index DB for ALL occurrences of an FQN, including its
+  definition and all references. Maps DB records to UsageLocation objects.
 "SemanticGraph.load_from_workspace": |-
   Discovers and loads all packages and peripheral files defined in the workspace.
 "SymbolNode": |-

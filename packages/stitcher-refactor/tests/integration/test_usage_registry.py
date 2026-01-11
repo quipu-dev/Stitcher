@@ -1,61 +1,38 @@
 from stitcher.refactor.engine.graph import SemanticGraph
-from stitcher.refactor.workspace import Workspace
+from stitcher.workspace import Workspace
+from stitcher.test_utils import create_populated_index
 
 
-def test_usage_registry_resolution(tmp_path):
-    # Setup:
-    # mypkg/
-    #   __init__.py
-    #   core.py -> defines `Helper`
-    #   app.py  -> imports `Helper` as `H`, uses `H()`
-
-    # For this simple test, we can just create a pyproject.toml at the root
-    # to make the workspace discover the package.
+def test_usage_query_via_index(tmp_path):
+    """验证 SemanticGraph.find_usages 正确从 Index DB 获取引用。"""
+    # 1. ARRANGE
     (tmp_path / "pyproject.toml").write_text("[project]\nname='test-proj'")
-
     pkg_dir = tmp_path / "mypkg"
     pkg_dir.mkdir()
     (pkg_dir / "__init__.py").write_text("", encoding="utf-8")
-
-    # core.py
     (pkg_dir / "core.py").write_text("class Helper:\n    pass", encoding="utf-8")
-
-    # app.py
-    # We import Helper as H, then instantiate it.
-    # The registry should map the usage of 'H' in app.py to 'mypkg.core.Helper'
     (pkg_dir / "app.py").write_text(
         "from mypkg.core import Helper as H\n\ndef main():\n    obj = H()",
         encoding="utf-8",
     )
 
-    # Execute
+    # 2. ACT
+    index_store = create_populated_index(tmp_path)
     workspace = Workspace(root_path=tmp_path)
-    graph = SemanticGraph(workspace=workspace)
+    graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
 
-    # Verify
-    # We want to find usages of 'mypkg.core.Helper'
-    usages = graph.registry.get_usages("mypkg.core.Helper")
+    # 3. ASSERT
+    # 我们查询 'mypkg.core.Helper'
+    usages = graph.find_usages("mypkg.core.Helper")
 
-    # Debug info
-    print(f"Usages found: {usages}")
+    # 我们期望找到：
+    # 1. app.py 中的导入：'Helper' as H (ReferenceRecord)
+    # 2. app.py 中的使用：'H()'
 
-    # We expect usages in:
-    # 1. app.py (the import statement "Helper as H" - handled by Griffe Alias scan?)
-    #    Actually our _scan_module_usages scans Name nodes.
-    #    The import statement creates the alias 'H'.
-    #    The UsageVisitor sees 'H' in 'obj = H()' and resolves it to 'mypkg.core.Helper'.
+    app_usages = [u for u in usages if u.file_path.name == "app.py"]
+    assert len(app_usages) >= 2
 
-    # Let's check if we caught the usage in `main`
-    app_usage = next(
-        (u for u in usages if u.file_path.name == "app.py" and u.lineno == 4), None
-    )
-
-    assert app_usage is not None, "Failed to find usage of H() in app.py"
-    assert app_usage.col_offset == 10  # "    obj = H()" -> H starts at index 10
-
-    # Also, we implicitly registered the definition in core.py?
-    # _scan_module_usages registers local definitions too.
-    # So 'class Helper' in core.py should also be a usage of 'mypkg.core.Helper' (definition is a usage)
-    core_usage = next((u for u in usages if u.file_path.name == "core.py"), None)
-    assert core_usage is not None
+    # 验证位置信息是否正确
+    call_usage = next(u for u in app_usages if u.lineno == 4)
+    assert call_usage.col_offset == 10  # H()

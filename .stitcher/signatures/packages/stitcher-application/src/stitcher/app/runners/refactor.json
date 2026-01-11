@@ -1,17 +1,22 @@
 {
   "Callable": {},
+  "FileIndexer": {},
+  "IndexStore": {},
   "L": {},
   "MigrationError": {},
   "MigrationLoader": {},
   "Optional": {},
   "Path": {},
   "Planner": {},
+  "PythonAdapter": {},
   "RefactorContext": {},
   "RefactorRunner": {},
   "RefactorRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path):",
-    "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, index_store: IndexStore, file_indexer: FileIndexer):",
+    "baseline_code_structure_hash": "6b8cd6353a2e7edc339f93808686a08b8a26e3e83047719532e37973dc2078f3"
   },
+  "RefactorRunner.file_indexer": {},
+  "RefactorRunner.index_store": {},
   "RefactorRunner.root_path": {},
   "RefactorRunner.run_apply": {
     "baseline_code_signature_text": "def run_apply(self, migration_script: Path, config: StitcherConfig, dry_run: bool = False, confirm_callback: Optional[Callable[[int], bool]] = None) -> bool:",

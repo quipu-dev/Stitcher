@@ -48,6 +48,10 @@
     "baseline_code_signature_text": "def _create_node_from_fqn(self, fqn: str) -> cst.BaseExpression:",
     "baseline_code_structure_hash": "201e0533220c702d4063c62258bfb4dbdd80bc5ff8e5781c16c91c331f05c9a7"
   },
+  "SymbolRenamerTransformer._get_rename_for_node": {
+    "baseline_code_signature_text": "def _get_rename_for_node(self, node: cst.CSTNode) -> Optional[Tuple[str, str]]:",
+    "baseline_code_structure_hash": "098def532368c1d3e89f0bfc2553abca5dab1491d11aa5f0d935e984abc56297"
+  },
   "SymbolRenamerTransformer._is_target": {
     "baseline_code_signature_text": "def _is_target(self, node: cst.CSTNode) -> Optional[str]:",
     "baseline_code_structure_hash": "740ce980ed3bcf2a2428128eca5366b9f47ddb46621b83b29cd0a2228577b51c"
