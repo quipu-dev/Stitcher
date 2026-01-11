@@ -57,29 +57,33 @@ def my_local_function():
         msg for msg in messages if msg["id"] == str(L.check.issue.missing)
     ]
 
-    reported_keys = {
-        (msg["params"]["key"], msg["params"].get("path"))
-        for msg in missing_doc_warnings
-    }
-    
+    # The `missing` message only contains the key, not the path. The file-level
+    # summary message contains the path. We only need to check the key here.
+    reported_keys = {msg["params"]["key"] for msg in missing_doc_warnings}
+
+    # We also check untracked messages, as new symbols will appear here.
+    untracked_missing_warnings = [
+        msg for msg in messages if msg["id"] == str(L.check.issue.untracked_missing_key)
+    ]
+    reported_untracked_keys = {msg["params"]["key"] for msg in untracked_missing_warnings}
+
+    all_reported_keys = reported_keys.union(reported_untracked_keys)
+
     # Assert that the locally defined function IS reported as missing
     assert (
-        "my_local_function",
-        "src/my_lib/__init__.py",
-    ) in reported_keys, "Local function was not reported as missing."
+        "my_local_function" in all_reported_keys
+    ), "Local function was not reported as missing."
 
     # Assert that standard imports and re-exports are NOT reported
     assert (
-        "Dict",
-        "src/my_lib/__init__.py",
-    ) not in reported_keys, "Standard import 'Dict' was incorrectly reported."
+        "Dict" not in all_reported_keys
+    ), "Standard import 'Dict' was incorrectly reported."
     
     assert (
-        "MyDefinedClass",
-        "src/my_lib/__init__.py",
-    ) not in reported_keys, "Re-exported class 'MyDefinedClass' was incorrectly reported."
+        "MyDefinedClass" not in all_reported_keys
+    ), "Re-exported class 'MyDefinedClass' was incorrectly reported."
 
     # Assert that the total number of missing doc warnings is exactly 1
     assert (
-        len(reported_keys) == 1
-    ), f"Expected 1 missing doc warning, but found {len(reported_keys)}: {reported_keys}"
+        len(all_reported_keys) == 1
+    ), f"Expected 1 missing doc warning, but found {len(all_reported_keys)}: {all_reported_keys}"

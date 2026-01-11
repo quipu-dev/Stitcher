@@ -140,7 +140,8 @@ class ModuleDef:
                 keys.add(cls.name)
                 # Public attributes in the class
                 for attr in cls.attributes:
-                    if not attr.name.startswith("_"):
+                    # An attribute that is an alias (import) is not defined here.
+                    if not attr.name.startswith("_") and attr.alias_target is None:
                         keys.add(f"{cls.name}.{attr.name}")
                 # Public methods
                 for method in cls.methods:
@@ -149,7 +150,8 @@ class ModuleDef:
 
         # Module-level public attributes
         for attr in self.attributes:
-            if not attr.name.startswith("_"):
+            # An attribute that is an alias (import) is not defined here.
+            if not attr.name.startswith("_") and attr.alias_target is None:
                 keys.add(attr.name)
 
         return keys
@@ -170,7 +172,11 @@ class ModuleDef:
                     keys.append(cls.name)
                 # Public attributes in the class
                 for attr in cls.attributes:
-                    if not attr.name.startswith("_") and not attr.docstring:
+                    if (
+                        not attr.name.startswith("_")
+                        and not attr.docstring
+                        and attr.alias_target is None
+                    ):
                         keys.append(f"{cls.name}.{attr.name}")
                 # Public methods
                 for method in cls.methods:
@@ -179,7 +185,11 @@ class ModuleDef:
 
         # Module-level public attributes
         for attr in self.attributes:
-            if not attr.name.startswith("_") and not attr.docstring:
+            if (
+                not attr.name.startswith("_")
+                and not attr.docstring
+                and attr.alias_target is None
+            ):
                 keys.append(attr.name)
 
         return sorted(keys)
