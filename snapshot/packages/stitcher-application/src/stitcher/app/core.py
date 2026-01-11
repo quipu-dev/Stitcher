@@ -61,6 +61,17 @@ class StitcherApp:
             root_path, self.scanner, self.doc_manager, transformer
         )
 
+        # 3. Indexing Subsystem
+        # Hardcoded path for architectural consistency
+        index_db_path = root_path / ".stitcher" / "index" / "index.db"
+        self.db_manager = DatabaseManager(index_db_path)
+        self.index_store = IndexStore(self.db_manager)
+        self.workspace_scanner = WorkspaceScanner(root_path, self.index_store)
+
+        # Register Adapters
+        # TODO: Load adapters dynamically or via config in future
+        self.workspace_scanner.register_adapter(".py", PythonAdapter(root_path))
+
         # 2. Runners (Command Handlers)
         self.check_runner = CheckRunner(
             root_path,
@@ -84,18 +95,7 @@ class StitcherApp:
             root_path, self.doc_manager, transformer
         )
         self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
-        self.refactor_runner = RefactorRunner(root_path)
-
-        # 3. Indexing Subsystem
-        # Hardcoded path for architectural consistency
-        index_db_path = root_path / ".stitcher" / "index" / "index.db"
-        self.db_manager = DatabaseManager(index_db_path)
-        self.index_store = IndexStore(self.db_manager)
-        self.workspace_scanner = WorkspaceScanner(root_path, self.index_store)
-
-        # Register Adapters
-        # TODO: Load adapters dynamically or via config in future
-        self.workspace_scanner.register_adapter(".py", PythonAdapter(root_path))
+        self.refactor_runner = RefactorRunner(root_path, self.index_store)
 
         self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
 
