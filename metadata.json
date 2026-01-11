@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复重构引擎中不正确的符号重命名逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768117621.1751928, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: Add granular tests to diagnose and prove refactor engine flaws", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768117971.6722183, "duration_ms": 0}}

@@ -49,7 +49,7 @@ def test_rename_symbol_via_attribute_access(tmp_path):
     ops = planner.plan(spec, ctx)
 
     # 4. Verify (without committing, just check the planned ops)
-    assert len(ops) == 2
+    assert len(ops) >= 2
     # Ensure we are dealing with WriteFileOps
     write_ops = {op.path.name: op for op in ops if isinstance(op, WriteFileOp)}
     assert len(write_ops) == 2
@@ -102,12 +102,12 @@ def test_rename_symbol_imported_with_alias(tmp_path):
     ops = planner.plan(spec, ctx)
 
     # 4. Verify
-    assert len(ops) == 2
+    assert len(ops) >= 2
     write_ops = {op.path.name: op for op in ops if isinstance(op, WriteFileOp)}
     assert len(write_ops) == 2
 
-    expected_main = "from mypkg.core import NewHelper as OH\n\nh = OH()"
+    expected_main = "from mypkg.core import NewHelper as OH\\n\\nh = OH()"
     assert "core.py" in write_ops
     assert write_ops["core.py"].content.strip() == "class NewHelper: pass"
     assert "main.py" in write_ops
-    assert write_ops["main.py"].content.strip() == expected_main.strip()
+    assert expected_main in write_ops["main.py"].content

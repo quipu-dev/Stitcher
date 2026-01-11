@@ -15,7 +15,7 @@ from stitcher.test_utils import WorkspaceFactory, create_populated_index
 
 def test_smoking_gun_concurrent_modifications_lost_edit(tmp_path):
     """
-    THE SMOKING GUN TEST (REVISED)
+    THE SMOKING GUN TEST
 
     Scenario:
     We have a file 'mypkg/core.py' containing TWO symbols.
@@ -24,16 +24,16 @@ def test_smoking_gun_concurrent_modifications_lost_edit(tmp_path):
     2. Renames Symbol A.
     3. Renames Symbol B.
 
-    Current Architecture Failure Mode (The "Lost Edit"):
-    1. MoveOp: Plans Move(core -> utils).
-    2. RenameOp(A): Reads 'core.py' (original), replaces A->NewA. Plans: Write(core, Content_A_Modified).
-    3. RenameOp(B): Reads 'core.py' (original), replaces B->NewB. Plans: Write(core, Content_B_Modified).
-
-    Execution (even with Path Rebasing):
-    1. Move(core -> utils) executes.
-    2. Write(utils, Content_A_Modified) executes. (File has NewA, but old B).
-    3. Write(utils, Content_B_Modified) executes. (File has NewB, but old A).
-       -> IT OVERWRITES THE PREVIOUS WRITE.
+    Old Architecture Failure Mode (The "Lost Edit"):
+    1. MoveOp generates intents.
+    2. RenameOp(A) generates intents.
+    3. RenameOp(B) generates intents.
+    4. Planner processes all RenameIntents:
+       - Renamer reads 'core.py', renames A, plans Write(core.py, content_A_modified).
+       - Renamer reads 'core.py' (original), renames B, plans Write(core.py, content_B_modified).
+    5. Planner processes MoveIntents, plans Move(core.py -> utils.py).
+    6. TransactionManager rebases paths, resulting in two conflicting writes to 'utils.py'.
+       The second write overwrites the first.
 
     Result: The file ends up with only ONE of the renames applied.
     """
@@ -81,7 +81,6 @@ def old_func():
         "mypkg.core.old_func", "mypkg.utils.new_func"
     )
 
-    # Use the new Planner V2 architecture
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner
 
@@ -114,12 +113,10 @@ def old_func():
 
     # Debug output
     if not (has_new_class and has_new_func):
-        print("\n--- FAILURE DIAGNOSTIC ---")
+        print("\\n--- FAILURE DIAGNOSTIC ---")
         print(f"Content of {dest_path}:")
         print(content)
         print("--------------------------")
 
-    # Both renames must be present.
-    # Current architecture will fail this: one will be missing.
     assert has_new_class, "Lost Edit: Class rename was overwritten!"
     assert has_new_func, "Lost Edit: Function rename was overwritten!"

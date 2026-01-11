@@ -3,6 +3,7 @@ from stitcher.common.transaction import (
     TransactionManager,
     WriteFileOp,
     MoveFileOp,
+    DeleteFileOp,
 )
 
 
@@ -17,12 +18,13 @@ def test_rebase_write_after_move():
     2. Write B (content updated)
     """
     tm = TransactionManager(Path("/"))
-    tm.add_move("A", "B")
-    tm.add_write("A", "new content")
+    # The internal ops list that will be processed
+    ops = [
+        MoveFileOp(Path("A"), Path("B")),
+        WriteFileOp(Path("A"), "new content"),
+    ]
 
-    # We need to access the private logic or trigger it via commit (mocked fs)
-    # Let's inspect the internal _rebase_ops method which we will implement
-    rebased = tm._rebase_ops(tm._ops)
+    rebased = tm._rebase_ops(ops)
 
     assert len(rebased) == 2
     assert isinstance(rebased[0], MoveFileOp)
@@ -46,12 +48,13 @@ def test_rebase_chain_moves():
     2. Move B -> C
     3. Write C
     """
+    ops = [
+        MoveFileOp(Path("A"), Path("B")),
+        MoveFileOp(Path("B"), Path("C")),
+        WriteFileOp(Path("A"), "final content"),
+    ]
     tm = TransactionManager(Path("/"))
-    tm.add_move("A", "B")
-    tm.add_move("B", "C")
-    tm.add_write("A", "final content")
-
-    rebased = tm._rebase_ops(tm._ops)
+    rebased = tm._rebase_ops(ops)
 
     assert len(rebased) == 3
     assert isinstance(rebased[2], WriteFileOp)
@@ -66,11 +69,12 @@ def test_rebase_no_effect_if_write_first():
 
     Expected: No change in paths (Write A happens before it moves)
     """
+    ops = [
+        WriteFileOp(Path("A"), "content"),
+        MoveFileOp(Path("A"), Path("B")),
+    ]
     tm = TransactionManager(Path("/"))
-    tm.add_write("A", "content")
-    tm.add_move("A", "B")
-
-    rebased = tm._rebase_ops(tm._ops)
+    rebased = tm._rebase_ops(ops)
 
     assert rebased[0].path == Path("A")
     assert rebased[1].path == Path("A")
@@ -89,10 +93,11 @@ def test_rebase_delete_after_move():
     1. Move A -> B
     2. Delete B
     """
+    ops = [
+        MoveFileOp(Path("A"), Path("B")),
+        DeleteFileOp(Path("A")),
+    ]
     tm = TransactionManager(Path("/"))
-    tm.add_move("A", "B")
-    tm.add_delete_file("A")
-
-    rebased = tm._rebase_ops(tm._ops)
+    rebased = tm._rebase_ops(ops)
 
     assert rebased[1].path == Path("B")
