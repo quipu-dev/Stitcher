@@ -689,9 +689,9 @@ dependencies = [
     { name = "stitcher-config" },
     { name = "stitcher-index" },
     { name = "stitcher-python-adapter" },
-    { name = "stitcher-refactor" },
     { name = "stitcher-spec" },
     { name = "stitcher-stubgen" },
+    { name = "stitcher-workspace" },
 ]
 
 [package.metadata]
@@ -701,9 +701,9 @@ requires-dist = [
     { name = "stitcher-config", editable = "packages/stitcher-config" },
     { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-python-adapter", editable = "packages/stitcher-python-adapter" },
-    { name = "stitcher-refactor", editable = "packages/stitcher-refactor" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
     { name = "stitcher-stubgen", editable = "packages/stitcher-stubgen" },
+    { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
 ]
 
 [[package]]
@@ -863,6 +863,7 @@ dependencies = [
     { name = "stitcher-index" },
     { name = "stitcher-python-analysis" },
     { name = "stitcher-spec" },
+    { name = "stitcher-workspace" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 
@@ -874,6 +875,7 @@ requires-dist = [
     { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-python-analysis", editable = "packages/stitcher-python-analysis" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
+    { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
 ]
 
@@ -909,6 +911,7 @@ dependencies = [
     { name = "stitcher-application" },
     { name = "stitcher-index" },
     { name = "stitcher-python-adapter" },
+    { name = "stitcher-workspace" },
     { name = "tomli-w" },
 ]
 
@@ -919,6 +922,7 @@ requires-dist = [
     { name = "stitcher-application", editable = "packages/stitcher-application" },
     { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-python-adapter", editable = "packages/stitcher-python-adapter" },
+    { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
     { name = "tomli-w" },
 ]
 
