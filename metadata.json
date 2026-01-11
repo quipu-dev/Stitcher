@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(check): 修正 CheckRunner 中的属性访问错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768129997.3756433, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(check): 修正 ASTCheckSubjectAdapter 的状态构建逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768130115.8292694, "duration_ms": 0}}

@@ -44,16 +44,17 @@ class ASTCheckSubjectAdapter(CheckSubject):
         return self._module.is_documentable()
 
     def get_all_symbol_states(self) -> Dict[str, SymbolState]:
-        # 1. Load all necessary data from various sources (the old way)
+        # 1. Load all necessary data from various sources
         source_docs = self._doc_manager.flatten_module_docs(self._module)
         yaml_docs = self._doc_manager.load_docs_for_module(self._module)
         public_fqns = self._module.get_public_documentable_fqns()
+        code_fqns = set(self._module.get_all_fqns())
 
         fingerprints = self._compute_fingerprints()
         yaml_hashes = self._doc_manager.compute_yaml_content_hashes(self._module)
         stored_hashes = self._sig_manager.load_composite_hashes(self.file_path)
 
-        all_fqns = set(source_docs.keys()) | set(yaml_docs.keys()) | set(stored_hashes.keys())
+        all_fqns = code_fqns | set(yaml_docs.keys()) | set(stored_hashes.keys())
         states: Dict[str, SymbolState] = {}
 
         # 2. Iterate and build the state object for each symbol
@@ -65,7 +66,7 @@ class ASTCheckSubjectAdapter(CheckSubject):
             states[fqn] = SymbolState(
                 fqn=fqn,
                 is_public=(fqn in public_fqns),
-                exists_in_code=(fqn in source_docs),
+                exists_in_code=(fqn in code_fqns),
                 source_doc_content=source_ir.summary if source_ir else None,
                 signature_hash=fp.get("current_code_structure_hash"),
                 signature_text=fp.get("current_code_signature_text"),
