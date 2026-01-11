@@ -41,6 +41,13 @@ class RefactorRunner:
             bus.info(L.index.run.start)
             workspace = Workspace(self.root_path, config)
 
+            # Ensure the database schema is initialized before indexing.
+            from stitcher.index.db import DatabaseManager
+            db_manager = DatabaseManager(
+                self.root_path / ".stitcher" / "index" / "index.db"
+            )
+            db_manager.initialize()
+
             # The FileIndexer was created with an unconfigured workspace.
             # We must re-register the adapter with the correct search paths.
             self.file_indexer.register_adapter(

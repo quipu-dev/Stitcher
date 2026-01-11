@@ -33,13 +33,11 @@ def upgrade(spec: MigrationSpec):
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = runner.invoke(
             app,
-            ["--verbose", "refactor", "apply", str(migration_script), "--yes"],
+            ["refactor", "apply", str(migration_script), "--yes"],
             catch_exceptions=False,
         )
 
     # 3. Assert
-    print(result.stdout)
-    print(result.stderr)
     assert result.exit_code == 0, result.stdout
     spy_bus.assert_id_called(L.refactor.run.success)
 
@@ -74,13 +72,11 @@ def upgrade(spec: MigrationSpec):
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = runner.invoke(
             app,
-            ["--verbose", "refactor", "apply", str(migration_script), "--dry-run"],
+            ["refactor", "apply", str(migration_script), "--dry-run"],
             catch_exceptions=False,
         )
 
     # 3. Assert
-    print(result.stdout)
-    print(result.stderr)
     assert result.exit_code == 0, result.stdout
     spy_bus.assert_id_called(L.refactor.run.preview_header)
 

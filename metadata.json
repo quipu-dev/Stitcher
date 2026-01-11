@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 创建调试测试以捕获隐藏的异常信息", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768118842.7129865, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 确保重构命令在执行前初始化索引数据库", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768118918.0323575, "duration_ms": 0}}

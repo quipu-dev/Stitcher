@@ -1,75 +1,120 @@
-为了确定导致 `refactor` 命令失败的确切异常，我将创建一个专门的调试测试文件。该测试将重现失败的场景，并断言 `SpyBus` 捕获到了错误消息。通过断言失败时的详细输出，我们将能够看到具体的异常堆栈或错误信息。
+好的，我们终于找到了根本原因！
 
-## [WIP] test: 创建调试测试以捕获隐藏的异常信息
+`An unexpected error occurred: no such table: files`
+
+这个 `sqlite` 错误信息清晰地表明，`refactor` 命令在执行时，索引数据库（`index.db`）是存在的，但内部是空的，连最基本的 `files` 表都没有。
+
+## [WIP] fix: 确保重构命令在执行前初始化索引数据库
 
 ### 错误分析
 
-集成测试失败且无输出，表明 `RefactorRunner.run_apply` 中的 `try...except` 块捕获了一个异常，并通过 `bus.error` 记录了它。由于测试使用了 `SpyBus`，这个错误信息被存入内存而未打印到控制台。为了修复这个 Bug，我们需要知道这个被吞没的异常到底是什么。
+调试探针测试捕获到的 SQLite 错误 `"no such table: files"` 明确地暴露了问题的根源。
+
+`RefactorRunner` 依赖一个功能完备的语义索引来查找符号用法。它通过 `run_index_build` 来更新索引，但这个更新过程**假设数据库的表结构已经存在**。`FileIndexer.index_files` 方法会直接对 `files` 表进行 `SELECT` 和 `UPDATE` 操作，如果表不存在，就会立即导致 `sqlite3.OperationalError: no such table` 异常。
+
+在正常的 CLI 工作流中，用户通常会先手动运行 `stitcher index build`，这个命令的执行入口 `IndexRunner.run_build` 包含了 `self.db_manager.initialize()` 这一关键步骤，它会执行 `schema.sql` 来创建所有必要的表。
+
+然而，`RefactorRunner` 为了保证索引是最新的，自己调用了 `self.file_indexer.index_files()`，但它**遗漏了**在调用索引器之前先调用 `self.db_manager.initialize()` 的步骤。
+
+这个缺陷在之前的测试中没有被发现，可能是因为其他的测试（比如 `check` 命令的测试）在 `refactor` 测试之前运行，并“意外地”初始化了数据库，从而掩盖了这个问题。但当测试被隔离执行时，这个隐藏的依赖问题就暴露了出来。
 
 ### 用户需求
 
-创建一个新的测试文件，用于提取并显示导致 `refactor` 命令失败的底层错误信息。
+修复 `refactor apply` 命令，使其能够在执行索引更新之前，确保索引数据库的表结构已经被正确创建。
+
+### 评论
+
+这是一个典型的“隐式依赖”或“状态假设”错误。`RefactorRunner` 错误地假设了数据库总是处于一个可用的状态。修复这个问题的关键是让 `RefactorRunner` 对自己的依赖项（一个初始化好的数据库）负起责任，而不是依赖外部或偶然的状态。
 
 ### 目标
 
-创建 `packages/stitcher-cli/tests/integration/test_refactor_debug_probe.py`。
-该测试将：
-1.  设置与失败的 `test_refactor_apply_e2e` 相同的环境。
-2.  运行 `refactor apply` 命令。
-3.  从 `SpyBus` 中检索所有 `error` 级别的消息。
-4.  使用 `pytest.fail` 显式打印这些错误消息，以便我们在测试报告中看到它们。
+修改 `packages/stitcher-application/src/stitcher/app/runners/refactor.py` 中的 `run_apply` 方法，在调用 `self.file_indexer.index_files(files_to_index)` 之前，显式地调用 `self.db_manager.initialize()`。
 
 ### 基本原理
 
-这是处理“被吞没的异常”的标准调试策略。通过编写一个专门用于暴露内部状态的测试，我们可以绕过 CLI 的输出抑制，直接查看应用程序的内部日志。
+这个修复方案确保了 `refactor` 命令的原子性和自足性。无论当前的 `.stitcher/index/index.db` 文件是否存在或是空的，`run_apply` 命令总能保证在开始任何数据库操作之前，表结构是完整且正确的。这消除了对外部状态的依赖，使得命令在任何情况下都能可靠地执行。
 
 ### 标签
 
-#intent/tooling #flow/ready #priority/high #comp/tests #scope/dx #ai/debug #task/domain/testing #task/object/integration-tests #task/action/debug #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/engine #concept/state #scope/core #ai/instruct #task/domain/testing #task/object/integration-tests #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建调试探针测试
+#### Acts 1: 在 RefactorRunner 中添加数据库初始化步骤
+
+我将修改 `refactor.py` 文件，在更新索引之前确保数据库 schema 已经创建。
 
 ~~~~~act
-write_file
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/refactor.py
+~~~~~
+~~~~~python.old
+            bus.info(L.index.run.start)
+            workspace = Workspace(self.root_path, config)
+
+            # The FileIndexer was created with an unconfigured workspace.
+            # We must re-register the adapter with the correct search paths.
+            self.file_indexer.register_adapter(
+                ".py", PythonAdapter(self.root_path, workspace.get_search_paths())
+            )
+
+            files_to_index = workspace.discover_files()
+            self.file_indexer.index_files(files_to_index)
+~~~~~
+~~~~~python.new
+            bus.info(L.index.run.start)
+            workspace = Workspace(self.root_path, config)
+
+            # Ensure the database schema is initialized before indexing.
+            from stitcher.index.db import DatabaseManager
+            db_manager = DatabaseManager(
+                self.root_path / ".stitcher" / "index" / "index.db"
+            )
+            db_manager.initialize()
+
+            # The FileIndexer was created with an unconfigured workspace.
+            # We must re-register the adapter with the correct search paths.
+            self.file_indexer.register_adapter(
+                ".py", PythonAdapter(self.root_path, workspace.get_search_paths())
+            )
+
+            files_to_index = workspace.discover_files()
+            self.file_indexer.index_files(files_to_index)
+~~~~~
+
+#### Acts 2: 删除临时调试探针测试
+
+既然我们已经找到了根本原因并制定了修复计划，这个调试测试文件就不再需要了。
+
+~~~~~act
+delete_file
 packages/stitcher-cli/tests/integration/test_refactor_debug_probe.py
 ~~~~~
-~~~~~python
-from typer.testing import CliRunner
-import pytest
-from stitcher.cli.main import app
-from stitcher.test_utils import WorkspaceFactory, SpyBus
-from needle.pointer import L
 
-runner = CliRunner()
+#### Acts 3: 移除 `test_refactor_command.py` 中的临时调试代码
 
-def test_probe_refactor_exception(tmp_path, monkeypatch):
-    """
-    A temporary debug test to reveal the exception hidden by SpyBus.
-    """
-    # 1. Arrange
-    factory = WorkspaceFactory(tmp_path)
-    (
-        factory.with_project_name("mypkg")
-        .with_config({"scan_paths": ["src"]})
-        .with_source("src/mypkg/__init__.py", "")
-        .with_source("src/mypkg/core.py", "class Old: pass")
-        .with_source("src/mypkg/app.py", "from mypkg.core import Old")
-    ).build()
-    
-    migration_script = tmp_path / "001_rename.py"
-    migration_script.write_text("""
-from stitcher.refactor.migration import MigrationSpec, Rename
-def upgrade(spec: MigrationSpec):
-    spec.add(Rename("mypkg.core.Old", "mypkg.core.New"))
-""")
+我们现在可以清理之前为增加可观测性而添加的 `print` 语句和 `--verbose` 标志。
 
-    # 2. Act
-    monkeypatch.chdir(tmp_path)
-    spy_bus = SpyBus()
+~~~~~act
+patch_file
+packages/stitcher-cli/tests/integration/test_refactor_command.py
+~~~~~
+~~~~~python.old
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        result = runner.invoke(
+            app,
+            ["--verbose", "refactor", "apply", str(migration_script), "--yes"],
+            catch_exceptions=False,
+        )
+
+    # 3. Assert
+    print(result.stdout)
+    print(result.stderr)
+    assert result.exit_code == 0, result.stdout
+~~~~~
+~~~~~python.new
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = runner.invoke(
             app,
@@ -77,20 +122,39 @@ def upgrade(spec: MigrationSpec):
             catch_exceptions=False,
         )
 
-    # 3. Probe
-    # Extract all error messages captured by SpyBus
-    messages = spy_bus.get_messages()
-    errors = [m for m in messages if m["level"] == "error"]
-    
-    if errors:
-        # Construct a detailed error report
-        error_report = "\n".join([f"ID: {e['id']}, Params: {e['params']}" for e in errors])
-        pytest.fail(f"Captured Errors in SpyBus:\n{error_report}")
-    
-    # If no errors but exit code is 1, it's weird
-    assert result.exit_code == 0, f"Exit code 1 but no bus errors? Stdout: {result.stdout}"
+    # 3. Assert
+    assert result.exit_code == 0, result.stdout
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-cli/tests/integration/test_refactor_command.py
+~~~~~
+~~~~~python.old
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        result = runner.invoke(
+            app,
+            ["--verbose", "refactor", "apply", str(migration_script), "--dry-run"],
+            catch_exceptions=False,
+        )
+
+    # 3. Assert
+    print(result.stdout)
+    print(result.stderr)
+    assert result.exit_code == 0, result.stdout
+~~~~~
+~~~~~python.new
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        result = runner.invoke(
+            app,
+            ["refactor", "apply", str(migration_script), "--dry-run"],
+            catch_exceptions=False,
+        )
+
+    # 3. Assert
+    assert result.exit_code == 0, result.stdout
 ~~~~~
 
 ### 下一步建议
 
-请运行这个新的测试文件。它将（预期地）失败，并在失败消息中打印出 `SpyBus` 捕获的异常信息。请将这些信息提供给我，我将根据它来修复代码。
+这个修复方案直接命中了问题的核心。请应用此计划并重新运行完整的测试套件。我非常有信心这次所有测试都将通过。
