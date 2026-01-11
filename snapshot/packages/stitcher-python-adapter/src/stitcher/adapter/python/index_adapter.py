@@ -9,6 +9,7 @@ import libcst as cst
 from stitcher.adapter.python.griffe_parser import GriffePythonParser
 from stitcher.adapter.python.fingerprint import PythonFingerprintStrategy
 from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
+from stitcher.python.analysis.scope import ScopeAnalyzer
 from stitcher.python.analysis.utils import path_to_logical_fqn
 from .uri import SURIGenerator
 
@@ -127,35 +128,9 @@ class PythonAdapter(LanguageAdapter):
     ) -> List[ReferenceRecord]:
         refs: List[ReferenceRecord] = []
 
-        # 1. Build local_symbols map (Name -> FQN)
-        # This helps the visitor distinguish between local usages and globals/builtins.
-        # It maps a name visible in the current scope to its fully-qualified name.
-        local_symbols = {}
-
-        # 1a. Register all imported aliases (e.g., 'helper' -> 'pkg.utils.helper')
-        for attr in module.attributes:
-            if attr.alias_target:
-                local_symbols[attr.name] = attr.alias_target
-
-        # 1b. Register all local definitions
-        def register_local(name: str, parent_fqn: str = "") -> str:
-            fqn = (
-                f"{parent_fqn}.{name}" if parent_fqn else f"{logical_module_fqn}.{name}"
-            )
-            local_symbols[name] = fqn
-            return fqn
-
-        for func in module.functions:
-            register_local(func.name)
-
-        for cls in module.classes:
-            cls_fqn = register_local(cls.name)
-            # Register class-level aliases
-            for attr in cls.attributes:
-                if attr.alias_target:
-                    local_symbols[attr.name] = attr.alias_target
-            # Methods are handled by the visitor's scope analysis (e.g., self.method)
-            # so we don't need to register them as top-level local symbols.
+        # 1. Build local_symbols map using the centralized analyzer
+        analyzer = ScopeAnalyzer()
+        local_symbols = analyzer.build_from_ir(module, logical_module_fqn)
 
         # 2. Parse CST and Run Visitor
         try:

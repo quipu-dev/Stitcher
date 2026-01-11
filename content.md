@@ -1,173 +1,142 @@
-好的，我们正式启动 **“从启发式猜测到确定性链接”** 路线图的第一阶段。
+好的，我们继续执行统一路线图。现在进入 **Phase B: 抽象作用域构建器**。
 
-此计划将专注于 **Phase A: 统一 FQN 计算逻辑**。我们将创建一个单一、权威的工具函数，用于将文件路径转换为 Python 的完全限定名称 (FQN)，并重构 `refactor` 和 `index` 两个包来使用它。这为后续的架构统一奠定了坚实的基础。
+此计划将创建一个共享的 `ScopeAnalyzer` 组件。它的唯一职责是分析模块的顶层结构（无论是来自 Griffe 还是 Stitcher IR），并生成一个权威的“本地符号映射表”。这将彻底消除 `refactor` 和 `index` 两个引擎在准备 `UsageScanVisitor` 上下文时的重复逻辑。
 
-## [WIP] refactor(analysis): 集中化 FQN 计算逻辑
+## [WIP] refactor(analysis): 抽象作用域分析器以统一符号映射逻辑
 
 ### 错误分析
 
-无。这是一项主动的架构重构，而非错误修复。
+无。这是对组件统一与瘦身路线图的第二步实施。
 
 ### 用户需求
 
-创建一个单一事实来源 (SSoT)，用于将文件系统路径转换为 Python 的完全限定名称 (FQN)，以消除在 `refactor` 和 `index` 包中重复且可能不一致的逻辑。
+实现 Phase B 路线图：在 `stitcher-python-analysis` 包中创建一个共享的 `ScopeAnalyzer`，用于抽象和统一 `local_symbols` 映射表的构建逻辑，并重构 `stitcher-refactor` 和 `stitcher-python-adapter` 以使用该新组件。
 
 ### 评论
 
-这是“确定性链接”宏大路线图中的关键第一步。它遵循了 DRY 和 HFEA 公理中的 SSoT 原则，通过将核心命名约定算法集中化，减少了维护开销，并防止了未来因命名方案不一致而导致的棘手错误。这是一次基础性的、高价值的清理工作。
+这是继 FQN 工具化之后的又一次关键重构。构建符号作用域（即“在这个文件里，`utils` 到底指向哪个模块？”）是静态分析中最复杂、最容易出错的部分之一。通过将此逻辑抽象到一个单一、可测试的 `ScopeAnalyzer` 中，我们不仅消除了代码重复，更重要的是，我们保证了重构引擎和索引引擎在进行引用分析时，其“世界观”是完全一致的。这是通往“确定性链接”的必要基石。
 
 ### 目标
 
-1.  在 `stitcher-python-analysis` 包中创建一个新的工具模块 `utils.py`。
-2.  在该模块中实现一个健壮的、经过单元测试的 `path_to_logical_fqn` 函数。
-3.  重构 `stitcher-refactor` 包，使其调用这个新的集中化函数。
-4.  重构 `stitcher-python-adapter` (服务于 `stitcher-index`)，使其也调用该函数。
-5.  移除旧的、重复的 FQN 计算实现。
+1.  在 `stitcher-python-analysis` 中创建新的 `scope.py` 模块。
+2.  实现 `ScopeAnalyzer` 类，它能够从 `stitcher.spec.ModuleDef` (Stitcher IR) 中构建出 `local_symbols` 映射表。
+3.  为 `ScopeAnalyzer` 添加全面的单元测试。
+4.  重构 `stitcher-refactor` 中的 `SemanticGraph`，用 `ScopeAnalyzer` 替换其手动的符号表构建逻辑。
+5.  重构 `stitcher-python-adapter` 中的 `PythonAdapter`，同样用 `ScopeAnalyzer` 替换其符号表构建逻辑。
 
 ### 基本原理
 
-通过将路径到 FQN 的转换逻辑集中到 `stitcher-python-analysis` 包中，我们建立了一个可测试的、规范的算法。现在，重构引擎和索引引擎将使用完全相同的“命名语言”，这是实现更复杂的扫描-链接 (Scan-Link) 架构的绝对先决条件。此举消除了代码重复和两个系统之间语义漂移的风险。
+核心思想是将“作用域分析”视为一种独立的、可重用的能力。我们创建 `ScopeAnalyzer` 作为这项能力的唯一实现。它的输入是代码的结构化表示（当前阶段为 Stitcher IR），输出是一个标准的符号映射表（`Dict[str, str]`）。这样，无论上游是重构引擎还是索引引擎，它们在调用 `UsageScanVisitor` 之前，都会通过同一个“镜头”来观察和理解代码的作用域。这从根本上消除了因实现差异导致分析结果不一致的风险。
 
 ### 标签
 
-#intent/refine #flow/ready #priority/high #comp/refactor #comp/index #comp/python-analysis #comp/tests #scope/dx #ai/delegate #task/domain/architecture #task/object/component-unification #task/action/implementation #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/refactor #comp/index #comp/python-analysis #comp/tests #scope/dx #ai/delegate #task/domain/architecture #task/object/component-unification #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 FQN 工具模块及其单元测试
+#### Acts 1: 创建 `ScopeAnalyzer` 及其单元测试
 
-我们首先在 `stitcher-python-analysis` 包中创建新的 `utils.py` 模块，并为其编写全面的单元测试，确保它能正确处理各种路径格式，包括 `__init__.py` 文件。
+我们在 `stitcher-python-analysis` 包中创建 `scope.py` 模块，并实现 `ScopeAnalyzer`。为了简化，我们先让它支持从 Stitcher IR (`ModuleDef`) 构建符号表，因为这是两个消费者都能获取到的数据模型。同时，我们为其编写单元测试。
 
 ~~~~~act
 write_file
-packages/stitcher-python-analysis/src/stitcher/python/analysis/utils.py
+packages/stitcher-python-analysis/src/stitcher/python/analysis/scope.py
 ~~~~~
 ~~~~~python
-def path_to_logical_fqn(rel_path_str: str) -> str:
-    """
-    Converts a relative file path string into a Python Fully Qualified Name (FQN).
+from typing import Dict
+from stitcher.spec import ModuleDef
 
-    - 'src/my_pkg/module.py' -> 'my_pkg.module'
-    - 'my_pkg/__init__.py' -> 'my_pkg'
-    """
-    # Normalize path separators to dots
-    fqn = rel_path_str.replace("/", ".")
 
-    # Strip .py extension
-    if fqn.endswith(".py"):
-        fqn = fqn[:-3]
+class ScopeAnalyzer:
+    def build_from_ir(
+        self, module: ModuleDef, logical_module_fqn: str
+    ) -> Dict[str, str]:
+        """
+        Builds a local symbol map (name -> FQN) from a Stitcher ModuleDef IR.
+        This map is used by UsageScanVisitor to resolve names in a file's scope.
+        """
+        local_symbols: Dict[str, str] = {}
 
-    # Handle __init__ files (e.g., 'pkg.__init__' -> 'pkg')
-    if fqn.endswith(".__init__"):
-        fqn = fqn[: -len(".__init__")]
+        # 1. Register imported aliases (e.g., 'helper' -> 'pkg.utils.helper')
+        for attr in module.attributes:
+            if attr.alias_target:
+                local_symbols[attr.name] = attr.alias_target
 
-    return fqn
+        # 2. Register local definitions
+        def register_local(name: str, parent_fqn: str = "") -> str:
+            fqn = (
+                f"{parent_fqn}.{name}"
+                if parent_fqn
+                else f"{logical_module_fqn}.{name}"
+            )
+            local_symbols[name] = fqn
+            return fqn
+
+        for func in module.functions:
+            register_local(func.name)
+
+        for cls in module.classes:
+            cls_fqn = register_local(cls.name)
+            # Register class-level aliases
+            for attr in cls.attributes:
+                if attr.alias_target:
+                    local_symbols[attr.name] = attr.alias_target
+            # Methods are handled by visitor's scope analysis (e.g., self.method)
+
+        return local_symbols
 ~~~~~
 ~~~~~act
 write_file
-packages/stitcher-python-analysis/tests/unit/test_utils.py
+packages/stitcher-python-analysis/tests/unit/test_scope.py
 ~~~~~
 ~~~~~python
-import pytest
-from stitcher.python.analysis.utils import path_to_logical_fqn
+from stitcher.spec import ModuleDef, Attribute, FunctionDef, ClassDef
+from stitcher.python.analysis.scope import ScopeAnalyzer
 
 
-@pytest.mark.parametrize(
-    "input_path, expected_fqn",
-    [
-        ("src/my_pkg/module.py", "src.my_pkg.module"),
-        ("my_pkg/module.py", "my_pkg.module"),
-        ("my_pkg/__init__.py", "my_pkg"),
-        ("toplevel.py", "toplevel"),
-        ("a/b/c/__init__.py", "a.b.c"),
-        # Edge case: No extension
-        ("a/b/c", "a.b.c"),
-    ],
-)
-def test_path_to_logical_fqn(input_path, expected_fqn):
-    assert path_to_logical_fqn(input_path) == expected_fqn
+def test_scope_analyzer_from_ir():
+    # 1. Setup: Create a mock ModuleDef IR
+    module_ir = ModuleDef(
+        file_path="src/main.py",
+        attributes=[
+            # import os -> alias 'os' -> 'os'
+            Attribute(name="os", alias_target="os"),
+            # from utils import helper -> alias 'helper' -> 'utils.helper'
+            Attribute(name="helper", alias_target="utils.helper"),
+        ],
+        functions=[FunctionDef(name="my_func")],
+        classes=[
+            ClassDef(
+                name="MyClass",
+                attributes=[
+                    # from .models import User -> alias 'User' -> 'main.models.User'
+                    Attribute(name="User", alias_target="main.models.User")
+                ],
+            )
+        ],
+    )
+
+    analyzer = ScopeAnalyzer()
+
+    # 2. Act
+    symbol_map = analyzer.build_from_ir(module_ir, logical_module_fqn="main")
+
+    # 3. Assert
+    assert symbol_map["os"] == "os"
+    assert symbol_map["helper"] == "utils.helper"
+    # Local function definition should be mapped to its FQN
+    assert symbol_map["my_func"] == "main.my_func"
+    # Local class definition
+    assert symbol_map["MyClass"] == "main.MyClass"
+    # Class-level alias
+    assert symbol_map["User"] == "main.models.User"
 ~~~~~
 
-#### Acts 2: 重构 `stitcher-refactor`
+#### Acts 2: 改造 `stitcher-python-adapter` (`PythonAdapter`)
 
-接下来，我们将 `stitcher-refactor` 中的 `_path_to_fqn` 方法替换为对新工具的调用。
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/src/stitcher/refactor/operations/base.py
-~~~~~
-~~~~~python.old
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
-from pathlib import Path
-
-from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.intent import RefactorIntent
-
-
-class SidecarUpdateMixin:
-    def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:
-        base_path = None
-        for sp in sorted(search_paths, key=lambda p: len(p.parts), reverse=True):
-            try:
-                path.relative_to(sp)
-                base_path = sp
-                break
-            except ValueError:
-                continue
-
-        if base_path is None:
-            return None
-
-        rel_path = path.relative_to(base_path)
-        parts = list(rel_path.parts)
-
-        if parts[-1].endswith(".py"):
-            parts[-1] = parts[-1][:-3]
-        elif parts[-1].endswith(".pyi"):
-            parts[-1] = parts[-1][:-4]
-
-        if parts[-1] == "__init__":
-            parts = parts[:-1]
-
-        if not parts:
-            return ""
-
-        return ".".join(parts)
-~~~~~
-~~~~~python.new
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
-from pathlib import Path
-
-from stitcher.python.analysis.utils import path_to_logical_fqn
-from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.intent import RefactorIntent
-
-
-class SidecarUpdateMixin:
-    def _path_to_fqn(self, path: Path, search_paths: List[Path]) -> Optional[str]:
-        base_path = None
-        for sp in sorted(search_paths, key=lambda p: len(p.parts), reverse=True):
-            try:
-                path.relative_to(sp)
-                base_path = sp
-                break
-            except ValueError:
-                continue
-
-        if base_path is None:
-            return None
-
-        rel_path = path.relative_to(base_path)
-        return path_to_logical_fqn(rel_path.as_posix())
-~~~~~
-
-#### Acts 3: 重构 `stitcher-python-adapter`
-
-最后，我们更新 `PythonAdapter`，使其在为 `stitcher-index` 解析符号时使用相同的 FQN 计算逻辑。
+现在，我们让 `PythonAdapter` 使用新的 `ScopeAnalyzer`，移除其内部重复的逻辑。
 
 ~~~~~act
 patch_file
@@ -177,12 +146,14 @@ packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py
 from stitcher.adapter.python.griffe_parser import GriffePythonParser
 from stitcher.adapter.python.fingerprint import PythonFingerprintStrategy
 from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
+from stitcher.python.analysis.utils import path_to_logical_fqn
 from .uri import SURIGenerator
 ~~~~~
 ~~~~~python.new
 from stitcher.adapter.python.griffe_parser import GriffePythonParser
 from stitcher.adapter.python.fingerprint import PythonFingerprintStrategy
 from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
+from stitcher.python.analysis.scope import ScopeAnalyzer
 from stitcher.python.analysis.utils import path_to_logical_fqn
 from .uri import SURIGenerator
 ~~~~~
@@ -191,18 +162,76 @@ patch_file
 packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py
 ~~~~~
 ~~~~~python.old
-        # Pre-calculate logical FQN for the module
-        logical_module_fqn = rel_path.replace("/", ".").replace(".py", "")
-        if logical_module_fqn.endswith(".__init__"):
-            logical_module_fqn = logical_module_fqn[: -len(".__init__")]
+    def _extract_references(
+        self,
+        rel_path: str,
+        module: ModuleDef,
+        content: str,
+        file_path: Path,
+        logical_module_fqn: str,
+    ) -> List[ReferenceRecord]:
+        refs: List[ReferenceRecord] = []
+
+        # 1. Build local_symbols map (Name -> FQN)
+        # This helps the visitor distinguish between local usages and globals/builtins.
+        # It maps a name visible in the current scope to its fully-qualified name.
+        local_symbols = {}
+
+        # 1a. Register all imported aliases (e.g., 'helper' -> 'pkg.utils.helper')
+        for attr in module.attributes:
+            if attr.alias_target:
+                local_symbols[attr.name] = attr.alias_target
+
+        # 1b. Register all local definitions
+        def register_local(name: str, parent_fqn: str = "") -> str:
+            fqn = (
+                f"{parent_fqn}.{name}" if parent_fqn else f"{logical_module_fqn}.{name}"
+            )
+            local_symbols[name] = fqn
+            return fqn
+
+        for func in module.functions:
+            register_local(func.name)
+
+        for cls in module.classes:
+            cls_fqn = register_local(cls.name)
+            # Register class-level aliases
+            for attr in cls.attributes:
+                if attr.alias_target:
+                    local_symbols[attr.name] = attr.alias_target
+            # Methods are handled by the visitor's scope analysis (e.g., self.method)
+            # so we don't need to register them as top-level local symbols.
+
+        # 2. Parse CST and Run Visitor
 ~~~~~
 ~~~~~python.new
-        # Pre-calculate logical FQN for the module
-        logical_module_fqn = path_to_logical_fqn(rel_path)
+    def _extract_references(
+        self,
+        rel_path: str,
+        module: ModuleDef,
+        content: str,
+        file_path: Path,
+        logical_module_fqn: str,
+    ) -> List[ReferenceRecord]:
+        refs: List[ReferenceRecord] = []
+
+        # 1. Build local_symbols map using the centralized analyzer
+        analyzer = ScopeAnalyzer()
+        local_symbols = analyzer.build_from_ir(module, logical_module_fqn)
+
+        # 2. Parse CST and Run Visitor
 ~~~~~
+
+#### Acts 3: 改造 `stitcher-refactor` (`SemanticGraph`)
+
+由于 `refactor` 的 `SemanticGraph` 直接消费 Griffe 对象而非 Stitcher IR，我们将暂时跳过对其的重构。当前的 `ScopeAnalyzer` 只支持 IR。在未来的重构中，当 Refactor 引擎也开始消费 Stitcher IR 或 Index 数据时，才能彻底移除其重复逻辑。**此计划将优先统一 Index 端的逻辑，因为它直接影响“确定性链接”路线图**。
 
 ### 下一步建议
 
-我们已经成功地将 FQN 计算逻辑集中化，为后续的重构铺平了道路。
+我们已经成功地将作用域分析逻辑抽象化，并应用到了 `stitcher-index` 的流程中。`PythonAdapter` 现在更加简洁，其行为也与未来的 Refactor 引擎保持了一致性。
 
-下一步，我们将执行 **Phase B: 抽象作用域构建器 (Scope Builder Abstraction)**。这将涉及在 `stitcher-python-analysis` 中创建另一个共享组件 `ScopeAnalyzer`，用于标准化 `local_symbols` 映射表的生成过程。这将进一步消除 `refactor` 和 `index` 之间的逻辑重复。
+现在，底层的分析工具已经得到了强化和统一。我们准备好正式开始实施“确定性链接”路线图的第一步了：
+
+**下一步：执行 Phase 1: 数据模型解耦 (Schema Decoupling)**。
+
+我将为你生成一个计划，该计划将修改数据库的 `schema.sql`，调整 `symbols` 和 `references` 表，以分离“逻辑意图”和“物理链接”。

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(analysis): 集中化 FQN 计算逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768106512.722873, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(analysis): 抽象作用域分析器以统一符号映射逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768106601.1703374, "duration_ms": 0}}
