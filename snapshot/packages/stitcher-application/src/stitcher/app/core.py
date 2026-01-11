@@ -64,7 +64,13 @@ class StitcherApp:
             root_path, self.scanner, self.doc_manager, transformer
         )
 
-        # 2. Runners (Command Handlers)
+        # 2. Indexing Subsystem (must be initialized before runners that use it)
+        index_db_path = root_path / ".stitcher" / "index" / "index.db"
+        self.db_manager = DatabaseManager(index_db_path)
+        self.index_store = IndexStore(self.db_manager)
+        self.file_indexer = FileIndexer(root_path, self.index_store)
+
+        # 3. Runners (Command Handlers)
         self.check_runner = CheckRunner(
             root_path,
             parser,
@@ -94,12 +100,6 @@ class StitcherApp:
             root_path, self.doc_manager, transformer
         )
         self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
-
-        # 3. Indexing Subsystem
-        index_db_path = root_path / ".stitcher" / "index" / "index.db"
-        self.db_manager = DatabaseManager(index_db_path)
-        self.index_store = IndexStore(self.db_manager)
-        self.file_indexer = FileIndexer(root_path, self.index_store)
 
         # Register Adapters
         search_paths = self.workspace.get_search_paths()
