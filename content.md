@@ -1,171 +1,134 @@
-好的，我将立即修复这个问题。
+分析非常准确。虽然我们之前修复了 `get_public_documentable_fqns`（用于 `check` 命令确定缺少文档的项），但我们遗漏了 `get_all_fqns` 和 `is_documentable`。
 
-您的分析完全正确。`[文档更新]` 消息的反复出现是由于 `check` 命令内部的操作顺序不当，导致自动格式化 (`reformat_all`) 在自动调和 (`auto_reconcile_docs`) 之后运行，从而使刚刚同步的状态立即失效。
+**为什么 `pump` 会触发这个问题？**
 
-我将通过调整 `StitcherApp.run_check` 方法中的执行顺序来解决这个“状态竞争”问题，确保格式化操作在调和操作之前完成。
+1.  `stitcher pump`（以及 `init`）使用 `ModuleDef.get_all_fqns()` 来决定要为哪些符号计算指纹并保存到 `.stitcher/signatures/` 中。
+2.  当前的 `get_all_fqns` **没有过滤别名（Import）**。它将所有导入的符号（如 `Callable`, `Path`）都视为该模块的符号。
+3.  因此，`pump` 运行后，它会生成包含这些导入符号的签名文件。
+4.  一旦签名文件（`.stitcher/signatures/...json`）中包含了这些符号，`stitcher check`（在后续运行时）或 `pump` 自身的状态检查逻辑就会认为这些符号是该模块的合法组成部分，进而检查它们是否缺少文档。
 
-## [WIP] fix: Prevent recurring '[DOC UPDATED]' messages by reordering operations
+**此外，`is_documentable` 也有同样的问题**：如果一个文件只包含导入（例如 `__init__.py` 有时只做重导出），当前的 `is_documentable` 会返回 `True`，因为导入被视为 Public Attribute。这会导致不应该被追踪的文件进入系统。
+
+我们需要在 `ModuleDef` 模型中彻底封堵这个漏洞。
+
+## [WIP] fix(spec): Exclude aliases from all ModuleDef symbol discovery methods
 
 ### 用户需求
 
-`stitcher check` 命令在每次运行时都会产生重复的 `[文档更新]` 消息。这是因为自动格式化步骤使其在同一次运行中由自动调和步骤更新的状态失效。
+`stitcher pump` 错误地将导入的符号（如 `Callable`, `Path`）包含在签名生成和文档追踪中。这是因为底层的 `ModuleDef.get_all_fqns` 方法没有排除别名。
 
 ### 评论
 
-这是一个微妙但对开发者体验（DX）至关重要的修复。`check` 命令的稳定、幂等的输出对于用户信任和将其集成到 CI/CD 流程中是必不可少的。此修复风险很低，因为它只改变了操作的顺序，而没有改变任一操作的核心逻辑。
+这是彻底解决“导入符号干扰”问题的最后一块拼图。之前的修复只覆盖了 `check` 命令的显示逻辑，而这个修复将纠正系统对“模块包含什么符号”的核心认知，防止污染签名数据库。
 
 ### 目标
 
-修改 `packages/stitcher-application/src/stitcher/app/core.py` 中的 `StitcherApp.run_check` 方法，以确保 `reformat_all` 在 `auto_reconcile_docs` *之前*执行。
+修改 `packages/stitcher-spec/src/stitcher/spec/models.py`：
+1.  更新 `is_documentable`：在判断是否有公共属性时，排除别名。
+2.  更新 `get_all_fqns`：在收集所有 FQN 时，排除别名。
 
 ### 基本原理
 
-根本原因是一种竞争条件，即自动格式化在调和操作使用预格式化哈希更新基线签名*之后*更改了文件哈希。通过重新排序，我们确保调和过程记录的是已格式化文件的最终、稳定哈希。这打破了“更新-失效”的循环，使 `check` 命令的状态变得幂等。
+`ModuleDef` 是整个系统的单一事实来源。通过在模型层面上强制过滤掉 `alias_target` 不为空的属性，我们确保了无论是生成签名 (`pump`/`init`) 还是检查文档 (`check`)，所有的下游组件都只会看到真正的本地定义符号。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/app #concept/state #scope/dx #task/domain/cli #task/object/check-command #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/critical #comp/spec #concept/state #task/domain/core #task/object/module-model #task/action/bug-fix #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 调整 `run_check` 中的操作顺序
-
-我将修改 `core.py`，将格式化步骤提前，并移除冗余的最终格式化调用。
+#### Acts 1: 修正 `ModuleDef` 的剩余方法
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+packages/stitcher-spec/src/stitcher/spec/models.py
 ~~~~~
 ~~~~~python.old
-        configs, _ = self._load_configs()
-        all_results: List[FileCheckResult] = []
-        all_modules_for_post_processing: List[ModuleDef] = []
+    def is_documentable(self) -> bool:
+        # A module is documentable if it has a docstring, or any public
+        # attributes, functions, or classes.
+        has_public_attributes = any(
+            not attr.name.startswith("_") for attr in self.attributes
+        )
+        has_public_functions = any(
+            not func.name.startswith("_") for func in self.functions
+        )
+        has_public_classes = any(not cls.name.startswith("_") for cls in self.classes)
 
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
+        return bool(
+            self.docstring
+            or has_public_attributes
+            or has_public_functions
+            or has_public_classes
+        )
 
-            # 1. Config Strategy
-            parser, renderer = get_docstring_codec(config.docstring_style)
-            serializer = get_docstring_serializer(config.docstring_style)
-            self.doc_manager.set_strategy(parser, serializer)
+    def get_all_fqns(self) -> List[str]:
+        fqns = []
+        if self.docstring:
+            # Consistent with how we might handle module doc in the future
+            # fqns.append("__doc__")
+            pass
 
-            # 2. Get Files (Physical) - Zero-IO Path
-            # We skip full AST parsing for physical files
-            files = self.scanner.get_files_from_config(config)
-            # Convert to relative paths as expected by the system
-            rel_paths = [f.relative_to(self.root_path).as_posix() for f in files]
+        for attr in self.attributes:
+            fqns.append(attr.name)
+        for func in self.functions:
+            fqns.append(func.name)
 
-            # 3. Get Plugins (Virtual) - AST Path
-            # Plugins must still be parsed as they don't exist in the index
-            plugin_modules = self.scanner.process_plugins(config.plugins)
-
-            if not rel_paths and not plugin_modules:
-                continue
-
-            # 4. Analyze
-            batch_results: List[FileCheckResult] = []
-            batch_conflicts: List[InteractionContext] = []
-
-            # 4a. Analyze Physical Files using Index
-            if rel_paths:
-                f_res, f_conflicts = self.check_runner.analyze_paths(rel_paths)
-                batch_results.extend(f_res)
-                batch_conflicts.extend(f_conflicts)
-
-            # 4b. Analyze Plugins using AST
-            if plugin_modules:
-                p_res, p_conflicts = self.check_runner.analyze_batch(plugin_modules)
-                batch_results.extend(p_res)
-                batch_conflicts.extend(p_conflicts)
-
-            all_results.extend(batch_results)
-
-            # 5. Prepare ModuleDefs for Post-Processing (Reconcile/Reformat)
-            # For physical files, we create lightweight stubs to avoid parsing.
-            # Post-processors only need file_path.
-            file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
-            batch_modules = file_module_stubs + plugin_modules
-            all_modules_for_post_processing.extend(batch_modules)
-
-            # 6. Auto-Reconcile Docs (e.g. hash updates)
-            self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
-
-            # 7. Resolve Conflicts (Interactive/Automatic)
-            if not self.check_runner.resolve_conflicts(
-                batch_results, batch_conflicts, force_relink, reconcile
-            ):
-                return False
-
-        # 8. Final Reformat & Report
-        self.check_runner.reformat_all(all_modules_for_post_processing)
-        report_success = self.check_runner.report(all_results)
-        return report_success and not self.scanner.had_errors
+        for cls in self.classes:
+            fqns.append(cls.name)
+            for attr in cls.attributes:
+                fqns.append(f"{cls.name}.{attr.name}")
+            for method in cls.methods:
+                fqns.append(f"{cls.name}.{method.name}")
+        return sorted(fqns)
 ~~~~~
 ~~~~~python.new
-        configs, _ = self._load_configs()
-        all_results: List[FileCheckResult] = []
+    def is_documentable(self) -> bool:
+        # A module is documentable if it has a docstring, or any public
+        # attributes, functions, or classes.
+        has_public_attributes = any(
+            not attr.name.startswith("_") and attr.alias_target is None
+            for attr in self.attributes
+        )
+        has_public_functions = any(
+            not func.name.startswith("_") for func in self.functions
+        )
+        has_public_classes = any(not cls.name.startswith("_") for cls in self.classes)
 
-        for config in configs:
-            if config.name != "default":
-                bus.info(L.generate.target.processing, name=config.name)
+        return bool(
+            self.docstring
+            or has_public_attributes
+            or has_public_functions
+            or has_public_classes
+        )
 
-            # 1. Config Strategy
-            parser, renderer = get_docstring_codec(config.docstring_style)
-            serializer = get_docstring_serializer(config.docstring_style)
-            self.doc_manager.set_strategy(parser, serializer)
+    def get_all_fqns(self) -> List[str]:
+        fqns = []
+        if self.docstring:
+            # Consistent with how we might handle module doc in the future
+            # fqns.append("__doc__")
+            pass
 
-            # 2. Get Files (Physical) - Zero-IO Path
-            files = self.scanner.get_files_from_config(config)
-            rel_paths = [f.relative_to(self.root_path).as_posix() for f in files]
+        for attr in self.attributes:
+            if attr.alias_target is None:
+                fqns.append(attr.name)
+        for func in self.functions:
+            fqns.append(func.name)
 
-            # 3. Get Plugins (Virtual) - AST Path
-            plugin_modules = self.scanner.process_plugins(config.plugins)
-
-            if not rel_paths and not plugin_modules:
-                continue
-
-            # 4. Analyze
-            batch_results: List[FileCheckResult] = []
-            batch_conflicts: List[InteractionContext] = []
-
-            if rel_paths:
-                f_res, f_conflicts = self.check_runner.analyze_paths(rel_paths)
-                batch_results.extend(f_res)
-                batch_conflicts.extend(f_conflicts)
-
-            if plugin_modules:
-                p_res, p_conflicts = self.check_runner.analyze_batch(plugin_modules)
-                batch_results.extend(p_res)
-                batch_conflicts.extend(p_conflicts)
-
-            all_results.extend(batch_results)
-
-            # 5. Prepare lightweight ModuleDefs for post-processing
-            file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
-            batch_modules = file_module_stubs + plugin_modules
-
-            # 6. Reformat FIRST to stabilize file hashes before reconciliation.
-            self.check_runner.reformat_all(batch_modules)
-
-            # 7. Auto-Reconcile Docs (now reads stable hashes)
-            self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
-
-            # 8. Resolve interactive/manual conflicts
-            if not self.check_runner.resolve_conflicts(
-                batch_results, batch_conflicts, force_relink, reconcile
-            ):
-                return False
-
-        # 9. Final Report
-        report_success = self.check_runner.report(all_results)
-        return report_success and not self.scanner.had_errors
+        for cls in self.classes:
+            fqns.append(cls.name)
+            for attr in cls.attributes:
+                # Class attributes that are aliases/imports should also be excluded
+                # if we want to be consistent, though they are rarer.
+                if attr.alias_target is None:
+                    fqns.append(f"{cls.name}.{attr.name}")
+            for method in cls.methods:
+                fqns.append(f"{cls.name}.{method.name}")
+        return sorted(fqns)
 ~~~~~
 
 ### 下一步建议
 
-修复已应用。现在，当您再次运行 `stitcher check` 时，`[文档更新]` 消息应该只会在第一次出现（如果需要），在随后的运行中将不再显示。
-
-在您确认此行为后，我将为您创建一个 `[COMMIT]` 计划来最终确定这些更改。
+修复已应用。建议您清理一下现有的签名文件缓存（`rm -rf .stitcher/signatures`），然后再次运行 `stitcher pump`。这次，新生成的签名文件将不再包含导入符号，从而永久消除那些错误的警告。

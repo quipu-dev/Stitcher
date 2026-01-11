@@ -88,7 +88,8 @@ class ModuleDef:
         # A module is documentable if it has a docstring, or any public
         # attributes, functions, or classes.
         has_public_attributes = any(
-            not attr.name.startswith("_") for attr in self.attributes
+            not attr.name.startswith("_") and attr.alias_target is None
+            for attr in self.attributes
         )
         has_public_functions = any(
             not func.name.startswith("_") for func in self.functions
@@ -110,14 +111,18 @@ class ModuleDef:
             pass
 
         for attr in self.attributes:
-            fqns.append(attr.name)
+            if attr.alias_target is None:
+                fqns.append(attr.name)
         for func in self.functions:
             fqns.append(func.name)
 
         for cls in self.classes:
             fqns.append(cls.name)
             for attr in cls.attributes:
-                fqns.append(f"{cls.name}.{attr.name}")
+                # Class attributes that are aliases/imports should also be excluded
+                # if we want to be consistent, though they are rarer.
+                if attr.alias_target is None:
+                    fqns.append(f"{cls.name}.{attr.name}")
             for method in cls.methods:
                 fqns.append(f"{cls.name}.{method.name}")
         return sorted(fqns)
