@@ -1,261 +1,171 @@
-You are absolutely correct. The test has failed, but in a very illuminating way. The output you provided gives us two critical pieces of information:
+好的，我将立即修复这个问题。
 
-1.  `AssertionError: assert ('my_local_function', 'src/my_lib/__init__.py') in {('my_local_function', None)}`
-    This tells me that my test assertion was slightly flawed. The `SpyBus` is capturing the missing doc warning for `my_local_function`, but the message parameters do not include the `path`. I need to adjust the test to not expect the path in the message payload.
+您的分析完全正确。`[文档更新]` 消息的反复出现是由于 `check` 命令内部的操作顺序不当，导致自动格式化 (`reformat_all`) 在自动调和 (`auto_reconcile_docs`) 之后运行，从而使刚刚同步的状态立即失效。
 
-2.  `[WARNING] check.file.untracked_with_details: {'path': 'src/my_lib/__init__.py', 'count': 1}`
-    This is the key. The log shows that `my_local_function` is being reported as "untracked" and missing a key, which is the correct behavior for a new file. The core logic for ignoring re-exports (`MyDefinedClass`) and imports (`Dict`) appears to be *already working* as intended, likely due to our previous fix filtering aliases.
+我将通过调整 `StitcherApp.run_check` 方法中的执行顺序来解决这个“状态竞争”问题，确保格式化操作在调和操作之前完成。
 
-The actual problem is simpler and relates to my test's expectations. I will fix the test first, then immediately proceed to the logical fix in the application code, which the first test `test_check_ignores_imports` originally hinted at.
-
-My apologies for the slight detour; the new, more complex test case has shaken out a subtle issue in how messages are reported, which is also valuable. I will now generate a single, comprehensive plan to fix both the test assertion and the underlying application logic.
-
-## [WIP] fix: Distinguish defined vs imported symbols and fix test
+## [WIP] fix: Prevent recurring '[DOC UPDATED]' messages by reordering operations
 
 ### 用户需求
 
-`stitcher check` must only report missing documentation for symbols defined within a module, completely ignoring standard imports and local re-exports. The test suite must be updated to correctly assert this behavior.
-
-### 错误分析
-
-1.  **Test Assertion Failure**: The test `test_check_ignores_reexports_and_imports` failed because the `check.issue.missing` message from `SpyBus` does not contain a `path` parameter, causing the tuple-based assertion `(key, path)` to fail. The test must be adjusted to only check for the `key`.
-2.  **Core Logic Flaw**: The original problem persists in how `ASTCheckSubjectAdapter` (used for untracked files) processes symbols. It incorrectly treats all module-level attributes that aren't explicit aliases (like imports) as documentable public APIs. This is why `Dict` and `MyDefinedClass` (re-export) are still being flagged in some scenarios. The root cause is `ModuleDef.get_public_documentable_fqns` not checking the `attr.alias_target` field.
+`stitcher check` 命令在每次运行时都会产生重复的 `[文档更新]` 消息。这是因为自动格式化步骤使其在同一次运行中由自动调和步骤更新的状态失效。
 
 ### 评论
 
-This plan addresses both the immediate test failure and the underlying architectural flaw. By first correcting the test's assertion logic, we can create a stable harness. Then, by fixing the `ModuleDef` model's behavior, we will eliminate the false positives for imported and re-exported symbols, satisfying the core requirement and making both regression tests pass.
+这是一个微妙但对开发者体验（DX）至关重要的修复。`check` 命令的稳定、幂等的输出对于用户信任和将其集成到 CI/CD 流程中是必不可少的。此修复风险很低，因为它只改变了操作的顺序，而没有改变任一操作的核心逻辑。
 
 ### 目标
 
-1.  **Fix the Test**: Modify `test_check_ignores_reexports.py` to assert only on the symbol's `key` (FQN) from the bus message, not the path.
-2.  **Fix the Core Logic**: Modify `stitcher-spec/src/stitcher/spec/models.py` to update the `get_public_documentable_fqns` and `get_undocumented_public_keys` methods. They will now ignore any `Attribute` that has a non-empty `alias_target` field.
+修改 `packages/stitcher-application/src/stitcher/app/core.py` 中的 `StitcherApp.run_check` 方法，以确保 `reformat_all` 在 `auto_reconcile_docs` *之前*执行。
 
 ### 基本原理
 
-The principle is to push the intelligence down into the model layer (`stitcher-spec`). Instead of consumers of `ModuleDef` having to remember to filter for imports, the `ModuleDef` model itself will provide a clean list of *truly* documentable symbols. By modifying `get_public_documentable_fqns` to exclude attributes where `alias_target` is set, we ensure that any part of the system asking "what should be documented here?" gets the correct answer, directly from the source of truth. This is a more robust and ontologically correct fix than patching individual consumers.
+根本原因是一种竞争条件，即自动格式化在调和操作使用预格式化哈希更新基线签名*之后*更改了文件哈希。通过重新排序，我们确保调和过程记录的是已格式化文件的最终、稳定哈希。这打破了“更新-失效”的循环，使 `check` 命令的状态变得幂等。
 
 ### 标签
 
-#intent/fix #intent/tooling #flow/ready #priority/critical #comp/spec #comp/app #comp/tests #concept/state #task/domain/testing #task/object/check-command #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/app #concept/state #scope/dx #task/domain/cli #task/object/check-command #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: Correct the Test Assertion Logic
+#### Acts 1: 调整 `run_check` 中的操作顺序
 
-First, I will fix the new regression test to align with the actual message format produced by the bus.
-
-~~~~~act
-patch_file
-packages/stitcher-application/tests/integration/test_check_ignores_reexports.py
-~~~~~
-~~~~~python.old
-    reported_keys = {
-        (msg["params"]["key"], msg["params"].get("path"))
-        for msg in missing_doc_warnings
-    }
-    
-    # Assert that the locally defined function IS reported as missing
-    assert (
-        "my_local_function",
-        "src/my_lib/__init__.py",
-    ) in reported_keys, "Local function was not reported as missing."
-
-    # Assert that standard imports and re-exports are NOT reported
-    assert (
-        "Dict",
-        "src/my_lib/__init__.py",
-    ) not in reported_keys, "Standard import 'Dict' was incorrectly reported."
-    
-    assert (
-        "MyDefinedClass",
-        "src/my_lib/__init__.py",
-    ) not in reported_keys, "Re-exported class 'MyDefinedClass' was incorrectly reported."
-
-    # Assert that the total number of missing doc warnings is exactly 1
-    assert (
-        len(reported_keys) == 1
-    ), f"Expected 1 missing doc warning, but found {len(reported_keys)}: {reported_keys}"
-~~~~~
-~~~~~python.new
-    # The `missing` message only contains the key, not the path. The file-level
-    # summary message contains the path. We only need to check the key here.
-    reported_keys = {msg["params"]["key"] for msg in missing_doc_warnings}
-
-    # We also check untracked messages, as new symbols will appear here.
-    untracked_missing_warnings = [
-        msg for msg in messages if msg["id"] == str(L.check.issue.untracked_missing_key)
-    ]
-    reported_untracked_keys = {msg["params"]["key"] for msg in untracked_missing_warnings}
-
-    all_reported_keys = reported_keys.union(reported_untracked_keys)
-
-    # Assert that the locally defined function IS reported as missing
-    assert (
-        "my_local_function" in all_reported_keys
-    ), "Local function was not reported as missing."
-
-    # Assert that standard imports and re-exports are NOT reported
-    assert (
-        "Dict" not in all_reported_keys
-    ), "Standard import 'Dict' was incorrectly reported."
-    
-    assert (
-        "MyDefinedClass" not in all_reported_keys
-    ), "Re-exported class 'MyDefinedClass' was incorrectly reported."
-
-    # Assert that the total number of missing doc warnings is exactly 1
-    assert (
-        len(all_reported_keys) == 1
-    ), f"Expected 1 missing doc warning, but found {len(all_reported_keys)}: {all_reported_keys}"
-~~~~~
-
-#### Acts 2: Implement the Core Logic Fix in `stitcher-spec`
-
-Now, I will apply the fundamental fix to the `ModuleDef` model to correctly identify documentable symbols.
+我将修改 `core.py`，将格式化步骤提前，并移除冗余的最终格式化调用。
 
 ~~~~~act
 patch_file
-packages/stitcher-spec/src/stitcher/spec/models.py
+packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
 ~~~~~python.old
-    def get_public_documentable_fqns(self) -> Set[str]:
-        keys: Set[str] = set()
+        configs, _ = self._load_configs()
+        all_results: List[FileCheckResult] = []
+        all_modules_for_post_processing: List[ModuleDef] = []
 
-        # Module docstring itself
-        if self.is_documentable():
-            keys.add("__doc__")
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
 
-        # Public Functions
-        for func in self.functions:
-            if not func.name.startswith("_"):
-                keys.add(func.name)
+            # 1. Config Strategy
+            parser, renderer = get_docstring_codec(config.docstring_style)
+            serializer = get_docstring_serializer(config.docstring_style)
+            self.doc_manager.set_strategy(parser, serializer)
 
-        # Public Classes and their contents
-        for cls in self.classes:
-            if not cls.name.startswith("_"):
-                keys.add(cls.name)
-                # Public attributes in the class
-                for attr in cls.attributes:
-                    if not attr.name.startswith("_"):
-                        keys.add(f"{cls.name}.{attr.name}")
-                # Public methods
-                for method in cls.methods:
-                    if not method.name.startswith("_"):
-                        keys.add(f"{cls.name}.{method.name}")
+            # 2. Get Files (Physical) - Zero-IO Path
+            # We skip full AST parsing for physical files
+            files = self.scanner.get_files_from_config(config)
+            # Convert to relative paths as expected by the system
+            rel_paths = [f.relative_to(self.root_path).as_posix() for f in files]
 
-        # Module-level public attributes
-        for attr in self.attributes:
-            if not attr.name.startswith("_"):
-                keys.add(attr.name)
+            # 3. Get Plugins (Virtual) - AST Path
+            # Plugins must still be parsed as they don't exist in the index
+            plugin_modules = self.scanner.process_plugins(config.plugins)
 
-        return keys
+            if not rel_paths and not plugin_modules:
+                continue
 
-    def get_undocumented_public_keys(self) -> List[str]:
-        keys = []
+            # 4. Analyze
+            batch_results: List[FileCheckResult] = []
+            batch_conflicts: List[InteractionContext] = []
 
-        # Functions
-        for func in self.functions:
-            if not func.name.startswith("_") and not func.docstring:
-                keys.append(func.name)
+            # 4a. Analyze Physical Files using Index
+            if rel_paths:
+                f_res, f_conflicts = self.check_runner.analyze_paths(rel_paths)
+                batch_results.extend(f_res)
+                batch_conflicts.extend(f_conflicts)
 
-        # Classes and their contents
-        for cls in self.classes:
-            if not cls.name.startswith("_"):
-                # Class itself
-                if not cls.docstring:
-                    keys.append(cls.name)
-                # Public attributes in the class
-                for attr in cls.attributes:
-                    if not attr.name.startswith("_") and not attr.docstring:
-                        keys.append(f"{cls.name}.{attr.name}")
-                # Public methods
-                for method in cls.methods:
-                    if not method.name.startswith("_") and not method.docstring:
-                        keys.append(f"{cls.name}.{method.name}")
+            # 4b. Analyze Plugins using AST
+            if plugin_modules:
+                p_res, p_conflicts = self.check_runner.analyze_batch(plugin_modules)
+                batch_results.extend(p_res)
+                batch_conflicts.extend(p_conflicts)
 
-        # Module-level public attributes
-        for attr in self.attributes:
-            if not attr.name.startswith("_") and not attr.docstring:
-                keys.append(attr.name)
+            all_results.extend(batch_results)
 
-        return sorted(keys)
-~~~~~
-~~~~~python.new
-    def get_public_documentable_fqns(self) -> Set[str]:
-        keys: Set[str] = set()
+            # 5. Prepare ModuleDefs for Post-Processing (Reconcile/Reformat)
+            # For physical files, we create lightweight stubs to avoid parsing.
+            # Post-processors only need file_path.
+            file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
+            batch_modules = file_module_stubs + plugin_modules
+            all_modules_for_post_processing.extend(batch_modules)
 
-        # Module docstring itself
-        if self.is_documentable():
-            keys.add("__doc__")
+            # 6. Auto-Reconcile Docs (e.g. hash updates)
+            self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
 
-        # Public Functions
-        for func in self.functions:
-            if not func.name.startswith("_"):
-                keys.add(func.name)
-
-        # Public Classes and their contents
-        for cls in self.classes:
-            if not cls.name.startswith("_"):
-                keys.add(cls.name)
-                # Public attributes in the class
-                for attr in cls.attributes:
-                    # An attribute that is an alias (import) is not defined here.
-                    if not attr.name.startswith("_") and attr.alias_target is None:
-                        keys.add(f"{cls.name}.{attr.name}")
-                # Public methods
-                for method in cls.methods:
-                    if not method.name.startswith("_"):
-                        keys.add(f"{cls.name}.{method.name}")
-
-        # Module-level public attributes
-        for attr in self.attributes:
-            # An attribute that is an alias (import) is not defined here.
-            if not attr.name.startswith("_") and attr.alias_target is None:
-                keys.add(attr.name)
-
-        return keys
-
-    def get_undocumented_public_keys(self) -> List[str]:
-        keys = []
-
-        # Functions
-        for func in self.functions:
-            if not func.name.startswith("_") and not func.docstring:
-                keys.append(func.name)
-
-        # Classes and their contents
-        for cls in self.classes:
-            if not cls.name.startswith("_"):
-                # Class itself
-                if not cls.docstring:
-                    keys.append(cls.name)
-                # Public attributes in the class
-                for attr in cls.attributes:
-                    if (
-                        not attr.name.startswith("_")
-                        and not attr.docstring
-                        and attr.alias_target is None
-                    ):
-                        keys.append(f"{cls.name}.{attr.name}")
-                # Public methods
-                for method in cls.methods:
-                    if not method.name.startswith("_") and not method.docstring:
-                        keys.append(f"{cls.name}.{method.name}")
-
-        # Module-level public attributes
-        for attr in self.attributes:
-            if (
-                not attr.name.startswith("_")
-                and not attr.docstring
-                and attr.alias_target is None
+            # 7. Resolve Conflicts (Interactive/Automatic)
+            if not self.check_runner.resolve_conflicts(
+                batch_results, batch_conflicts, force_relink, reconcile
             ):
-                keys.append(attr.name)
+                return False
 
-        return sorted(keys)
+        # 8. Final Reformat & Report
+        self.check_runner.reformat_all(all_modules_for_post_processing)
+        report_success = self.check_runner.report(all_results)
+        return report_success and not self.scanner.had_errors
+~~~~~
+~~~~~python.new
+        configs, _ = self._load_configs()
+        all_results: List[FileCheckResult] = []
+
+        for config in configs:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
+
+            # 1. Config Strategy
+            parser, renderer = get_docstring_codec(config.docstring_style)
+            serializer = get_docstring_serializer(config.docstring_style)
+            self.doc_manager.set_strategy(parser, serializer)
+
+            # 2. Get Files (Physical) - Zero-IO Path
+            files = self.scanner.get_files_from_config(config)
+            rel_paths = [f.relative_to(self.root_path).as_posix() for f in files]
+
+            # 3. Get Plugins (Virtual) - AST Path
+            plugin_modules = self.scanner.process_plugins(config.plugins)
+
+            if not rel_paths and not plugin_modules:
+                continue
+
+            # 4. Analyze
+            batch_results: List[FileCheckResult] = []
+            batch_conflicts: List[InteractionContext] = []
+
+            if rel_paths:
+                f_res, f_conflicts = self.check_runner.analyze_paths(rel_paths)
+                batch_results.extend(f_res)
+                batch_conflicts.extend(f_conflicts)
+
+            if plugin_modules:
+                p_res, p_conflicts = self.check_runner.analyze_batch(plugin_modules)
+                batch_results.extend(p_res)
+                batch_conflicts.extend(p_conflicts)
+
+            all_results.extend(batch_results)
+
+            # 5. Prepare lightweight ModuleDefs for post-processing
+            file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
+            batch_modules = file_module_stubs + plugin_modules
+
+            # 6. Reformat FIRST to stabilize file hashes before reconciliation.
+            self.check_runner.reformat_all(batch_modules)
+
+            # 7. Auto-Reconcile Docs (now reads stable hashes)
+            self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
+
+            # 8. Resolve interactive/manual conflicts
+            if not self.check_runner.resolve_conflicts(
+                batch_results, batch_conflicts, force_relink, reconcile
+            ):
+                return False
+
+        # 9. Final Report
+        report_success = self.check_runner.report(all_results)
+        return report_success and not self.scanner.had_errors
 ~~~~~
 
 ### 下一步建议
 
-With these two changes, the entire logical chain is corrected. The `ModuleDef` model now accurately reports only locally defined symbols as documentable, and the test suite correctly and robustly verifies this behavior for both standard imports and local re-exports. I will now re-run the tests, and I expect them all to pass cleanly. After that, we can commit this comprehensive fix.
+修复已应用。现在，当您再次运行 `stitcher check` 时，`[文档更新]` 消息应该只会在第一次出现（如果需要），在随后的运行中将不再显示。
+
+在您确认此行为后，我将为您创建一个 `[COMMIT]` 计划来最终确定这些更改。
