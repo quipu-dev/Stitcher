@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(tests): 适配 SignatureManager 解耦后的测试用例", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768122906.7504148, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor: 解耦 SignatureManager 并集成自动索引机制", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768123102.0734863, "duration_ms": 0}}
