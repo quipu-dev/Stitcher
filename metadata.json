@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] chore: 为重构引擎添加诊断日志以追踪失败的重命名", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768113201.469846, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 使索引适配器感知工作区以生成正确的FQN", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768113422.6391466, "duration_ms": 0}}

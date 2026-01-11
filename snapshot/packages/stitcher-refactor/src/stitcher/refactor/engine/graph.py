@@ -67,12 +67,10 @@ class SemanticGraph:
         Query the Index DB for ALL occurrences of an FQN, including its
         definition and all references. Maps DB records to UsageLocation objects.
         """
-        log.debug(f"--- RENAME DEBUG: Finding all usages for FQN: {target_fqn} ---")
         usages = []
 
         # 1. Find all references (usages)
         db_refs = self.index_store.find_references(target_fqn)
-        log.debug(f"Found {len(db_refs)} references from DB:")
         for ref, file_path_str in db_refs:
             abs_path = self.root_path / file_path_str
             try:
@@ -80,37 +78,35 @@ class SemanticGraph:
             except ValueError:
                 ref_type = ReferenceType.SYMBOL  # Fallback
 
-            location = UsageLocation(
-                file_path=abs_path,
-                lineno=ref.lineno,
-                col_offset=ref.col_offset,
-                end_lineno=ref.end_lineno,
-                end_col_offset=ref.end_col_offset,
-                ref_type=ref_type,
-                target_node_fqn=ref.target_fqn,
+            usages.append(
+                UsageLocation(
+                    file_path=abs_path,
+                    lineno=ref.lineno,
+                    col_offset=ref.col_offset,
+                    end_lineno=ref.end_lineno,
+                    end_col_offset=ref.end_col_offset,
+                    ref_type=ref_type,
+                    target_node_fqn=ref.target_fqn,
+                )
             )
-            log.debug(f"  - REF: {location}")
-            usages.append(location)
 
         # 2. Find the definition itself and treat it as a usage site
         definition_result = self.index_store.find_symbol_by_fqn(target_fqn)
-        log.debug(f"Found definition from DB: {definition_result}")
         if definition_result:
             symbol, file_path_str = definition_result
             abs_path = self.root_path / file_path_str
-            location = UsageLocation(
-                file_path=abs_path,
-                lineno=symbol.lineno,
-                col_offset=symbol.col_offset,
-                end_lineno=symbol.end_lineno,
-                end_col_offset=symbol.end_col_offset,
-                ref_type=ReferenceType.SYMBOL,  # A definition is a symbol site
-                target_node_fqn=symbol.canonical_fqn or target_fqn,
+            usages.append(
+                UsageLocation(
+                    file_path=abs_path,
+                    lineno=symbol.lineno,
+                    col_offset=symbol.col_offset,
+                    end_lineno=symbol.end_lineno,
+                    end_col_offset=symbol.end_col_offset,
+                    ref_type=ReferenceType.SYMBOL,  # A definition is a symbol site
+                    target_node_fqn=symbol.canonical_fqn or target_fqn,
+                )
             )
-            log.debug(f"  - DEF: {location}")
-            usages.append(location)
 
-        log.debug(f"--- RENAME DEBUG: Total locations for '{target_fqn}': {len(usages)} ---")
         return usages
 
     def get_module(self, package_name: str) -> Optional[griffe.Module]:
