@@ -1,179 +1,136 @@
-分析显示，验证测试的失败揭示了系统内部的一个深层不一致性：
+你的直觉非常敏锐。通过对代码的静态分析，我发现了一个严重的架构不一致性：`InitRunner` 已经通过 `SignatureManager` 适配了 SURI，但 **`PumpRunner` 却在手动序列化 JSON**，这导致它会绕过 SURI 逻辑，重新写回旧的短键格式，从而破坏数据的统一性。
 
-为了继续执行任务，我必须解决以下未经证实的核心假设：
-*   **假设 `InitRunner` 和 `PumpRunner` 会为所有 documentable 实体（包括类）创建基准指纹。**
+同时，`CheckRunner` 目前虽然能“兼容”加载（通过跳过无法解析的键），但它并没有任何逻辑将旧格式“就地升级”为新格式。
 
-**诊断：**
-测试失败是因为生成的 `.json` 签名文件中缺少了 `MyClass` 的条目。通过检查代码，我发现：
-1.  `InitRunner` 和 `PumpRunner` 的 `_compute_fingerprints` 方法只遍历了函数和方法，跳过了类。
-2.  `stitcher-python-adapter` 中的 `StructureHasher` 和 `SignatureTextHasher` 目前也只处理 `FunctionDef`，对 `ClassDef` 仅做了 `pass` 处理。
-3.  这导致 `signatures/*.json` (Baseline) 与 `index.db` (Actual) 以及 `.stitcher.yaml` (Docs) 之间出现了脱节：索引器和文档管理器都在追踪类，但签名管理器却没有。
+根据 **ADAP v1.0** 协议和你的指令，我将**仅创建测试文件**来捕获这些确定性缺失的边缘情况。
 
-根据 **ADAP v1.0** 协议，我必须停止简单的“测试修正”，转而修复这个导致确定性缺失的架构缺陷。只有让所有组件对“哪些实体需要追踪”达成共识，SURI 体系才能真正稳固。
-
-## [WIP] refactor: 统一类实体的指纹追踪逻辑
+## [WIP] test(application): 捕获 Pump 与 Check 在 SURI 迁移中的不一致性
 
 ### 用户需求
-修复 `test_signature_suri_format.py` 中的断言失败，确保类实体（ClassDef）像函数和方法一样，在基准存档（Baseline）中拥有正确的 SURI 键和指纹数据。
+创建集成测试，用于暴露以下两个问题：
+1.  `pump` 命令是否会错误地将签名文件写回旧的短键格式。
+2.  `check` 命令是否能够识别旧格式并在执行重链接（relink）操作时将其升级为 SURI 格式。
 
 ### 评论
-通过这次修复，我们将消除系统中的一个“盲区”。类不仅可以拥有文档字符串（需要被 `Check/Pump` 追踪），其定义结构（如父类变更）也属于“签名漂移”的一部分。
+我们必须确保系统的进化是“全方位的”。如果只有 `init` 遵循新协议，而核心的 `pump` 流程仍在破坏协议，那么 SURI 体系就会崩溃。这些测试将作为我们“RED”阶段的基石。
 
 ### 目标
-1.  升级 `stitcher-python-adapter` 中的 `StructureHasher` 和 `SignatureTextHasher`，使其支持 `ClassDef`。
-2.  升级 `InitRunner` 和 `PumpRunner`，在计算指纹时包含类实体。
-3.  确保测试用例能够成功验证包含类的 SURI。
+1.  创建 `packages/stitcher-application/tests/integration/test_signature_migration.py`。
+2.  **测试 A (`test_pump_maintains_suri_format`)**: 验证在 `init` 产生 SURI 后，运行 `pump` 是否会保持 SURI 格式。
+3.  **测试 B (`test_check_upgrades_legacy_format_on_relink`)**: 验证面对旧版短键 JSON，`check --force-relink` 是否能将其正确迁移为 SURI。
+
+### 基本原理
+-   **捕获 Pump 腐蚀**: 我们通过检查 `pump` 后的物理文件内容，确认是否存在 `py://` 前缀。
+-   **捕获 Check 迁移缺失**: 我们手动构造一个旧版 JSON，运行 `check`，观察它是否能通过重链接过程“洗白”数据格式。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/application #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/fingerprint #task/action/unify-tracking #task/state/continue
+#intent/tooling #flow/ready #priority/critical #comp/tests #concept/state #scope/dx #ai/instruct #task/domain/storage #task/object/suri-migration #task/action/capture-failure #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 升级 Python 适配器的哈希逻辑
+#### Acts 1: 创建不一致性捕获测试
 
-我们将修改 `fingerprint.py`，为类实体提供结构哈希和签名文本提取。
-
-~~~~~act
-patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/fingerprint.py
-~~~~~
-~~~~~python.old
-    def update(
-        self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
-    ) -> None:
-        if isinstance(entity, FunctionDef):
-            h = self._compute_func_hash(entity)
-            fingerprint["current_code_structure_hash"] = h
-        elif isinstance(entity, ClassDef):
-            # Class-level structure hash logic can be added here if needed in future.
-            # Currently Stitcher focuses on methods.
-            pass
-
-    def _compute_func_hash(self, func: FunctionDef) -> str:
-~~~~~
-~~~~~python.new
-    def update(
-        self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
-    ) -> None:
-        if isinstance(entity, FunctionDef):
-            h = self._compute_func_hash(entity)
-            fingerprint["current_code_structure_hash"] = h
-        elif isinstance(entity, ClassDef):
-            h = self._compute_class_hash(entity)
-            fingerprint["current_code_structure_hash"] = h
-
-    def _compute_class_hash(self, cls: ClassDef) -> str:
-        # Bases and name form the structure of a class
-        parts = [f"name:{cls.name}", f"bases:{'|'.join(cls.bases)}"]
-        sig_str = "|".join(parts)
-        return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
-
-    def _compute_func_hash(self, func: FunctionDef) -> str:
-~~~~~
+我们将编写两个精确的集成测试，它们在当前的实现下**必然会失败**。
 
 ~~~~~act
-patch_file
-packages/stitcher-python-adapter/src/stitcher/adapter/python/fingerprint.py
+write_file
+packages/stitcher-application/tests/integration/test_signature_migration.py
 ~~~~~
-~~~~~python.old
-class SignatureTextHasher:
-    def update(
-        self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
-    ) -> None:
-        if isinstance(entity, FunctionDef):
-            text = self._get_signature_string(entity)
-            fingerprint["current_code_signature_text"] = text
+~~~~~python
+import json
+import pytest
+from pathlib import Path
+from stitcher.test_utils import WorkspaceFactory, create_test_app, SpyBus
 
-    def _get_signature_string(self, func: FunctionDef) -> str:
-~~~~~
-~~~~~python.new
-class SignatureTextHasher:
-    def update(
-        self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
-    ) -> None:
-        if isinstance(entity, FunctionDef):
-            text = self._get_func_signature_string(entity)
-            fingerprint["current_code_signature_text"] = text
-        elif isinstance(entity, ClassDef):
-            text = self._get_class_signature_string(entity)
-            fingerprint["current_code_signature_text"] = text
+def test_pump_should_not_corrupt_suri_keys(tmp_path, monkeypatch):
+    """
+    捕获错误：PumpRunner 目前手动序列化 JSON，可能会将 SURI 键写回短键。
+    """
+    # 1. Arrange: Init a project with SURIs
+    factory = WorkspaceFactory(tmp_path)
+    rel_path = "src/app.py"
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source(rel_path, "def existing_func(): pass")
+        .build()
+    )
+    
+    app = create_test_app(project_root)
+    app.run_init()
+    
+    # 验证初始是 SURI
+    sig_path = project_root / ".stitcher/signatures/src/app.json"
+    with sig_path.open("r") as f:
+        assert any(k.startswith("py://") for k in json.load(f).keys())
 
-    def _get_class_signature_string(self, cls: ClassDef) -> str:
-        bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
-        return f"class {cls.name}{bases_str}:"
+    # 2. Act: 添加新函数并运行 pump
+    (project_root / rel_path).write_text("def existing_func(): pass\ndef new_func(): \"\"\"Doc\"\"\"")
+    
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+        # 注意：这里我们期望 pump 能保持 SURI
+        app.run_pump()
+        
+    # 3. Assert: 检查物理文件
+    with sig_path.open("r") as f:
+        raw_data = json.load(f)
+        keys = list(raw_data.keys())
+        
+        # 失败点：如果 PumpRunner 没改，这里会是 ["existing_func", "new_func"]
+        # 我们期望这里依然全是 SURI
+        assert all(k.startswith("py://") for k in keys), f"Pump corrupted SURI keys! Found: {keys}"
 
-    def _get_func_signature_string(self, func: FunctionDef) -> str:
-~~~~~
+def test_check_relink_should_upgrade_legacy_signatures(tmp_path, monkeypatch):
+    """
+    捕获缺失功能：Check --force-relink 应该将旧版短键 JSON 升级为 SURI。
+    """
+    # 1. Arrange: 手动创建一个旧版的短键签名文件
+    factory = WorkspaceFactory(tmp_path)
+    rel_path = "src/app.py"
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source(rel_path, "def func(a: int): pass")
+        .build()
+    )
+    
+    sig_dir = project_root / ".stitcher/signatures/src"
+    sig_dir.mkdir(parents=True)
+    legacy_data = {
+        "func": {
+            "baseline_code_structure_hash": "old_hash",
+            "baseline_yaml_content_hash": "old_yaml_hash"
+        }
+    }
+    (sig_dir / "app.json").write_text(json.dumps(legacy_data))
 
-#### Acts 2: 更新 InitRunner 以包含类
+    # 2. Act: 运行 check --force-relink (模拟签名漂移后的修复)
+    # 修改源码触发漂移
+    (project_root / rel_path).write_text("def func(a: str): pass")
+    
+    app = create_test_app(project_root)
+    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+        # 执行强制重链接，我们期望它不仅更新哈希，还升级 Key 格式
+        app.run_check(force_relink=True)
 
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/init.py
-~~~~~
-~~~~~python.old
-    def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
-        fingerprints: Dict[str, Fingerprint] = {}
-        for func in module.functions:
-            fingerprints[func.name] = self.fingerprint_strategy.compute(func)
-        for cls in module.classes:
-            for method in cls.methods:
-                fqn = f"{cls.name}.{method.name}"
-                fingerprints[fqn] = self.fingerprint_strategy.compute(method)
-        return fingerprints
-~~~~~
-~~~~~python.new
-    def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
-        fingerprints: Dict[str, Fingerprint] = {}
-        for func in module.functions:
-            fingerprints[func.name] = self.fingerprint_strategy.compute(func)
-        for cls in module.classes:
-            # Include the class itself
-            fingerprints[cls.name] = self.fingerprint_strategy.compute(cls)
-            for method in cls.methods:
-                fqn = f"{cls.name}.{method.name}"
-                fingerprints[fqn] = self.fingerprint_strategy.compute(method)
-        return fingerprints
-~~~~~
-
-#### Acts 3: 更新 PumpRunner 以包含类
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/pump.py
-~~~~~
-~~~~~python.old
-    def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
-        fingerprints: Dict[str, Fingerprint] = {}
-        for func in module.functions:
-            fingerprints[func.name] = self.fingerprint_strategy.compute(func)
-        for cls in module.classes:
-            for method in cls.methods:
-                fqn = f"{cls.name}.{method.name}"
-                fingerprints[fqn] = self.fingerprint_strategy.compute(method)
-        return fingerprints
-~~~~~
-~~~~~python.new
-    def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
-        fingerprints: Dict[str, Fingerprint] = {}
-        for func in module.functions:
-            fingerprints[func.name] = self.fingerprint_strategy.compute(func)
-        for cls in module.classes:
-            # Include the class itself
-            fingerprints[cls.name] = self.fingerprint_strategy.compute(cls)
-            for method in cls.methods:
-                fqn = f"{cls.name}.{method.name}"
-                fingerprints[fqn] = self.fingerprint_strategy.compute(method)
-        return fingerprints
+    # 3. Assert: 检查物理文件是否已迁移为 SURI
+    sig_path = sig_dir / "app.json"
+    with sig_path.open("r") as f:
+        raw_data = json.load(f)
+        keys = list(raw_data.keys())
+        
+        # 失败点：如果 Check 只是盲目更新，Key 依然会是 "func"
+        # 我们期望它升级为 "py://src/app.py#func"
+        assert any(k.startswith("py://") for k in keys), f"Check failed to upgrade legacy keys! Found: {keys}"
 ~~~~~
 
 ### 下一步建议
 
-由于底层逻辑发生了变更，现有的其他集成测试可能会因为签名文件中多了类条目而需要重新运行。
+现在请运行这些测试：
+`pytest packages/stitcher-application/tests/integration/test_signature_migration.py`
 
-请再次执行 SURI 验证测试：
-`pytest packages/stitcher-application/tests/integration/test_signature_suri_format.py`
+我预计这两个测试都会**失败 (RED)**。
+- 第一个测试会失败，因为 `PumpRunner` 确实在手动写 JSON 且没用 SURI。
+- 第二个测试会失败，因为 `SignatureManager.load_composite_hashes` 在加载时会跳过（解析失败）旧键，导致 `check` 认为 Baseline 为空，从而无法进行有效的 Relink/升级。
 
-如果通过，我们将确保了全系统对 SURI 和实体追踪的一致性，随后即可开始对 `PumpRunner` 的重构。
+一旦确认失败，我将根据 **ADAP v1.0** 协议提交修复方案，彻底统一这些链路。
