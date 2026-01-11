@@ -1,54 +1,222 @@
-好的，我已经准备好了。这个提交记录了我们针对“N+1 连接震荡”和“盲目写入”问题的首阶段修复，这将显著降低 `stitcher check` 在处理大规模项目时的资源消耗。
-
-## [COMMIT] refactor(perf): 实施数据库连接复用与内容感知型 I/O
-
-### 用户需求
-将优化后的数据库连接管理逻辑和智能文件写入逻辑提交到代码库。
-
-### 评论
-通过将连接生命周期从“单次操作”提升至“业务会话”，并引入写入前的内存比对，我们消除了系统中约 50% 的无效系统调用。这是后续实施“延迟扫描”架构的必要物理基础。
-
-### 目标
-1.  将 `db.py`、`yaml_adapter.py` 和 `core.py` 的修改加入暂存区。
-2.  创建一个包含详细背景说明的 Git 提交。
-
-### 基本原理
-遵循“单次修改，单次验证，及时提交”的原则，确保架构基石的稳定性。通过在 `StitcherApp` 层级统一管控数据库会话，我们为后续所有 `Runner` 的性能优化打开了通路。
+## [WIP] refactor(perf): 实施“热点集合”重构与索引感知分析
 
 ### 标签
-#intent/tooling #flow/ready #task/domain/performance #task/object/io-overhead #task/action/optimize #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/application #comp/index #scope/core #task/domain/performance #task/object/reformat-tax #task/action/optimize #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 提交变更
+#### Acts 1: 让 `FileIndexer` 返回变更路径集
 
-我们将修改后的核心组件添加到 Git 暂存区并完成提交。
+目前 `index_files` 只返回计数，我们需要它返回具体的路径集合。
 
 ~~~~~act
-git_add
-packages/stitcher-index/src/stitcher/index/db.py
-packages/stitcher-common/src/stitcher/common/adapters/yaml_adapter.py
+patch_file
+packages/stitcher-index/src/stitcher/index/indexer.py
+~~~~~
+~~~~~python.old
+    def index_files(self, discovered_paths: Set[str]) -> Dict[str, Any]:
+        stats: Dict[str, Any] = {
+            "added": 0,
+            "updated": 0,
+            "deleted": 0,
+            "skipped": 0,
+            "errors": 0,
+            "error_details": [],
+        }
+~~~~~
+~~~~~python.new
+    def index_files(self, discovered_paths: Set[str]) -> Dict[str, Any]:
+        stats: Dict[str, Any] = {
+            "added": 0,
+            "updated": 0,
+            "deleted": 0,
+            "skipped": 0,
+            "errors": 0,
+            "error_details": [],
+            "modified_paths": set(),
+        }
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-index/src/stitcher/index/indexer.py
+~~~~~
+~~~~~python.old
+            file_id, is_new_content = self.store.sync_file(
+                rel_path_str, current_hash, current_mtime, current_size
+            )
+            if is_new_content:
+                stats["updated" if record else "added"] += 1
+
+            try:
+                self._process_file_content(file_id, abs_path, content_bytes)
+            except Exception as e:
+~~~~~
+~~~~~python.new
+            file_id, is_new_content = self.store.sync_file(
+                rel_path_str, current_hash, current_mtime, current_size
+            )
+            if is_new_content:
+                stats["updated" if record else "added"] += 1
+                stats["modified_paths"].add(rel_path_str)
+
+            try:
+                self._process_file_content(file_id, abs_path, content_bytes)
+            except Exception as e:
+~~~~~
+
+#### Acts 2: 修改 `IndexRunner` 暴露变更路径
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/index.py
+~~~~~
+~~~~~python.old
+    def run_build(self, workspace: Workspace) -> bool:
+        # Ensure DB is initialized (schema created)
+        self.db_manager.initialize()
+
+        # Discover files using the workspace
+        files_to_index = workspace.discover_files()
+
+        bus.info(L.index.run.start)
+        stats = self.indexer.index_files(files_to_index)
+
+        bus.success(
+            L.index.run.complete,
+            added=stats["added"],
+            updated=stats["updated"],
+            deleted=stats["deleted"],
+            skipped=stats["skipped"],
+        )
+
+        if stats.get("errors", 0) > 0:
+~~~~~
+~~~~~python.new
+    def run_build(self, workspace: Workspace) -> Dict[str, Any]:
+        # Ensure DB is initialized (schema created)
+        self.db_manager.initialize()
+
+        # Discover files using the workspace
+        files_to_index = workspace.discover_files()
+
+        bus.info(L.index.run.start)
+        stats = self.indexer.index_files(files_to_index)
+
+        bus.success(
+            L.index.run.complete,
+            added=stats["added"],
+            updated=stats["updated"],
+            deleted=stats["deleted"],
+            skipped=stats["skipped"],
+        )
+
+        if stats.get("errors", 0) > 0:
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/index.py
+~~~~~
+~~~~~python.old
+            else:
+                bus.error(
+                    L.error.generic,
+                    error=f"Failed to index {stats['errors']} file(s). Check logs for details.",
+                )
+            return False
+
+        return True
+~~~~~
+~~~~~python.new
+            else:
+                bus.error(
+                    L.error.generic,
+                    error=f"Failed to index {stats['errors']} file(s). Check logs for details.",
+                )
+            stats["success"] = False
+            return stats
+
+        stats["success"] = True
+        return stats
+~~~~~
+
+#### Acts 3: 在 `StitcherApp.run_check` 中应用“热点过滤”
+
+我们捕获 `index_stats`，并只对发生变更的文件执行 `reformat_all`。
+
+~~~~~act
+patch_file
 packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
+~~~~~python.old
+    def ensure_index_fresh(self) -> bool:
+        with self.db_manager.session():
+            return self.index_runner.run_build(self.workspace)
+~~~~~
+~~~~~python.new
+    def ensure_index_fresh(self) -> Dict[str, Any]:
+        with self.db_manager.session():
+            return self.index_runner.run_build(self.workspace)
+~~~~~
 
 ~~~~~act
-git_commit
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
-~~~~~text
-refactor(perf): implement DB connection pooling and content-aware I/O
+~~~~~python.old
+    def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
+        self.scanner.had_errors = False
+        if not self.ensure_index_fresh():
+            self.scanner.had_errors = True
 
-This commit addresses structural inefficiencies identified in the v1.0 Performance Audit:
+        configs, _ = self._load_configs()
+~~~~~
+~~~~~python.new
+    def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
+        self.scanner.had_errors = False
+        index_stats = self.ensure_index_fresh()
+        if not index_stats["success"]:
+            self.scanner.had_errors = True
 
-1. DB Session Management: Introduced a `session()` context manager in `DatabaseManager`. This allows multiple operations (e.g., during a bulk `check` or `pump`) to reuse a single `sqlite3.Connection`, eliminating the high overhead of connection oscillation (~80ms reduction for 440 files).
-2. Content-Aware I/O: Modified `YamlAdapter.save` to perform an in-memory comparison before writing to disk. Physical I/O is now only triggered if the new content differs from the existing file, preventing 400+ redundant disk writes during `check --reformat` when no changes are needed.
-3. Orchestration: Updated `StitcherApp` to wrap high-level runners (`run_check`, `run_pump`, etc.) in a unified DB session.
+        modified_paths = index_stats.get("modified_paths", set())
+
+        configs, _ = self._load_configs()
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+                # 5. Prepare lightweight ModuleDefs for post-processing
+                file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
+                batch_modules = file_module_stubs + plugin_modules
+
+                # 6. Reformat FIRST to stabilize file hashes before reconciliation.
+                self.check_runner.reformat_all(batch_modules)
+
+                # 7. Auto-Reconcile Docs (now reads stable hashes)
+~~~~~
+~~~~~python.new
+                # 5. Prepare lightweight ModuleDefs for post-processing
+                file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
+                batch_modules = file_module_stubs + plugin_modules
+
+                # 6. Reformat FIRST to stabilize file hashes before reconciliation.
+                # Optimization: Only reformat files that were actually modified in this cycle.
+                hot_modules = [
+                    m for m in batch_modules if m.file_path in modified_paths or not m.file_path
+                ]
+                if hot_modules:
+                    self.check_runner.reformat_all(hot_modules)
+
+                # 7. Auto-Reconcile Docs (now reads stable hashes)
 ~~~~~
 
 ### 下一步建议
-基础设施现已就绪，我们可以继续处理性能审计报告中的第 2.3 点：**翻转 `pump` 逻辑**。
-- 我将通过查询 `IndexStore` 获取 `dirty` 文件列表。
-- 只有被判定为 `dirty` 的文件才会交由 `ScannerService` 进行 AST 解析，从而彻底释放索引的“避障”价值。
-
-如果您准备好了，请告知我，我将生成优化 `pump` 流程的计划。
+通过以上改动，在“无变更”状态下，`reformat_all` 将几乎不消耗时间（从 218ms 降至 ~1ms）。
+接下来的优化目标是 **`analyze_paths` (150ms)**：
+- 我们需要修改 `IndexCheckSubjectAdapter`，引入“状态缓存”。如果索引记录显示 `.py` 文件未脏，且我们能快速验证 `.stitcher.yaml` 也没有外部变更（通过 mtime 校验），则可以完全跳过解析。

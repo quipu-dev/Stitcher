@@ -10,7 +10,7 @@ class IndexRunner:
         self.db_manager = db_manager
         self.indexer = indexer
 
-    def run_build(self, workspace: Workspace) -> bool:
+    def run_build(self, workspace: Workspace) -> Dict[str, Any]:
         # Ensure DB is initialized (schema created)
         self.db_manager.initialize()
 
@@ -38,6 +38,8 @@ class IndexRunner:
                     L.error.generic,
                     error=f"Failed to index {stats['errors']} file(s). Check logs for details.",
                 )
-            return False
+            stats["success"] = False
+            return stats
 
-        return True
+        stats["success"] = True
+        return stats

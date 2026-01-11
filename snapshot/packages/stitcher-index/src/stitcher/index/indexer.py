@@ -29,6 +29,7 @@ class FileIndexer:
             "skipped": 0,
             "errors": 0,
             "error_details": [],
+            "modified_paths": set(),
         }
 
         # Load DB state
@@ -84,6 +85,7 @@ class FileIndexer:
             )
             if is_new_content:
                 stats["updated" if record else "added"] += 1
+                stats["modified_paths"].add(rel_path_str)
 
             try:
                 self._process_file_content(file_id, abs_path, content_bytes)

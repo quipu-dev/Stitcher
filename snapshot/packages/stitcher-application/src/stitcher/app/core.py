@@ -121,7 +121,7 @@ class StitcherApp:
     def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:
         return load_config_from_path(self.root_path)
 
-    def ensure_index_fresh(self) -> bool:
+    def ensure_index_fresh(self) -> Dict[str, Any]:
         with self.db_manager.session():
             return self.index_runner.run_build(self.workspace)
 
@@ -200,8 +200,11 @@ class StitcherApp:
 
     def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
         self.scanner.had_errors = False
-        if not self.ensure_index_fresh():
+        index_stats = self.ensure_index_fresh()
+        if not index_stats["success"]:
             self.scanner.had_errors = True
+
+        modified_paths = index_stats.get("modified_paths", set())
 
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
@@ -248,7 +251,12 @@ class StitcherApp:
                 batch_modules = file_module_stubs + plugin_modules
 
                 # 6. Reformat FIRST to stabilize file hashes before reconciliation.
-                self.check_runner.reformat_all(batch_modules)
+                # Optimization: Only reformat files that were actually modified in this cycle.
+                hot_modules = [
+                    m for m in batch_modules if m.file_path in modified_paths or not m.file_path
+                ]
+                if hot_modules:
+                    self.check_runner.reformat_all(hot_modules)
 
                 # 7. Auto-Reconcile Docs (now reads stable hashes)
                 self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
