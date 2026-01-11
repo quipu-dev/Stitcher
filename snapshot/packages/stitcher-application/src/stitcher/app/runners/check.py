@@ -1,7 +1,7 @@
 import copy
 from pathlib import Path
 from collections import defaultdict
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from stitcher.common import bus
 from needle.pointer import L
