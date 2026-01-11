@@ -9,8 +9,7 @@
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentAdapter": {},
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager": {
     "baseline_code_signature_text": "class DocumentManager:",
-    "baseline_code_structure_hash": "6d0f45ae24fed508e17a32aa16ba0a6cc850bcf356d04fa6431eae4775d44793",
-    "baseline_yaml_content_hash": "5ad8f647cc1d900dfd03553f9f9136ddb6cc0ecf43ee8bbc1db947814211e271"
+    "baseline_code_structure_hash": "6d0f45ae24fed508e17a32aa16ba0a6cc850bcf356d04fa6431eae4775d44793"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):",
@@ -26,87 +25,68 @@
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._deserialize_ir": {
     "baseline_code_signature_text": "def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:",
-    "baseline_code_structure_hash": "d540c75ebbf8ac16bc068a35f5530518b1cea50bc05543f18f973876eeb2f3e2",
-    "baseline_yaml_content_hash": "d2b9abddef8299d3f9a652e7bcd29e27e709579ec3bd3a98c20183fd5b526bf2"
+    "baseline_code_structure_hash": "d540c75ebbf8ac16bc068a35f5530518b1cea50bc05543f18f973876eeb2f3e2"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._extract_from_class": {
     "baseline_code_signature_text": "def _extract_from_class(self, cls: ClassDef, prefix: str = '') -> Dict[str, DocstringIR]:",
-    "baseline_code_structure_hash": "04658528dda48ba6f4553631c892e17ace2f350167ace9186581a222082e5397",
-    "baseline_yaml_content_hash": "a7d2e19478cc208c6ac38b9d8894e24f732ca1d6c66b27f5251160beb592b8f3"
+    "baseline_code_structure_hash": "04658528dda48ba6f4553631c892e17ace2f350167ace9186581a222082e5397"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._extract_from_function": {
     "baseline_code_signature_text": "def _extract_from_function(self, func: FunctionDef, prefix: str = '') -> Dict[str, DocstringIR]:",
-    "baseline_code_structure_hash": "fcdf03f80b7df20eb645399a1b3970a47c6a78b3d98364ac3dbd34739f06cfd1",
-    "baseline_yaml_content_hash": "d618bc5c7f5f8567fdf81168eed319ecd3ba82b43fba4f75d7aa64fc2ed8b8e0"
+    "baseline_code_structure_hash": "fcdf03f80b7df20eb645399a1b3970a47c6a78b3d98364ac3dbd34739f06cfd1"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._extract_keys": {
     "baseline_code_signature_text": "def _extract_keys(self, module: ModuleDef, public_only: bool) -> set:",
-    "baseline_code_structure_hash": "7a2c8ee81bdded8693b6ab2a3034c3459b54ccda65b0a41f3c84f4f2e7ab9682",
-    "baseline_yaml_content_hash": "1ce6c578a26aaa0fbbfca857442133ee3295592534adce0009938acb12f371e3"
+    "baseline_code_structure_hash": "7a2c8ee81bdded8693b6ab2a3034c3459b54ccda65b0a41f3c84f4f2e7ab9682"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._serialize_ir": {
     "baseline_code_signature_text": "def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
-    "baseline_code_structure_hash": "e56a0adff3469aa6298fdb962bf102b0ba1154d1d861c3a7668a0fffb4def6ea",
-    "baseline_yaml_content_hash": "16e102b61434fa6dd4b1ea93a3270f57784033d8b58f51aff23ac67a6630b5ce"
+    "baseline_code_structure_hash": "e56a0adff3469aa6298fdb962bf102b0ba1154d1d861c3a7668a0fffb4def6ea"
   },
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.adapter": {
-    "baseline_yaml_content_hash": "0bd0ae12d5d4a6d7b48ad371777ab4a728d2d38f1af1ff7ed506318c76a872c4"
-  },
+  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.adapter": {},
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.apply_docs_to_module": {
     "baseline_code_signature_text": "def apply_docs_to_module(self, module: ModuleDef) -> None:",
-    "baseline_code_structure_hash": "c6645f43c1a821f38d963df39121da79f021da316cc6ef453a74d3357a1b402d",
-    "baseline_yaml_content_hash": "4414b06edfe2e7d9ac3513b900c861a844b53ce5797973896b568f567381bbdb"
+    "baseline_code_structure_hash": "c6645f43c1a821f38d963df39121da79f021da316cc6ef453a74d3357a1b402d"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.check_module": {
     "baseline_code_signature_text": "def check_module(self, module: ModuleDef) -> Dict[str, set]:",
-    "baseline_code_structure_hash": "f07c3476847541b2c2779bdf0f2e509ccb12c5fda9c933070d963215d24d6f9c",
-    "baseline_yaml_content_hash": "e23620966b1257a1218186cf795fa98caccde9df4fcbb53f6dcec3e7fcc066b5"
+    "baseline_code_structure_hash": "f07c3476847541b2c2779bdf0f2e509ccb12c5fda9c933070d963215d24d6f9c"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.compute_yaml_content_hash": {
     "baseline_code_signature_text": "def compute_yaml_content_hash(self, content: Union[str, Dict[str, Any]]) -> str:",
-    "baseline_code_structure_hash": "9b0193fc54ae81f01144d1408e8008630f86ad52d4feca7eaea809e9ef11ae6c",
-    "baseline_yaml_content_hash": "cf76c9a02656f387dcdd2153bc83fa7fae974c30b829eba1df05dc7e592eba25"
+    "baseline_code_structure_hash": "9b0193fc54ae81f01144d1408e8008630f86ad52d4feca7eaea809e9ef11ae6c"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.compute_yaml_content_hashes": {
     "baseline_code_signature_text": "def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:",
-    "baseline_code_structure_hash": "dfcbf92e9dc8b80168adf3b58c20280a105de891575b7ac2e92e68c31a7032bd",
-    "baseline_yaml_content_hash": "5af0e615ba0abfb5c4d821de4ea0ac9e210366143d1dfe17a892512f424afd29"
+    "baseline_code_structure_hash": "dfcbf92e9dc8b80168adf3b58c20280a105de891575b7ac2e92e68c31a7032bd"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.flatten_module_docs": {
     "baseline_code_signature_text": "def flatten_module_docs(self, module: ModuleDef) -> Dict[str, DocstringIR]:",
-    "baseline_code_structure_hash": "743d7524d695e466e9bb0d5e32b9e05a599f694eb69f25a912e5f398fb2035d5",
-    "baseline_yaml_content_hash": "89f431b2c76878b80efef2a6d92fef633fab317702b4368dbf495fb0e64982d4"
+    "baseline_code_structure_hash": "743d7524d695e466e9bb0d5e32b9e05a599f694eb69f25a912e5f398fb2035d5"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.hydrate_module": {
     "baseline_code_signature_text": "def hydrate_module(self, module: ModuleDef, force: bool = False, reconcile: bool = False, resolution_map: Optional[Dict[str, Any]] = None, dry_run: bool = False) -> Dict[str, Any]:",
-    "baseline_code_structure_hash": "5ad031b9c1bbecacc97bac10b79873165a17d2924a88b6ed7c1f49a24f2a7cdd",
-    "baseline_yaml_content_hash": "a4fb37a5f60218d39cfc657bedba077ef1f7ae6229ef6f9b2d6c4d58f4d7fc52"
+    "baseline_code_structure_hash": "5ad031b9c1bbecacc97bac10b79873165a17d2924a88b6ed7c1f49a24f2a7cdd"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.load_docs_for_module": {
     "baseline_code_signature_text": "def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:",
-    "baseline_code_structure_hash": "7470cd97a7b59b0e4d822b7c274493787c7254fb4c5aeaac42549a35b62002a0",
-    "baseline_yaml_content_hash": "a5f256c4763afa098eab47a6b83969a567577883e8db685bdb66ef3f60643c43"
+    "baseline_code_structure_hash": "7470cd97a7b59b0e4d822b7c274493787c7254fb4c5aeaac42549a35b62002a0"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.parser": {},
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.reformat_docs_for_module": {
     "baseline_code_signature_text": "def reformat_docs_for_module(self, module: ModuleDef) -> bool:",
-    "baseline_code_structure_hash": "a2f948dc6e91ac5cadfae6dd35803e41ac4599d7f1a652ab5837e4cabb34d632",
-    "baseline_yaml_content_hash": "2a5425854930cf4b2eb740e886855013dd77c75b8b4f032eb99bc5fb2d8da988"
+    "baseline_code_structure_hash": "a2f948dc6e91ac5cadfae6dd35803e41ac4599d7f1a652ab5837e4cabb34d632"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.resolver": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.root_path": {
-    "baseline_yaml_content_hash": "ae19ba5d58eb34b77c99f67a28ec6605bbb661b4d7092fa36d9d0c9fc6eb7e9a"
-  },
+  "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.root_path": {},
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.save_docs_for_module": {
     "baseline_code_signature_text": "def save_docs_for_module(self, module: ModuleDef) -> Path:",
-    "baseline_code_structure_hash": "02e5fe452fa0690256cf2ccf7dd9bf4ee571745329485156eea4f2879692527a",
-    "baseline_yaml_content_hash": "c30f2cec878e8951aebe24bc87a7adb9fd507c0c59aafe0d2a5902e3f1b413b3"
+    "baseline_code_structure_hash": "02e5fe452fa0690256cf2ccf7dd9bf4ee571745329485156eea4f2879692527a"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.serializer": {},
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.set_strategy": {
     "baseline_code_signature_text": "def set_strategy(self, parser: DocstringParserProtocol, serializer: DocstringSerializerProtocol):",
-    "baseline_code_structure_hash": "b9800de0282d3f7b7a216cc4fc1e457a5de9dff7c4c29bf5d4018b08cb47f2cf",
-    "baseline_yaml_content_hash": "0cff586d15ad7c0811defd1ec5212ab1c6bd75d7413abc32d53b54da34794e48"
+    "baseline_code_structure_hash": "b9800de0282d3f7b7a216cc4fc1e457a5de9dff7c4c29bf5d4018b08cb47f2cf"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#FunctionDef": {},
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#ModuleDef": {},

@@ -7,8 +7,7 @@
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#FunctionDef": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#IRBuildingVisitor": {
     "baseline_code_signature_text": "class IRBuildingVisitor(cst.CSTVisitor):",
-    "baseline_code_structure_hash": "bb8e5f0b2e62c317ab049d7708691b5aa2c6b61b36770c435b8fc8586fec9e0a",
-    "baseline_yaml_content_hash": "291e393707efa7e2ef1f5bf5d6ee642a0c50179602804c332eaa3bdb23f32ef2"
+    "baseline_code_structure_hash": "bb8e5f0b2e62c317ab049d7708691b5aa2c6b61b36770c435b8fc8586fec9e0a"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#IRBuildingVisitor.METADATA_DEPENDENCIES": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#IRBuildingVisitor.__init__": {
@@ -74,8 +73,7 @@
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#_enrich_typing_imports": {
     "baseline_code_signature_text": "def _enrich_typing_imports(module: ModuleDef):",
-    "baseline_code_structure_hash": "188b1cfbb2fd8126b0eef17a30839ca23bb6973e7009e6898d7e71b518cee85c",
-    "baseline_yaml_content_hash": "d96914efb4299b654953e30fde915e63ff5ea6274c50965b1174c117a1c1b5ec"
+    "baseline_code_structure_hash": "188b1cfbb2fd8126b0eef17a30839ca23bb6973e7009e6898d7e71b518cee85c"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#_has_unannotated_attributes": {
     "baseline_code_signature_text": "def _has_unannotated_attributes(module: ModuleDef) -> bool:",
@@ -85,8 +83,7 @@
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#cst": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#parse_source_code": {
     "baseline_code_signature_text": "def parse_source_code(source_code: str, file_path: str = '') -> ModuleDef:",
-    "baseline_code_structure_hash": "544ac99af006a7e824ae83739504de3c292c175aa7ae4c4a451318eab218386d",
-    "baseline_yaml_content_hash": "a276d79063578564dd45c0578064ff727e32761f55f367542e01ffb9bc39ef27"
+    "baseline_code_structure_hash": "544ac99af006a7e824ae83739504de3c292c175aa7ae4c4a451318eab218386d"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#re": {}
 }

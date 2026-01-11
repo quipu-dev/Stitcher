@@ -14,13 +14,11 @@
   "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager.db_path": {},
   "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager.get_connection": {
     "baseline_code_signature_text": "def get_connection(self) -> Generator[sqlite3.Connection, None, None]:",
-    "baseline_code_structure_hash": "b59cf6b3c452497dfe97d723ccb692d383e55ccb602491b83cf81fb339587d1e",
-    "baseline_yaml_content_hash": "1d5d8552f486836f5d6754885e5a4cf5265c7d80f74e2e33062cc15157c0b51e"
+    "baseline_code_structure_hash": "b59cf6b3c452497dfe97d723ccb692d383e55ccb602491b83cf81fb339587d1e"
   },
   "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager.initialize": {
     "baseline_code_signature_text": "def initialize(self) -> None:",
-    "baseline_code_structure_hash": "e36fa6cfdacc0a16a73991ac1c1abede9d31bda0075ecf8a043ac766d3ce4893",
-    "baseline_yaml_content_hash": "e436d30be4ffa94c6c96df11489319423e096a74edced58568e99a460aa0bf27"
+    "baseline_code_structure_hash": "e36fa6cfdacc0a16a73991ac1c1abede9d31bda0075ecf8a043ac766d3ce4893"
   },
   "py://packages/stitcher-index/src/stitcher/index/db.py#Generator": {},
   "py://packages/stitcher-index/src/stitcher/index/db.py#Path": {},

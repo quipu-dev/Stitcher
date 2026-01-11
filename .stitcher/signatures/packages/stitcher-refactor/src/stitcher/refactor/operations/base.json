@@ -4,15 +4,9 @@
     "baseline_code_signature_text": "class AbstractOperation(ABC):",
     "baseline_code_structure_hash": "c4d3e87e888e6b8c170744b680f20a8c794f378dcc94c2ca553b10f25e99b038"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#AbstractOperation.analyze": {
-    "baseline_code_signature_text": "def analyze(self, ctx: RefactorContext) -> List[FileOp]:",
-    "baseline_code_structure_hash": "cc6dd02b0d0143253aa0de6af6b49124f2d73c34ee53f06d4f66386054609aa1",
-    "baseline_yaml_content_hash": "b784ec87513350954be88fcbf01b0991e7d99769bc2981bd544cd68034f786f1"
-  },
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#AbstractOperation.collect_intents": {
     "baseline_code_signature_text": "def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:",
-    "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625",
-    "baseline_yaml_content_hash": "258913016fc1a8646b579767d8de94d90931b54d9129f3d91404f43f0a71b13e"
+    "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#Any": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#Dict": {},

@@ -3,8 +3,7 @@
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#Dict": {},
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#DocumentAdapter": {
     "baseline_code_signature_text": "class DocumentAdapter(Protocol):",
-    "baseline_code_structure_hash": "544225511e107950ce92ce0a87c372b96df551c846296d4477ff65f18bd0f1ad",
-    "baseline_yaml_content_hash": "5a086ed7e2069a1800c0d961eeaeff5b7da613065736aed6bb4db87d5ea5242f"
+    "baseline_code_structure_hash": "544225511e107950ce92ce0a87c372b96df551c846296d4477ff65f18bd0f1ad"
   },
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#DocumentAdapter.dump": {
     "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",
@@ -12,13 +11,11 @@
   },
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#DocumentAdapter.load": {
     "baseline_code_signature_text": "def load(self, path: Path) -> Dict[str, Any]:",
-    "baseline_code_structure_hash": "eabd26163ff572de5814f693e2b0ee951c1a9f1150be6aa50b3a914e0e8114bf",
-    "baseline_yaml_content_hash": "1985052bc42168f0deb4deafef97d18f08d3bc3fe0000db4187920b8d3a976b4"
+    "baseline_code_structure_hash": "eabd26163ff572de5814f693e2b0ee951c1a9f1150be6aa50b3a914e0e8114bf"
   },
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#DocumentAdapter.save": {
     "baseline_code_signature_text": "def save(self, path: Path, data: Dict[str, Any]) -> None:",
-    "baseline_code_structure_hash": "abd5c271e8c4100dde4968bf3f0ecef31b95cd128a4425acc0a8c89df4993387",
-    "baseline_yaml_content_hash": "1a2f19a918cd3dcbe618ae95dfb52f09bb5ff6c2e882d5f56e9d9250426f0bd7"
+    "baseline_code_structure_hash": "abd5c271e8c4100dde4968bf3f0ecef31b95cd128a4425acc0a8c89df4993387"
   },
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#Path": {},
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#Protocol": {}

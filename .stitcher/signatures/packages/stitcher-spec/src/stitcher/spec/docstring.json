@@ -3,8 +3,7 @@
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#Dict": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringIR": {
     "baseline_code_signature_text": "class DocstringIR:",
-    "baseline_code_structure_hash": "5dd576b77e6ba3f5c1ddeb7fe826814a48fa703f3e1528101678bbf6d313194f",
-    "baseline_yaml_content_hash": "c899e3a111ffc5bcc16858788d8a8167c5bb0fa2492bee2b9611c98147d060b9"
+    "baseline_code_structure_hash": "5dd576b77e6ba3f5c1ddeb7fe826814a48fa703f3e1528101678bbf6d313194f"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringIR.addons": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringIR.extended": {},
@@ -13,8 +12,7 @@
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringIR.summary": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringItem": {
     "baseline_code_signature_text": "class DocstringItem:",
-    "baseline_code_structure_hash": "00ce3319c1eca106da2132c47ab4e08e872d9bc1c189d2a65107d59614103016",
-    "baseline_yaml_content_hash": "c199caa67e8bb7729de236dbaacb05478a3a2df2108d44ad92d0fdd4d3ee203f"
+    "baseline_code_structure_hash": "00ce3319c1eca106da2132c47ab4e08e872d9bc1c189d2a65107d59614103016"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringItem.annotation": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringItem.default": {},
@@ -22,8 +20,7 @@
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringItem.name": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringSection": {
     "baseline_code_signature_text": "class DocstringSection:",
-    "baseline_code_structure_hash": "37f97ebb7fac2fe8daa7702e6e0f9f79d3edee50c548affa3a5634e76c2b4e0f",
-    "baseline_yaml_content_hash": "07852a09275b76a2fd2c8afdf77a72cbea11a46bde0d1b3f3b01cb75b69ab32f"
+    "baseline_code_structure_hash": "37f97ebb7fac2fe8daa7702e6e0f9f79d3edee50c548affa3a5634e76c2b4e0f"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringSection.content": {},
   "py://packages/stitcher-spec/src/stitcher/spec/docstring.py#DocstringSection.kind": {},

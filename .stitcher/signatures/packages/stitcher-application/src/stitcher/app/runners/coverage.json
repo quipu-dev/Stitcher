@@ -12,25 +12,16 @@
     "baseline_code_signature_text": "def _analyze_module_coverage(self, module: ModuleDef) -> CoverageResult:",
     "baseline_code_structure_hash": "67b0de8e1dacbb0f6d2faaa4f3d02616b54b8bfbfcf9e6e25be383040fab59e5"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner._render_report": {
-    "baseline_code_signature_text": "def _render_report(self, results: List[CoverageResult]):",
-    "baseline_code_structure_hash": "df0e3d48dcbe6ddcee62e116c1422fd19ee7b869af0215bf6ef00c1aab3f7a8c"
-  },
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.doc_manager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.report": {
     "baseline_code_signature_text": "def report(self, results: List[CoverageResult]):",
     "baseline_code_structure_hash": "e53a8cddc75897a1498351447783092631925cc788a3b708e9ef928c48fb3642"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.root_path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.run": {
-    "baseline_code_signature_text": "def run(self) -> bool:",
-    "baseline_code_structure_hash": "721d76a32c15d47dcca6c5eb082a905b7cf7a0e184ca505f8d5648c46922807d"
-  },
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.run_batch": {
     "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef]) -> List[CoverageResult]:",
     "baseline_code_structure_hash": "963606d2fa671e837956ce272a0eb73904a44910317c9ed931157fee805fba62"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.scanner": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#DocumentManager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#List": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#ModuleDef": {},

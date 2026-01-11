@@ -15,9 +15,7 @@
     "baseline_code_signature_text": "def run_build(self, workspace: Workspace) -> bool:",
     "baseline_code_structure_hash": "8fbb503bf6bb2e039d1f4ad3307977405eed953bd022ba12e8ca89378ace8c6a"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/index.py#IndexRunner.scanner": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/index.py#L": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/index.py#Workspace": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/index.py#WorkspaceScanner": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/index.py#bus": {}
 }

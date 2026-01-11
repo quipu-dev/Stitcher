@@ -28,10 +28,6 @@
     "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
     "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner._generate_diff": {
-    "baseline_code_signature_text": "def _generate_diff(self, a: str, b: str, label_a: str, label_b: str) -> str:",
-    "baseline_code_structure_hash": "62016244a2fa1e685039c4248ad132dc2bdf55fb5b67eabda296c12fb9f79b73"
-  },
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner._generate_execution_plan": {
     "baseline_code_signature_text": "def _generate_execution_plan(self, module: ModuleDef, decisions: Dict[str, ResolutionAction], strip_requested: bool) -> Dict[str, FunctionExecutionPlan]:",
     "baseline_code_structure_hash": "c599468497a324893d71ada59c115f03bc36d7e4aa7b7dc191bac64d9576295e"
@@ -41,17 +37,11 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.fingerprint_strategy": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.interaction_handler": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.merger": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.parser": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.root_path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.run": {
-    "baseline_code_signature_text": "def run(self, strip: bool = False, force: bool = False, reconcile: bool = False) -> PumpResult:",
-    "baseline_code_structure_hash": "43c277941d6c604f282848bae3e473260a276d998ff2c2db940147f66b52375d"
-  },
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.run_batch": {
     "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef], config: StitcherConfig, tm: TransactionManager, strip: bool = False, force: bool = False, reconcile: bool = False) -> PumpResult:",
     "baseline_code_structure_hash": "10275f1445fae0ddf9d6c9a93ed190107938c114c9ec54dd8c7c7a63228b183a"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.scanner": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.sig_manager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.transformer": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#ResolutionAction": {},
@@ -60,6 +50,5 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#TransactionManager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#bus": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#copy": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#defaultdict": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#json": {}
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#defaultdict": {}
 }
