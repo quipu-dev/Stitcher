@@ -48,6 +48,9 @@ class SpyBus:
         # setting this ensures internal checks for valid renderer pass if needed)
         monkeypatch.setattr(real_bus, "_renderer", self._spy_renderer)
 
+        # 3. Prevent the CLI's main() callback from overwriting our spy renderer
+        monkeypatch.setattr(target, "set_renderer", lambda renderer: None)
+
         yield self
 
     def get_messages(self) -> List[Dict[str, Any]]:

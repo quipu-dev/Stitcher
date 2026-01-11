@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M test_refactor_command.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768118646.7400806, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 修复 `SpyBus` 的 `patch` 方法，使其能够抵抗来自应用启动逻辑的干扰，从而恢复测试的可观测性。", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768118696.1473067, "duration_ms": 0}}
