@@ -376,10 +376,10 @@ class DocumentManager:
     def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:
         return self.compute_yaml_hashes_for_path(module.file_path)
 
-    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
-        if not module.file_path:
+    def reformat_docs_for_path(self, file_path: str) -> bool:
+        if not file_path:
             return False
-        module_path = self.root_path / module.file_path
+        module_path = self.root_path / file_path
         doc_path = self.resolver.get_doc_path(module_path)
         if not doc_path.exists():
             return False
@@ -395,3 +395,6 @@ class DocumentManager:
 
         self.adapter.save(doc_path, formatted_data)
         return True
+
+    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
+        return self.reformat_docs_for_path(module.file_path)

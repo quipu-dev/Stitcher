@@ -1,240 +1,638 @@
 [简要回答]
-好的，我将重构 `DocumentManager`，解除其对 `ModuleDef` AST 的强依赖，并添加基于文件路径和索引符号的文档一致性检查方法。
+好的，我将执行 Index-First 重构的第二步，重写 `CheckRunner` 并更新 `StitcherApp` 和 `DocumentManager` 以适配新架构。
 
-## [WIP] refactor: 解耦 DocumentManager 并支持 Index-First 检查
+## [WIP] refactor: 重构 CheckRunner 实现 Query-First 检查逻辑
 
 ### 用户需求
-为了实现 Stitcher 2.0 的 Index-First 架构，`DocumentManager` 需要能够独立于昂贵的 AST 解析（`ModuleDef`）运行。它需要能够直接通过文件路径加载 YAML 文档，并使用来自 `stitcher-index` 的 `SymbolRecord` 列表来进行结构一致性检查（Missing/Extra）。
+将 `CheckRunner` 从基于 AST (`ModuleDef`) 的检查模式重构为基于索引 (`IndexStore`) 和路径的查询模式。这将消除检查过程中的源码解析开销，显著提升性能，并实现 "Index-First" 架构。
 
 ### 评论
-这是架构转型的关键一步。通过解除对 `ModuleDef` 的依赖，我们将能够构建出无需读取和解析所有 Python 源代码即可运行的 `CheckRunner`，从而大幅提升性能。
+这是本次重构的核心部分。我们将移除 `CheckRunner` 中所有涉及源代码解析的逻辑，转而通过查询 SQLite 索引来获取代码状态，并与 YAML 文档和 Baseline 签名进行三方比对。
 
 ### 目标
-1.  在 `DocumentManager` 中添加 `load_docs_for_path` 方法。
-2.  在 `DocumentManager` 中添加 `compute_yaml_hashes_for_path` 方法。
-3.  在 `DocumentManager` 中添加 `check_consistency_with_symbols` 方法，利用 `SymbolRecord` 列表替代 `ModuleDef` 进行结构检查。
+1.  在 `DocumentManager` 中补充 `reformat_docs_for_path` 方法。
+2.  彻底重写 `CheckRunner`：
+    *   移除 `parser` 和 `fingerprint_strategy` 依赖。
+    *   引入 `IndexStore` 依赖。
+    *   将 `analyze_batch` 的输入从 `ModuleDef` 列表改为文件路径列表。
+    *   实现基于 `SymbolRecord` 的状态比对逻辑。
+3.  更新 `StitcherApp` 以适配新的 `CheckRunner` 接口和调用方式。
 
 ### 基本原理
-目前的 `DocumentManager` API 均要求传入 `ModuleDef` 对象，这迫使调用者（如 `CheckRunner`）必须先进行源码解析。通过重构，我们将允许通过更轻量的 `file_path` 和数据库记录来进行操作。这符合 Index-First 的 "Query-First" 设计原则。
+通过利用 `stitcher-index` 中已有的符号签名哈希和文档哈希，我们可以直接在内存中检测 "签名漂移" 和 "文档变更"，而无需读取物理磁盘上的 Python 文件。这不仅解耦了检查逻辑与语言解析器，还为未来支持其他语言打下了基础。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/application #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/doc-manager #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/application #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/check-runner #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 DocumentManager
+#### Acts 1: 补充 DocumentManager 方法
 
-我们将修改 `doc_manager.py`，添加支持路径和符号列表的新方法，并让旧方法复用新逻辑以保持兼容性。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/services/doc_manager.py
-~~~~~
-~~~~~python.old
-from typing import Dict, Optional, Any, Union
-
-from stitcher.spec import (
-    ModuleDef,
-    ClassDef,
-    FunctionDef,
-    DocstringIR,
-    DocstringParserProtocol,
-    DocstringSerializerProtocol,
-)
-from stitcher.common import DocumentAdapter, YamlAdapter
-from stitcher.adapter.python import RawDocstringParser, RawSerializer
-from stitcher.common.services import AssetPathResolver
-
-
-class DocumentManager:
-    def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):
-~~~~~
-~~~~~python.new
-from typing import Dict, Optional, Any, Union, List, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from stitcher.index.types import SymbolRecord
-
-from stitcher.spec import (
-    ModuleDef,
-    ClassDef,
-    FunctionDef,
-    DocstringIR,
-    DocstringParserProtocol,
-    DocstringSerializerProtocol,
-)
-from stitcher.common import DocumentAdapter, YamlAdapter
-from stitcher.adapter.python import RawDocstringParser, RawSerializer
-from stitcher.common.services import AssetPathResolver
-
-
-class DocumentManager:
-    def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):
-~~~~~
+首先补全 `DocumentManager` 的路径支持方法。
 
 ~~~~~act
 patch_file
 packages/stitcher-application/src/stitcher/app/services/doc_manager.py
 ~~~~~
 ~~~~~python.old
-    def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:
+    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
         if not module.file_path:
-            return {}
+            return False
         module_path = self.root_path / module.file_path
         doc_path = self.resolver.get_doc_path(module_path)
+        if not doc_path.exists():
+            return False
 
-        raw_data = self.adapter.load(doc_path)  # returns Dict[str, Any] now ideally
+        # Load raw to preserve everything, then deserialize->serialize to apply formatting rules
+        raw_data = self.adapter.load(doc_path)
+        if not raw_data:
+            return False
 
-        # Adapter.load is typed to return Dict[str, str], but YamlAdapter actually returns parsed YAML.
-        # We assume YamlAdapter can return Dict[str, Union[str, Dict]]
+        # Round-trip through IR to enforce schema
+        irs = {fqn: self._deserialize_ir(val) for fqn, val in raw_data.items()}
+        formatted_data = {fqn: self._serialize_ir(ir) for fqn, ir in irs.items()}
 
-        return {fqn: self._deserialize_ir(val) for fqn, val in raw_data.items()}
-
-    def _apply_to_function(
+        self.adapter.save(doc_path, formatted_data)
+        return True
 ~~~~~
 ~~~~~python.new
-    def load_docs_for_path(self, file_path: str) -> Dict[str, DocstringIR]:
+    def reformat_docs_for_path(self, file_path: str) -> bool:
         if not file_path:
-            return {}
+            return False
         module_path = self.root_path / file_path
         doc_path = self.resolver.get_doc_path(module_path)
+        if not doc_path.exists():
+            return False
 
+        # Load raw to preserve everything, then deserialize->serialize to apply formatting rules
         raw_data = self.adapter.load(doc_path)
-        return {fqn: self._deserialize_ir(val) for fqn, val in raw_data.items()}
+        if not raw_data:
+            return False
 
-    def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:
-        return self.load_docs_for_path(module.file_path)
+        # Round-trip through IR to enforce schema
+        irs = {fqn: self._deserialize_ir(val) for fqn, val in raw_data.items()}
+        formatted_data = {fqn: self._serialize_ir(ir) for fqn, ir in irs.items()}
 
-    def _apply_to_function(
+        self.adapter.save(doc_path, formatted_data)
+        return True
+
+    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
+        return self.reformat_docs_for_path(module.file_path)
+~~~~~
+
+#### Acts 2: 重写 CheckRunner
+
+这将是一个破坏性变更，完全替换了旧的实现。
+
+~~~~~act
+write_file
+packages/stitcher-application/src/stitcher/app/runners/check.py
+~~~~~
+~~~~~python
+import copy
+from pathlib import Path
+from collections import defaultdict
+from typing import List, Tuple, Dict, Set
+
+from stitcher.common import bus
+from needle.pointer import L
+from stitcher.spec import (
+    ConflictType,
+    ResolutionAction,
+)
+from stitcher.app.services import (
+    DocumentManager,
+    SignatureManager,
+    Differ,
+)
+from stitcher.app.protocols import InteractionHandler, InteractionContext
+from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
+from stitcher.app.types import FileCheckResult
+from stitcher.index.store import IndexStore
+
+
+class CheckRunner:
+    def __init__(
+        self,
+        root_path: Path,
+        index_store: IndexStore,
+        doc_manager: DocumentManager,
+        sig_manager: SignatureManager,
+        differ: Differ,
+        interaction_handler: InteractionHandler | None,
+    ):
+        self.root_path = root_path
+        self.index_store = index_store
+        self.doc_manager = doc_manager
+        self.sig_manager = sig_manager
+        self.differ = differ
+        self.interaction_handler = interaction_handler
+
+    def _analyze_file(
+        self, file_path: str
+    ) -> Tuple[FileCheckResult, List[InteractionContext]]:
+        result = FileCheckResult(path=file_path)
+        unresolved_conflicts: List[InteractionContext] = []
+
+        # 1. Load Data from Three Sources
+        # Source A: Actual Code State (from Index)
+        actual_symbols = self.index_store.get_symbols_by_file_path(file_path)
+        
+        # Source B: Documentation State (from YAML)
+        has_yaml = (self.root_path / file_path).with_suffix(".stitcher.yaml").exists()
+        
+        if has_yaml:
+            # Check consistency (Missing/Extra/Redundant)
+            # Note: Redundant/Conflict checks require content, which we handle below in State Machine
+            # Here we primarily check structural presence.
+            doc_issues = self.doc_manager.check_consistency_with_symbols(
+                file_path, actual_symbols
+            )
+            result.warnings["missing"].extend(doc_issues["missing"])
+            result.warnings["redundant"].extend(doc_issues["redundant"])
+            result.errors["pending"].extend(doc_issues["pending"])
+            result.errors["conflict"].extend(doc_issues["conflict"])
+            for fqn in doc_issues["extra"]:
+                unresolved_conflicts.append(
+                    InteractionContext(file_path, fqn, ConflictType.DANGLING_DOC)
+                )
+
+        # Source C: Baseline State (from Signatures)
+        stored_hashes_map = self.sig_manager.load_composite_hashes(file_path)
+        
+        # 2. Prepare Maps for Comparison
+        # Map: FQN -> SymbolRecord
+        actual_map = {
+            s.canonical_fqn: s 
+            for s in actual_symbols 
+            if s.canonical_fqn
+        }
+        
+        # Map: FQN -> YAML Hash
+        current_yaml_map = self.doc_manager.compute_yaml_hashes_for_path(file_path)
+
+        all_fqns = set(actual_map.keys()) | set(stored_hashes_map.keys())
+
+        # 3. State Machine Analysis
+        for fqn in sorted(list(all_fqns)):
+            # --- Get Actual State ---
+            symbol = actual_map.get(fqn)
+            code_hash = symbol.signature_hash if symbol else None
+            current_sig_text = symbol.signature_text if symbol else None
+            
+            # --- Get YAML State ---
+            yaml_hash = current_yaml_map.get(fqn)
+
+            # --- Get Baseline State ---
+            stored_fp = stored_hashes_map.get(fqn)
+            baseline_code_hash = (
+                stored_fp.get("baseline_code_structure_hash") if stored_fp else None
+            )
+            baseline_yaml_hash = (
+                stored_fp.get("baseline_yaml_content_hash") if stored_fp else None
+            )
+            baseline_sig_text = (
+                stored_fp.get("baseline_code_signature_text") if stored_fp else None
+            )
+
+            # --- Logic ---
+            if not code_hash and baseline_code_hash:  # Extra (Code deleted but sig exists)
+                # This is implicitly handled by cleanup logic or "extra" check if we tracked it in sigs
+                # But usually we focus on Dangling Doc.
+                continue
+            if code_hash and not baseline_code_hash:  # New (Code added but not in sig)
+                # Untracked symbol.
+                continue
+
+            code_matches = code_hash == baseline_code_hash
+            yaml_matches = yaml_hash == baseline_yaml_hash
+
+            if code_matches and not yaml_matches:  # Doc improvement
+                result.infos["doc_improvement"].append(fqn)
+            elif not code_matches:
+                # Signature Drift or Co-evolution
+                sig_diff = None
+                if baseline_sig_text and current_sig_text:
+                    sig_diff = self.differ.generate_text_diff(
+                        baseline_sig_text,
+                        current_sig_text,
+                        "baseline",
+                        "current",
+                    )
+                elif current_sig_text:
+                    sig_diff = f"(No baseline signature stored)\n+++ current\n{current_sig_text}"
+
+                conflict_type = (
+                    ConflictType.SIGNATURE_DRIFT
+                    if yaml_matches
+                    else ConflictType.CO_EVOLUTION
+                )
+
+                unresolved_conflicts.append(
+                    InteractionContext(
+                        file_path, fqn, conflict_type, signature_diff=sig_diff
+                    )
+                )
+
+        # 4. Untracked File Check
+        # We need to check if the file itself is documentable but has no YAML
+        if not has_yaml:
+            # Check if there are any public symbols
+            # We can infer this from actual_symbols
+            public_symbols = []
+            for s in actual_symbols:
+                # Basic visibility check
+                parts = s.name.split(".")
+                if not s.name.startswith("_") and s.kind != "module":
+                     public_symbols.append(s.name)
+            
+            if public_symbols:
+                result.warnings["untracked_detailed"].extend(sorted(public_symbols))
+            elif actual_symbols: # Has symbols but all private? or just module
+                 # Maybe check module doc presence? 
+                 pass
+
+        return result, unresolved_conflicts
+
+    def _apply_resolutions(
+        self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]
+    ):
+        sig_updates_by_file = defaultdict(list)
+        purges_by_file = defaultdict(list)
+
+        for file_path, fqn_actions in resolutions.items():
+            for fqn, action in fqn_actions:
+                if action in [ResolutionAction.RELINK, ResolutionAction.RECONCILE]:
+                    sig_updates_by_file[file_path].append((fqn, action))
+                elif action == ResolutionAction.PURGE_DOC:
+                    purges_by_file[file_path].append(fqn)
+
+        # Apply signature updates
+        for file_path, fqn_actions in sig_updates_by_file.items():
+            stored_hashes = self.sig_manager.load_composite_hashes(file_path)
+            new_hashes = copy.deepcopy(stored_hashes)
+
+            # Retrieve FRESH state from Index (Actual) and YAML
+            actual_symbols = self.index_store.get_symbols_by_file_path(file_path)
+            actual_map = {s.canonical_fqn: s for s in actual_symbols if s.canonical_fqn}
+            
+            current_yaml_map = self.doc_manager.compute_yaml_hashes_for_path(file_path)
+
+            for fqn, action in fqn_actions:
+                if fqn in new_hashes:
+                    fp = new_hashes[fqn]
+                    symbol = actual_map.get(fqn)
+                    
+                    if symbol and symbol.signature_hash:
+                        current_code_hash = symbol.signature_hash
+                        
+                        if action == ResolutionAction.RELINK:
+                            fp["baseline_code_structure_hash"] = str(current_code_hash)
+                            if symbol.signature_text:
+                                fp["baseline_code_signature_text"] = symbol.signature_text
+                                
+                        elif action == ResolutionAction.RECONCILE:
+                            fp["baseline_code_structure_hash"] = str(current_code_hash)
+                            if symbol.signature_text:
+                                fp["baseline_code_signature_text"] = symbol.signature_text
+                                
+                            if fqn in current_yaml_map:
+                                fp["baseline_yaml_content_hash"] = str(
+                                    current_yaml_map[fqn]
+                                )
+
+            if new_hashes != stored_hashes:
+                self.sig_manager.save_composite_hashes(file_path, new_hashes)
+
+        # Apply doc purges
+        for file_path, fqns_to_purge in purges_by_file.items():
+            docs = self.doc_manager.load_docs_for_path(file_path)
+            original_len = len(docs)
+
+            for fqn in fqns_to_purge:
+                if fqn in docs:
+                    del docs[fqn]
+
+            if len(docs) < original_len:
+                doc_path = (self.root_path / file_path).with_suffix(".stitcher.yaml")
+                if not docs:
+                    if doc_path.exists():
+                        doc_path.unlink()
+                else:
+                    final_data = {
+                        k: self.doc_manager._serialize_ir(v) for k, v in docs.items()
+                    }
+                    self.doc_manager.adapter.save(doc_path, final_data)
+
+    def analyze_batch(
+        self, file_paths: List[str]
+    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
+        results = []
+        conflicts = []
+        for path in file_paths:
+            res, conf = self._analyze_file(path)
+            results.append(res)
+            conflicts.extend(conf)
+        return results, conflicts
+
+    def auto_reconcile_docs(
+        self, results: List[FileCheckResult], file_paths: List[str]
+    ):
+        # file_paths arg is not strictly needed if we iterate results, 
+        # but kept for API shape consistency if needed later.
+        
+        for res in results:
+            if res.infos["doc_improvement"]:
+                stored_hashes = self.sig_manager.load_composite_hashes(res.path)
+                new_hashes = copy.deepcopy(stored_hashes)
+                current_yaml_map = self.doc_manager.compute_yaml_hashes_for_path(res.path)
+
+                for fqn in res.infos["doc_improvement"]:
+                    if fqn in new_hashes:
+                        new_yaml_hash = current_yaml_map.get(fqn)
+                        if new_yaml_hash is not None:
+                            new_hashes[fqn]["baseline_yaml_content_hash"] = (
+                                new_yaml_hash
+                            )
+                        elif "baseline_yaml_content_hash" in new_hashes[fqn]:
+                            del new_hashes[fqn]["baseline_yaml_content_hash"]
+
+                if new_hashes != stored_hashes:
+                    self.sig_manager.save_composite_hashes(
+                        res.path, new_hashes
+                    )
+
+    def resolve_conflicts(
+        self,
+        results: List[FileCheckResult],
+        conflicts: List[InteractionContext],
+        force_relink: bool = False,
+        reconcile: bool = False,
+    ) -> bool:
+        if not conflicts:
+            return True
+
+        if self.interaction_handler:
+            chosen_actions = self.interaction_handler.process_interactive_session(
+                conflicts
+            )
+            resolutions_by_file = defaultdict(list)
+            reconciled_results = defaultdict(lambda: defaultdict(list))
+
+            for i, context in enumerate(conflicts):
+                action = chosen_actions[i]
+                if action == ResolutionAction.RELINK:
+                    resolutions_by_file[context.file_path].append((context.fqn, action))
+                    reconciled_results[context.file_path]["force_relink"].append(
+                        context.fqn
+                    )
+                elif action == ResolutionAction.RECONCILE:
+                    resolutions_by_file[context.file_path].append((context.fqn, action))
+                    reconciled_results[context.file_path]["reconcile"].append(
+                        context.fqn
+                    )
+                elif action == ResolutionAction.PURGE_DOC:
+                    resolutions_by_file[context.file_path].append((context.fqn, action))
+                    reconciled_results[context.file_path]["purged"].append(context.fqn)
+                elif action == ResolutionAction.SKIP:
+                    for res in results:
+                        if res.path == context.file_path:
+                            error_key = {
+                                ConflictType.SIGNATURE_DRIFT: "signature_drift",
+                                ConflictType.CO_EVOLUTION: "co_evolution",
+                                ConflictType.DANGLING_DOC: "extra",
+                            }.get(context.conflict_type, "unknown")
+                            res.errors[error_key].append(context.fqn)
+                            break
+                elif action == ResolutionAction.ABORT:
+                    bus.warning(L.strip.run.aborted)
+                    return False
+
+            self._apply_resolutions(dict(resolutions_by_file))
+
+            for res in results:
+                if res.path in reconciled_results:
+                    res.reconciled["force_relink"] = reconciled_results[res.path][
+                        "force_relink"
+                    ]
+                    res.reconciled["reconcile"] = reconciled_results[res.path][
+                        "reconcile"
+                    ]
+                    res.reconciled["purged"] = reconciled_results[res.path].get(
+                        "purged", []
+                    )
+        else:
+            handler = NoOpInteractionHandler(force_relink, reconcile)
+            chosen_actions = handler.process_interactive_session(conflicts)
+            resolutions_by_file = defaultdict(list)
+            reconciled_results = defaultdict(lambda: defaultdict(list))
+            for i, context in enumerate(conflicts):
+                action = chosen_actions[i]
+                if action != ResolutionAction.SKIP:
+                    key = (
+                        "force_relink"
+                        if action == ResolutionAction.RELINK
+                        else "reconcile"
+                    )
+                    resolutions_by_file[context.file_path].append((context.fqn, action))
+                    reconciled_results[context.file_path][key].append(context.fqn)
+                else:
+                    for res in results:
+                        if res.path == context.file_path:
+                            error_key = {
+                                ConflictType.SIGNATURE_DRIFT: "signature_drift",
+                                ConflictType.CO_EVOLUTION: "co_evolution",
+                                ConflictType.DANGLING_DOC: "extra",
+                            }.get(context.conflict_type, "unknown")
+                            res.errors[error_key].append(context.fqn)
+
+            self._apply_resolutions(dict(resolutions_by_file))
+            for res in results:
+                if res.path in reconciled_results:
+                    res.reconciled["force_relink"] = reconciled_results[res.path][
+                        "force_relink"
+                    ]
+                    res.reconciled["reconcile"] = reconciled_results[res.path][
+                        "reconcile"
+                    ]
+        return True
+
+    def reformat_all(self, file_paths: List[str]):
+        bus.info(L.check.run.reformatting)
+        for path in file_paths:
+            self.doc_manager.reformat_docs_for_path(path)
+            self.sig_manager.reformat_hashes_for_file(path)
+
+    def report(self, results: List[FileCheckResult]) -> bool:
+        global_failed_files = 0
+        global_warnings_files = 0
+        for res in results:
+            for key in sorted(res.infos["doc_improvement"]):
+                bus.info(L.check.state.doc_updated, key=key)
+            if res.is_clean:
+                continue
+            if res.reconciled_count > 0:
+                for key in res.reconciled.get("force_relink", []):
+                    bus.success(L.check.state.relinked, key=key, path=res.path)
+                for key in res.reconciled.get("reconcile", []):
+                    bus.success(L.check.state.reconciled, key=key, path=res.path)
+                for key in res.reconciled.get("purged", []):
+                    bus.success(L.check.state.purged, key=key, path=res.path)
+            if res.error_count > 0:
+                global_failed_files += 1
+                bus.error(L.check.file.fail, path=res.path, count=res.error_count)
+            elif res.warning_count > 0:
+                global_warnings_files += 1
+                bus.warning(L.check.file.warn, path=res.path, count=res.warning_count)
+            for key in sorted(res.errors["extra"]):
+                bus.error(L.check.issue.extra, key=key)
+            for key in sorted(res.errors["signature_drift"]):
+                bus.error(L.check.state.signature_drift, key=key)
+            for key in sorted(res.errors["co_evolution"]):
+                bus.error(L.check.state.co_evolution, key=key)
+            for key in sorted(res.errors["conflict"]):
+                bus.error(L.check.issue.conflict, key=key)
+            for key in sorted(res.errors["pending"]):
+                bus.error(L.check.issue.pending, key=key)
+            for key in sorted(res.warnings["missing"]):
+                bus.warning(L.check.issue.missing, key=key)
+            for key in sorted(res.warnings["redundant"]):
+                bus.warning(L.check.issue.redundant, key=key)
+            for key in sorted(res.warnings["untracked_key"]):
+                bus.warning(L.check.state.untracked_code, key=key)
+            if "untracked_detailed" in res.warnings:
+                keys = res.warnings["untracked_detailed"]
+                bus.warning(
+                    L.check.file.untracked_with_details, path=res.path, count=len(keys)
+                )
+                for key in sorted(keys):
+                    bus.warning(L.check.issue.untracked_missing_key, key=key)
+            elif "untracked" in res.warnings:
+                bus.warning(L.check.file.untracked, path=res.path)
+
+        if global_failed_files > 0:
+            bus.error(L.check.run.fail, count=global_failed_files)
+            return False
+        if global_warnings_files > 0:
+            bus.success(L.check.run.success_with_warnings, count=global_warnings_files)
+        else:
+            bus.success(L.check.run.success)
+        return True
+~~~~~
+
+#### Acts 3: 更新 StitcherApp
+
+适配 `CheckRunner` 的新初始化和调用方式。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+        # 3. Runners (Command Handlers)
+        self.check_runner = CheckRunner(
+            root_path,
+            parser,
+            self.doc_manager,
+            self.sig_manager,
+            self.differ,
+            interaction_handler,
+            fingerprint_strategy=self.fingerprint_strategy,
+        )
+        self.pump_runner = PumpRunner(
+~~~~~
+~~~~~python.new
+        # 3. Runners (Command Handlers)
+        self.check_runner = CheckRunner(
+            root_path,
+            self.index_store,
+            self.doc_manager,
+            self.sig_manager,
+            self.differ,
+            interaction_handler,
+        )
+        self.pump_runner = PumpRunner(
 ~~~~~
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/services/doc_manager.py
+packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
 ~~~~~python.old
-        return {
-            "extra": extra,
-            "missing": missing_doc,
-            "pending": pending_hydration,
-            "redundant": redundant_doc,
-            "conflict": doc_conflict,
-        }
+    def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
+        self.ensure_index_fresh()
+        configs, _ = self._load_configs()
+        all_results: List[FileCheckResult] = []
+        all_modules: List[ModuleDef] = []
 
-    def hydrate_module(
+        self.scanner.had_errors = False
+
+        for config in configs:
+            modules = self._configure_and_scan(config)
+            if not modules:
+                continue
+            all_modules.extend(modules)
+
+            results, conflicts = self.check_runner.analyze_batch(modules)
+            all_results.extend(results)
+
+            self.check_runner.auto_reconcile_docs(results, modules)
+
+            if not self.check_runner.resolve_conflicts(
+                results, conflicts, force_relink, reconcile
+            ):
+                return False
+
+        self.check_runner.reformat_all(all_modules)
+        report_success = self.check_runner.report(all_results)
+        return report_success and not self.scanner.had_errors
 ~~~~~
 ~~~~~python.new
-        return {
-            "extra": extra,
-            "missing": missing_doc,
-            "pending": pending_hydration,
-            "redundant": redundant_doc,
-            "conflict": doc_conflict,
-        }
+    def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
+        self.ensure_index_fresh()
+        configs, _ = self._load_configs()
+        all_results: List[FileCheckResult] = []
+        # Store all paths for final reformatting
+        all_file_paths: List[str] = []
 
-    def check_consistency_with_symbols(
-        self, file_path: str, actual_symbols: List["SymbolRecord"]
-    ) -> Dict[str, set]:
-        """
-        Performs structural consistency check using Index Symbols instead of AST.
-        Note: This does NOT check for content conflicts (doc_conflict) or redundancy,
-        as that requires source content. It focuses on Missing and Extra keys.
-        """
-        # 1. Extract keys from symbols
-        all_keys = set()
-        public_keys = set()
+        self.scanner.had_errors = False
 
-        for sym in actual_symbols:
-            key = None
-            if sym.kind == "module":
-                key = "__doc__"
-            elif sym.logical_path:
-                key = sym.logical_path
+        for config in configs:
+            # For check, we don't need to parse modules anymore.
+            # We just need the list of files to check from config.
+            files = self.scanner.get_files_from_config(config)
+            
+            # Convert to relative paths string
+            file_paths = []
+            for p in files:
+                try:
+                    rel = p.relative_to(self.root_path).as_posix()
+                    file_paths.append(rel)
+                except ValueError:
+                    # File outside root? Skip or handle.
+                    pass
+            
+            if not file_paths:
+                continue
+                
+            all_file_paths.extend(file_paths)
 
-            if key:
-                all_keys.add(key)
-                # Check for visibility (simple underscore check on components)
-                # logical_path 'A.B._c' -> parts ['A', 'B', '_c']
-                parts = key.split(".")
-                if not any(p.startswith("_") and p != "__doc__" for p in parts):
-                    public_keys.add(key)
+            results, conflicts = self.check_runner.analyze_batch(file_paths)
+            all_results.extend(results)
 
-        # 2. Load YAML keys
-        yaml_docs = self.load_docs_for_path(file_path)
-        yaml_keys = set(yaml_docs.keys())
+            self.check_runner.auto_reconcile_docs(results, file_paths)
 
-        # 3. Compare
-        extra = yaml_keys - all_keys
-        extra.discard("__doc__")  # __doc__ in yaml is fine even if not explicitly tracked sometimes?
-        # Actually, if it's in yaml but not in code (e.g. empty file?), it is extra.
-        # But 'module' symbol usually exists.
+            if not self.check_runner.resolve_conflicts(
+                results, conflicts, force_relink, reconcile
+            ):
+                return False
 
-        missing_doc = set()
-
-        for key in all_keys:
-            if key in public_keys and key not in yaml_keys:
-                missing_doc.add(key)
-
-        return {
-            "extra": extra,
-            "missing": missing_doc,
-            # Pending/Redundant/Conflict require source content comparison, skipped here.
-            "pending": set(),
-            "redundant": set(),
-            "conflict": set(),
-        }
-
-    def hydrate_module(
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/services/doc_manager.py
-~~~~~
-~~~~~python.old
-        return hashlib.sha256(b"").hexdigest()
-
-    def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:
-        # We need raw data here to compute the hash exactly as it is stored
-        # But load_docs_for_module returns IRs.
-        # We should load raw data directly from adapter for hashing.
-
-        if not module.file_path:
-            return {}
-        module_path = self.root_path / module.file_path
-        doc_path = self.resolver.get_doc_path(module_path)
-
-        # Load raw dict from YAML
-        raw_data = self.adapter.load(doc_path)
-
-        return {
-            fqn: self.compute_yaml_content_hash(val) for fqn, val in raw_data.items()
-        }
-
-    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
-~~~~~
-~~~~~python.new
-        return hashlib.sha256(b"").hexdigest()
-
-    def compute_yaml_hashes_for_path(self, file_path: str) -> Dict[str, str]:
-        if not file_path:
-            return {}
-        module_path = self.root_path / file_path
-        doc_path = self.resolver.get_doc_path(module_path)
-
-        raw_data = self.adapter.load(doc_path)
-
-        return {
-            fqn: self.compute_yaml_content_hash(val) for fqn, val in raw_data.items()
-        }
-
-    def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:
-        return self.compute_yaml_hashes_for_path(module.file_path)
-
-    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
+        self.check_runner.reformat_all(all_file_paths)
+        report_success = self.check_runner.report(all_results)
+        return report_success and not self.scanner.had_errors
 ~~~~~
 
 ### 下一步建议
-现在 `DocumentManager` 已经具备了独立工作的能力。下一步，我们将重写 `CheckRunner`，使其不再扫描 AST，而是从 `stitcher-index` 获取数据，并调用这些新方法执行检查。
+重构完成后，建议通过运行 `stitcher check` 来验证新逻辑是否正常工作。特别关注它是否能正确报告签名漂移，以及在修改源码后（触发 Index 更新）是否能立即反映状态。此外，可以考虑进一步清理 `StitcherApp` 中不再需要的 `_configure_and_scan` 调用（如果它只被 `run_check` 使用的话，但看起来其他 Runner 还在用，所以暂时保留）。
