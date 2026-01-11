@@ -31,6 +31,7 @@
   "py://packages/stitcher-index/src/stitcher/index/types.py#SymbolRecord.alias_target_id": {},
   "py://packages/stitcher-index/src/stitcher/index/types.py#SymbolRecord.canonical_fqn": {},
   "py://packages/stitcher-index/src/stitcher/index/types.py#SymbolRecord.col_offset": {},
+  "py://packages/stitcher-index/src/stitcher/index/types.py#SymbolRecord.docstring_content": {},
   "py://packages/stitcher-index/src/stitcher/index/types.py#SymbolRecord.docstring_hash": {},
   "py://packages/stitcher-index/src/stitcher/index/types.py#SymbolRecord.end_col_offset": {},
   "py://packages/stitcher-index/src/stitcher/index/types.py#SymbolRecord.end_lineno": {},

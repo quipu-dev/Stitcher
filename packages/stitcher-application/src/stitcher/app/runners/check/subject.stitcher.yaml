@@ -1,0 +1,3 @@
+"ASTCheckSubjectAdapter": |-
+  An adapter that provides a CheckSubject interface backed by
+  a live-parsed AST (ModuleDef).

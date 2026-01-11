@@ -1,7 +1,7 @@
 import copy
 from pathlib import Path
 from collections import defaultdict
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict
 
 from stitcher.common import bus
 from needle.pointer import L
@@ -37,7 +37,7 @@ class CheckResolver:
         self.fingerprint_strategy = fingerprint_strategy
 
     def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
-        # Helper duplicated here for simplicity in applying updates, 
+        # Helper duplicated here for simplicity in applying updates,
         # ideally this logic belongs to a shared utility or service.
         fingerprints: Dict[str, Fingerprint] = {}
         for func in module.functions:
@@ -100,7 +100,7 @@ class CheckResolver:
     ) -> bool:
         # Should be safe since check logic guarantees interaction_handler is not None here
         assert self.interaction_handler is not None
-        
+
         chosen_actions = self.interaction_handler.process_interactive_session(conflicts)
         resolutions_by_file = defaultdict(list)
         reconciled_results = defaultdict(lambda: defaultdict(list))
@@ -139,7 +139,7 @@ class CheckResolver:
         chosen_actions = handler.process_interactive_session(conflicts)
         resolutions_by_file = defaultdict(list)
         reconciled_results = defaultdict(lambda: defaultdict(list))
-        
+
         for i, context in enumerate(conflicts):
             action = chosen_actions[i]
             if action != ResolutionAction.SKIP:

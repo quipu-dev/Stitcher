@@ -1,0 +1,9 @@
+"CheckSubject": |-
+  The contract for what the CheckAnalyzer can inspect.
+"CheckSubject.get_all_symbol_states": |-
+  Gets the aggregated state of all symbols relevant to this subject.
+  This includes symbols defined in code and/or documented in YAML.
+"CheckSubject.is_documentable": |-
+  Checks if the subject as a whole is worth tracking.
+"SymbolState": |-
+  A complete snapshot of a symbol's state from all sources.

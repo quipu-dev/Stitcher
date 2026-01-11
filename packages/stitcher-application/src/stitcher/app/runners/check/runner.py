@@ -19,6 +19,9 @@ from .resolver import CheckResolver
 from .reporter import CheckReporter
 
 
+from .subject import ASTCheckSubjectAdapter
+
+
 class CheckRunner:
     def __init__(
         self,
@@ -30,9 +33,15 @@ class CheckRunner:
         interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
     ):
-        self.analyzer = CheckAnalyzer(
-            root_path, doc_manager, sig_manager, differ, fingerprint_strategy
-        )
+        # Keep services needed by both adapter and resolver
+        self.root_path = root_path
+        self.parser = parser
+        self.doc_manager = doc_manager
+        self.sig_manager = sig_manager
+        self.fingerprint_strategy = fingerprint_strategy
+
+        # Inject dependencies into sub-components
+        self.analyzer = CheckAnalyzer(root_path, differ)
         self.resolver = CheckResolver(
             root_path,
             parser,
@@ -46,7 +55,24 @@ class CheckRunner:
     def analyze_batch(
         self, modules: List[ModuleDef]
     ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
-        return self.analyzer.analyze_batch(modules)
+        all_results: List[FileCheckResult] = []
+        all_conflicts: List[InteractionContext] = []
+
+        for module in modules:
+            # Create the adapter (subject) for each module
+            subject = ASTCheckSubjectAdapter(
+                module,
+                self.doc_manager,
+                self.sig_manager,
+                self.fingerprint_strategy,
+            )
+
+            # Analyze using the subject
+            result, conflicts = self.analyzer.analyze_subject(subject)
+            all_results.append(result)
+            all_conflicts.extend(conflicts)
+
+        return all_results, all_conflicts
 
     def auto_reconcile_docs(
         self, results: List[FileCheckResult], modules: List[ModuleDef]

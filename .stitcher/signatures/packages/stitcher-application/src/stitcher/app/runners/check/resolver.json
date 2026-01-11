@@ -1,0 +1,73 @@
+{
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#Any": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver": {
+    "baseline_code_signature_text": "class CheckResolver:",
+    "baseline_code_structure_hash": "c7adf3e8d5b4f65f5f2e33e1aa1667c7c6ef18330c5077d17b10f8400880b42b"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.__init__": {
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, interaction_handler: InteractionHandler | None, fingerprint_strategy: FingerprintStrategyProtocol):",
+    "baseline_code_structure_hash": "8d98469ccfae9a988943b8f115a008ce8b5d5bd8a10753ce5b167e43d8893bb1"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._apply_resolutions": {
+    "baseline_code_signature_text": "def _apply_resolutions(self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]):",
+    "baseline_code_structure_hash": "5a10cfb2b48149d205274fbe089baca395860335fc1e68ed6b71989b33d6a8d5"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._compute_fingerprints": {
+    "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
+    "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._mark_result_error": {
+    "baseline_code_signature_text": "def _mark_result_error(self, results: List[FileCheckResult], context: InteractionContext):",
+    "baseline_code_structure_hash": "b1afd141b7afd875facd654d68d491ff318b5b0d7765d4914be22a66fc2c896a"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._resolve_interactive": {
+    "baseline_code_signature_text": "def _resolve_interactive(self, results: List[FileCheckResult], conflicts: List[InteractionContext]) -> bool:",
+    "baseline_code_structure_hash": "5f44d69735f8f17ea4d54bc46f22d82c2b2429e7a4973b83383638b2f71fdf15"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._resolve_noop": {
+    "baseline_code_signature_text": "def _resolve_noop(self, results: List[FileCheckResult], conflicts: List[InteractionContext], force_relink: bool, reconcile: bool) -> bool:",
+    "baseline_code_structure_hash": "c561d28845f95abd80a480e5fb5dabe7aca335bac81b0e313963da98c2c0843d"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._update_results": {
+    "baseline_code_signature_text": "def _update_results(self, results: List[FileCheckResult], reconciled_data: dict):",
+    "baseline_code_structure_hash": "99f614a9b470351f157adb4745f95e55c352843034d2e0790eb74a96f0614a3a"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.auto_reconcile_docs": {
+    "baseline_code_signature_text": "def auto_reconcile_docs(self, results: List[FileCheckResult], modules: List[ModuleDef]):",
+    "baseline_code_structure_hash": "b19909870f99eac4c1aecbac8e9ad003854fe8513ee72cabbe21639f31f38718"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.doc_manager": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.fingerprint_strategy": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.interaction_handler": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.parser": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.reformat_all": {
+    "baseline_code_signature_text": "def reformat_all(self, modules: List[ModuleDef]):",
+    "baseline_code_structure_hash": "1ffd9769c49297ddeaccf6ce1061dfa70a81478a8bbd6e4d5720439f020f4f7a"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.resolve_conflicts": {
+    "baseline_code_signature_text": "def resolve_conflicts(self, results: List[FileCheckResult], conflicts: List[InteractionContext], force_relink: bool = False, reconcile: bool = False) -> bool:",
+    "baseline_code_structure_hash": "7c312fb41ba8a7400e0883713391a167220fa568d784e32a0b58963a346d7366"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.root_path": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.sig_manager": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#ConflictType": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#Dict": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#DocumentManager": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#FileCheckResult": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#Fingerprint": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#FingerprintStrategyProtocol": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#InteractionContext": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#InteractionHandler": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#L": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#LanguageParserProtocol": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#List": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#ModuleDef": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#NoOpInteractionHandler": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#Path": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#ResolutionAction": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#SignatureManager": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#Tuple": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#bus": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#copy": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#defaultdict": {}
+}
