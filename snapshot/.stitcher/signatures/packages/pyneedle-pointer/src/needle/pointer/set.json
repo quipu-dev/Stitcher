@@ -6,15 +6,18 @@
   },
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#PointerSet.__add__": {
     "baseline_code_signature_text": "def __add__(self, other: Union[str, SemanticPointerProtocol]) -> PointerSet:",
-    "baseline_code_structure_hash": "231d25289c0b2f52cc65d5fc05aa12a59d6289f89a73f7f2e51fe970be6716f6"
+    "baseline_code_structure_hash": "231d25289c0b2f52cc65d5fc05aa12a59d6289f89a73f7f2e51fe970be6716f6",
+    "baseline_yaml_content_hash": "2cfd96a0f0f78fbe256ec8bc6b23ab2828f4998d50320517fc18272b48d1e89a"
   },
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#PointerSet.__mul__": {
     "baseline_code_signature_text": "def __mul__(self, other: Any) -> PointerSet:",
-    "baseline_code_structure_hash": "ec59f5268409a50520bc08207946de2abf276e9b59fe31ec633b6765a3840ece"
+    "baseline_code_structure_hash": "ec59f5268409a50520bc08207946de2abf276e9b59fe31ec633b6765a3840ece",
+    "baseline_yaml_content_hash": "c2e9d4f750ca1be11f819d929b66fecab88a687c2ece7b97ccbfc02838fc1dae"
   },
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#PointerSet.__truediv__": {
     "baseline_code_signature_text": "def __truediv__(self, other: Union[str, SemanticPointerProtocol]) -> PointerSet:",
-    "baseline_code_structure_hash": "744a00eeec951a45c5125126cbb1bbe7526e71fa5f558c19fa4eb866477b6449"
+    "baseline_code_structure_hash": "744a00eeec951a45c5125126cbb1bbe7526e71fa5f558c19fa4eb866477b6449",
+    "baseline_yaml_content_hash": "c9f1c899f1e02476537f7ad1c453e5079532b71ceca8cb44865422cb1e911eb3"
   },
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#PointerSetProtocol": {},
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#SemanticPointer": {},

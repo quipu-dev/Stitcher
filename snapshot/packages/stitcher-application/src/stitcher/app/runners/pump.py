@@ -55,10 +55,6 @@ class PumpRunner:
         self.index_store = index_store
 
     def _get_dirty_source_docs(self, module: ModuleDef) -> Dict[str, DocstringIR]:
-        """
-        Compares docstring hashes in the index against the baseline to find changes.
-        Returns a map of source docstrings only for the FQNs that have changed.
-        """
         actual_symbols = self.index_store.get_symbols_by_file_path(module.file_path)
         actual_map = {
             s.logical_path: s for s in actual_symbols if s.logical_path is not None

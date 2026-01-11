@@ -6,11 +6,13 @@
   },
   "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator.__call__": {
     "baseline_code_signature_text": "def __call__(self, pointer: Union[str, SemanticPointerProtocol]) -> Optional[str]:",
-    "baseline_code_structure_hash": "808a28242b6833ee5c35c24b5f17b2c379243e436d29399e73756bd693c43660"
+    "baseline_code_structure_hash": "808a28242b6833ee5c35c24b5f17b2c379243e436d29399e73756bd693c43660",
+    "baseline_yaml_content_hash": "f9486ef5bdc0808cd652454239456966543e50c85e3081dd73202cea76513000"
   },
   "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator.__init__": {
     "baseline_code_signature_text": "def __init__(self, root: Union[str, Path]):",
-    "baseline_code_structure_hash": "858994c8e62417b1b579d2aa5c2030fcf5ac5c1c68647dd238e507d4316e7622"
+    "baseline_code_structure_hash": "858994c8e62417b1b579d2aa5c2030fcf5ac5c1c68647dd238e507d4316e7622",
+    "baseline_yaml_content_hash": "7ff0d5a4200e5a3168565565539c0271ed76bf5311fc804d5e81432b983f9745"
   },
   "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator._calculate_prefix": {
     "baseline_code_signature_text": "def _calculate_prefix(self, file_path: Path, root_path: Path) -> str:",

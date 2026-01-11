@@ -10,5 +10,7 @@
     "baseline_code_signature_text": "def _find_project_root(start_dir: Optional[Path] = None) -> Path:",
     "baseline_code_structure_hash": "774c9201a944c4e1df2825aec9ec24922659c213887a8af44bc5436800682e62"
   },
-  "py://packages/pyneedle-runtime/src/needle/runtime.py#nexus": {}
+  "py://packages/pyneedle-runtime/src/needle/runtime.py#nexus": {
+    "baseline_yaml_content_hash": "0f3081e4b468e163bce5fc63f71c26ba37660fe63308d927a625268bd12fb0ee"
+  }
 }
