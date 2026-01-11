@@ -3,7 +3,8 @@
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#HasBody": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#InjectorTransformer": {
     "baseline_code_signature_text": "class InjectorTransformer(cst.CSTTransformer):",
-    "baseline_code_structure_hash": "195ed31498ddb6616574a228db36a7067e5c68c4aaf1449c6e9888d408a252a2"
+    "baseline_code_structure_hash": "195ed31498ddb6616574a228db36a7067e5c68c4aaf1449c6e9888d408a252a2",
+    "baseline_yaml_content_hash": "62ec1461af34159aabcd57d59b1836ec31fd6d275eaf013a6ff5448a4e02eef8"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#InjectorTransformer.__init__": {
     "baseline_code_signature_text": "def __init__(self, docs: Dict[str, str]):",
@@ -49,7 +50,8 @@
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#Sequence": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#StripperTransformer": {
     "baseline_code_signature_text": "class StripperTransformer(cst.CSTTransformer):",
-    "baseline_code_structure_hash": "82eaa4c53de6bd2bc7b8afdea75a7b3e2050c8c220b3b052bec4ec5829d9acd4"
+    "baseline_code_structure_hash": "82eaa4c53de6bd2bc7b8afdea75a7b3e2050c8c220b3b052bec4ec5829d9acd4",
+    "baseline_yaml_content_hash": "5da167776195f91cd86b7fa52c8bb32b0eccdc8bcd1a66283c86fe51bff757b2"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/transformers.py#StripperTransformer.__init__": {
     "baseline_code_signature_text": "def __init__(self, whitelist: Optional[List[str]] = None):",

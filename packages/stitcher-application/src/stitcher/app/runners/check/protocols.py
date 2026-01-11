@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from stitcher.spec import DocstringIR
 
 
-
-
 @dataclass
 class SymbolState:
     fqn: str

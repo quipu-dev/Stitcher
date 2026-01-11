@@ -6,7 +6,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/fingerprint.py#Fingerprint": {
     "baseline_code_signature_text": "class Fingerprint:",
-    "baseline_code_structure_hash": "3f89b8c430e27c5d4ac637c421efed2b154efb9c281379e6c608760f79e6fbd1"
+    "baseline_code_structure_hash": "3f89b8c430e27c5d4ac637c421efed2b154efb9c281379e6c608760f79e6fbd1",
+    "baseline_yaml_content_hash": "29ce065db51f536e938572ee2a25e87a882992ed125555dccc0bc025e35f878f"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/fingerprint.py#Fingerprint.__contains__": {
     "baseline_code_signature_text": "def __contains__(self, key: str) -> bool:",
@@ -55,7 +56,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/fingerprint.py#InvalidFingerprintKeyError": {
     "baseline_code_signature_text": "class InvalidFingerprintKeyError(KeyError):",
-    "baseline_code_structure_hash": "6ee161c69fce89fec71d3e65cccb844e6ad1a55b33f7531b5dc0e2712521b34a"
+    "baseline_code_structure_hash": "6ee161c69fce89fec71d3e65cccb844e6ad1a55b33f7531b5dc0e2712521b34a",
+    "baseline_yaml_content_hash": "f9928bc981387462f9a37c7a51b903817c7fc25380366afa1ce2d42b2622fa48"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/fingerprint.py#InvalidFingerprintKeyError.__init__": {
     "baseline_code_signature_text": "def __init__(self, key: str):",

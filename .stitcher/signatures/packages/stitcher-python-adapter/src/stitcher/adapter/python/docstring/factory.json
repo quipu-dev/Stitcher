@@ -10,7 +10,8 @@
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#RawDocstringParser": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#RawDocstringRenderer": {
     "baseline_code_signature_text": "class RawDocstringRenderer(DocstringRendererProtocol):",
-    "baseline_code_structure_hash": "806ec53bc278396aaabf476af079a80e030fcd039e6b455541f2cbbfca637fa4"
+    "baseline_code_structure_hash": "806ec53bc278396aaabf476af079a80e030fcd039e6b455541f2cbbfca637fa4",
+    "baseline_yaml_content_hash": "e2284613d2f2e71a59697187e735c9ab1510e8c777c341c2b78ef8fa2370e066"
   },
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#RawDocstringRenderer.render": {
     "baseline_code_signature_text": "def render(self, docstring_ir, context = None) -> str:",

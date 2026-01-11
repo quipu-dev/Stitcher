@@ -1,7 +1,8 @@
 {
   "py://packages/stitcher-index/src/stitcher/index/protocols.py#LanguageAdapter": {
     "baseline_code_signature_text": "class LanguageAdapter(Protocol):",
-    "baseline_code_structure_hash": "f5373d6369d37021eacec55650823ae459ebef9ac1115576700c33598a831050"
+    "baseline_code_structure_hash": "f5373d6369d37021eacec55650823ae459ebef9ac1115576700c33598a831050",
+    "baseline_yaml_content_hash": "6bc9821682feb0db8f236d5a4f023a71a63413159074cb2517c3fc38be45919e"
   },
   "py://packages/stitcher-index/src/stitcher/index/protocols.py#LanguageAdapter.parse": {
     "baseline_code_signature_text": "def parse(self, file_path: Path, content: str) -> Tuple[List[SymbolRecord], List[ReferenceRecord]]:",

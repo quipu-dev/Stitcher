@@ -1,11 +1,109 @@
-from typing import Dict
+from typing import Dict, Optional
 from stitcher.spec import (
     ModuleDef,
     Fingerprint,
     FingerprintStrategyProtocol,
 )
 from stitcher.app.services import DocumentManager, SignatureManager
+from stitcher.index.store import IndexStore
+from stitcher.index.types import SymbolRecord
 from .protocols import SymbolState, CheckSubject
+
+
+class IndexCheckSubjectAdapter(CheckSubject):
+    def __init__(
+        self,
+        file_path: str,
+        index_store: IndexStore,
+        doc_manager: DocumentManager,
+        sig_manager: SignatureManager,
+    ):
+        self._file_path = file_path
+        self._index_store = index_store
+        self._doc_manager = doc_manager
+        self._sig_manager = sig_manager
+
+    @property
+    def file_path(self) -> str:
+        return self._file_path
+
+    def _is_public(self, fqn: str) -> bool:
+        # Replicate public visibility logic from AST-based approach
+        parts = fqn.split(".")
+        return not any(p.startswith("_") and p != "__doc__" for p in parts)
+
+    def is_documentable(self) -> bool:
+        symbols = self._index_store.get_symbols_by_file_path(self.file_path)
+        if not symbols:
+            return False
+
+        for sym in symbols:
+            if sym.kind == "module" and sym.docstring_content:
+                return True
+            if sym.logical_path and self._is_public(sym.logical_path):
+                return True
+        return False
+
+    def get_all_symbol_states(self) -> Dict[str, SymbolState]:
+        # 1. Load data from all sources
+        symbols_from_db = self._index_store.get_symbols_by_file_path(self.file_path)
+        yaml_docs = self._doc_manager.load_docs_for_path(self.file_path)
+        stored_hashes = self._sig_manager.load_composite_hashes(self.file_path)
+
+        yaml_content_hashes = {
+            fqn: self._doc_manager.compute_yaml_content_hash(
+                self._doc_manager._serialize_ir(ir)
+            )
+            for fqn, ir in yaml_docs.items()
+        }
+
+        # 2. Map symbols for easy lookup
+        symbol_map: Dict[str, SymbolRecord] = {}
+        module_symbol: Optional[SymbolRecord] = None
+        for sym in symbols_from_db:
+            if sym.kind == "module":
+                module_symbol = sym
+            elif sym.logical_path:
+                symbol_map[sym.logical_path] = sym
+
+        # 3. Aggregate all unique FQNs
+        all_fqns = (
+            set(symbol_map.keys()) | set(yaml_docs.keys()) | set(stored_hashes.keys())
+        )
+        if module_symbol:
+            all_fqns.add("__doc__")
+
+        states: Dict[str, SymbolState] = {}
+
+        # 4. Build state for each FQN
+        for fqn in all_fqns:
+            symbol_rec: Optional[SymbolRecord] = None
+            if fqn == "__doc__":
+                symbol_rec = module_symbol
+            else:
+                symbol_rec = symbol_map.get(fqn)
+
+            stored_fp = stored_hashes.get(fqn, Fingerprint())
+
+            states[fqn] = SymbolState(
+                fqn=fqn,
+                is_public=self._is_public(fqn),
+                # Source Code State (from Index)
+                exists_in_code=(symbol_rec is not None),
+                source_doc_content=symbol_rec.docstring_content if symbol_rec else None,
+                signature_hash=symbol_rec.signature_hash if symbol_rec else None,
+                signature_text=symbol_rec.signature_text if symbol_rec else None,
+                # YAML State
+                exists_in_yaml=(fqn in yaml_docs),
+                yaml_doc_ir=yaml_docs.get(fqn),
+                yaml_content_hash=yaml_content_hashes.get(fqn),
+                # Baseline State
+                baseline_signature_hash=stored_fp.get("baseline_code_structure_hash"),
+                baseline_signature_text=stored_fp.get("baseline_code_signature_text"),
+                baseline_yaml_content_hash=stored_fp.get("baseline_yaml_content_hash"),
+            )
+
+        return states
 
 
 class ASTCheckSubjectAdapter(CheckSubject):

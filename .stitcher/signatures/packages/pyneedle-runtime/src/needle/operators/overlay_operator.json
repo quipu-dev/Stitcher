@@ -4,7 +4,8 @@
   "py://packages/pyneedle-runtime/src/needle/operators/overlay_operator.py#OperatorProtocol": {},
   "py://packages/pyneedle-runtime/src/needle/operators/overlay_operator.py#OverlayOperator": {
     "baseline_code_signature_text": "class OverlayOperator(OperatorProtocol):",
-    "baseline_code_structure_hash": "25827baf9b05a868c15451ac13a8ae1446a9fb71e20d35ebe1a858ecd239ca28"
+    "baseline_code_structure_hash": "25827baf9b05a868c15451ac13a8ae1446a9fb71e20d35ebe1a858ecd239ca28",
+    "baseline_yaml_content_hash": "2a0fa91d29f459031f6dec043c678f661e7dce4ff7a585ec964b44104e03c1c7"
   },
   "py://packages/pyneedle-runtime/src/needle/operators/overlay_operator.py#OverlayOperator.__call__": {
     "baseline_code_signature_text": "def __call__(self, key: Union[str, SemanticPointerProtocol]) -> Any:",

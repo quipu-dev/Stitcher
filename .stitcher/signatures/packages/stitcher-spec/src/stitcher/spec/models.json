@@ -1,7 +1,8 @@
 {
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Argument": {
     "baseline_code_signature_text": "class Argument:",
-    "baseline_code_structure_hash": "8c4148cd3dd05f8ce90f6d659050d5dc9e6a2ec23407aba36efcd43a9b81531d"
+    "baseline_code_structure_hash": "8c4148cd3dd05f8ce90f6d659050d5dc9e6a2ec23407aba36efcd43a9b81531d",
+    "baseline_yaml_content_hash": "2096b760b61500d1e865462ee2ac9a55abc4bbec6caea21751abb02bc9c0d198"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Argument.annotation": {
     "baseline_yaml_content_hash": "1e3d70d41950e1403646abcd31611d05c379b2a6933d9cdc47b2614fe0581178"
@@ -17,7 +18,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ArgumentKind": {
     "baseline_code_signature_text": "class ArgumentKind(str, Enum):",
-    "baseline_code_structure_hash": "99ac56b09945499ce5a28d6fa8c327feebd297a25133e446d4621de8a9731a9b"
+    "baseline_code_structure_hash": "99ac56b09945499ce5a28d6fa8c327feebd297a25133e446d4621de8a9731a9b",
+    "baseline_yaml_content_hash": "8e3c1bfc03b1a9550007cc6092f04a4caa2cbf8c535de2d7d89da8b721675a31"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ArgumentKind.KEYWORD_ONLY": {
     "baseline_yaml_content_hash": "cc185150002aacfec51af563dea9ab4554d49bd08843a1ae0515f771c78df9e3"
@@ -36,7 +38,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Attribute": {
     "baseline_code_signature_text": "class Attribute:",
-    "baseline_code_structure_hash": "9dded85e05e68af76da7f6915a7aedd6ef0bc623d81563c5644371d36edf53f6"
+    "baseline_code_structure_hash": "9dded85e05e68af76da7f6915a7aedd6ef0bc623d81563c5644371d36edf53f6",
+    "baseline_yaml_content_hash": "71d4c4ba631412a1e0d9fa5efd09679c5f2447a18ec4eb650fe19da2875141ad"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Attribute.alias_target": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Attribute.annotation": {
@@ -54,7 +57,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ClassDef": {
     "baseline_code_signature_text": "class ClassDef:",
-    "baseline_code_structure_hash": "a8874c654fe8b58d3b7b1013c5dbe900847f62ad5c9fe6a3acf19bc999807ba1"
+    "baseline_code_structure_hash": "a8874c654fe8b58d3b7b1013c5dbe900847f62ad5c9fe6a3acf19bc999807ba1",
+    "baseline_yaml_content_hash": "b9f57ce803b21cd56365bfa515bf6cbda2ec3e52ae16c2aa7c05c64e83dd044c"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ClassDef.attributes": {
     "baseline_yaml_content_hash": "fbee5dcf81c502493e38ed8afe0cfeba9210021619a4b330dedafcb334627b5a"
@@ -78,7 +82,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ConflictType": {
     "baseline_code_signature_text": "class ConflictType(str, Enum):",
-    "baseline_code_structure_hash": "bee8fdbef55e297d9cb9f7a301dafc8f9a8305bd1760afa8a835b3d8d400b0cc"
+    "baseline_code_structure_hash": "bee8fdbef55e297d9cb9f7a301dafc8f9a8305bd1760afa8a835b3d8d400b0cc",
+    "baseline_yaml_content_hash": "a4671b4aa4899c85018a7edcb52f45e56ef4e81ac0e157285d854deff6b531a5"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ConflictType.CO_EVOLUTION": {
     "baseline_yaml_content_hash": "23bf32f872edc3baf4fffa3e99d1f9309193a34ab870ddc6b0423b699336d50b"
@@ -94,7 +99,8 @@
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Enum": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionDef": {
     "baseline_code_signature_text": "class FunctionDef:",
-    "baseline_code_structure_hash": "46e5b535bd4d5678b9fdf741e627db423f3afa7a92ca714255aa687db129b565"
+    "baseline_code_structure_hash": "46e5b535bd4d5678b9fdf741e627db423f3afa7a92ca714255aa687db129b565",
+    "baseline_yaml_content_hash": "f5cc1f1b62b8e0ba6e18e60c8d1c120c58a03c8f60edf0a9f792f7d71bb3e4b0"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionDef.args": {
     "baseline_yaml_content_hash": "a86cc24a1403803dbf13f01a5404687a2e150fcda695dce993d6ed0c35fabf2d"
@@ -124,7 +130,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionExecutionPlan": {
     "baseline_code_signature_text": "class FunctionExecutionPlan:",
-    "baseline_code_structure_hash": "c1ebf7ac9c7c32eb8c437f9426104e008d31997ca344ff53fd2bde16ad100a72"
+    "baseline_code_structure_hash": "c1ebf7ac9c7c32eb8c437f9426104e008d31997ca344ff53fd2bde16ad100a72",
+    "baseline_yaml_content_hash": "0a0339697e4d0234483280607e5165d8b37a5c871a211f861e1e8058234a7ed0"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionExecutionPlan.fqn": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#FunctionExecutionPlan.hydrate_yaml": {},
@@ -134,7 +141,8 @@
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#List": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ModuleDef": {
     "baseline_code_signature_text": "class ModuleDef:",
-    "baseline_code_structure_hash": "9579442d48d5179ec7af3a3597c9b895a97483e81ec5c65fe3b1fa8e7300b2bb"
+    "baseline_code_structure_hash": "9579442d48d5179ec7af3a3597c9b895a97483e81ec5c65fe3b1fa8e7300b2bb",
+    "baseline_yaml_content_hash": "7b44cb86cdeed96153de0246a375ccb4eace928620bac59c14c99d3bcc5c0f7d"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ModuleDef.attributes": {
     "baseline_yaml_content_hash": "bf32bae54af07010a306989718ed573d92561f97307944472c2d314b5125c178"
@@ -181,7 +189,8 @@
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Optional": {},
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Resolution": {
     "baseline_code_signature_text": "class Resolution:",
-    "baseline_code_structure_hash": "f59ab4e2f7dbec8f9e224082c3976b65a5623994d4d41be1559615fef0429d27"
+    "baseline_code_structure_hash": "f59ab4e2f7dbec8f9e224082c3976b65a5623994d4d41be1559615fef0429d27",
+    "baseline_yaml_content_hash": "bbfc93e8de4a20f3396fa1d074330b20507a9d08ff60dcf87b3c4288e10e8a5c"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#Resolution.action": {
     "baseline_yaml_content_hash": "744a677ce56ee02526025cc008adb5cd260e84a1202b418800c99fb56957d7cf"
@@ -194,7 +203,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ResolutionAction": {
     "baseline_code_signature_text": "class ResolutionAction(str, Enum):",
-    "baseline_code_structure_hash": "8cf9935e1355204f63c802e01cffc547561d5b5b0ff302856ffb4a78045df0c0"
+    "baseline_code_structure_hash": "8cf9935e1355204f63c802e01cffc547561d5b5b0ff302856ffb4a78045df0c0",
+    "baseline_yaml_content_hash": "cb970d213f299e867fa79009e3e0b8735dc4a383bc92a80b50f2d752221383c4"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ResolutionAction.ABORT": {
     "baseline_yaml_content_hash": "724f081b160160e9f3c3704b19f0ebc4b8d2db7d61a0cfbf4b290f9a25b7b1c5"
@@ -217,7 +227,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ResolutionPlan": {
     "baseline_code_signature_text": "class ResolutionPlan:",
-    "baseline_code_structure_hash": "e22627533b210903be252389bcbadb8c8ab7b752a803a2a83d21f9ed2218a697"
+    "baseline_code_structure_hash": "e22627533b210903be252389bcbadb8c8ab7b752a803a2a83d21f9ed2218a697",
+    "baseline_yaml_content_hash": "47da729513f045248fc20c72be274d93ac4997e4e6d99ba60675107572681798"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/models.py#ResolutionPlan.resolutions": {
     "baseline_yaml_content_hash": "1d4214565c02231907947de3c09b5d885ce9d8d74c12263509f0250d80196926"

@@ -27,15 +27,21 @@ def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
     app = create_test_app(tmp_path)
 
     # SETUP: Mock the parser to simulate a crash on specific file
-    # We access the parser instance directly attached to the scanner
-    real_parse = app.scanner.parser.parse
+    # In Zero-IO mode, parsing happens in the Indexer via PythonAdapter
+    # We need to find the correct parser instance to mock.
+
+    python_adapter = app.file_indexer.adapters[".py"]
+    # Verify we got the adapter (the key might vary if not registered as .py, but StitcherApp does register it as .py)
+    assert python_adapter is not None
+
+    real_parse = python_adapter.parser.parse
 
     def failing_parse(source_code, file_path=""):
         if "core.py" in str(file_path):
             raise ValueError("Simulated parser crash for testing")
         return real_parse(source_code, file_path)
 
-    monkeypatch.setattr(app.scanner.parser, "parse", failing_parse)
+    monkeypatch.setattr(python_adapter.parser, "parse", failing_parse)
 
     # WHEN we run the check command
     spy_bus = SpyBus()

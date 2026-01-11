@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Tuple
 
+
 from stitcher.spec import (
     ModuleDef,
     LanguageParserProtocol,
@@ -13,13 +14,14 @@ from stitcher.app.services import (
 )
 from stitcher.app.protocols import InteractionHandler, InteractionContext
 from stitcher.app.types import FileCheckResult
+from stitcher.index.store import IndexStore
 
 from .analyzer import CheckAnalyzer
 from .resolver import CheckResolver
 from .reporter import CheckReporter
 
 
-from .subject import ASTCheckSubjectAdapter
+from .subject import ASTCheckSubjectAdapter, IndexCheckSubjectAdapter
 
 
 class CheckRunner:
@@ -32,6 +34,7 @@ class CheckRunner:
         differ: Differ,
         interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
+        index_store: IndexStore,
     ):
         # Keep services needed by both adapter and resolver
         self.root_path = root_path
@@ -39,6 +42,7 @@ class CheckRunner:
         self.doc_manager = doc_manager
         self.sig_manager = sig_manager
         self.fingerprint_strategy = fingerprint_strategy
+        self.index_store = index_store
 
         # Inject dependencies into sub-components
         self.analyzer = CheckAnalyzer(root_path, differ)
@@ -51,6 +55,22 @@ class CheckRunner:
             fingerprint_strategy,
         )
         self.reporter = CheckReporter()
+
+    def analyze_paths(
+        self, file_paths: List[str]
+    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
+        all_results: List[FileCheckResult] = []
+        all_conflicts: List[InteractionContext] = []
+
+        for file_path in file_paths:
+            subject = IndexCheckSubjectAdapter(
+                file_path, self.index_store, self.doc_manager, self.sig_manager
+            )
+            result, conflicts = self.analyzer.analyze_subject(subject)
+            all_results.append(result)
+            all_conflicts.extend(conflicts)
+
+        return all_results, all_conflicts
 
     def analyze_batch(
         self, modules: List[ModuleDef]

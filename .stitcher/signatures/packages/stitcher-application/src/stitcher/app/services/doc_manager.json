@@ -9,7 +9,8 @@
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentAdapter": {},
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager": {
     "baseline_code_signature_text": "class DocumentManager:",
-    "baseline_code_structure_hash": "6d0f45ae24fed508e17a32aa16ba0a6cc850bcf356d04fa6431eae4775d44793"
+    "baseline_code_structure_hash": "6d0f45ae24fed508e17a32aa16ba0a6cc850bcf356d04fa6431eae4775d44793",
+    "baseline_yaml_content_hash": "5ad8f647cc1d900dfd03553f9f9136ddb6cc0ecf43ee8bbc1db947814211e271"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path, adapter: Optional[DocumentAdapter] = None):",

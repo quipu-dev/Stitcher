@@ -6,7 +6,8 @@
   "py://packages/stitcher-config/src/stitcher/config/loader.py#Path": {},
   "py://packages/stitcher-config/src/stitcher/config/loader.py#StitcherConfig": {
     "baseline_code_signature_text": "class StitcherConfig:",
-    "baseline_code_structure_hash": "5ccda7daed921f203d08c4b67f289b35331d27fa109e48041c1f9001140cc540"
+    "baseline_code_structure_hash": "5ccda7daed921f203d08c4b67f289b35331d27fa109e48041c1f9001140cc540",
+    "baseline_yaml_content_hash": "4667409b8c9a106a8a5bf30fcd5d8e7f4812479c2c3a69eb254ce7bbf08860f8"
   },
   "py://packages/stitcher-config/src/stitcher/config/loader.py#StitcherConfig.docstring_style": {},
   "py://packages/stitcher-config/src/stitcher/config/loader.py#StitcherConfig.name": {

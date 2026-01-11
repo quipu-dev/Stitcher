@@ -9,7 +9,8 @@
   "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#SemanticMenuOption": {},
   "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#TyperInteractionHandler": {
     "baseline_code_signature_text": "class TyperInteractionHandler(InteractionHandler):",
-    "baseline_code_structure_hash": "8563b8e53d5a97197781c900a2c82521584235ee1c2c39abdae19f9e8cbd6280"
+    "baseline_code_structure_hash": "8563b8e53d5a97197781c900a2c82521584235ee1c2c39abdae19f9e8cbd6280",
+    "baseline_yaml_content_hash": "6420f1db09b70cf040706006dc6843f8c4a510f5d8670ea9ceea0aa48d3e5b83"
   },
   "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#TyperInteractionHandler.__init__": {
     "baseline_code_signature_text": "def __init__(self, renderer: TyperInteractiveRenderer):",

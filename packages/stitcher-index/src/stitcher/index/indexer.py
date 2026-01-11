@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Dict, Set
+from typing import Dict, Set, Any
 
 from .store import IndexStore
 from .types import FileRecord
@@ -21,8 +21,15 @@ class FileIndexer:
     def register_adapter(self, extension: str, adapter: LanguageAdapter):
         self.adapters[extension] = adapter
 
-    def index_files(self, discovered_paths: Set[str]) -> Dict[str, int]:
-        stats = {"added": 0, "updated": 0, "deleted": 0, "skipped": 0}
+    def index_files(self, discovered_paths: Set[str]) -> Dict[str, Any]:
+        stats: Dict[str, Any] = {
+            "added": 0,
+            "updated": 0,
+            "deleted": 0,
+            "skipped": 0,
+            "errors": 0,
+            "error_details": [],
+        }
 
         # Load DB state
         known_files: Dict[str, FileRecord] = {
@@ -78,18 +85,24 @@ class FileIndexer:
             if is_new_content:
                 stats["updated" if record else "added"] += 1
 
-            self._process_file_content(file_id, abs_path, content_bytes)
+            try:
+                self._process_file_content(file_id, abs_path, content_bytes)
+            except Exception as e:
+                stats["errors"] += 1
+                stats["error_details"].append((str(abs_path), str(e)))
 
         # --- Linking ---
         self.linker.link()
         return stats
 
-    def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes):
+    def _process_file_content(
+        self, file_id: int, abs_path: Path, content_bytes: bytes
+    ) -> None:
         try:
             text_content = content_bytes.decode("utf-8")
         except UnicodeDecodeError:
             self.store.update_analysis(file_id, [], [])
-            return
+            return  # Not a parser error, just binary file
 
         ext = abs_path.suffix
         adapter = self.adapters.get(ext)
@@ -97,9 +110,6 @@ class FileIndexer:
             self.store.update_analysis(file_id, [], [])
             return
 
-        try:
-            symbols, references = adapter.parse(abs_path, text_content)
-            self.store.update_analysis(file_id, symbols, references)
-        except Exception as e:
-            log.error(f"Failed to parse {abs_path}: {e}")
-            self.store.update_analysis(file_id, [], [])
+        # Let exceptions bubble up to be caught by the caller
+        symbols, references = adapter.parse(abs_path, text_content)
+        self.store.update_analysis(file_id, symbols, references)

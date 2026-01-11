@@ -5,7 +5,8 @@
   "py://packages/stitcher-common/src/stitcher/common/adapters/yaml_adapter.py#Path": {},
   "py://packages/stitcher-common/src/stitcher/common/adapters/yaml_adapter.py#YamlAdapter": {
     "baseline_code_signature_text": "class YamlAdapter(DocumentAdapter):",
-    "baseline_code_structure_hash": "0060aeb51ec5437bf96418c141775e1334e605b90b44e8cf7e9675af292f24a8"
+    "baseline_code_structure_hash": "0060aeb51ec5437bf96418c141775e1334e605b90b44e8cf7e9675af292f24a8",
+    "baseline_yaml_content_hash": "8f062ba6cc4aa1a10b219c01f06f346693197fb010bc0ec894470b705cde94bb"
   },
   "py://packages/stitcher-common/src/stitcher/common/adapters/yaml_adapter.py#YamlAdapter.dump": {
     "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",

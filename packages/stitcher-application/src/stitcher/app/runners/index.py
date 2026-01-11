@@ -27,4 +27,17 @@ class IndexRunner:
             deleted=stats["deleted"],
             skipped=stats["skipped"],
         )
+
+        if stats.get("errors", 0) > 0:
+            # Report the first detailed error to give the user immediate context
+            if stats["error_details"]:
+                path, err = stats["error_details"][0]
+                bus.error(L.error.generic, error=f"Failed to parse {path}: {err}")
+            else:
+                bus.error(
+                    L.error.generic,
+                    error=f"Failed to index {stats['errors']} file(s). Check logs for details.",
+                )
+            return False
+
         return True

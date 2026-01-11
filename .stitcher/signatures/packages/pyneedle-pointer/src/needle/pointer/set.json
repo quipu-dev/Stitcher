@@ -2,7 +2,8 @@
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#Any": {},
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#PointerSet": {
     "baseline_code_signature_text": "class PointerSet(Set['SemanticPointer'], PointerSetProtocol):",
-    "baseline_code_structure_hash": "6116b41284a6f83c519354c991afa7278f922abae74e2723e88baef9bf982834"
+    "baseline_code_structure_hash": "6116b41284a6f83c519354c991afa7278f922abae74e2723e88baef9bf982834",
+    "baseline_yaml_content_hash": "b4c7aaaca949bf6b38142198c1c79b541515027229d191eb73e1735cb7da4f18"
   },
   "py://packages/pyneedle-pointer/src/needle/pointer/set.py#PointerSet.__add__": {
     "baseline_code_signature_text": "def __add__(self, other: Union[str, SemanticPointerProtocol]) -> PointerSet:",

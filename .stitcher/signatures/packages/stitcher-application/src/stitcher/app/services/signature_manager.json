@@ -7,7 +7,8 @@
   "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#SURIGenerator": {},
   "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#SignatureManager": {
     "baseline_code_signature_text": "class SignatureManager:",
-    "baseline_code_structure_hash": "a15dbd4a2d11a838c44ed29e6bf4a1085ea0cff37a62147ea79f3b256b6a0ddc"
+    "baseline_code_structure_hash": "a15dbd4a2d11a838c44ed29e6bf4a1085ea0cff37a62147ea79f3b256b6a0ddc",
+    "baseline_yaml_content_hash": "2b1ded155d40063ba0e25ab309dbb16b66ac1ad6cc38ffe1dd6b1a9649a317b3"
   },
   "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#SignatureManager.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path):",

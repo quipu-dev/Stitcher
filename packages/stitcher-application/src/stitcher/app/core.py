@@ -40,6 +40,7 @@ from stitcher.adapter.python.docstring import (
     get_docstring_codec,
     get_docstring_serializer,
 )
+from stitcher.app.protocols import InteractionContext
 
 
 class StitcherApp:
@@ -85,6 +86,7 @@ class StitcherApp:
             self.differ,
             interaction_handler,
             fingerprint_strategy=self.fingerprint_strategy,
+            index_store=self.index_store,
         )
         self.pump_runner = PumpRunner(
             root_path,
@@ -117,8 +119,8 @@ class StitcherApp:
     def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:
         return load_config_from_path(self.root_path)
 
-    def ensure_index_fresh(self) -> None:
-        self.index_runner.run_build(self.workspace)
+    def ensure_index_fresh(self) -> bool:
+        return self.index_runner.run_build(self.workspace)
 
     def _configure_and_scan(self, config: StitcherConfig) -> List[ModuleDef]:
         if config.name != "default":
@@ -194,30 +196,72 @@ class StitcherApp:
         return all_created
 
     def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
-        self.ensure_index_fresh()
+        self.scanner.had_errors = False
+        if not self.ensure_index_fresh():
+            self.scanner.had_errors = True
+
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
-        all_modules: List[ModuleDef] = []
-
-        self.scanner.had_errors = False
+        all_modules_for_post_processing: List[ModuleDef] = []
 
         for config in configs:
-            modules = self._configure_and_scan(config)
-            if not modules:
+            if config.name != "default":
+                bus.info(L.generate.target.processing, name=config.name)
+
+            # 1. Config Strategy
+            parser, renderer = get_docstring_codec(config.docstring_style)
+            serializer = get_docstring_serializer(config.docstring_style)
+            self.doc_manager.set_strategy(parser, serializer)
+
+            # 2. Get Files (Physical) - Zero-IO Path
+            # We skip full AST parsing for physical files
+            files = self.scanner.get_files_from_config(config)
+            # Convert to relative paths as expected by the system
+            rel_paths = [f.relative_to(self.root_path).as_posix() for f in files]
+
+            # 3. Get Plugins (Virtual) - AST Path
+            # Plugins must still be parsed as they don't exist in the index
+            plugin_modules = self.scanner.process_plugins(config.plugins)
+
+            if not rel_paths and not plugin_modules:
                 continue
-            all_modules.extend(modules)
 
-            results, conflicts = self.check_runner.analyze_batch(modules)
-            all_results.extend(results)
+            # 4. Analyze
+            batch_results: List[FileCheckResult] = []
+            batch_conflicts: List[InteractionContext] = []
 
-            self.check_runner.auto_reconcile_docs(results, modules)
+            # 4a. Analyze Physical Files using Index
+            if rel_paths:
+                f_res, f_conflicts = self.check_runner.analyze_paths(rel_paths)
+                batch_results.extend(f_res)
+                batch_conflicts.extend(f_conflicts)
 
+            # 4b. Analyze Plugins using AST
+            if plugin_modules:
+                p_res, p_conflicts = self.check_runner.analyze_batch(plugin_modules)
+                batch_results.extend(p_res)
+                batch_conflicts.extend(p_conflicts)
+
+            all_results.extend(batch_results)
+
+            # 5. Prepare ModuleDefs for Post-Processing (Reconcile/Reformat)
+            # For physical files, we create lightweight stubs to avoid parsing.
+            # Post-processors only need file_path.
+            file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
+            batch_modules = file_module_stubs + plugin_modules
+            all_modules_for_post_processing.extend(batch_modules)
+
+            # 6. Auto-Reconcile Docs (e.g. hash updates)
+            self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
+
+            # 7. Resolve Conflicts (Interactive/Automatic)
             if not self.check_runner.resolve_conflicts(
-                results, conflicts, force_relink, reconcile
+                batch_results, batch_conflicts, force_relink, reconcile
             ):
                 return False
 
-        self.check_runner.reformat_all(all_modules)
+        # 8. Final Reformat & Report
+        self.check_runner.reformat_all(all_modules_for_post_processing)
         report_success = self.check_runner.report(all_results)
         return report_success and not self.scanner.had_errors
 
