@@ -1,268 +1,226 @@
-你的分析完全正确。最后的这三个失败揭示了重构引擎与新索引系统之间最后的一点“粘连”问题。
+好的，我们开始执行计划的第一步：将 `Workspace` 相关的逻辑提取到一个新的、专用的 `stitcher-workspace` 包中。这个新包将成为项目结构发现和解析的核心组件。
 
-1.  **确定性缺失 (E2E 失败)**: `RefactorRunner` 在执行重构计划前没有确保索引是最新的。由于重构完全依赖索引来查找引用，如果索引为空（如测试环境中的初始状态），它就找不到任何需要修改的地方，导致断言失败。
-2.  **API 误用 (AttributeError)**: `SemanticGraph` 已经从“内存注册表模式”转向了“持久化索引查询模式”，因此不再持有 `registry` 属性。
+我将创建新包的目录骨架，移动现有文件，并更新所有相关的 `pyproject.toml` 配置文件以集成这个新包。
 
-我将生成一个计划来修复这些问题。
-
-## [WIP] fix: 修复重构引擎的索引依赖与 API 误用
-
-### 错误分析
-1.  **`RefactorRunner` 逻辑缺陷**: 之前的实现中，`RefactorRunner` 实例化 `SemanticGraph` 时漏掉了 `index_store` 参数，且未在分析前执行索引扫描。
-2.  **`test_refactor_internals.py` 坏味道**: 测试代码仍在尝试访问已移除的 `graph.registry`。
+## [WIP] feat(arch): 创建 stitcher-workspace 核心包
 
 ### 用户需求
-1.  确保 `RefactorRunner` 在运行重构前自动更新索引。
-2.  修复 `RefactorRunner` 对 `SemanticGraph` 的错误实例化调用。
-3.  更新测试代码以使用正确的 `find_usages` API。
+
+根据代码审查，`Workspace` 组件目前被错误地放置在 `stitcher-refactor` 包中，但它实际上是一个被多个核心模块依赖的通用组件。需要将其提取到一个新的、独立的 `stitcher-workspace` 包中，以改善架构、降低耦合。
 
 ### 评论
-通过将索引构建集成到重构流程的起点，我们保证了重构操作的“确定性”。这是 ADAP 协议所倡导的：不依赖于“假设索引已经存在”，而是通过“工具照明（执行扫描）”来确保状态的确定性。
+
+这是对项目架构的一次重要且必要的重构。将 `Workspace` 提升为一等公民，可以明确其核心地位，解决依赖倒置问题，并为后续合并 `WorkspaceScanner` 的功能、消除 DRY 违规打下坚实的基础。此举将显著提升代码库的模块化程度和长期可维护性。
 
 ### 目标
-1.  修改 `RefactorRunner` 构造函数，注入 `index_store` 和 `workspace_scanner`。
-2.  在 `RefactorRunner.run_apply` 中增加索引扫描步骤。
-3.  在 `StitcherApp` 中完成相应的依赖注入。
-4.  修复 `test_refactor_internals.py` 中的断言逻辑。
+
+1.  创建 `packages/stitcher-workspace` 的完整目录结构和 `pyproject.toml` 配置文件。
+2.  将 `stitcher.refactor.workspace` 模块移动到新的 `stitcher.workspace` 命名空间下。
+3.  更新根 `pyproject.toml`，将新包完全集成到开发环境、测试路径、类型检查和 Stitcher 自身的扫描目标中。
 
 ### 基本原理
-重构是一个“读-分析-写”的过程。索引系统承担了“读”和“分析”的核心权重。通过强制在重构前进行一次增量扫描，我们确保了重构引擎获取到的符号关系和引用位置是绝对可靠的。
+
+通过物理上分离通用组件 (`Workspace`) 和功能性组件 (`refactor`)，我们可以建立一个更清晰的依赖图。新的 `stitcher-workspace` 包将不依赖任何功能性包，而所有需要理解项目结构的其他包（如 `application`, `refactor`, `index`）都将依赖它。这遵循了软件工程中的“高内聚、低耦合”原则。
 
 ### 标签
-#intent/fix #flow/ready #priority/high 
-#comp/refactor #comp/application #comp/tests
-#concept/history #concept/executor
-#ai/brainstorm
-#task/domain/architecture
-#task/object/refactor-engine
-#task/action/fix-dependencies
-#task/state/continue
+
+#intent/architect #flow/ready #priority/high #comp/build #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/workspace-component #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `RefactorRunner` 及其调用逻辑
+#### Acts 1: 创建新包的目录和基础文件
 
-我们将 `RefactorRunner` 与索引系统正式挂钩，并修复其对 `SemanticGraph` 的调用。
+首先，我们创建 `stitcher-workspace` 包所需的目录结构和基础 Python 模块文件，包括符合命名空间包规范的 `__init__.py`。
 
 ~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/refactor.py
+run_command
 ~~~~~
-~~~~~python.old
-from stitcher.common import bus
-from needle.pointer import L
-from stitcher.refactor.engine import (
-    SemanticGraph,
-    RefactorContext,
-    Planner,
-    TransactionManager,
-)
-from stitcher.refactor.migration import MigrationLoader, MigrationError
 ~~~~~
-~~~~~python.new
-from stitcher.common import bus
-from needle.pointer import L
-from stitcher.index.store import IndexStore
-from stitcher.index.scanner import WorkspaceScanner
-from stitcher.refactor.engine import (
-    SemanticGraph,
-    RefactorContext,
-    Planner,
-    TransactionManager,
-)
-from stitcher.refactor.migration import MigrationLoader, MigrationError
+mkdir -p packages/stitcher-workspace/src/stitcher/workspace
 ~~~~~
 
 ~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/refactor.py
+write_file
+packages/stitcher-workspace/src/stitcher/__init__.py
 ~~~~~
-~~~~~python.old
-class RefactorRunner:
-    def __init__(self, root_path: Path):
-        self.root_path = root_path
-
-    def run_apply(
-~~~~~
-~~~~~python.new
-class RefactorRunner:
-    def __init__(
-        self,
-        root_path: Path,
-        index_store: IndexStore,
-        workspace_scanner: WorkspaceScanner,
-    ):
-        self.root_path = root_path
-        self.index_store = index_store
-        self.workspace_scanner = workspace_scanner
-
-    def run_apply(
+~~~~~python
+# This allows this package to coexist with other distribution packages
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 ~~~~~
 
 ~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/refactor.py
+write_file
+packages/stitcher-workspace/src/stitcher/workspace/__init__.py
 ~~~~~
-~~~~~python.old
-    def run_apply(
-        self,
-        migration_script: Path,
-        config: StitcherConfig,
-        dry_run: bool = False,
-        confirm_callback: Optional[Callable[[int], bool]] = None,
-    ) -> bool:
-        try:
-            # 1. Bootstrap services
-            bus.info(L.refactor.run.loading_graph)
-            workspace = Workspace(self.root_path, config)
-            bus.debug(
-                L.debug.log.refactor_workspace_paths, paths=workspace.get_search_paths()
-            )
-            sidecar_manager = SidecarManager(self.root_path)
-            graph = SemanticGraph(workspace)
+~~~~~python
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-            # Load all workspace symbols, including main packages and peripherals
-            graph.load_from_workspace()
+from .workspace import Workspace
 
-            ctx = RefactorContext(
-                workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-            )
-~~~~~
-~~~~~python.new
-    def run_apply(
-        self,
-        migration_script: Path,
-        config: StitcherConfig,
-        dry_run: bool = False,
-        confirm_callback: Optional[Callable[[int], bool]] = None,
-    ) -> bool:
-        try:
-            # 0. Ensure index is up to date
-            bus.info(L.index.run.start)
-            self.workspace_scanner.scan()
-
-            # 1. Bootstrap services
-            bus.info(L.refactor.run.loading_graph)
-            workspace = Workspace(self.root_path, config)
-            bus.debug(
-                L.debug.log.refactor_workspace_paths, paths=workspace.get_search_paths()
-            )
-            sidecar_manager = SidecarManager(self.root_path)
-            graph = SemanticGraph(workspace, self.index_store)
-
-            # Load all workspace symbols, including main packages and peripherals
-            graph.load_from_workspace()
-
-            ctx = RefactorContext(
-                workspace=workspace,
-                graph=graph,
-                sidecar_manager=sidecar_manager,
-                index_store=self.index_store,
-            )
+__all__ = ["Workspace"]
 ~~~~~
 
-#### Acts 2: 更新 `StitcherApp` 以注入依赖
+~~~~~act
+write_file
+packages/stitcher-workspace/src/stitcher/workspace/py.typed
+~~~~~
+~~~~~
+~~~~~
+
+#### Acts 2: 创建新包的 pyproject.toml
+
+定义 `stitcher-workspace` 包的元数据、依赖项（它依赖 `stitcher-config`）和构建配置。
+
+~~~~~act
+write_file
+packages/stitcher-workspace/pyproject.toml
+~~~~~
+~~~~~toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stitcher-workspace"
+version = "0.1.0"
+description = "Workspace discovery and layout analysis for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "stitcher-config",
+    "tomli>=2.0.1; python_version < '3.11'",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+
+[tool.uv.sources]
+stitcher-config = { workspace = true }
+~~~~~
+
+#### Acts 3: 移动 Workspace 模块
+
+将 `workspace.py` 文件从 `stitcher-refactor` 移动到新的 `stitcher-workspace` 包中。
+
+~~~~~act
+move_file
+packages/stitcher-refactor/src/stitcher/refactor/workspace.py
+packages/stitcher-workspace/src/stitcher/workspace/workspace.py
+~~~~~
+
+#### Acts 4: 更新根 pyproject.toml 以集成新包
+
+最后，我们将新包集成到整个项目中，更新开发依赖、UV 工作区配置、Pytest 路径、Stitcher 扫描路径和 Pyright 类型检查路径。
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+pyproject.toml
 ~~~~~
-~~~~~python.old
-        self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
-        self.refactor_runner = RefactorRunner(root_path)
-
-        # 3. Indexing Subsystem
+~~~~~toml
+    "stitcher-test-utils",
+    "stitcher-refactor",
+    "stitcher-index",
+]
 ~~~~~
-~~~~~python.new
-        self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
-
-        # 3. Indexing Subsystem
+~~~~~toml
+    "stitcher-test-utils",
+    "stitcher-refactor",
+    "stitcher-index",
+    "stitcher-workspace",
+]
 ~~~~~
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/core.py
+pyproject.toml
 ~~~~~
-~~~~~python.old
-        self.workspace_scanner.register_adapter(
-            ".py", PythonAdapter(root_path, search_paths)
-        )
-
-        self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
+~~~~~toml
+stitcher-refactor = { workspace = true }
+stitcher-index = { workspace = true }
+stitcher-python-analysis = { workspace = true }
 ~~~~~
-~~~~~python.new
-        self.workspace_scanner.register_adapter(
-            ".py", PythonAdapter(root_path, search_paths)
-        )
-
-        self.index_runner = IndexRunner(self.db_manager, self.workspace_scanner)
-
-        # 4. Refactor Runner (depends on Indexing)
-        self.refactor_runner = RefactorRunner(
-            root_path, self.index_store, self.workspace_scanner
-        )
+~~~~~toml
+stitcher-refactor = { workspace = true }
+stitcher-index = { workspace = true }
+stitcher-python-analysis = { workspace = true }
+stitcher-workspace = { workspace = true }
 ~~~~~
-
-#### Acts 3: 修复测试用例 `test_refactor_internals.py`
 
 ~~~~~act
 patch_file
-packages/stitcher-cli/tests/integration/test_refactor_internals.py
+pyproject.toml
 ~~~~~
-~~~~~python.old
-    for pkg_name in pkg_names:
-        graph.load(pkg_name)
-
-    # 3. Assert: Check the internal state of the SemanticGraph's registry
-    # Assert that the definition of the class itself is found and registered as a "usage"
-    usages_of_definition = [
-        u
-        for u in graph.registry.get_usages("mypkg.core.Old")
-        if u.file_path.name == "core.py"
-    ]
-    assert len(usages_of_definition) > 0, (
-        "Graph should find the definition of mypkg.core.Old"
-    )
-
-    # Assert that the usage in another file is found
-    usages_in_app = [
-        u
-        for u in graph.registry.get_usages("mypkg.core.Old")
-        if u.file_path.name == "app.py"
-    ]
-    assert len(usages_in_app) > 0, (
-        "Graph should find the usage of mypkg.core.Old in app.py"
-    )
+~~~~~toml
+[tool.pytest.ini_options]
+addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
+testpaths = ["tests", "packages"]
+norecursedirs = ["tests/fixtures"]
+pythonpath = [
+    "packages/stitcher-application/src",
+    "packages/stitcher-cli/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-index/src",
+    "packages/stitcher-python-adapter/src",
+    "packages/stitcher-python-analysis/src",
+    "packages/stitcher-refactor/src",
+    "packages/stitcher-spec/src",
 ~~~~~
-~~~~~python.new
-    for pkg_name in pkg_names:
-        graph.load(pkg_name)
+~~~~~toml
+[tool.pytest.ini_options]
+addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
+testpaths = ["tests", "packages"]
+norecursedirs = ["tests/fixtures"]
+pythonpath = [
+    "packages/stitcher-application/src",
+    "packages/stitcher-cli/src",
+    "packages/stitcher-common/src",
+    "packages/stitcher-config/src",
+    "packages/stitcher-index/src",
+    "packages/stitcher-python-adapter/src",
+    "packages/stitcher-python-analysis/src",
+    "packages/stitcher-refactor/src",
+    "packages/stitcher-spec/src",
+    "packages/stitcher-workspace/src",
+~~~~~
 
-    # 3. Assert: Check the internal state of the SemanticGraph's usage discovery
-    # Assert that the definition of the class itself is found and registered as a "usage"
-    usages_of_definition = [
-        u
-        for u in graph.find_usages("mypkg.core.Old")
-        if u.file_path.name == "core.py"
-    ]
-    assert len(usages_of_definition) > 0, (
-        "Graph should find the definition of mypkg.core.Old"
-    )
+~~~~~act
+patch_file
+pyproject.toml
+~~~~~
+~~~~~toml
+    "packages/stitcher-refactor/src",
+    "packages/stitcher-spec/src",
+    "packages/stitcher-stubgen/src",
+~~~~~
+~~~~~toml
+    "packages/stitcher-refactor/src",
+    "packages/stitcher-spec/src",
+    "packages/stitcher-stubgen/src",
+    "packages/stitcher-workspace/src",
+~~~~~
 
-    # Assert that the usage in another file is found
-    usages_in_app = [
-        u
-        for u in graph.find_usages("mypkg.core.Old")
-        if u.file_path.name == "app.py"
-    ]
-    assert len(usages_in_app) > 0, (
-        "Graph should find the usage of mypkg.core.Old in app.py"
-    )
+~~~~~act
+patch_file
+pyproject.toml
+~~~~~
+~~~~~toml
+    "packages/stitcher-stubgen/src",
+    "packages/stitcher-python-analysis/src",
+    "packages/stitcher-index/src",
+]
+~~~~~
+~~~~~toml
+    "packages/stitcher-stubgen/src",
+    "packages/stitcher-python-analysis/src",
+    "packages/stitcher-index/src",
+    "packages/stitcher-workspace/src",
+]
 ~~~~~
 
 ### 下一步建议
-现在，你可以再次运行测试。如果一切顺利，这次我们应该能看到令人欣慰的绿色。
 
-一旦测试通过，我们就可以说 Stitcher 已经完成了从“单文件解析”到“全项目语义感知”的重大跃迁。我们可以考虑下一步：如何利用这个新建立的语义索引来提供更强大的功能，比如跨包的代码跳转文档，或者更智能的冗余文档清理。
+我们已经成功创建了 `stitcher-workspace` 包并迁移了 `Workspace` 类。下一步，也是最关键的一步，是更新整个代码库中对 `Workspace` 的引用。
+
+我将扫描所有文件，将 `from stitcher.refactor.workspace import Workspace` 的导入语句修改为 `from stitcher.workspace import Workspace`，并同步更新相关包的 `pyproject.toml` 依赖项。如果你同意，我将立即开始准备这个计划。
