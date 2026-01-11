@@ -1,136 +1,199 @@
-你的直觉非常敏锐。通过对代码的静态分析，我发现了一个严重的架构不一致性：`InitRunner` 已经通过 `SignatureManager` 适配了 SURI，但 **`PumpRunner` 却在手动序列化 JSON**，这导致它会绕过 SURI 逻辑，重新写回旧的短键格式，从而破坏数据的统一性。
+检测到“确定性缺失”违例，由于 `PumpRunner` 和 `CheckRunner` 在处理基准存档时未能统一遵循 SURI 协议，导致数据在不同命令间发生“格式腐蚀”。根据 **ADAP v1.0** 和 **HFEA v1.0** 协议，我们必须首先修复这一架构缺陷。
 
-同时，`CheckRunner` 目前虽然能“兼容”加载（通过跳过无法解析的键），但它并没有任何逻辑将旧格式“就地升级”为新格式。
+## [WIP] fix: 统一全系统基准存档的 SURI 迁移与持久化逻辑
 
-根据 **ADAP v1.0** 协议和你的指令，我将**仅创建测试文件**来捕获这些确定性缺失的边缘情况。
-
-## [WIP] test(application): 捕获 Pump 与 Check 在 SURI 迁移中的不一致性
+### 错误分析
+1.  **加载逻辑过严 (`SignatureManager`)**: `load_composite_hashes` 目前仅接受 SURI 格式的键。遇到旧版的短键（如 `func`）时，`SURIGenerator.parse` 会抛出异常，导致旧数据被直接忽略。这使得 `check` 命令无法识别旧版存档，从而无法执行升级。
+2.  **持久化逻辑越权 (`PumpRunner`)**: `PumpRunner` 目前绕过了 `SignatureManager` 的封装，在自己的代码中手动进行 JSON 序列化，且错误地使用了 `fqn` 作为键。这直接导致了协议违规，将已升级的 SURI 键重新覆盖为旧的短键。
 
 ### 用户需求
-创建集成测试，用于暴露以下两个问题：
-1.  `pump` 命令是否会错误地将签名文件写回旧的短键格式。
-2.  `check` 命令是否能够识别旧格式并在执行重链接（relink）操作时将其升级为 SURI 格式。
+统一全链路的签名文件处理：让系统能够向后兼容加载旧格式，并确保任何写回操作（不管是 `init`、`check` 还是 `pump`）都强制统一为 SURI 格式。
 
 ### 评论
-我们必须确保系统的进化是“全方位的”。如果只有 `init` 遵循新协议，而核心的 `pump` 流程仍在破坏协议，那么 SURI 体系就会崩溃。这些测试将作为我们“RED”阶段的基石。
+“平庸是比错误更严重的失败”。我们不应该在各处散布 SURI 转换逻辑。`SignatureManager` 应该作为基准存档的唯一权威门户，负责处理从旧格式到新格式的透明迁移。
 
 ### 目标
-1.  创建 `packages/stitcher-application/tests/integration/test_signature_migration.py`。
-2.  **测试 A (`test_pump_maintains_suri_format`)**: 验证在 `init` 产生 SURI 后，运行 `pump` 是否会保持 SURI 格式。
-3.  **测试 B (`test_check_upgrades_legacy_format_on_relink`)**: 验证面对旧版短键 JSON，`check --force-relink` 是否能将其正确迁移为 SURI。
+1.  **兼容性加载**: 增强 `SignatureManager.load_composite_hashes`，使其能识别并回退到解析旧版短键。
+2.  **统一持久化**:
+    *   在 `SignatureManager` 中提取出 `serialize_hashes` 工具方法。
+    *   重构 `PumpRunner`，使其不再手动构造 JSON，而是调用 `SignatureManager` 的逻辑生成符合协议的内容。
+3.  **修复 Check 迁移**: 既然加载逻辑现在能看到旧键，`check --force-relink` 触发的保存操作将通过 `SignatureManager` 自动将这些键升级为 SURI。
 
 ### 基本原理
--   **捕获 Pump 腐蚀**: 我们通过检查 `pump` 后的物理文件内容，确认是否存在 `py://` 前缀。
--   **捕获 Check 迁移缺失**: 我们手动构造一个旧版 JSON，运行 `check`，观察它是否能通过重链接过程“洗白”数据格式。
+-   **SSoT (真理单一来源)**: 所有的 SURI 生成必须通过 `SignatureManager` 控制。
+-   **透明迁移**: 当 Manager 发现一个非 SURI 格式的键时，将其视为 `fragment`。这样，旧数据被加载到内存中，下一次保存时由于 Manager 强制调用 `for_symbol`，它会自然而然地被“洗”成 SURI。
 
 ### 标签
-#intent/tooling #flow/ready #priority/critical #comp/tests #concept/state #scope/dx #ai/instruct #task/domain/storage #task/object/suri-migration #task/action/capture-failure #task/state/begin
+#intent/fix #flow/ready #priority/critical #comp/application #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/signature-archive #task/action/unify-protocol #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建不一致性捕获测试
+#### Acts 1: 增强 SignatureManager 的兼容性与工具化
 
-我们将编写两个精确的集成测试，它们在当前的实现下**必然会失败**。
+修改 `SignatureManager`：
+1. 使 `load_composite_hashes` 支持旧版短键。
+2. 暴露 `serialize_hashes` 方法，供需要通过 TransactionManager 写入的 Runner 使用。
 
 ~~~~~act
-write_file
-packages/stitcher-application/tests/integration/test_signature_migration.py
+patch_file
+packages/stitcher-application/src/stitcher/app/services/signature_manager.py
 ~~~~~
-~~~~~python
-import json
-import pytest
-from pathlib import Path
-from stitcher.test_utils import WorkspaceFactory, create_test_app, SpyBus
+~~~~~python.old
+    def save_composite_hashes(
+        self, file_path: str, hashes: Dict[str, Fingerprint]
+    ) -> None:
+        if not hashes:
+            sig_path = self._get_sig_path(file_path)
+            if sig_path.exists():
+                sig_path.unlink()
+            return
 
-def test_pump_should_not_corrupt_suri_keys(tmp_path, monkeypatch):
-    """
-    捕获错误：PumpRunner 目前手动序列化 JSON，可能会将 SURI 键写回短键。
-    """
-    # 1. Arrange: Init a project with SURIs
-    factory = WorkspaceFactory(tmp_path)
-    rel_path = "src/app.py"
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source(rel_path, "def existing_func(): pass")
-        .build()
-    )
-    
-    app = create_test_app(project_root)
-    app.run_init()
-    
-    # 验证初始是 SURI
-    sig_path = project_root / ".stitcher/signatures/src/app.json"
-    with sig_path.open("r") as f:
-        assert any(k.startswith("py://") for k in json.load(f).keys())
+        sig_path = self._get_sig_path(file_path)
+        sig_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 2. Act: 添加新函数并运行 pump
-    (project_root / rel_path).write_text("def existing_func(): pass\ndef new_func(): \"\"\"Doc\"\"\"")
-    
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
-        # 注意：这里我们期望 pump 能保持 SURI
-        app.run_pump()
-        
-    # 3. Assert: 检查物理文件
-    with sig_path.open("r") as f:
-        raw_data = json.load(f)
-        keys = list(raw_data.keys())
-        
-        # 失败点：如果 PumpRunner 没改，这里会是 ["existing_func", "new_func"]
-        # 我们期望这里依然全是 SURI
-        assert all(k.startswith("py://") for k in keys), f"Pump corrupted SURI keys! Found: {keys}"
-
-def test_check_relink_should_upgrade_legacy_signatures(tmp_path, monkeypatch):
-    """
-    捕获缺失功能：Check --force-relink 应该将旧版短键 JSON 升级为 SURI。
-    """
-    # 1. Arrange: 手动创建一个旧版的短键签名文件
-    factory = WorkspaceFactory(tmp_path)
-    rel_path = "src/app.py"
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source(rel_path, "def func(a: int): pass")
-        .build()
-    )
-    
-    sig_dir = project_root / ".stitcher/signatures/src"
-    sig_dir.mkdir(parents=True)
-    legacy_data = {
-        "func": {
-            "baseline_code_structure_hash": "old_hash",
-            "baseline_yaml_content_hash": "old_yaml_hash"
+        serialized_data = {
+            SURIGenerator.for_symbol(file_path, fqn): fp.to_dict()
+            for fqn, fp in hashes.items()
         }
-    }
-    (sig_dir / "app.json").write_text(json.dumps(legacy_data))
 
-    # 2. Act: 运行 check --force-relink (模拟签名漂移后的修复)
-    # 修改源码触发漂移
-    (project_root / rel_path).write_text("def func(a: str): pass")
-    
-    app = create_test_app(project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
-        # 执行强制重链接，我们期望它不仅更新哈希，还升级 Key 格式
-        app.run_check(force_relink=True)
+        with sig_path.open("w", encoding="utf-8") as f:
+            json.dump(serialized_data, f, indent=2, sort_keys=True)
 
-    # 3. Assert: 检查物理文件是否已迁移为 SURI
-    sig_path = sig_dir / "app.json"
-    with sig_path.open("r") as f:
-        raw_data = json.load(f)
-        keys = list(raw_data.keys())
-        
-        # 失败点：如果 Check 只是盲目更新，Key 依然会是 "func"
-        # 我们期望它升级为 "py://src/app.py#func"
-        assert any(k.startswith("py://") for k in keys), f"Check failed to upgrade legacy keys! Found: {keys}"
+    def load_composite_hashes(self, file_path: str) -> Dict[str, Fingerprint]:
+        sig_path = self._get_sig_path(file_path)
+        if not sig_path.exists():
+            return {}
+        try:
+            with sig_path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                if not isinstance(data, dict):
+                    return {}
+                result = {}
+                for suri, fp_data in data.items():
+                    try:
+                        _path, fragment = SURIGenerator.parse(suri)
+                        if fragment:
+                            result[fragment] = Fingerprint.from_dict(fp_data)
+                    except (ValueError, InvalidFingerprintKeyError):
+                        # Gracefully skip malformed SURIs or invalid fingerprint data
+                        continue
+                return result
+        except (json.JSONDecodeError, OSError):
+            return {}
+~~~~~
+~~~~~python.new
+    def serialize_hashes(self, file_path: str, hashes: Dict[str, Fingerprint]) -> str:
+        """
+        Serializes fingerprints into a JSON string using SURI as keys.
+        """
+        serialized_data = {
+            SURIGenerator.for_symbol(file_path, fqn): fp.to_dict()
+            for fqn, fp in hashes.items()
+        }
+        return json.dumps(serialized_data, indent=2, sort_keys=True)
+
+    def save_composite_hashes(
+        self, file_path: str, hashes: Dict[str, Fingerprint]
+    ) -> None:
+        if not hashes:
+            sig_path = self._get_sig_path(file_path)
+            if sig_path.exists():
+                sig_path.unlink()
+            return
+
+        sig_path = self._get_sig_path(file_path)
+        sig_path.parent.mkdir(parents=True, exist_ok=True)
+        content = self.serialize_hashes(file_path, hashes)
+
+        with sig_path.open("w", encoding="utf-8") as f:
+            f.write(content)
+
+    def load_composite_hashes(self, file_path: str) -> Dict[str, Fingerprint]:
+        sig_path = self._get_sig_path(file_path)
+        if not sig_path.exists():
+            return {}
+        try:
+            with sig_path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                if not isinstance(data, dict):
+                    return {}
+                result = {}
+                for key, fp_data in data.items():
+                    try:
+                        # Protocol Check: If it's a SURI, parse it.
+                        if key.startswith("py://"):
+                            _path, fragment = SURIGenerator.parse(key)
+                        else:
+                            # Legacy Fallback: Treat key as direct fragment
+                            fragment = key
+
+                        if fragment:
+                            result[fragment] = Fingerprint.from_dict(fp_data)
+                    except (ValueError, InvalidFingerprintKeyError):
+                        continue
+                return result
+        except (json.JSONDecodeError, OSError):
+            return {}
+~~~~~
+
+#### Acts 2: 修正 PumpRunner 的非法写入
+
+重构 `PumpRunner.run_batch`，确保其通过 `SignatureManager` 产生持久化内容。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/pump.py
+~~~~~
+~~~~~python.old
+                if signatures_need_save:
+                    if not new_hashes:
+                        sig_path = self.sig_manager._get_sig_path(module.file_path)
+                        if sig_path.exists():
+                            tm.add_delete_file(
+                                str(sig_path.relative_to(self.root_path))
+                            )
+                    else:
+                        self.sig_manager.save_composite_hashes(
+                            module.file_path, new_hashes
+                        )
+                        # The save logic is complex, let's defer to the manager.
+                        # We need to write the content via the TM.
+                        serialized_data = {
+                            fqn: fp.to_dict() for fqn, fp in new_hashes.items()
+                        }
+                        sig_content = json.dumps(
+                            serialized_data, indent=2, sort_keys=True
+                        )
+                        sig_path = self.sig_manager._get_sig_path(module.file_path)
+                        tm.add_write(
+                            str(sig_path.relative_to(self.root_path)), sig_content
+                        )
+~~~~~
+~~~~~python.new
+                if signatures_need_save:
+                    sig_path = self.sig_manager._get_sig_path(module.file_path)
+                    rel_sig_path = str(sig_path.relative_to(self.root_path))
+
+                    if not new_hashes:
+                        if sig_path.exists():
+                            tm.add_delete_file(rel_sig_path)
+                    else:
+                        # Use centralized serialization to ensure SURI keys
+                        sig_content = self.sig_manager.serialize_hashes(
+                            module.file_path, new_hashes
+                        )
+                        tm.add_write(rel_sig_path, sig_content)
 ~~~~~
 
 ### 下一步建议
 
-现在请运行这些测试：
+由于 `SignatureManager` 现在具备了向后兼容能力且强制了 SURI 持久化：
+1. `pump` 操作现在会自动将原有的短键升级为 SURI 键。
+2. `check --force-relink` 逻辑现在能正确“看到”旧键并将其“洗白”为 SURI。
+
+请立即运行迁移测试：
 `pytest packages/stitcher-application/tests/integration/test_signature_migration.py`
 
-我预计这两个测试都会**失败 (RED)**。
-- 第一个测试会失败，因为 `PumpRunner` 确实在手动写 JSON 且没用 SURI。
-- 第二个测试会失败，因为 `SignatureManager.load_composite_hashes` 在加载时会跳过（解析失败）旧键，导致 `check` 认为 Baseline 为空，从而无法进行有效的 Relink/升级。
-
-一旦确认失败，我将根据 **ADAP v1.0** 协议提交修复方案，彻底统一这些链路。
+这些测试现在应该能够全部通过（GREEN）。完成后，我们才真正拥有了一个统一的数据底座，可以继续推进 `PumpRunner` 的 Query-First 重构。

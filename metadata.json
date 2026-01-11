@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test(application): 捕获 Pump 与 Check 在 SURI 迁移中的不一致性", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768126021.2680535, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 统一全系统基准存档的 SURI 迁移与持久化逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768126085.6140146, "duration_ms": 0}}

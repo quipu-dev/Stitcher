@@ -246,28 +246,18 @@ class PumpRunner:
                     )
 
                 if signatures_need_save:
+                    sig_path = self.sig_manager._get_sig_path(module.file_path)
+                    rel_sig_path = str(sig_path.relative_to(self.root_path))
+
                     if not new_hashes:
-                        sig_path = self.sig_manager._get_sig_path(module.file_path)
                         if sig_path.exists():
-                            tm.add_delete_file(
-                                str(sig_path.relative_to(self.root_path))
-                            )
+                            tm.add_delete_file(rel_sig_path)
                     else:
-                        self.sig_manager.save_composite_hashes(
+                        # Use centralized serialization to ensure SURI keys
+                        sig_content = self.sig_manager.serialize_hashes(
                             module.file_path, new_hashes
                         )
-                        # The save logic is complex, let's defer to the manager.
-                        # We need to write the content via the TM.
-                        serialized_data = {
-                            fqn: fp.to_dict() for fqn, fp in new_hashes.items()
-                        }
-                        sig_content = json.dumps(
-                            serialized_data, indent=2, sort_keys=True
-                        )
-                        sig_path = self.sig_manager._get_sig_path(module.file_path)
-                        tm.add_write(
-                            str(sig_path.relative_to(self.root_path)), sig_content
-                        )
+                        tm.add_write(rel_sig_path, sig_content)
 
                 if file_has_redundancy:
                     redundant_files_list.append(self.root_path / module.file_path)
