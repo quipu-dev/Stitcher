@@ -1,11 +1,4 @@
 {
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#AliasResolutionError": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#Any": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#Argument": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#ArgumentKind": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#Attribute": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#ClassDef": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#FunctionDef": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#GriffePythonParser": {
     "baseline_code_signature_text": "class GriffePythonParser(LanguageParserProtocol):",
     "baseline_code_structure_hash": "f01866fbe93950584b5afbc51d693ed6d33e6113f88d7276d13271bd6e1efc49"
@@ -42,13 +35,6 @@
     "baseline_code_signature_text": "def parse(self, source_code: str, file_path: str = '') -> ModuleDef:",
     "baseline_code_structure_hash": "7cdee217ef2d564bf97560e5bc9d2a86ff7385b13fee797305bbe9f202846833"
   },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#LanguageParserProtocol": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#List": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#ModuleDef": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#Optional": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#Path": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#SourceLocation": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#Union": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#_ImportVisitor": {
     "baseline_code_signature_text": "class _ImportVisitor(ast.NodeVisitor):",
     "baseline_code_structure_hash": "adbb1a6bd96facdd49a5f881651e3680e996f415f5031189a1e6fa9a756ab90c"
@@ -65,10 +51,5 @@
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#_ImportVisitor.visit_ImportFrom": {
     "baseline_code_signature_text": "def visit_ImportFrom(self, node: ast.ImportFrom) -> None:",
     "baseline_code_structure_hash": "bc1e23ad33ae8252ae3444fb7fad823144e14754f8b876b51d1793d05c85c1c1"
-  },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#_enrich_typing_imports": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#ast": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#cast": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#griffe": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/griffe_parser.py#logging": {}
+  }
 }

@@ -1,15 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#Callable": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#FileIndexer": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#IndexStore": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#L": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#MigrationError": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#MigrationLoader": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#Optional": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#Path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#Planner": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#PythonAdapter": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorContext": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorRunner": {
     "baseline_code_signature_text": "class RefactorRunner:",
     "baseline_code_structure_hash": "3fdfdc7d87145f7a37995377a7eb2abd5cceb75b9e0b8b07f4e628980020cd4b"
@@ -24,11 +13,5 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorRunner.run_apply": {
     "baseline_code_signature_text": "def run_apply(self, migration_script: Path, config: StitcherConfig, dry_run: bool = False, confirm_callback: Optional[Callable[[int], bool]] = None) -> bool:",
     "baseline_code_structure_hash": "f4c8ec05521cba7b1380ddd595a6ea806690da985365733d874bae3403bccd4b"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#SemanticGraph": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#SidecarManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#StitcherConfig": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#TransactionManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#Workspace": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#bus": {}
+  }
 }

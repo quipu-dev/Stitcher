@@ -1,10 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#AssetPathResolver": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#Dict": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#Fingerprint": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#InvalidFingerprintKeyError": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#Path": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#SURIGenerator": {},
   "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#SignatureManager": {
     "baseline_code_signature_text": "class SignatureManager:",
     "baseline_code_structure_hash": "a15dbd4a2d11a838c44ed29e6bf4a1085ea0cff37a62147ea79f3b256b6a0ddc",
@@ -40,6 +34,5 @@
     "baseline_code_signature_text": "def serialize_hashes(self, file_path: str, hashes: Dict[str, Fingerprint]) -> str:",
     "baseline_code_structure_hash": "7d7cceb76e85a32872afc3373218efcc5574e9c31d2af35dd0a3e8540e679f5a",
     "baseline_yaml_content_hash": "c945a7d6e23af1601c51ea8eb55863bc04a00f494d84df5029b9f6dabcdfbab2"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#json": {}
+  }
 }

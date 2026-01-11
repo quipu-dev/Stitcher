@@ -1,7 +1,4 @@
 {
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/json_handler.py#Any": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/json_handler.py#Dict": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/json_handler.py#FileHandlerProtocol": {},
   "py://packages/pyneedle-runtime/src/needle/operators/helpers/json_handler.py#JsonHandler": {
     "baseline_code_signature_text": "class JsonHandler(FileHandlerProtocol):",
     "baseline_code_structure_hash": "4e8a512ea40d82b05e441e8aa6cacb6326b46ca3c22ed913822c086f3e9e0770"
@@ -25,7 +22,5 @@
   "py://packages/pyneedle-runtime/src/needle/operators/helpers/json_handler.py#JsonHandler.save": {
     "baseline_code_signature_text": "def save(self, path: Path, data: Dict[str, Any]) -> bool:",
     "baseline_code_structure_hash": "9d71fdde26ac2d1bcafdb0b1e71ae9214f95dd6c9d09cad8ca7c7d09fa51ee5b"
-  },
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/json_handler.py#Path": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/json_handler.py#json": {}
+  }
 }

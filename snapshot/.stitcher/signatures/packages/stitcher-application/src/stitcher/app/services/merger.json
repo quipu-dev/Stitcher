@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/services/merger.py#DocstringIR": {},
   "py://packages/stitcher-application/src/stitcher/app/services/merger.py#DocstringMerger": {
     "baseline_code_signature_text": "class DocstringMerger:",
     "baseline_code_structure_hash": "a0de92b0baea2ee8146b2b336d0279c17ad352e5bfd262517b91a87b7f7bf655",
@@ -9,7 +8,5 @@
     "baseline_code_signature_text": "def merge(self, base: Optional[DocstringIR], incoming: DocstringIR) -> DocstringIR:",
     "baseline_code_structure_hash": "f21bcf495ca5c34cbc4698acd7b76780a0035b754862d7d5257e2be60aa396e8",
     "baseline_yaml_content_hash": "98e59ecb6edf9237e17f09d272bc317caa440b29c8d7dcead2fc8c0fd43d377f"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/services/merger.py#Optional": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/merger.py#copy": {}
+  }
 }

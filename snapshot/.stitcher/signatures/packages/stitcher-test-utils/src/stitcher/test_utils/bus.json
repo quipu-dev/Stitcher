@@ -1,10 +1,4 @@
 {
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#Any": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#Dict": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#List": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#Optional": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#Renderer": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SemanticPointer": {},
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus": {
     "baseline_code_signature_text": "class SpyBus:",
     "baseline_code_structure_hash": "65aa0f065b138f219d3f17554fd97f1645fb398a21146dcfdc3d94042f04af67",
@@ -51,8 +45,5 @@
     "baseline_code_signature_text": "def render(self, message: str, level: str) -> None:",
     "baseline_code_structure_hash": "5ee01c65ceae57a45c16a7c14d696ccdbefeca3e86709a97c1f828eeae4eedec",
     "baseline_yaml_content_hash": "ac368e82bf66516dd24182300dac2becaecca2f62c2041e01596114afec6cb01"
-  },
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#Union": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#contextmanager": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#stitcher": {}
+  }
 }

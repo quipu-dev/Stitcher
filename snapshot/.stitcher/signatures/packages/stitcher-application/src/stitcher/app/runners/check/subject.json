@@ -25,11 +25,6 @@
     "baseline_code_signature_text": "def is_documentable(self) -> bool:",
     "baseline_code_structure_hash": "1a55c9ded7bf45553f63ae27c049594f5faa1245bd0c6ce98f4a0d2d7cd30db7"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#CheckSubject": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#Dict": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#DocumentManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#Fingerprint": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#FingerprintStrategyProtocol": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter": {
     "baseline_code_signature_text": "class IndexCheckSubjectAdapter(CheckSubject):",
     "baseline_code_structure_hash": "2d58ecb2c30492b92b72c1e76df294fc27becfd22fe1a306f752cd98d42b3f99"
@@ -54,11 +49,5 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter.is_documentable": {
     "baseline_code_signature_text": "def is_documentable(self) -> bool:",
     "baseline_code_structure_hash": "1a55c9ded7bf45553f63ae27c049594f5faa1245bd0c6ce98f4a0d2d7cd30db7"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexStore": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ModuleDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#Optional": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#SignatureManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#SymbolRecord": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#SymbolState": {}
+  }
 }

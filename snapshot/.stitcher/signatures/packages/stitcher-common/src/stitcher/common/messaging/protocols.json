@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-common/src/stitcher/common/messaging/protocols.py#Protocol": {},
   "py://packages/stitcher-common/src/stitcher/common/messaging/protocols.py#Renderer": {
     "baseline_code_signature_text": "class Renderer(Protocol):",
     "baseline_code_structure_hash": "8342694db8d308b36ba5d1ecf2dc07bba1460712ac3a9a9438c5abba24852b3d",

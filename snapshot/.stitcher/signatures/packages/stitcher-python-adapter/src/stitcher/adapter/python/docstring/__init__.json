@@ -1,12 +1,3 @@
 {
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#GoogleDocstringRenderer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#GoogleSerializer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#GriffeDocstringParser": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#NumpyDocstringRenderer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#NumpySerializer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#RawDocstringParser": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#RawSerializer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#__all__": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#get_docstring_codec": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#get_docstring_serializer": {}
+  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/__init__.py#__all__": {}
 }

@@ -1,13 +1,4 @@
 {
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#DocstringParserProtocol": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#DocstringRendererProtocol": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#DocstringSerializerProtocol": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#GoogleDocstringRenderer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#GoogleSerializer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#GriffeDocstringParser": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#NumpyDocstringRenderer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#NumpySerializer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#RawDocstringParser": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#RawDocstringRenderer": {
     "baseline_code_signature_text": "class RawDocstringRenderer(DocstringRendererProtocol):",
     "baseline_code_structure_hash": "806ec53bc278396aaabf476af079a80e030fcd039e6b455541f2cbbfca637fa4",
@@ -17,8 +8,6 @@
     "baseline_code_signature_text": "def render(self, docstring_ir, context = None) -> str:",
     "baseline_code_structure_hash": "05a6e5ca4fcb5739f798bac0a20de58eaa96be177a23c5e223e6945dc9665efb"
   },
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#RawSerializer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#Tuple": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/factory.py#get_docstring_codec": {
     "baseline_code_signature_text": "def get_docstring_codec(style: str) -> Tuple[DocstringParserProtocol, DocstringRendererProtocol]:",
     "baseline_code_structure_hash": "7d811b0c7b02af76f198ac44d0ad399905b0da9d8edad4b6a3587aa3ab3aa7e0",

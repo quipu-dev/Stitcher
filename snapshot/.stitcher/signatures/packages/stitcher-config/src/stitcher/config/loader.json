@@ -1,9 +1,4 @@
 {
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#Any": {},
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#Dict": {},
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#List": {},
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#Optional": {},
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#Path": {},
   "py://packages/stitcher-config/src/stitcher/config/loader.py#StitcherConfig": {
     "baseline_code_signature_text": "class StitcherConfig:",
     "baseline_code_structure_hash": "5ccda7daed921f203d08c4b67f289b35331d27fa109e48041c1f9001140cc540",
@@ -26,7 +21,6 @@
   "py://packages/stitcher-config/src/stitcher/config/loader.py#StitcherConfig.stub_path": {
     "baseline_yaml_content_hash": "d8a5c531132399b230551bf32b8e37f8c51927c421df2dc304c4e564f281b016"
   },
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#Tuple": {},
   "py://packages/stitcher-config/src/stitcher/config/loader.py#_find_plugins": {
     "baseline_code_signature_text": "def _find_plugins(workspace_root: Path) -> Dict[str, str]:",
     "baseline_code_structure_hash": "9774a83c7eee3c859a40560352554b7b1fc69f6349f1a100be7134989d3735ad",
@@ -37,13 +31,9 @@
     "baseline_code_structure_hash": "d9c36fb18b5aafed5134c1f576d59607d8f737cde72096b43c064b5b35009b56",
     "baseline_yaml_content_hash": "2d3327c0e8045b46f5375b52c6fef49a0003161732bac6b3fdb50e454a614dbe"
   },
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#dataclass": {},
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#field": {},
   "py://packages/stitcher-config/src/stitcher/config/loader.py#load_config_from_path": {
     "baseline_code_signature_text": "def load_config_from_path(search_path: Path) -> Tuple[List[StitcherConfig], Optional[str]]:",
     "baseline_code_structure_hash": "f72917deeb9acd64d41aec3a3c2bf32c04d664ddf818eea4cdb47fc65101c2ee",
     "baseline_yaml_content_hash": "628be6581eae98dacc9821a1ad4ccd5da7cf345eb8f6086e832781dcdd846413"
-  },
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#sys": {},
-  "py://packages/stitcher-config/src/stitcher/config/loader.py#tomllib": {}
+  }
 }

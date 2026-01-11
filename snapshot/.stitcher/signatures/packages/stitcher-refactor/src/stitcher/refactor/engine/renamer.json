@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#Dict": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#GlobalBatchRenamer": {
     "baseline_code_signature_text": "class GlobalBatchRenamer:",
     "baseline_code_structure_hash": "c87afb7fe940b39530b5d652dd4a59d1a7ef4fe9958fac8911ac4035797b5130"
@@ -13,13 +12,5 @@
     "baseline_code_structure_hash": "be4940c6c7eb90cc9fd2bdbc3a80dd205c67d5640bcb6cd7ad7c4d2b68b7f25d"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#GlobalBatchRenamer.ctx": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#GlobalBatchRenamer.rename_map": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#List": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#Path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#RefactorContext": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#SymbolRenamerTransformer": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#UsageLocation": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#WriteFileOp": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#cst": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#defaultdict": {}
+  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py#GlobalBatchRenamer.rename_map": {}
 }

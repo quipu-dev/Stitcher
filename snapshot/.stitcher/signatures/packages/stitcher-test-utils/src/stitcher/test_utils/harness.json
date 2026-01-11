@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#Path": {},
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness": {
     "baseline_code_signature_text": "class VenvHarness:",
     "baseline_code_structure_hash": "e5de92a72e125ac041b70b44296eb598c2f579d07f28b9a0990eaa6d5f77fae3",
@@ -59,8 +58,5 @@
   },
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.venv_dir": {
     "baseline_yaml_content_hash": "c75f6b5bdf5d4e338f45c177f4c54f2cc18394d019ddc2b35383938791e44318"
-  },
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#subprocess": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#sys": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#venv": {}
+  }
 }

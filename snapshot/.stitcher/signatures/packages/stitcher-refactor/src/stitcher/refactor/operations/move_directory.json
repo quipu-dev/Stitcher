@@ -1,7 +1,4 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#AbstractOperation": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#DeleteDirectoryIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#List": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#MoveDirectoryOperation": {
     "baseline_code_signature_text": "class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):",
     "baseline_code_structure_hash": "1c60a2362a0be611c1bc5d817f15fc98aa340b12e9de20c888a008f2118e7a18",
@@ -20,13 +17,5 @@
     "baseline_code_structure_hash": "0ebfa3bb1987404f5b905343a01db0aebb84b1d1ff8ccee39b51f10cab2e8625"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#MoveDirectoryOperation.dest_dir": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#MoveDirectoryOperation.src_dir": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#MoveFileIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#Path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#RefactorContext": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#RefactorIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#RenameIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#ScaffoldIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#SidecarUpdateIntent": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#SidecarUpdateMixin": {}
+  "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#MoveDirectoryOperation.src_dir": {}
 }

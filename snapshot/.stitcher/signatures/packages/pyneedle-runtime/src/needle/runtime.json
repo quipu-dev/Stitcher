@@ -1,10 +1,4 @@
 {
-  "py://packages/pyneedle-runtime/src/needle/runtime.py#L": {},
-  "py://packages/pyneedle-runtime/src/needle/runtime.py#Optional": {},
-  "py://packages/pyneedle-runtime/src/needle/runtime.py#OverlayOperator": {},
-  "py://packages/pyneedle-runtime/src/needle/runtime.py#Path": {},
-  "py://packages/pyneedle-runtime/src/needle/runtime.py#PointerSet": {},
-  "py://packages/pyneedle-runtime/src/needle/runtime.py#SemanticPointer": {},
   "py://packages/pyneedle-runtime/src/needle/runtime.py#__all__": {},
   "py://packages/pyneedle-runtime/src/needle/runtime.py#_find_project_root": {
     "baseline_code_signature_text": "def _find_project_root(start_dir: Optional[Path] = None) -> Path:",

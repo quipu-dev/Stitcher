@@ -1,13 +1,4 @@
 {
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#CodeRange": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#DefaultDict": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#Dict": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#List": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#Optional": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#Path": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#PositionProvider": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#ReferenceType": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageLocation": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageRegistry": {
     "baseline_code_signature_text": "class UsageRegistry:",
     "baseline_code_structure_hash": "967c896897154b5dae54e74f3892ab42d8088198a58ae52225e85f7f60321d33",
@@ -75,11 +66,5 @@
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageScanVisitor.visit_Name": {
     "baseline_code_signature_text": "def visit_Name(self, node: cst.Name):",
     "baseline_code_structure_hash": "cd22b676f96a3ec757b09d2c11277d6b56e755f04646f134ed579260699b2a96"
-  },
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#cast": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#cst": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#defaultdict": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#get_absolute_module_from_package_for_import": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#get_full_name_for_node": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#helpers": {}
+  }
 }

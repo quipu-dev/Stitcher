@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-index/src/stitcher/index/linker.py#DatabaseManager": {},
   "py://packages/stitcher-index/src/stitcher/index/linker.py#Linker": {
     "baseline_code_signature_text": "class Linker:",
     "baseline_code_structure_hash": "d4316f6a1b6b29b437e7c2315c8d9a86328ea38289eee332db6d936d899f732d"
@@ -14,6 +13,5 @@
     "baseline_code_structure_hash": "d279b3e3a641feb0779899f94ecd5288c78bcdeed580d2a7e8437bef237264d6",
     "baseline_yaml_content_hash": "6f9fafdd6caee12a67e8e133b0c4edaffacbcc68e59eecf13185617e01648b1a"
   },
-  "py://packages/stitcher-index/src/stitcher/index/linker.py#log": {},
-  "py://packages/stitcher-index/src/stitcher/index/linker.py#logging": {}
+  "py://packages/stitcher-index/src/stitcher/index/linker.py#log": {}
 }

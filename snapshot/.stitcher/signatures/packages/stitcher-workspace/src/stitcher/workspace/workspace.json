@@ -1,10 +1,4 @@
 {
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Dict": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#List": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Optional": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Path": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Set": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#StitcherConfig": {},
   "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace": {
     "baseline_code_signature_text": "class Workspace:",
     "baseline_code_structure_hash": "b2a5fc0b2fb82e14bbb08d8b2421510009a0a42f1a6ee7780a11acfdaf371480"
@@ -45,10 +39,5 @@
   },
   "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.peripheral_source_dirs": {},
   "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.root_path": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#defaultdict": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#log": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#logging": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#os": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#subprocess": {},
-  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#tomllib": {}
+  "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#log": {}
 }

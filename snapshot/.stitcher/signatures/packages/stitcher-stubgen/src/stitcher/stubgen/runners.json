@@ -1,7 +1,4 @@
 {
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#Dict": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#DocstringRendererProtocol": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#DocumentManager": {},
   "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#GenerateRunner": {
     "baseline_code_signature_text": "class GenerateRunner:",
     "baseline_code_structure_hash": "70b16df5bba9a5b9159ba25b70d6972c38342f9441ec98a36f99d2f381f7ba2f"
@@ -32,17 +29,5 @@
     "baseline_code_structure_hash": "dbf406fb1ca88903cbc9089be3ba1a9820b10686acdb3b9fc06f8854138f95c9"
   },
   "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#GenerateRunner.stub_pkg_manager": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#GenerateRunner.transformer": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#L": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#LanguageTransformerProtocol": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#List": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#ModuleDef": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#Optional": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#Path": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#ScannerService": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#StitcherConfig": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#StubGeneratorProtocol": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#StubPackageManager": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#TransactionManager": {},
-  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#bus": {}
+  "py://packages/stitcher-stubgen/src/stitcher/stubgen/runners.py#GenerateRunner.transformer": {}
 }

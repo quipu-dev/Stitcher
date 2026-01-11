@@ -1,12 +1,4 @@
 {
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#ConflictType": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#InteractionContext": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#InteractionHandler": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#L": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#List": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#Optional": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#ResolutionAction": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#SemanticMenuOption": {},
   "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#TyperInteractionHandler": {
     "baseline_code_signature_text": "class TyperInteractionHandler(InteractionHandler):",
     "baseline_code_structure_hash": "8563b8e53d5a97197781c900a2c82521584235ee1c2c39abdae19f9e8cbd6280",
@@ -23,7 +15,5 @@
   },
   "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#TyperInteractionHandler.renderer": {
     "baseline_yaml_content_hash": "ad1def1908ca2ce89f8f7c5e8731322ef08406ddacd8475bac716986388abff1"
-  },
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#TyperInteractiveRenderer": {},
-  "py://packages/stitcher-cli/src/stitcher/cli/handlers.py#sys": {}
+  }
 }

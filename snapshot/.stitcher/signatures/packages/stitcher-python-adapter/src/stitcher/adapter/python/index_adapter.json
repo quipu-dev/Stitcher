@@ -1,10 +1,4 @@
 {
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#GriffePythonParser": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#LanguageAdapter": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#List": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#ModuleDef": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#Optional": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#Path": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#PythonAdapter": {
     "baseline_code_signature_text": "class PythonAdapter(LanguageAdapter):",
     "baseline_code_structure_hash": "816ffb64743f42cc526b9ca5a37b81acdf1224278ef1a602fc2fc3780383b72a"
@@ -33,15 +27,5 @@
   },
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#PythonAdapter.parser": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#PythonAdapter.root_path": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#PythonAdapter.search_paths": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#PythonFingerprintStrategy": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#ReferenceRecord": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#SURIGenerator": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#ScopeAnalyzer": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#SymbolRecord": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#Tuple": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#UsageRegistry": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#UsageScanVisitor": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#cst": {},
-  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#path_to_logical_fqn": {}
+  "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/index_adapter.py#PythonAdapter.search_paths": {}
 }

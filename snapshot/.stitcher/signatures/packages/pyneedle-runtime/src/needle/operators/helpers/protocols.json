@@ -1,6 +1,4 @@
 {
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/protocols.py#Any": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/protocols.py#Dict": {},
   "py://packages/pyneedle-runtime/src/needle/operators/helpers/protocols.py#FileHandlerProtocol": {
     "baseline_code_signature_text": "class FileHandlerProtocol(Protocol):",
     "baseline_code_structure_hash": "b1564b22a7e8be5775a96e955981a4539c9b3c9a2b62bffa5b3bf2e932ab7d13"
@@ -16,7 +14,5 @@
   "py://packages/pyneedle-runtime/src/needle/operators/helpers/protocols.py#FileHandlerProtocol.save": {
     "baseline_code_signature_text": "def save(self, path: Path, data: Dict[str, Any]) -> bool:",
     "baseline_code_structure_hash": "9d71fdde26ac2d1bcafdb0b1e71ae9214f95dd6c9d09cad8ca7c7d09fa51ee5b"
-  },
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/protocols.py#Path": {},
-  "py://packages/pyneedle-runtime/src/needle/operators/helpers/protocols.py#Protocol": {}
+  }
 }

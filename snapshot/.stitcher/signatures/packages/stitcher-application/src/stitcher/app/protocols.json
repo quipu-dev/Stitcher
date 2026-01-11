@@ -1,5 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/protocols.py#ConflictType": {},
   "py://packages/stitcher-application/src/stitcher/app/protocols.py#InteractionContext": {
     "baseline_code_signature_text": "class InteractionContext:",
     "baseline_code_structure_hash": "04a0d5f8fec77fb8d5cca3e3a23bb7b79fa3663477cd2bcb3a5508b875589cfc",
@@ -29,10 +28,5 @@
     "baseline_code_signature_text": "def process_interactive_session(self, contexts: List[InteractionContext]) -> List[ResolutionAction]:",
     "baseline_code_structure_hash": "72ab2928cd87e4ba0ccc8358dc09f0186a38a90654abd80ff66a8358659e5a1b",
     "baseline_yaml_content_hash": "6134b629025d8f17130b48d3413c07e21b60ef78800dca20dd6318508cdf22c4"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/protocols.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/protocols.py#Optional": {},
-  "py://packages/stitcher-application/src/stitcher/app/protocols.py#Protocol": {},
-  "py://packages/stitcher-application/src/stitcher/app/protocols.py#ResolutionAction": {},
-  "py://packages/stitcher-application/src/stitcher/app/protocols.py#dataclass": {}
+  }
 }

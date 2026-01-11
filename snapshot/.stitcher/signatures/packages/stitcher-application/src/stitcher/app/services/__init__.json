@@ -1,8 +1,3 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/services/__init__.py#Differ": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/__init__.py#DocstringMerger": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/__init__.py#DocumentManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/__init__.py#ScannerService": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/__init__.py#SignatureManager": {},
   "py://packages/stitcher-application/src/stitcher/app/services/__init__.py#__all__": {}
 }

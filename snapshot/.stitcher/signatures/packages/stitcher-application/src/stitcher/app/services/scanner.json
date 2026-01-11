@@ -1,11 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#Dict": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#InspectionError": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#L": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#LanguageParserProtocol": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ModuleDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#Path": {},
   "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService": {
     "baseline_code_signature_text": "class ScannerService:",
     "baseline_code_structure_hash": "9beda3a2a9bfc873fc967152732dec7d0a63a4435327a70bd129b0bdee8322cc"
@@ -32,9 +25,5 @@
   "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.scan_files": {
     "baseline_code_signature_text": "def scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:",
     "baseline_code_structure_hash": "9c25fa3899ba90cbf4820f04fee91733aa77fc94a5b0a72d553e3551c36b915c"
-  },
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#StitcherConfig": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#bus": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#defaultdict": {},
-  "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#parse_plugin_entry": {}
+  }
 }

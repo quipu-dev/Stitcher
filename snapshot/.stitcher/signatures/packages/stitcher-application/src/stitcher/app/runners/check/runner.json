@@ -1,8 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#ASTCheckSubjectAdapter": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckAnalyzer": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckReporter": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckResolver": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner": {
     "baseline_code_signature_text": "class CheckRunner:",
     "baseline_code_structure_hash": "51cb9a01b6a0263aeb242f78835ea5fd9cced46725a16807875266497033e248"
@@ -43,19 +39,5 @@
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.resolver": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.root_path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.sig_manager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#Differ": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#DocumentManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#FileCheckResult": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#FingerprintStrategyProtocol": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#IndexCheckSubjectAdapter": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#IndexStore": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#InteractionContext": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#InteractionHandler": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#LanguageParserProtocol": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#ModuleDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#Path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#SignatureManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#Tuple": {}
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.sig_manager": {}
 }

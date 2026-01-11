@@ -1,8 +1,4 @@
 {
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#Any": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#Dict": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#List": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#Path": {},
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory": {
     "baseline_code_signature_text": "class WorkspaceFactory:",
     "baseline_code_structure_hash": "a92355e853b1eb20433f50d1d1a620d0ae95f233763900cc5f2290a58c66b60d",
@@ -58,9 +54,5 @@
     "baseline_code_signature_text": "def with_source(self, path: str, content: str) -> WorkspaceFactory:",
     "baseline_code_structure_hash": "4231b100542176367e7ccc6879eb0bbb2119ecb797141bd39a83766aedfde7b0",
     "baseline_yaml_content_hash": "207cbff581589c62a759786a59fa2c1d43b4d125ba5716697e38c157e3065f92"
-  },
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#dedent": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#subprocess": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#tomli_w": {},
-  "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#yaml": {}
+  }
 }

@@ -1,23 +1,4 @@
 {
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#ConflictType": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#Dict": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#Differ": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#DocstringIR": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#DocstringMerger": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#DocumentManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#Fingerprint": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#FingerprintStrategyProtocol": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#FunctionExecutionPlan": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#IndexStore": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#InteractionContext": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#InteractionHandler": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#L": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#LanguageTransformerProtocol": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#List": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#ModuleDef": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#NoOpInteractionHandler": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#Path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpResult": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner": {
     "baseline_code_signature_text": "class PumpRunner:",
     "baseline_code_structure_hash": "f32cd836f7a4265c873827c8bf5ba6e0ee9868d683bd9170faf9aa1833ba2bcb"
@@ -51,12 +32,5 @@
     "baseline_code_structure_hash": "10275f1445fae0ddf9d6c9a93ed190107938c114c9ec54dd8c7c7a63228b183a"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.sig_manager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.transformer": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#ResolutionAction": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#SignatureManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#StitcherConfig": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#TransactionManager": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#bus": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#copy": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#defaultdict": {}
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump.py#PumpRunner.transformer": {}
 }

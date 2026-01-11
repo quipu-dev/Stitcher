@@ -1,7 +1,4 @@
 {
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#CodeRange": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#Dict": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#List": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#NamespaceRenamerTransformer": {
     "baseline_code_signature_text": "class NamespaceRenamerTransformer(cst.CSTTransformer):",
     "baseline_code_structure_hash": "e373a02c58b486663e5afdb16e9102c3439638ec57105e23bc9c7a9b4d74e161",
@@ -31,9 +28,6 @@
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#NamespaceRenamerTransformer.locations": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#NamespaceRenamerTransformer.new_prefix": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#NamespaceRenamerTransformer.old_prefix": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#Optional": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#PositionProvider": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#ReferenceType": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#SymbolRenamerTransformer": {
     "baseline_code_signature_text": "class SymbolRenamerTransformer(cst.CSTTransformer):",
     "baseline_code_structure_hash": "b57fcdc4a2955361e44dfe84e497575eee0b5aaa73ec0ab9ab9cfec9f66df939",
@@ -69,9 +63,5 @@
     "baseline_code_signature_text": "def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.BaseExpression:",
     "baseline_code_structure_hash": "359a7b7d03fd4c22322b79587ce2f48c68c764ee80795ad2766698ab49ff3fef"
   },
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#SymbolRenamerTransformer.rename_map": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#Tuple": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#UsageLocation": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#cast": {},
-  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#cst": {}
+  "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/rename_transformers.py#SymbolRenamerTransformer.rename_map": {}
 }
