@@ -108,7 +108,9 @@ class StitcherApp:
         self.transform_runner = TransformRunner(
             root_path, self.doc_manager, transformer
         )
-        self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
+        self.coverage_runner = CoverageRunner(
+            root_path, self.doc_manager, self.index_store
+        )
         self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
 
         # 4. Refactor Runner (depends on Indexing)
@@ -341,8 +343,19 @@ class StitcherApp:
         all_results: List[CoverageResult] = []
 
         for config in configs:
-            modules = self._configure_and_scan(config)
-            results = self.coverage_runner.run_batch(modules)
+            # Bypassing the expensive scan, getting file paths directly
+            files_to_process = self.scanner.get_files_from_config(config)
+            relative_paths = [
+                p.relative_to(self.root_path).as_posix() for p in files_to_process
+            ]
+
+            # Note: Plugin coverage is temporarily disabled in this refactor
+            # to focus on the performance gain from file-based indexing.
+            # It can be re-introduced later as a separate step.
+            if not relative_paths:
+                continue
+
+            results = self.coverage_runner.run_batch(relative_paths)
             all_results.extend(results)
 
         self.coverage_runner.report(all_results)
