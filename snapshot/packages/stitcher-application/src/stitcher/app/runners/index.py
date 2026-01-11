@@ -18,13 +18,15 @@ class IndexRunner:
         files_to_index = workspace.discover_files()
 
         bus.info(L.index.run.start)
-        stats = self.indexer.index_files(files_to_index)
+        stats, had_errors = self.indexer.index_files(files_to_index)
 
-        bus.success(
-            L.index.run.complete,
-            added=stats["added"],
-            updated=stats["updated"],
-            deleted=stats["deleted"],
-            skipped=stats["skipped"],
-        )
-        return True
+        if not had_errors:
+            bus.success(
+                L.index.run.complete,
+                added=stats["added"],
+                updated=stats["updated"],
+                deleted=stats["deleted"],
+                skipped=stats["skipped"],
+            )
+
+        return not had_errors

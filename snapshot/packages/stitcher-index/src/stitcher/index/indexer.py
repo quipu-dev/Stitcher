@@ -17,12 +17,14 @@ class FileIndexer:
         self.store = store
         self.adapters: Dict[str, LanguageAdapter] = {}
         self.linker = Linker(store.db)
+        self.had_errors = False
 
     def register_adapter(self, extension: str, adapter: LanguageAdapter):
         self.adapters[extension] = adapter
 
-    def index_files(self, discovered_paths: Set[str]) -> Dict[str, int]:
+    def index_files(self, discovered_paths: Set[str]) -> Tuple[Dict[str, int], bool]:
         stats = {"added": 0, "updated": 0, "deleted": 0, "skipped": 0}
+        self.had_errors = False
 
         # Load DB state
         known_files: Dict[str, FileRecord] = {
@@ -82,7 +84,7 @@ class FileIndexer:
 
         # --- Linking ---
         self.linker.link()
-        return stats
+        return stats, self.had_errors
 
     def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes):
         try:
@@ -103,3 +105,4 @@ class FileIndexer:
         except Exception as e:
             log.error(f"Failed to parse {abs_path}: {e}")
             self.store.update_analysis(file_id, [], [])
+            self.had_errors = True

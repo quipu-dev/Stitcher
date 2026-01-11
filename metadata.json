@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 升级 StitcherApp 实现 Zero-IO Check 流程", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768130948.1657612, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复因解析器异常被吞没导致的测试失败", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768131049.6718836, "duration_ms": 0}}

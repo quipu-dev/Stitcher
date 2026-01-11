@@ -118,8 +118,8 @@ class StitcherApp:
     def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:
         return load_config_from_path(self.root_path)
 
-    def ensure_index_fresh(self) -> None:
-        self.index_runner.run_build(self.workspace)
+    def ensure_index_fresh(self) -> bool:
+        return self.index_runner.run_build(self.workspace)
 
     def _configure_and_scan(self, config: StitcherConfig) -> List[ModuleDef]:
         if config.name != "default":
@@ -195,7 +195,9 @@ class StitcherApp:
         return all_created
 
     def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
-        self.ensure_index_fresh()
+        if not self.ensure_index_fresh():
+            return False
+
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
         all_modules_for_post_processing: List[ModuleDef] = []
