@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修正重构测试中的反向断言", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768113504.5321248, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(arch): 解耦 PythonAdapter 与 refactor 包以消除循环依赖", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768114249.3976629, "duration_ms": 0}}

@@ -4,7 +4,6 @@ from typing import List, Tuple, Optional
 from stitcher.spec import ModuleDef
 from stitcher.index.protocols import LanguageAdapter
 from stitcher.index.types import SymbolRecord, ReferenceRecord
-from stitcher.refactor.workspace import Workspace
 
 import libcst as cst
 from stitcher.adapter.python.griffe_parser import GriffePythonParser
@@ -16,29 +15,28 @@ from .uri import SURIGenerator
 
 
 class PythonAdapter(LanguageAdapter):
-    def __init__(self, workspace: Workspace):
-        self.workspace = workspace
-        self.root_path = workspace.root_path
+    def __init__(self, root_path: Path, search_paths: List[Path]):
+        self.root_path = root_path
+        self.search_paths = search_paths
         self.parser = GriffePythonParser()
         self.hasher = PythonFingerprintStrategy()
 
     def _get_source_root_for_file(self, file_path: Path) -> Path:
         """Finds the deepest matching source root for a given file."""
         longest_match: Optional[Path] = None
-        for source_roots in self.workspace.import_to_source_dirs.values():
-            for root in source_roots:
-                try:
-                    if file_path.is_relative_to(root):
-                        if longest_match is None or len(root.parts) > len(
-                            longest_match.parts
-                        ):
-                            longest_match = root
-                except ValueError:  # For Python < 3.9, is_relative_to may not exist
-                    if str(file_path).startswith(str(root)):
-                        if longest_match is None or len(root.parts) > len(
-                            longest_match.parts
-                        ):
-                            longest_match = root
+        for root in self.search_paths:
+            try:
+                if file_path.is_relative_to(root):
+                    if longest_match is None or len(root.parts) > len(
+                        longest_match.parts
+                    ):
+                        longest_match = root
+            except ValueError:  # For Python < 3.9 compatibility
+                if str(file_path).startswith(str(root)):
+                    if longest_match is None or len(root.parts) > len(
+                        longest_match.parts
+                    ):
+                        longest_match = root
         return longest_match or self.root_path
 
     def parse(
@@ -178,9 +176,6 @@ class PythonAdapter(LanguageAdapter):
 
         # 1. Build local_symbols map using the centralized analyzer
         analyzer = ScopeAnalyzer()
-        # Note: ScopeAnalyzer returns a map of {local_name: target_fqn}
-        # We don't need to manually use it here because UsageScanVisitor uses it internally?
-        # Wait, UsageScanVisitor takes local_symbols as input.
         local_symbols = analyzer.build_from_ir(module, logical_module_fqn)
 
         # 2. Parse CST and Run Visitor
@@ -198,13 +193,12 @@ class PythonAdapter(LanguageAdapter):
             wrapper.visit(visitor)
 
             # 3. Convert Registry to ReferenceRecords
-            # UsageRegistry structure: { target_fqn: [UsageLocation, ...] }
             for target_fqn, locations in registry.get_all_usages().items():
                 for loc in locations:
                     refs.append(
                         ReferenceRecord(
-                            target_fqn=target_fqn,  # Store the logical intent directly
-                            target_id=None,  # Decoupled: Linker will fill this
+                            target_fqn=target_fqn,
+                            target_id=None,
                             kind=loc.ref_type.value,
                             lineno=loc.lineno,
                             col_offset=loc.col_offset,

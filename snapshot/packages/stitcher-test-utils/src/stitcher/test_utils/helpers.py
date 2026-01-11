@@ -25,10 +25,13 @@ def create_populated_index(root_path: Path) -> IndexStore:
     db_manager.initialize()
     store = IndexStore(db_manager)
 
-    # The scanner needs a workspace-aware adapter
+    # The scanner needs a workspace-aware adapter.
+    # The adapter itself is decoupled; the context is provided here.
     workspace = Workspace(root_path)
+    search_paths = workspace.get_search_paths()
+
     scanner = WorkspaceScanner(root_path, store)
-    scanner.register_adapter(".py", PythonAdapter(workspace))
+    scanner.register_adapter(".py", PythonAdapter(root_path, search_paths))
     scanner.scan()
 
     return store
