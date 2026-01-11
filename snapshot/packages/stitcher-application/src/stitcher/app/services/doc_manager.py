@@ -1,7 +1,7 @@
 import hashlib
 import json
 from pathlib import Path
-from typing import Dict, Optional, Any, Union
+from typing import Dict, Optional, Any, Union, List
 
 from stitcher.spec import (
     ModuleDef,
@@ -14,6 +14,7 @@ from stitcher.spec import (
 from stitcher.common import DocumentAdapter, YamlAdapter
 from stitcher.adapter.python import RawDocstringParser, RawSerializer
 from stitcher.common.services import AssetPathResolver
+from stitcher.index.types import SymbolRecord
 
 
 class DocumentManager:
@@ -38,6 +39,8 @@ class DocumentManager:
 
     def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
         return self.serializer.to_yaml(ir)
+
+    # --- AST-Based Methods (for Init, Inject) ---
 
     def _extract_from_function(
         self, func: FunctionDef, prefix: str = ""
@@ -89,19 +92,6 @@ class DocumentManager:
         self.adapter.save(output_path, yaml_data)
         return output_path
 
-    def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:
-        if not module.file_path:
-            return {}
-        module_path = self.root_path / module.file_path
-        doc_path = self.resolver.get_doc_path(module_path)
-
-        raw_data = self.adapter.load(doc_path)  # returns Dict[str, Any] now ideally
-
-        # Adapter.load is typed to return Dict[str, str], but YamlAdapter actually returns parsed YAML.
-        # We assume YamlAdapter can return Dict[str, Union[str, Dict]]
-
-        return {fqn: self._deserialize_ir(val) for fqn, val in raw_data.items()}
-
     def _apply_to_function(
         self, func: FunctionDef, docs: Dict[str, DocstringIR], prefix: str = ""
     ):
@@ -126,7 +116,7 @@ class DocumentManager:
                 attr.docstring = docs[attr_key].summary
 
     def apply_docs_to_module(self, module: ModuleDef) -> None:
-        docs = self.load_docs_for_module(module)
+        docs = self.load_docs_for_file(module.file_path)
         if not docs:
             return
         if "__doc__" in docs:
@@ -140,48 +130,64 @@ class DocumentManager:
             if attr.name in docs:
                 attr.docstring = docs[attr.name].summary
 
-    def check_module(self, module: ModuleDef) -> Dict[str, set]:
-        public_keys = self._extract_keys(module, public_only=True)
-        all_keys = self._extract_keys(module, public_only=False)
-        source_docs = self.flatten_module_docs(module)
-        yaml_docs = self.load_docs_for_module(module)
+    # --- Query-First / Path-Based Methods ---
+
+    def load_docs_for_file(self, file_path: str) -> Dict[str, DocstringIR]:
+        if not file_path:
+            return {}
+        module_path = self.root_path / file_path
+        doc_path = self.resolver.get_doc_path(module_path)
+
+        raw_data = self.adapter.load(doc_path)
+        return {fqn: self._deserialize_ir(val) for fqn, val in raw_data.items()}
+
+    def check_consistency(
+        self, file_path: str, actual_symbols: List[SymbolRecord]
+    ) -> Dict[str, set]:
+        """
+        Compares indexed symbols against YAML docs for existence issues.
+        This method does NOT check for content conflicts (hash comparison).
+        It only checks for:
+        - extra: Docs that have no corresponding symbol in the code.
+        - missing: Public symbols that have no docstring at all.
+        - pending: Public symbols that have a docstring in code but not in YAML.
+        """
+        all_keys = {s.logical_path for s in actual_symbols if s.logical_path}
+        public_keys = {
+            s.logical_path
+            for s in actual_symbols
+            if s.logical_path and not s.name.startswith("_")
+        }
+
+        yaml_docs = self.load_docs_for_file(file_path)
         yaml_keys = set(yaml_docs.keys())
 
         extra = yaml_keys - all_keys
-        extra.discard("__doc__")
+        if "__doc__" in extra:
+            extra.discard("__doc__")
 
         missing_doc = set()
         pending_hydration = set()
-        redundant_doc = set()
-        doc_conflict = set()
 
-        for key in all_keys:
-            is_public = key in public_keys
-            has_source_doc = key in source_docs
+        for symbol in actual_symbols:
+            key = symbol.logical_path
+            if not key or key not in public_keys:
+                continue
+
+            has_source_doc = symbol.docstring_hash is not None
             has_yaml_doc = key in yaml_keys
 
             if not has_source_doc and not has_yaml_doc:
-                if is_public:
-                    missing_doc.add(key)
+                missing_doc.add(key)
             elif has_source_doc and not has_yaml_doc:
                 pending_hydration.add(key)
-            elif has_source_doc and has_yaml_doc:
-                # Compare SUMMARIES only.
-                # Addons in YAML do not cause conflict with Source Code.
-                src_summary = source_docs[key].summary or ""
-                yaml_summary = yaml_docs[key].summary or ""
-
-                if src_summary != yaml_summary:
-                    doc_conflict.add(key)
-                else:
-                    redundant_doc.add(key)
 
         return {
             "extra": extra,
             "missing": missing_doc,
             "pending": pending_hydration,
-            "redundant": redundant_doc,
-            "conflict": doc_conflict,
+            "redundant": set(),  # No longer this service's job
+            "conflict": set(),  # No longer this service's job
         }
 
     def hydrate_module(
@@ -208,7 +214,7 @@ class DocumentManager:
                 "reconciled_keys": [],
             }
 
-        yaml_docs = self.load_docs_for_module(module)
+        yaml_docs = self.load_docs_for_file(module.file_path)
         updated_keys = []
         conflicts = []
         reconciled_keys = []
@@ -269,33 +275,6 @@ class DocumentManager:
             "reconciled_keys": reconciled_keys,
         }
 
-    def _extract_keys(self, module: ModuleDef, public_only: bool) -> set:
-        keys = set()
-        if module.docstring:
-            keys.add("__doc__")
-
-        def include(name: str) -> bool:
-            if public_only:
-                return not name.startswith("_")
-            return True
-
-        for func in module.functions:
-            if include(func.name):
-                keys.add(func.name)
-        for cls in module.classes:
-            if include(cls.name):
-                keys.add(cls.name)
-                for method in cls.methods:
-                    if include(method.name):
-                        keys.add(f"{cls.name}.{method.name}")
-                for attr in cls.attributes:
-                    if include(attr.name):
-                        keys.add(f"{cls.name}.{attr.name}")
-        for attr in module.attributes:
-            if include(attr.name):
-                keys.add(attr.name)
-        return keys
-
     def compute_yaml_content_hash(self, content: Union[str, Dict[str, Any]]) -> str:
         if isinstance(content, str):
             return hashlib.sha256(content.encode("utf-8")).hexdigest()
@@ -307,14 +286,10 @@ class DocumentManager:
 
         return hashlib.sha256(b"").hexdigest()
 
-    def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:
-        # We need raw data here to compute the hash exactly as it is stored
-        # But load_docs_for_module returns IRs.
-        # We should load raw data directly from adapter for hashing.
-
-        if not module.file_path:
+    def compute_yaml_hashes_for_file(self, file_path: str) -> Dict[str, str]:
+        if not file_path:
             return {}
-        module_path = self.root_path / module.file_path
+        module_path = self.root_path / file_path
         doc_path = self.resolver.get_doc_path(module_path)
 
         # Load raw dict from YAML
@@ -324,10 +299,10 @@ class DocumentManager:
             fqn: self.compute_yaml_content_hash(val) for fqn, val in raw_data.items()
         }
 
-    def reformat_docs_for_module(self, module: ModuleDef) -> bool:
-        if not module.file_path:
+    def reformat_docs_for_file(self, file_path: str) -> bool:
+        if not file_path:
             return False
-        module_path = self.root_path / module.file_path
+        module_path = self.root_path / file_path
         doc_path = self.resolver.get_doc_path(module_path)
         if not doc_path.exists():
             return False
