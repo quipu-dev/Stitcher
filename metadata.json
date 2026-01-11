@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 为 Planner 添加单元测试以暴露“丢失更新”缺陷", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768118230.705926, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 修复测试设置以正确运行 Planner 单元测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768118340.6957586, "duration_ms": 0}}

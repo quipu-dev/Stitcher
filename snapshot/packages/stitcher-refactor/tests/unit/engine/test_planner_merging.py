@@ -24,6 +24,15 @@ def mock_context(tmp_path: Path) -> RefactorContext:
     ctx = Mock(spec=RefactorContext)
     ctx.graph = mock_graph
     ctx.index_store = mock_index
+
+    # Mock SidecarManager to avoid AttributeError
+    mock_sidecar = Mock()
+    # Return non-existent paths so the operations skip sidecar logic
+    # and we focus purely on the code modification merging logic.
+    mock_sidecar.get_doc_path.return_value = tmp_path / "nonexistent.yaml"
+    mock_sidecar.get_signature_path.return_value = tmp_path / "nonexistent.json"
+    ctx.sidecar_manager = mock_sidecar
+
     return ctx
 
 
