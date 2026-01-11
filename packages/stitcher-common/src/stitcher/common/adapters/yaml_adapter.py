@@ -54,12 +54,22 @@ class YamlAdapter(DocumentAdapter):
 
         MultilineDumper.add_representer(str, str_presenter)
 
+        new_content = yaml.dump(
+            sorted_data,
+            Dumper=MultilineDumper,
+            allow_unicode=True,
+            default_flow_style=False,
+            sort_keys=False,
+        )
+
+        if path.exists():
+            try:
+                old_content = path.read_text(encoding="utf-8")
+                if old_content == new_content:
+                    return
+            except (OSError, UnicodeDecodeError):
+                # If we can't read it or it's not text, assume we need to overwrite
+                pass
+
         with path.open("w", encoding="utf-8") as f:
-            yaml.dump(
-                sorted_data,
-                f,
-                Dumper=MultilineDumper,
-                allow_unicode=True,
-                default_flow_style=False,
-                sort_keys=False,
-            )
+            f.write(new_content)
