@@ -7,7 +7,7 @@ from stitcher.refactor.engine import (
 )
 from stitcher.refactor.operations.rename_namespace import RenameNamespaceOperation
 from stitcher.workspace import Workspace
-from stitcher.refactor.sidecar import SidecarManager
+from stitcher.refactor.sidecar.manager import SidecarManager
 
 
 def test_rename_namespace_operation_fails_as_expected(workspace_factory: WorkspaceFactory):
