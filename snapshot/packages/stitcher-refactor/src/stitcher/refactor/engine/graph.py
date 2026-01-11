@@ -64,20 +64,19 @@ class SemanticGraph:
 
     def find_usages(self, target_fqn: str) -> List[UsageLocation]:
         """
-        Query the Index DB for usages of the given FQN.
-        Maps DB ReferenceRecords to UsageLocation objects.
+        Query the Index DB for ALL occurrences of an FQN, including its
+        definition and all references. Maps DB records to UsageLocation objects.
         """
-        db_refs = self.index_store.find_references(target_fqn)
         usages = []
+
+        # 1. Find all references (usages)
+        db_refs = self.index_store.find_references(target_fqn)
         for ref, file_path_str in db_refs:
             abs_path = self.root_path / file_path_str
-            # We map DB 'kind' back to ReferenceType.
-            # Assuming DB stores 'symbol' or 'import_path' matching the enum values.
             try:
                 ref_type = ReferenceType(ref.kind)
             except ValueError:
-                # Fallback or log warning if DB contains unknown kinds
-                ref_type = ReferenceType.SYMBOL
+                ref_type = ReferenceType.SYMBOL  # Fallback
 
             usages.append(
                 UsageLocation(
@@ -90,6 +89,24 @@ class SemanticGraph:
                     target_node_fqn=ref.target_fqn,
                 )
             )
+
+        # 2. Find the definition itself and treat it as a usage site
+        definition_result = self.index_store.find_symbol_by_fqn(target_fqn)
+        if definition_result:
+            symbol, file_path_str = definition_result
+            abs_path = self.root_path / file_path_str
+            usages.append(
+                UsageLocation(
+                    file_path=abs_path,
+                    lineno=symbol.lineno,
+                    col_offset=symbol.col_offset,
+                    end_lineno=symbol.end_lineno,
+                    end_col_offset=symbol.end_col_offset,
+                    ref_type=ReferenceType.SYMBOL,  # A definition is a symbol site
+                    target_node_fqn=symbol.canonical_fqn or target_fqn,
+                )
+            )
+
         return usages
 
     def get_module(self, package_name: str) -> Optional[griffe.Module]:
