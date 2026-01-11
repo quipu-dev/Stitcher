@@ -1,272 +1,120 @@
-你的观察非常及时。重构后的测试套件确实存在过时引用和命名冲突：
+我分析了全部 25 个失败的测试用例，发现问题集中在两个核心的系统性缺陷上：
 
-1.  **`test_scanner_aliases.py`**: 仍然在使用已经不存在的 `WorkspaceScanner` 及其 `scan()` 方法。
-2.  **`test_workspace.py` 冲突与错位**: 
-    - `packages/stitcher-refactor` 中还残留着 `Workspace` 的单元测试。
-    - 既然 `Workspace` 已经独立成包，这些关于布局发现（Standard, Flat, Namespace）的测试理应迁移到 `stitcher-workspace` 中，与 `discover_files` 的测试合并。
+1.  **`check` 命令逻辑错误**：`check` 命令在处理多目标配置时，没有正确地将每个目标的分析结果累积起来。它只保留了最后一个目标的结果，导致最终报告时认为没有错误，从而使所有预期失败的测试都意外通过了。
 
-我将立即清理这些残留，完成测试套件的现代化。
+2.  **`refactor` 命令配置错误**：`refactor` 命令依赖的语义索引服务在 `StitcherApp` 启动时被过早地初始化了，当时还没有加载项目的完整配置。这导致索引器在没有正确搜索路径的情况下工作，无法构建完整的符号图谱，最终在执行重构计划时因找不到符号而崩溃。
 
-## [WIP] refactor(tests): 清理过时测试并统一 Workspace 测试
+我将生成一个计划来修复这两个根本问题。
+
+## [WIP] fix: 修复 check 和 refactor 命令的核心逻辑缺陷
 
 ### 错误分析
 
-1.  **逻辑过时**: `packages/stitcher-index/tests/integration/test_scanner_aliases.py` 依赖于已重构的 `WorkspaceScanner` API，无法运行。
-2.  **职责错位**: `packages/stitcher-refactor/tests/unit/refactor/test_workspace.py` 中的测试逻辑（验证项目布局解析）现在属于 `stitcher-workspace` 的核心职责，留在 `refactor` 包中会导致维护混乱。
-3.  **命名冲突**: 两个包中存在同名的 `test_workspace.py`，不利于测试结果的清晰展示。
+1.  **Check Runner 结果丢失**: 在 `StitcherApp.run_check` 方法中，存在一个循环来处理 `pyproject.toml` 中的多个扫描目标（targets）。虽然每个目标的分析结果（`results`）被正确计算出来，但它们从未被添加到一个总的列表（`all_results`）中。循环结束后，`all_results` 仍然是空的。因此，后续的报告逻辑 `self.check_runner.report(all_results)` 接收到的是一个空列表，错误地判断为所有检查都已成功通过。这导致了所有依赖 `check` 失败的测试用例（如检测到冲突、签名漂移等）都断言失败。
+
+2.  **Refactor Runner 依赖配置失效**: `StitcherApp` 在初始化时创建了 `FileIndexer` 服务，该服务依赖于一个 `Workspace` 实例来获取代码搜索路径。然而，这个初始的 `Workspace` 实例是在加载 `pyproject.toml` 配置*之前*创建的，因此搜索路径不完整。当 `run_refactor_apply` 命令执行时，虽然它内部创建了一个正确配置的 `Workspace`，但它调用的 `FileIndexer` 仍然是那个被错误配置的旧实例。这导致语义索引不完整，当重构引擎（`Planner`）试图查找符号用法时，会因信息缺失而崩溃，导致命令执行失败。
 
 ### 用户需求
 
-1.  更新 `stitcher-index` 的集成测试，将其适配为 `FileIndexer`。
-2.  将 `stitcher-refactor` 中关于 `Workspace` 的测试迁移并合并到 `stitcher-workspace` 包中。
-3.  删除 `stitcher-refactor` 中不再需要的测试文件。
+修复所有 25 个失败的集成测试，确保 `check` 和 `refactor` 命令按预期工作。
+
+### 评论
+
+这两个是严重的核心逻辑缺陷，导致了大量测试失败，并严重影响了两个关键命令的可靠性。修复这些问题将极大地提高系统的稳定性和正确性。
 
 ### 目标
 
-1.  将 `test_scanner_aliases.py` 重命名为 `test_indexer_aliases.py`。
-2.  重构 `test_indexer_aliases.py`，使用 `Workspace` 发现文件，并调用 `FileIndexer.index_files()`。
-3.  将 `stitcher-refactor` 中的工作区布局测试合并到 `packages/stitcher-workspace/tests/unit/test_workspace.py`。
-4.  删除 `packages/stitcher-refactor/tests/unit/refactor/test_workspace.py`。
+1.  **修正 `check` 命令**: 修改 `stitcher.app.core.StitcherApp.run_check` 方法，确保在处理多目标扫描的循环中，将每个目标的 `results` 正确地追加到 `all_results` 列表中。
+2.  **修正 `refactor` 命令**: 修改 `stitcher.app.runners.refactor.RefactorRunner.run_apply` 方法，在执行索引之前，使用当前任务的正确配置（`config`）来重新配置 `FileIndexer` 使用的 `PythonAdapter`，确保其拥有正确的代码搜索路径。
+
+### 基本原理
+
+*   **对于 `check`**: 修复方案是在 `for` 循环内部添加一行 `all_results.extend(results)`，这是一个直接且正确的逻辑补丁，用于修正状态累积的错误。
+*   **对于 `refactor`**: 修复方案遵循“即时配置”原则。由于 `FileIndexer` 是一个在应用启动时共享的实例，但在 `refactor` 运行时才拥有最终的、准确的配置，因此在运行时重新配置其内部的 `PythonAdapter` 是最直接的解决方案。这确保了在构建索引这一关键步骤中，使用的是最新的、最准确的上下文信息。
 
 ### 标签
 
-#intent/refine #intent/tooling #flow/ready #priority/medium #comp/tests #scope/core #ai/instruct #task/domain/architecture #task/object/test-suite #task/action/cleanup #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/cli #comp/engine #concept/state #scope/core #ai/brainstorm #task/domain/testing #task/object/integration-tests #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构索引器别名集成测试
+#### Acts 1: 修复 `check` 命令的结果累积逻辑
 
-重命名并更新 `test_scanner_aliases.py`，使其反映“发现 -> 索引”的新流。
-
-~~~~~act
-move_file
-packages/stitcher-index/tests/integration/test_scanner_aliases.py
-packages/stitcher-index/tests/integration/test_indexer_aliases.py
-~~~~~
+我们将修改 `stitcher.app.core.py`，确保 `run_check` 方法能正确收集所有扫描目标的结果。
 
 ~~~~~act
-write_file
-packages/stitcher-index/tests/integration/test_indexer_aliases.py
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
-~~~~~python
-from textwrap import dedent
-from stitcher.index.indexer import FileIndexer
-from stitcher.adapter.python.index_adapter import PythonAdapter
-from stitcher.test_utils.workspace import WorkspaceFactory
-from stitcher.workspace import Workspace
+~~~~~python.old
+            results, conflicts = self.check_runner.analyze_batch(modules)
+            self.check_runner.auto_reconcile_docs(results, modules)
 
-import pytest
+            if not self.check_runner.resolve_conflicts(
+                results, conflicts, force_relink, reconcile
+            ):
+~~~~~
+~~~~~python.new
+            results, conflicts = self.check_runner.analyze_batch(modules)
+            all_results.extend(results)
 
+            self.check_runner.auto_reconcile_docs(results, modules)
 
-def test_indexer_resolves_aliases_and_references(tmp_path, store):
-    """
-    End-to-end test for alias resolution and reference scanning.
-    Verifies that:
-    1. Aliases (imports) are stored as symbols with kind='alias'.
-    2. `alias_target_id` correctly points to the original symbol's SURI.
-    3. Usages of aliases create correct ReferenceRecords.
-    """
-    # 1. Setup: A multi-file python package
-    wf = WorkspaceFactory(tmp_path)
-    wf.with_source("pkg/__init__.py", "")
-    wf.with_source(
-        "pkg/defs.py",
-        dedent(
-            """
-            class MyClass:
-                pass
-
-            def my_func():
-                pass
-            """
-        ),
-    )
-    wf.with_source(
-        "pkg/main.py",
-        dedent(
-            """
-            import pkg.defs
-            from pkg.defs import MyClass
-            from pkg.defs import my_func as func_alias
-
-            # Usages
-            instance = MyClass()
-            pkg.defs.my_func()
-            func_alias()
-            """
-        ),
-    )
-    project_root = wf.build()
-
-    # 2. Execution: Run the full indexer pipeline
-    workspace = Workspace(project_root)
-    files_to_index = workspace.discover_files()
-
-    indexer = FileIndexer(project_root, store)
-    # Manual search_paths to avoid dependency on Workspace service in pure index tests
-    adapter = PythonAdapter(project_root, [project_root])
-    indexer.register_adapter(".py", adapter)
-    indexer.index_files(files_to_index)
-
-    # 3. Verification
-    main_py_record = store.get_file_by_path("pkg/main.py")
-    assert main_py_record is not None
-
-    # 3a. Verify Alias Symbols in main.py
-    symbols = store.get_symbols_by_file(main_py_record.id)
-    symbols_by_name = {s.name: s for s in symbols}
-
-    # from pkg.defs import MyClass
-    alias_myclass = symbols_by_name.get("MyClass")
-    assert alias_myclass is not None
-    assert alias_myclass.kind == "alias"
-    assert alias_myclass.alias_target_id == "py://pkg/defs.py#MyClass"
-
-    # from pkg.defs import my_func as func_alias
-    alias_funcalias = symbols_by_name.get("func_alias")
-    assert alias_funcalias is not None
-    assert alias_funcalias.kind == "alias"
-    assert alias_funcalias.alias_target_id == "py://pkg/defs.py#my_func"
-
-    # import pkg.defs
-    alias_pkg_defs = symbols_by_name.get("pkg")
-    assert alias_pkg_defs is not None
-    assert alias_pkg_defs.kind == "alias"
-    assert alias_pkg_defs.alias_target_id == "py://pkg/__init__.py"
-
-    # 3b. Verify References in main.py
-    references = store.get_references_by_file(main_py_record.id)
-    ref_targets = {ref.target_id for ref in references}
-
-    assert "py://pkg/defs.py#MyClass" in ref_targets
-    assert "py://pkg/defs.py#my_func" in ref_targets
+            if not self.check_runner.resolve_conflicts(
+                results, conflicts, force_relink, reconcile
+            ):
 ~~~~~
 
-#### Acts 2: 迁移并合并 Workspace 单元测试
+#### Acts 2: 修复 `refactor` 命令的索引器配置
 
-我们将 `stitcher-refactor` 中的布局测试合并到 `stitcher-workspace` 的单元测试文件中，并删除旧文件。
+现在，我们将修改 `stitcher.app.runners.refactor.py`，确保在建立索引前，`FileIndexer` 使用了正确的、已配置的 `Workspace`。
 
 ~~~~~act
-write_file
-packages/stitcher-workspace/tests/unit/test_workspace.py
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/refactor.py
 ~~~~~
-~~~~~python
-from stitcher.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
-
-
-def test_discover_files_git(tmp_path):
-    # Arrange
-    factory = WorkspaceFactory(tmp_path).init_git()
-    factory.with_source("src/pkg_a/mod1.py", "pass")
-    factory.with_source("src/pkg_a/data.txt", "data")
-    factory.with_source("untracked.py", "pass")
-    factory.with_raw_file(".gitignore", "*.txt\n.stitcher/")
-    factory.with_source(".stitcher/signatures/src/pkg_a/mod1.json", "{}")
-    project_root = factory.build()
-
-    # Act
-    workspace = Workspace(project_root)
-    files = workspace.discover_files()
-
-    # Assert
-    assert "src/pkg_a/mod1.py" in files
-    assert "untracked.py" in files
-    assert ".gitignore" in files
-    assert "src/pkg_a/data.txt" not in files, "Should be gitignored"
-    assert (
-        ".stitcher/signatures/src/pkg_a/mod1.json" not in files
-    ), "Should ignore .stitcher dir"
-
-
-def test_discover_files_os_walk(tmp_path):
-    # Arrange
-    factory = WorkspaceFactory(tmp_path)  # No git
-    factory.with_source("src/pkg_a/mod1.py", "pass")
-    factory.with_source("src/pkg_a/data.txt", "data")
-    factory.with_source(".hidden/file.py", "pass")
-    factory.with_source(".stitcher/config.json", "{}")
-    project_root = factory.build()
-
-    # Act
-    workspace = Workspace(project_root)
-    files = workspace.discover_files()
-
-    # Assert
-    assert "src/pkg_a/mod1.py" in files
-    assert "src/pkg_a/data.txt" in files
-    assert ".hidden/file.py" not in files, "Should ignore hidden directories"
-    assert ".stitcher/config.json" not in files, "Should ignore .stitcher directory"
-
-
-def test_workspace_standard_src_layout(tmp_path):
-    # ARRANGE
-    factory = (
-        WorkspaceFactory(tmp_path)
-        .with_pyproject("pkg_a")
-        .with_source("pkg_a/src/pkga_lib/__init__.py", "")
-    )
-    project_root = factory.build()
-    pkg_a_src = project_root / "pkg_a" / "src"
-
-    # ACT
-    workspace = Workspace(project_root)
-
-    # ASSERT
-    assert workspace.import_to_source_dirs["pkga_lib"] == {pkg_a_src}
-    assert sorted(workspace.get_search_paths()) == sorted([project_root, pkg_a_src])
-
-
-def test_workspace_flat_layout(tmp_path):
-    # ARRANGE
-    factory = (
-        WorkspaceFactory(tmp_path)
-        .with_pyproject("pkg_b")
-        .with_source("pkg_b/pkgb_lib/__init__.py", "")
-    )
-    project_root = factory.build()
-    pkg_b_root = project_root / "pkg_b"
-
-    # ACT
-    workspace = Workspace(project_root)
-
-    # ASSERT
-    assert workspace.import_to_source_dirs["pkgb_lib"] == {pkg_b_root}
-    assert sorted(workspace.get_search_paths()) == sorted([project_root, pkg_b_root])
-
-
-def test_workspace_namespace_package(tmp_path):
-    # ARRANGE
-    factory = (
-        WorkspaceFactory(tmp_path)
-        .with_pyproject("cascade-engine")
-        .with_source("cascade-engine/src/cascade/__init__.py", "")
-        .with_pyproject("cascade-app")
-        .with_source("cascade-app/src/cascade/__init__.py", "")
-    )
-    project_root = factory.build()
-    engine_src = project_root / "cascade-engine" / "src"
-    app_src = project_root / "cascade-app" / "src"
-
-    # ACT
-    workspace = Workspace(project_root)
-
-    # ASSERT
-    assert workspace.import_to_source_dirs["cascade"] == {engine_src, app_src}
-    assert sorted(workspace.get_search_paths()) == sorted(
-        [project_root, engine_src, app_src]
-    )
+~~~~~python.old
+from stitcher.refactor.sidecar.manager import SidecarManager
+~~~~~
+~~~~~python.new
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.adapter.python import PythonAdapter
 ~~~~~
 
 ~~~~~act
-delete_file
-packages/stitcher-refactor/tests/unit/refactor/test_workspace.py
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/refactor.py
+~~~~~
+~~~~~python.old
+        try:
+            # 0. Ensure index is up to date
+            bus.info(L.index.run.start)
+            workspace = Workspace(self.root_path, config)
+            files_to_index = workspace.discover_files()
+            self.file_indexer.index_files(files_to_index)
+
+            # 1. Bootstrap services
+~~~~~
+~~~~~python.new
+        try:
+            # 0. Ensure index is up to date
+            bus.info(L.index.run.start)
+            workspace = Workspace(self.root_path, config)
+
+            # The FileIndexer was created with an unconfigured workspace.
+            # We must re-register the adapter with the correct search paths.
+            self.file_indexer.register_adapter(
+                ".py", PythonAdapter(self.root_path, workspace.get_search_paths())
+            )
+
+            files_to_index = workspace.discover_files()
+            self.file_indexer.index_files(files_to_index)
+
+            # 1. Bootstrap services
 ~~~~~
 
 ### 下一步建议
 
-测试套件现在的结构已经与新架构完全同步。
-
-我建议现在运行 `pytest` 来验证所有变更。如果所有测试通过，我们将准备最后的 `[COMMIT]` 计划。
+在应用这些修复后，请重新运行整个测试套件。这两个修复应该能解决所有列出的 25 个失败用例。如果仍有失败，那将是更深层次或不相关的问题，我们可以再进行分析。

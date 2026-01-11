@@ -15,6 +15,7 @@ from stitcher.refactor.engine import (
 from stitcher.refactor.migration import MigrationLoader, MigrationError
 from stitcher.workspace import Workspace
 from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.adapter.python import PythonAdapter
 
 
 class RefactorRunner:
@@ -39,6 +40,13 @@ class RefactorRunner:
             # 0. Ensure index is up to date
             bus.info(L.index.run.start)
             workspace = Workspace(self.root_path, config)
+
+            # The FileIndexer was created with an unconfigured workspace.
+            # We must re-register the adapter with the correct search paths.
+            self.file_indexer.register_adapter(
+                ".py", PythonAdapter(self.root_path, workspace.get_search_paths())
+            )
+
             files_to_index = workspace.discover_files()
             self.file_indexer.index_files(files_to_index)
 

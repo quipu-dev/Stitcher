@@ -195,6 +195,8 @@ class StitcherApp:
             all_modules.extend(modules)
 
             results, conflicts = self.check_runner.analyze_batch(modules)
+            all_results.extend(results)
+
             self.check_runner.auto_reconcile_docs(results, modules)
 
             if not self.check_runner.resolve_conflicts(

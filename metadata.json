@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(tests): 清理过时测试并统一 Workspace 测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768117078.3379538, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 check 和 refactor 命令的核心逻辑缺陷", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768117425.311867, "duration_ms": 0}}
