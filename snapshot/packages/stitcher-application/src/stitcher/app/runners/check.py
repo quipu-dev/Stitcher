@@ -28,8 +28,8 @@ class CheckRunner:
     def __init__(
         self,
         root_path: Path,
-        parser: LanguageParserProtocol,  # Keep parser for applying resolutions (needs re-parse)
-        index_store: IndexStore,  # New dependency: The DB
+        parser: LanguageParserProtocol,
+        index_store: IndexStore,
         doc_manager: DocumentManager,
         sig_manager: SignatureManager,
         differ: Differ,
@@ -59,7 +59,6 @@ class CheckRunner:
         result = FileCheckResult(path=file_path)
         unresolved_conflicts: List[InteractionContext] = []
 
-        # 1. Query ACTUAL state from DB
         file_record = self.index_store.get_file_by_path(file_path)
         if not file_record:
             return result, []
@@ -70,58 +69,53 @@ class CheckRunner:
             if sym.logical_path:
                 actual_fingerprints[sym.logical_path] = self._symbol_to_fingerprint(sym)
 
-        # 2. Load BASELINE state from Signatures
         stored_hashes_map = self.sig_manager.load_composite_hashes(file_path)
-
-        # 3. Load YAML content hashes
         module_stub = ModuleDef(file_path=file_path)
         current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module_stub)
 
-        # 4. Lighter Doc Content Check using Sets
-        yaml_keys = set(current_yaml_map.keys())
+        # --- Doc Content and State Machine Analysis ---
+        is_tracked = (self.root_path / file_path).with_suffix(".stitcher.yaml").exists()
         code_keys = set(actual_fingerprints.keys())
-
+        yaml_keys = set(current_yaml_map.keys())
         public_code_keys = {k for k in code_keys if not k.split(".")[-1].startswith("_")}
 
-        is_tracked = (self.root_path / file_path).with_suffix(".stitcher.yaml").exists()
-
         if is_tracked:
-            missing = public_code_keys - yaml_keys
-            result.warnings["missing"].extend(sorted(list(missing)))
-
+            # Extra (Dangling Doc)
             extra = yaml_keys - code_keys
             extra.discard("__doc__")
-
             for fqn in extra:
                 unresolved_conflicts.append(
                     InteractionContext(file_path, fqn, ConflictType.DANGLING_DOC)
                 )
 
-        # 5. State Machine Analysis
-        all_fqns = set(actual_fingerprints.keys()) | set(stored_hashes_map.keys())
+            # Check states for all public symbols in code
+            for key in public_code_keys:
+                code_fp = actual_fingerprints.get(key, Fingerprint())
+                has_code_doc = "current_code_docstring_hash" in code_fp
+                has_yaml_doc = key in current_yaml_map
 
+                if not has_code_doc and not has_yaml_doc:
+                    result.warnings["missing"].append(key)
+                elif has_code_doc and not has_yaml_doc:
+                    result.errors["pending"].append(key)
+                elif has_code_doc and has_yaml_doc:
+                    if code_fp["current_code_docstring_hash"] == current_yaml_map[key]:
+                        result.warnings["redundant"].append(key)
+                    else:
+                        result.errors["conflict"].append(key)
+
+        # --- Signature Drift Analysis ---
+        all_fqns = code_keys | set(stored_hashes_map.keys())
         for fqn in sorted(list(all_fqns)):
             computed_fp = actual_fingerprints.get(fqn, Fingerprint())
+            stored_fp = stored_hashes_map.get(fqn)
+            if not computed_fp or not stored_fp:
+                continue
 
             code_hash = computed_fp.get("current_code_structure_hash")
-            current_sig_text = computed_fp.get("current_code_signature_text")
+            baseline_code_hash = stored_fp.get("baseline_code_structure_hash")
             yaml_hash = current_yaml_map.get(fqn)
-
-            stored_fp = stored_hashes_map.get(fqn)
-            baseline_code_hash = (
-                stored_fp.get("baseline_code_structure_hash") if stored_fp else None
-            )
-            baseline_yaml_hash = (
-                stored_fp.get("baseline_yaml_content_hash") if stored_fp else None
-            )
-            baseline_sig_text = (
-                stored_fp.get("baseline_code_signature_text") if stored_fp else None
-            )
-
-            if not code_hash and baseline_code_hash:
-                continue
-            if code_hash and not baseline_code_hash:
-                continue
+            baseline_yaml_hash = stored_fp.get("baseline_yaml_content_hash")
 
             code_matches = code_hash == baseline_code_hash
             yaml_matches = yaml_hash == baseline_yaml_hash
@@ -129,31 +123,40 @@ class CheckRunner:
             if code_matches and not yaml_matches:
                 result.infos["doc_improvement"].append(fqn)
             elif not code_matches:
-                sig_diff = None
-                if baseline_sig_text and current_sig_text:
-                    sig_diff = self.differ.generate_text_diff(
-                        baseline_sig_text,
-                        current_sig_text,
-                        "baseline",
-                        "current",
-                    )
-                elif current_sig_text:
-                    sig_diff = f"(No baseline signature stored)\n+++ current\n{current_sig_text}"
-
                 conflict_type = (
                     ConflictType.SIGNATURE_DRIFT
                     if yaml_matches
                     else ConflictType.CO_EVOLUTION
                 )
-
                 unresolved_conflicts.append(
                     InteractionContext(
-                        file_path, fqn, conflict_type, signature_diff=sig_diff
+                        file_path,
+                        fqn,
+                        conflict_type,
+                        signature_diff=self.differ.generate_text_diff(
+                            stored_fp.get("baseline_code_signature_text", ""),
+                            computed_fp.get("current_code_signature_text", ""),
+                            "baseline",
+                            "current",
+                        ),
                     )
                 )
 
-        if not is_tracked and public_code_keys:
-            result.warnings["untracked_detailed"].extend(sorted(list(public_code_keys)))
+        # --- Untracked File Logic ---
+        if not is_tracked:
+            undocumented_public_keys = [
+                k
+                for k in public_code_keys
+                if not actual_fingerprints.get(k, Fingerprint()).get(
+                    "current_code_docstring_hash"
+                )
+            ]
+            if undocumented_public_keys:
+                result.warnings["untracked_detailed"].extend(
+                    sorted(undocumented_public_keys)
+                )
+            elif public_code_keys:
+                result.warnings["untracked"].append("all")
 
         return result, unresolved_conflicts
 

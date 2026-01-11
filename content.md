@@ -1,132 +1,45 @@
-您完全正确，非常感谢您指出这些错误。我的上一个计划存在明显的缺陷，导致了 `AttributeError` 和 pyright 类型错误。
+好的，我来分析并修复这些测试失败。
 
-## [WIP] fix(application): 修正 CheckRunner 重构引入的初始化与类型错误
+## [WIP] fix(application): 修复 CheckRunner 中缺失的文档状态检测逻辑
 
 ### 错误分析
-您提供的错误报告非常清晰，问题出在以下三个方面：
+您提供的测试失败报告非常精确。在我将 `CheckRunner` 重构为 "Query-First" 模式时，为了追求性能，我过度简化了逻辑，导致了几个关键的回归错误：
 
-1.  **`AttributeError` in `StitcherApp.__init__`**: 这是最核心的问题。我在 `StitcherApp` 的 `__init__` 方法中，在初始化 `self.check_runner` 时尝试传入 `self.index_store`，但 `self.index_store` 及其相关组件（`db_manager`, `file_indexer`）的初始化逻辑却在 `self.check_runner` 初始化*之后*。这是一个经典的依赖顺序错误。
-2.  **`reportRedeclaration` in `check.py`**: 我的 `patch_file` 操作不够彻底。它在 `CheckRunner` 中添加了新的、接收 `ModuleDef` 列表的 `analyze_batch` 方法，但未能移除旧的、同名的方法。这导致了方法重定义错误。
-3.  **`reportArgumentType` in `check.py`**: 在新实现的 `analyze_batch` 方法中，我错误地调用了 `self._analyze_file(module)`，传递了整个 `ModuleDef` 对象。而重构后的 `_analyze_file` 方法签名已经变更为 `_analyze_file(self, file_path: str)`，它需要的是一个字符串路径。
+1.  **`redundant` 和 `conflict` 状态检测丢失**: 新的 `_analyze_file` 方法只比较了代码和 YAML 各自与其*基准 (baseline)* 版本的哈希，但**完全丢失了代码中的文档哈希与 YAML 中的文档哈希之间的直接比较**。这导致：
+    *   当代码文档和 YAML 文档内容相同时，无法识别为 `redundant` 状态。(`test_check_detects_matrix_states` 失败)
+    *   当它们内容不同时，无法识别为 `conflict` 状态。(`test_check_detects_content_conflict` 失败)
+
+2.  **`untracked` 状态报告逻辑错误**:
+    *   `test_check_reports_untracked_with_details`: 我的逻辑错误地将一个未跟踪文件中的*所有*公共符号都报告为“需要文档”，而不是只报告那些*真正缺少*文档的符号。
+    *   `test_check_reports_simple_untracked_if_all_docs_present`: 当一个未跟踪文件中的所有公共符号都已经有了文档时，我的逻辑没能正确地回退到发出一个简单的 `untracked` 警告，而是什么都没报告。
 
 ### 用户需求
-修复由 `CheckRunner` "Query-First" 重构引入的初始化依赖错误和类型错误，使系统恢复到可测试和可运行的状态。
+修复 `CheckRunner` 的逻辑，使其能够正确地检测和报告所有的文档一致性状态（`missing`, `pending`, `redundant`, `conflict`），并修正对 `untracked` 文件的报告行为，以使所有相关测试通过。
 
 ### 评论
-这是一个由于重构范围较大而引入的典型回归错误。修复这些问题将使我们的 "Query-First" 改造回到正轨，并为后续 `PumpRunner` 的重构提供一个稳定的基础。
+这是一个典型的重构回归案例。虽然 "Query-First" 的方向是正确的，但必须确保新实现能够 100% 覆盖旧实现的业务逻辑。这次修复将恢复 `check` 命令的正确性，同时保留其高性能的优点。
 
 ### 目标
-1.  **调整 `StitcherApp` 初始化顺序**: 将 `db_manager`, `index_store`, `file_indexer` 的初始化逻辑提前到 `check_runner` 初始化之前。
-2.  **彻底重写 `check.py`**: 使用 `write_file` 替换 `patch_file`，以确保 `CheckRunner` 的实现是完整且正确的，移除重复的方法定义。
-3.  **修正类型错误**: 在 `CheckRunner.analyze_batch` 的实现中，确保调用 `_analyze_file` 时传递的是 `module.file_path` 字符串，而不是 `module` 对象。
+1.  在 `CheckRunner._analyze_file` 中，重新引入代码文档哈希与 YAML 文档哈希的直接比较逻辑。
+2.  基于上述比较，正确地将符号分类为 `redundant` 或 `conflict` 状态。
+3.  重新实现 `missing` 和 `pending` 的检测逻辑，使其基于索引数据而不是不完整的集合运算。
+4.  修正 `untracked` 状态的报告逻辑，使其能区分“需要详细报告”和“仅需简单报告”两种情况。
 
 ### 基本原理
--   对于 `StitcherApp`，我们将通过 `patch_file` 调整代码块的顺序来解决依赖注入问题。
--   对于 `check.py`，由于修改涉及方法签名、删除方法和修正调用，使用 `write_file` 提供完整的文件内容是最安全、最不容易出错的方式，可以根除所有不一致性。
+我们将利用数据库中已经存在的 `docstring_hash` 字段和从 YAML 文件实时计算的哈希值。
+-   对于已跟踪文件，我们将遍历所有公共符号，并根据其在代码和 YAML 中是否存在文档以及文档哈希是否匹配，将其精确地归类到五种状态之一。
+-   对于未跟踪文件，我们将首先检查其中有多少公共符号是真正未文档化的。如果数量大于零，则发出详细报告；如果数量为零但文件本身有公共符号，则发出简单报告。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/application #concept/state #scope/core #ai/instruct #task/domain/runner #task/object/check-runner #task/action/query-first-refactor #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/application #comp/tests #concept/state #scope/core #ai/instruct #task/domain/runner #task/object/check-runner #task/action/query-first-refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修正 `StitcherApp` 的初始化顺序
+#### Acts 1: 完整重写 `check.py` 以修复所有逻辑错误
 
-我们将 `db_manager` 和 `index_store` 的初始化逻辑移动到所有 Runners 初始化之前。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
-~~~~~
-~~~~~python.old
-        self.stubgen_service = StubgenService(
-            root_path, self.scanner, self.doc_manager, transformer
-        )
-
-        # 2. Runners (Command Handlers)
-        self.check_runner = CheckRunner(
-            root_path,
-            parser,
-            self.index_store,
-            self.doc_manager,
-            self.sig_manager,
-            self.differ,
-            interaction_handler,
-        )
-        self.pump_runner = PumpRunner(
-            root_path,
-            self.doc_manager,
-            self.sig_manager,
-            transformer,
-            self.differ,
-            self.merger,
-            interaction_handler,
-            fingerprint_strategy=self.fingerprint_strategy,
-        )
-        self.init_runner = InitRunner(
-            root_path,
-            self.doc_manager,
-            self.sig_manager,
-            fingerprint_strategy=self.fingerprint_strategy,
-        )
-        self.transform_runner = TransformRunner(
-            root_path, self.doc_manager, transformer
-        )
-        self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
-
-        # 3. Indexing Subsystem
-        index_db_path = root_path / ".stitcher" / "index" / "index.db"
-        self.db_manager = DatabaseManager(index_db_path)
-        self.index_store = IndexStore(self.db_manager)
-        self.file_indexer = FileIndexer(root_path, self.index_store)
-~~~~~
-~~~~~python.new
-        self.stubgen_service = StubgenService(
-            root_path, self.scanner, self.doc_manager, transformer
-        )
-
-        # 2. Indexing Subsystem (must be initialized before runners that use it)
-        index_db_path = root_path / ".stitcher" / "index" / "index.db"
-        self.db_manager = DatabaseManager(index_db_path)
-        self.index_store = IndexStore(self.db_manager)
-        self.file_indexer = FileIndexer(root_path, self.index_store)
-
-        # 3. Runners (Command Handlers)
-        self.check_runner = CheckRunner(
-            root_path,
-            parser,
-            self.index_store,
-            self.doc_manager,
-            self.sig_manager,
-            self.differ,
-            interaction_handler,
-        )
-        self.pump_runner = PumpRunner(
-            root_path,
-            self.doc_manager,
-            self.sig_manager,
-            transformer,
-            self.differ,
-            self.merger,
-            interaction_handler,
-            fingerprint_strategy=self.fingerprint_strategy,
-        )
-        self.init_runner = InitRunner(
-            root_path,
-            self.doc_manager,
-            self.sig_manager,
-            fingerprint_strategy=self.fingerprint_strategy,
-        )
-        self.transform_runner = TransformRunner(
-            root_path, self.doc_manager, transformer
-        )
-        self.coverage_runner = CoverageRunner(root_path, self.doc_manager)
-~~~~~
-
-#### Acts 2: 完整重写 `check.py` 以修复所有错误
-
-使用 `write_file` 提供 `check.py` 的完整、正确版本。
+由于逻辑变更分散且相互关联，最安全的方式是使用 `write_file` 提供一个完整的、经过修正的 `check.py` 版本。
 
 ~~~~~act
 write_file
@@ -163,8 +76,8 @@ class CheckRunner:
     def __init__(
         self,
         root_path: Path,
-        parser: LanguageParserProtocol,  # Keep parser for applying resolutions (needs re-parse)
-        index_store: IndexStore,  # New dependency: The DB
+        parser: LanguageParserProtocol,
+        index_store: IndexStore,
         doc_manager: DocumentManager,
         sig_manager: SignatureManager,
         differ: Differ,
@@ -194,7 +107,6 @@ class CheckRunner:
         result = FileCheckResult(path=file_path)
         unresolved_conflicts: List[InteractionContext] = []
 
-        # 1. Query ACTUAL state from DB
         file_record = self.index_store.get_file_by_path(file_path)
         if not file_record:
             return result, []
@@ -205,58 +117,53 @@ class CheckRunner:
             if sym.logical_path:
                 actual_fingerprints[sym.logical_path] = self._symbol_to_fingerprint(sym)
 
-        # 2. Load BASELINE state from Signatures
         stored_hashes_map = self.sig_manager.load_composite_hashes(file_path)
-
-        # 3. Load YAML content hashes
         module_stub = ModuleDef(file_path=file_path)
         current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module_stub)
 
-        # 4. Lighter Doc Content Check using Sets
-        yaml_keys = set(current_yaml_map.keys())
+        # --- Doc Content and State Machine Analysis ---
+        is_tracked = (self.root_path / file_path).with_suffix(".stitcher.yaml").exists()
         code_keys = set(actual_fingerprints.keys())
-
+        yaml_keys = set(current_yaml_map.keys())
         public_code_keys = {k for k in code_keys if not k.split(".")[-1].startswith("_")}
 
-        is_tracked = (self.root_path / file_path).with_suffix(".stitcher.yaml").exists()
-
         if is_tracked:
-            missing = public_code_keys - yaml_keys
-            result.warnings["missing"].extend(sorted(list(missing)))
-
+            # Extra (Dangling Doc)
             extra = yaml_keys - code_keys
             extra.discard("__doc__")
-
             for fqn in extra:
                 unresolved_conflicts.append(
                     InteractionContext(file_path, fqn, ConflictType.DANGLING_DOC)
                 )
 
-        # 5. State Machine Analysis
-        all_fqns = set(actual_fingerprints.keys()) | set(stored_hashes_map.keys())
+            # Check states for all public symbols in code
+            for key in public_code_keys:
+                code_fp = actual_fingerprints.get(key, Fingerprint())
+                has_code_doc = "current_code_docstring_hash" in code_fp
+                has_yaml_doc = key in current_yaml_map
 
+                if not has_code_doc and not has_yaml_doc:
+                    result.warnings["missing"].append(key)
+                elif has_code_doc and not has_yaml_doc:
+                    result.errors["pending"].append(key)
+                elif has_code_doc and has_yaml_doc:
+                    if code_fp["current_code_docstring_hash"] == current_yaml_map[key]:
+                        result.warnings["redundant"].append(key)
+                    else:
+                        result.errors["conflict"].append(key)
+
+        # --- Signature Drift Analysis ---
+        all_fqns = code_keys | set(stored_hashes_map.keys())
         for fqn in sorted(list(all_fqns)):
             computed_fp = actual_fingerprints.get(fqn, Fingerprint())
+            stored_fp = stored_hashes_map.get(fqn)
+            if not computed_fp or not stored_fp:
+                continue
 
             code_hash = computed_fp.get("current_code_structure_hash")
-            current_sig_text = computed_fp.get("current_code_signature_text")
+            baseline_code_hash = stored_fp.get("baseline_code_structure_hash")
             yaml_hash = current_yaml_map.get(fqn)
-
-            stored_fp = stored_hashes_map.get(fqn)
-            baseline_code_hash = (
-                stored_fp.get("baseline_code_structure_hash") if stored_fp else None
-            )
-            baseline_yaml_hash = (
-                stored_fp.get("baseline_yaml_content_hash") if stored_fp else None
-            )
-            baseline_sig_text = (
-                stored_fp.get("baseline_code_signature_text") if stored_fp else None
-            )
-
-            if not code_hash and baseline_code_hash:
-                continue
-            if code_hash and not baseline_code_hash:
-                continue
+            baseline_yaml_hash = stored_fp.get("baseline_yaml_content_hash")
 
             code_matches = code_hash == baseline_code_hash
             yaml_matches = yaml_hash == baseline_yaml_hash
@@ -264,31 +171,40 @@ class CheckRunner:
             if code_matches and not yaml_matches:
                 result.infos["doc_improvement"].append(fqn)
             elif not code_matches:
-                sig_diff = None
-                if baseline_sig_text and current_sig_text:
-                    sig_diff = self.differ.generate_text_diff(
-                        baseline_sig_text,
-                        current_sig_text,
-                        "baseline",
-                        "current",
-                    )
-                elif current_sig_text:
-                    sig_diff = f"(No baseline signature stored)\n+++ current\n{current_sig_text}"
-
                 conflict_type = (
                     ConflictType.SIGNATURE_DRIFT
                     if yaml_matches
                     else ConflictType.CO_EVOLUTION
                 )
-
                 unresolved_conflicts.append(
                     InteractionContext(
-                        file_path, fqn, conflict_type, signature_diff=sig_diff
+                        file_path,
+                        fqn,
+                        conflict_type,
+                        signature_diff=self.differ.generate_text_diff(
+                            stored_fp.get("baseline_code_signature_text", ""),
+                            computed_fp.get("current_code_signature_text", ""),
+                            "baseline",
+                            "current",
+                        ),
                     )
                 )
 
-        if not is_tracked and public_code_keys:
-            result.warnings["untracked_detailed"].extend(sorted(list(public_code_keys)))
+        # --- Untracked File Logic ---
+        if not is_tracked:
+            undocumented_public_keys = [
+                k
+                for k in public_code_keys
+                if not actual_fingerprints.get(k, Fingerprint()).get(
+                    "current_code_docstring_hash"
+                )
+            ]
+            if undocumented_public_keys:
+                result.warnings["untracked_detailed"].extend(
+                    sorted(undocumented_public_keys)
+                )
+            elif public_code_keys:
+                result.warnings["untracked"].append("all")
 
         return result, unresolved_conflicts
 
@@ -581,6 +497,6 @@ class CheckRunner:
 
 ### 下一步建议
 
-我们已经修复了 `CheckRunner` 重构引入的所有已知错误。现在，`check` 命令应该能够以高性能的 "Query-First" 模式正确运行。
+我们已经修复了 `CheckRunner` 的核心逻辑，使其能够正确处理所有文档状态。现在，测试应该能够全部通过。
 
-下一步是再次运行测试套件，确保所有测试都能通过。如果测试通过，我们将创建一个提交来固化这次重构。然后，我们将按照原定计划，开始重构 `PumpRunner`。
+如果测试通过，我将生成一个 `[COMMIT]` 计划，将 `CheckRunner` 的 "Query-First" 重构作为一个完整的、经过验证的工作单元进行提交。
