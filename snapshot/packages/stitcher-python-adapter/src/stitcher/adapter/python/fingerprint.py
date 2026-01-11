@@ -17,9 +17,14 @@ class StructureHasher:
             h = self._compute_func_hash(entity)
             fingerprint["current_code_structure_hash"] = h
         elif isinstance(entity, ClassDef):
-            # Class-level structure hash logic can be added here if needed in future.
-            # Currently Stitcher focuses on methods.
-            pass
+            h = self._compute_class_hash(entity)
+            fingerprint["current_code_structure_hash"] = h
+
+    def _compute_class_hash(self, cls: ClassDef) -> str:
+        # Bases and name form the structure of a class
+        parts = [f"name:{cls.name}", f"bases:{'|'.join(cls.bases)}"]
+        sig_str = "|".join(parts)
+        return hashlib.sha256(sig_str.encode("utf-8")).hexdigest()
 
     def _compute_func_hash(self, func: FunctionDef) -> str:
         # Extracted from stitcher.spec.models.FunctionDef.compute_fingerprint
@@ -46,10 +51,17 @@ class SignatureTextHasher:
         self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
     ) -> None:
         if isinstance(entity, FunctionDef):
-            text = self._get_signature_string(entity)
+            text = self._get_func_signature_string(entity)
+            fingerprint["current_code_signature_text"] = text
+        elif isinstance(entity, ClassDef):
+            text = self._get_class_signature_string(entity)
             fingerprint["current_code_signature_text"] = text
 
-    def _get_signature_string(self, func: FunctionDef) -> str:
+    def _get_class_signature_string(self, cls: ClassDef) -> str:
+        bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
+        return f"class {cls.name}{bases_str}:"
+
+    def _get_func_signature_string(self, func: FunctionDef) -> str:
         # Extracted from stitcher.spec.models.FunctionDef.get_signature_string
         parts = []
         if func.is_async:

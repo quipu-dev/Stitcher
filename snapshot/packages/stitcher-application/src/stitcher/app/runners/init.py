@@ -25,6 +25,8 @@ class InitRunner:
         for func in module.functions:
             fingerprints[func.name] = self.fingerprint_strategy.compute(func)
         for cls in module.classes:
+            # Include the class itself
+            fingerprints[cls.name] = self.fingerprint_strategy.compute(cls)
             for method in cls.methods:
                 fqn = f"{cls.name}.{method.name}"
                 fingerprints[fqn] = self.fingerprint_strategy.compute(method)
