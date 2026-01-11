@@ -29,11 +29,11 @@ def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
     # SETUP: Mock the parser to simulate a crash on specific file
     # In Zero-IO mode, parsing happens in the Indexer via PythonAdapter
     # We need to find the correct parser instance to mock.
-    
+
     python_adapter = app.file_indexer.adapters[".py"]
     # Verify we got the adapter (the key might vary if not registered as .py, but StitcherApp does register it as .py)
     assert python_adapter is not None
-    
+
     real_parse = python_adapter.parser.parse
 
     def failing_parse(source_code, file_path=""):

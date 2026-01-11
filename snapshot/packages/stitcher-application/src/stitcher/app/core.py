@@ -40,6 +40,7 @@ from stitcher.adapter.python.docstring import (
     get_docstring_codec,
     get_docstring_serializer,
 )
+from stitcher.app.protocols import InteractionContext
 
 
 class StitcherApp:
@@ -216,10 +217,8 @@ class StitcherApp:
             # We skip full AST parsing for physical files
             files = self.scanner.get_files_from_config(config)
             # Convert to relative paths as expected by the system
-            rel_paths = [
-                f.relative_to(self.root_path).as_posix() for f in files
-            ]
-            
+            rel_paths = [f.relative_to(self.root_path).as_posix() for f in files]
+
             # 3. Get Plugins (Virtual) - AST Path
             # Plugins must still be parsed as they don't exist in the index
             plugin_modules = self.scanner.process_plugins(config.plugins)
@@ -242,7 +241,7 @@ class StitcherApp:
                 p_res, p_conflicts = self.check_runner.analyze_batch(plugin_modules)
                 batch_results.extend(p_res)
                 batch_conflicts.extend(p_conflicts)
-            
+
             all_results.extend(batch_results)
 
             # 5. Prepare ModuleDefs for Post-Processing (Reconcile/Reformat)

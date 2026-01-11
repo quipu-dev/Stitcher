@@ -2,7 +2,8 @@
   "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#Dict": {},
   "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator": {
     "baseline_code_signature_text": "class FileSystemOperator(OperatorProtocol):",
-    "baseline_code_structure_hash": "3dd024de64043e1862c5c3d238a4d93750c877292125bb8264d0530767cfea64"
+    "baseline_code_structure_hash": "3dd024de64043e1862c5c3d238a4d93750c877292125bb8264d0530767cfea64",
+    "baseline_yaml_content_hash": "4742e47b9eae2db18de72d278fbc548742abf4a1f12878261b9c6d6b54e5d0bb"
   },
   "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator.__call__": {
     "baseline_code_signature_text": "def __call__(self, pointer: Union[str, SemanticPointerProtocol]) -> Optional[str]:",

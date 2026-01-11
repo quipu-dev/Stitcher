@@ -3,7 +3,8 @@
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#Dict": {},
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#DocumentAdapter": {
     "baseline_code_signature_text": "class DocumentAdapter(Protocol):",
-    "baseline_code_structure_hash": "544225511e107950ce92ce0a87c372b96df551c846296d4477ff65f18bd0f1ad"
+    "baseline_code_structure_hash": "544225511e107950ce92ce0a87c372b96df551c846296d4477ff65f18bd0f1ad",
+    "baseline_yaml_content_hash": "5a086ed7e2069a1800c0d961eeaeff5b7da613065736aed6bb4db87d5ea5242f"
   },
   "py://packages/stitcher-common/src/stitcher/common/interfaces.py#DocumentAdapter.dump": {
     "baseline_code_signature_text": "def dump(self, data: Dict[str, Any]) -> str:",

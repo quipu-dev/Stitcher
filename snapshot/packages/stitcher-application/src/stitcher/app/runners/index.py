@@ -34,7 +34,10 @@ class IndexRunner:
                 path, err = stats["error_details"][0]
                 bus.error(L.error.generic, error=f"Failed to parse {path}: {err}")
             else:
-                bus.error(L.error.generic, error=f"Failed to index {stats['errors']} file(s). Check logs for details.")
+                bus.error(
+                    L.error.generic,
+                    error=f"Failed to index {stats['errors']} file(s). Check logs for details.",
+                )
             return False
 
         return True

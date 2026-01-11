@@ -1,7 +1,8 @@
 {
   "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver": {
     "baseline_code_signature_text": "class AssetPathResolver:",
-    "baseline_code_structure_hash": "884c539e9b6636dad1323ddd2f4dd47af9268fe830f532c2c22f01ee73472c10"
+    "baseline_code_structure_hash": "884c539e9b6636dad1323ddd2f4dd47af9268fe830f532c2c22f01ee73472c10",
+    "baseline_yaml_content_hash": "be464b306bcdebc2da446e41fe3539fe29e8e74bc7689f1e0c4f0ece94ee38a7"
   },
   "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.__init__": {
     "baseline_code_signature_text": "def __init__(self, root_path: Path):",

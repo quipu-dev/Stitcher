@@ -3,7 +3,8 @@
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/uri.py#Path": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/uri.py#SURIGenerator": {
     "baseline_code_signature_text": "class SURIGenerator:",
-    "baseline_code_structure_hash": "1b5e412f41cb8b7aedb37e107b31e8a53c93193ef6eee857c22c42f53cb2cb61"
+    "baseline_code_structure_hash": "1b5e412f41cb8b7aedb37e107b31e8a53c93193ef6eee857c22c42f53cb2cb61",
+    "baseline_yaml_content_hash": "54072cdaced8907997908e2875dfdd02d75ad547f579fe37484154e18d220789"
   },
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/uri.py#SURIGenerator.for_file": {
     "baseline_code_signature_text": "def for_file(rel_path: str) -> str:",

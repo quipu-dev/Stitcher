@@ -7,7 +7,8 @@
   "py://packages/stitcher-cli/src/stitcher/cli/interactive.py#ResolutionAction": {},
   "py://packages/stitcher-cli/src/stitcher/cli/interactive.py#SemanticMenuOption": {
     "baseline_code_signature_text": "class SemanticMenuOption:",
-    "baseline_code_structure_hash": "46bbd14948090d5d063ff72a84d2829711d92c3c706a8b4ed833c5f186ed6844"
+    "baseline_code_structure_hash": "46bbd14948090d5d063ff72a84d2829711d92c3c706a8b4ed833c5f186ed6844",
+    "baseline_yaml_content_hash": "094bff150864625cab0566d91126a79165c98e1b19b54794bf90216c0abe867e"
   },
   "py://packages/stitcher-cli/src/stitcher/cli/interactive.py#SemanticMenuOption.action": {
     "baseline_yaml_content_hash": "f4d407b2c9b300dfec448b949f13603d6754c551c715b481357f2f6fd5360a5c"
@@ -24,7 +25,8 @@
   "py://packages/stitcher-cli/src/stitcher/cli/interactive.py#SemanticPointer": {},
   "py://packages/stitcher-cli/src/stitcher/cli/interactive.py#TyperInteractiveRenderer": {
     "baseline_code_signature_text": "class TyperInteractiveRenderer:",
-    "baseline_code_structure_hash": "2d3308b50a4944278ed9bbedd73bb2ff14e6c39e04d6264bf5961e7e9ab3f0c2"
+    "baseline_code_structure_hash": "2d3308b50a4944278ed9bbedd73bb2ff14e6c39e04d6264bf5961e7e9ab3f0c2",
+    "baseline_yaml_content_hash": "93692d06cf12324096fb552da6cdcef36aae854a944039ab6d3094420df3b6f6"
   },
   "py://packages/stitcher-cli/src/stitcher/cli/interactive.py#TyperInteractiveRenderer.__init__": {
     "baseline_code_signature_text": "def __init__(self, operator):",

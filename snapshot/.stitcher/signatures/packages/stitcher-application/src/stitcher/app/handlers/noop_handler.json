@@ -5,7 +5,8 @@
   "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#List": {},
   "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler": {
     "baseline_code_signature_text": "class NoOpInteractionHandler(InteractionHandler):",
-    "baseline_code_structure_hash": "bb45973058b9f945b4ef436a774e1c4c49f85e7f97b7213ff9218fbad6deb7c9"
+    "baseline_code_structure_hash": "bb45973058b9f945b4ef436a774e1c4c49f85e7f97b7213ff9218fbad6deb7c9",
+    "baseline_yaml_content_hash": "2fcf0d0dc8c8109c0cf141e89b828b2baea39f0147893c3b0fbbcef02a40e194"
   },
   "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler.__init__": {
     "baseline_code_signature_text": "def __init__(self, force_relink: bool = False, reconcile: bool = False, hydrate_force: bool = False, hydrate_reconcile: bool = False):",

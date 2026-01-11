@@ -2,7 +2,8 @@
   "py://packages/pyneedle-runtime/src/needle/operators/i18n_factory.py#FileSystemOperator": {},
   "py://packages/pyneedle-runtime/src/needle/operators/i18n_factory.py#I18NFactoryOperator": {
     "baseline_code_signature_text": "class I18NFactoryOperator(OperatorProtocol):",
-    "baseline_code_structure_hash": "a7a1ad9f0e1967addc6ca34c27b6d6284a24127613851dc2f3293930467d6628"
+    "baseline_code_structure_hash": "a7a1ad9f0e1967addc6ca34c27b6d6284a24127613851dc2f3293930467d6628",
+    "baseline_yaml_content_hash": "7fe490754ed1396bba8ae9aabd2c89c8a7694e3659d0660a5773427e2334b2d9"
   },
   "py://packages/pyneedle-runtime/src/needle/operators/i18n_factory.py#I18NFactoryOperator.__call__": {
     "baseline_code_signature_text": "def __call__(self, lang_pointer: Union[str, SemanticPointerProtocol]) -> FileSystemOperator:",

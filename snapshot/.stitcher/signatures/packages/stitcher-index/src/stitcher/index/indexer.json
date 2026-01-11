@@ -1,4 +1,5 @@
 {
+  "py://packages/stitcher-index/src/stitcher/index/indexer.py#Any": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#Dict": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer": {
     "baseline_code_signature_text": "class FileIndexer:",
@@ -9,13 +10,13 @@
     "baseline_code_structure_hash": "d70efa7425fcf910431ea7898a3909fba4d8d02a58b5ef86d97db68d96d9f2d8"
   },
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer._process_file_content": {
-    "baseline_code_signature_text": "def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes):",
-    "baseline_code_structure_hash": "8d17d1545901bf0a8c24e42e7c2f7f5bcc909f3ac105fa11ece60804ea8ed53d"
+    "baseline_code_signature_text": "def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes) -> None:",
+    "baseline_code_structure_hash": "32723c4260c9d953727020f9b974dcd3cbfbb7170138d638384e85207441fec1"
   },
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.adapters": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.index_files": {
-    "baseline_code_signature_text": "def index_files(self, discovered_paths: Set[str]) -> Dict[str, int]:",
-    "baseline_code_structure_hash": "4e2e65f687754bfa9aa76a8d8ef291072cdab5686f7078a13971e14b34312ff6"
+    "baseline_code_signature_text": "def index_files(self, discovered_paths: Set[str]) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "f60678d8933a29288d8c48e1818beca57402a6f312083bd6204111b137486f27"
   },
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.linker": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.register_adapter": {

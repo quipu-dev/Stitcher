@@ -68,9 +68,7 @@ class IndexCheckSubjectAdapter(CheckSubject):
 
         # 3. Aggregate all unique FQNs
         all_fqns = (
-            set(symbol_map.keys())
-            | set(yaml_docs.keys())
-            | set(stored_hashes.keys())
+            set(symbol_map.keys()) | set(yaml_docs.keys()) | set(stored_hashes.keys())
         )
         if module_symbol:
             all_fqns.add("__doc__")

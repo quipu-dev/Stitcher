@@ -4,7 +4,8 @@
   "py://packages/pyneedle-pointer/src/needle/pointer/core.py#PointerSetProtocol": {},
   "py://packages/pyneedle-pointer/src/needle/pointer/core.py#SemanticPointer": {
     "baseline_code_signature_text": "class SemanticPointer(SemanticPointerProtocol):",
-    "baseline_code_structure_hash": "ca374b159ff512b21c4c536fc1a93ef2ac02a7d975516ecb917c56a5b3e3774c"
+    "baseline_code_structure_hash": "ca374b159ff512b21c4c536fc1a93ef2ac02a7d975516ecb917c56a5b3e3774c",
+    "baseline_yaml_content_hash": "34f396dadf3e550650a5bd63192531a23eeae05c8bc66a87a233bd7eecb5d8f7"
   },
   "py://packages/pyneedle-pointer/src/needle/pointer/core.py#SemanticPointer.__add__": {
     "baseline_code_signature_text": "def __add__(self, other: Any) -> SemanticPointer:",

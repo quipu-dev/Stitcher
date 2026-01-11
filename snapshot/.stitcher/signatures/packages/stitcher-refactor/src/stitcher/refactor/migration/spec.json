@@ -4,7 +4,8 @@
   "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#List": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#MigrationSpec": {
     "baseline_code_signature_text": "class MigrationSpec:",
-    "baseline_code_structure_hash": "de835ddfb68014ae24f25a9367f10f51e5a3368c26c1c87e5a28e0109b2dccc0"
+    "baseline_code_structure_hash": "de835ddfb68014ae24f25a9367f10f51e5a3368c26c1c87e5a28e0109b2dccc0",
+    "baseline_yaml_content_hash": "db9c7b20aa79d098af8370ab21d3856f991ddc3d93f2964770006491b1f5305c"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/migration/spec.py#MigrationSpec.__init__": {
     "baseline_code_signature_text": "def __init__(self):",

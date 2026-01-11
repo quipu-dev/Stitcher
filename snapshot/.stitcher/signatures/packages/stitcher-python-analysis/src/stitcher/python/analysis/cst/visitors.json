@@ -7,7 +7,8 @@
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#FunctionDef": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#IRBuildingVisitor": {
     "baseline_code_signature_text": "class IRBuildingVisitor(cst.CSTVisitor):",
-    "baseline_code_structure_hash": "bb8e5f0b2e62c317ab049d7708691b5aa2c6b61b36770c435b8fc8586fec9e0a"
+    "baseline_code_structure_hash": "bb8e5f0b2e62c317ab049d7708691b5aa2c6b61b36770c435b8fc8586fec9e0a",
+    "baseline_yaml_content_hash": "291e393707efa7e2ef1f5bf5d6ee642a0c50179602804c332eaa3bdb23f32ef2"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#IRBuildingVisitor.METADATA_DEPENDENCIES": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/visitors.py#IRBuildingVisitor.__init__": {

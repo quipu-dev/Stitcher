@@ -8,12 +8,16 @@
     "baseline_code_structure_hash": "51cb9a01b6a0263aeb242f78835ea5fd9cced46725a16807875266497033e248"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, differ: Differ, interaction_handler: InteractionHandler | None, fingerprint_strategy: FingerprintStrategyProtocol):",
-    "baseline_code_structure_hash": "90a2750f4e45ca8d7c6f082f579f445ea4041a3a01af5eba2b5b6e48831bd97b"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, doc_manager: DocumentManager, sig_manager: SignatureManager, differ: Differ, interaction_handler: InteractionHandler | None, fingerprint_strategy: FingerprintStrategyProtocol, index_store: IndexStore):",
+    "baseline_code_structure_hash": "94d546028710ccd7c6d28024ddc2cd77fa4b9a912af0aba1df0f2684b7bf535f"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.analyze_batch": {
     "baseline_code_signature_text": "def analyze_batch(self, modules: List[ModuleDef]) -> Tuple[List[FileCheckResult], List[InteractionContext]]:",
     "baseline_code_structure_hash": "8742a43e421e48d1a4d7776ad0be983b97b7bb7b890e7c1f7c95a9e00daf45b8"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.analyze_paths": {
+    "baseline_code_signature_text": "def analyze_paths(self, file_paths: List[str]) -> Tuple[List[FileCheckResult], List[InteractionContext]]:",
+    "baseline_code_structure_hash": "56c64004facaea7e1dbca72157aa4efc83007b03c42255412bdaf39b3a8ebfa8"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.analyzer": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.auto_reconcile_docs": {
@@ -22,6 +26,7 @@
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.doc_manager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.fingerprint_strategy": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.index_store": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.parser": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.reformat_all": {
     "baseline_code_signature_text": "def reformat_all(self, modules: List[ModuleDef]):",
@@ -43,6 +48,8 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#DocumentManager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#FileCheckResult": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#FingerprintStrategyProtocol": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#IndexCheckSubjectAdapter": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#IndexStore": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#InteractionContext": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#InteractionHandler": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#LanguageParserProtocol": {},

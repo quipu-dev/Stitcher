@@ -7,7 +7,8 @@
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SemanticPointer": {},
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus": {
     "baseline_code_signature_text": "class SpyBus:",
-    "baseline_code_structure_hash": "65aa0f065b138f219d3f17554fd97f1645fb398a21146dcfdc3d94042f04af67"
+    "baseline_code_structure_hash": "65aa0f065b138f219d3f17554fd97f1645fb398a21146dcfdc3d94042f04af67",
+    "baseline_yaml_content_hash": "224acf2bccb0081bcf7889ed8cf35ae91333493fe3d01ec3f394d13af8cd5e69"
   },
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus.__init__": {
     "baseline_code_signature_text": "def __init__(self):",
@@ -31,7 +32,8 @@
   },
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyRenderer": {
     "baseline_code_signature_text": "class SpyRenderer(Renderer):",
-    "baseline_code_structure_hash": "563d75f1f1b560a8dc29abb1c0a3ff928367b4acdce131bd0ab495065de91245"
+    "baseline_code_structure_hash": "563d75f1f1b560a8dc29abb1c0a3ff928367b4acdce131bd0ab495065de91245",
+    "baseline_yaml_content_hash": "9080916eac10c5f5a84436850d5ccf6f51a612746134c90f041cc11e89d1962b"
   },
   "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyRenderer.__init__": {
     "baseline_code_signature_text": "def __init__(self):",

@@ -34,7 +34,8 @@
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#Fingerprint": {},
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#FingerprintStrategyProtocol": {
     "baseline_code_signature_text": "class FingerprintStrategyProtocol(Protocol):",
-    "baseline_code_structure_hash": "8e985e07af6b97e49318ee6403215f9a6b73ea40a3c96ddfaa83769a0396374f"
+    "baseline_code_structure_hash": "8e985e07af6b97e49318ee6403215f9a6b73ea40a3c96ddfaa83769a0396374f",
+    "baseline_yaml_content_hash": "548744f31aa0f674d6e0fc3ead1e689063fdddc0e0213a3f6d19ac377e985f44"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#FingerprintStrategyProtocol.compute": {
     "baseline_code_signature_text": "def compute(self, entity: Union[FunctionDef, ClassDef]) -> Fingerprint:",
@@ -44,7 +45,8 @@
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#FunctionDef": {},
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#LanguageParserProtocol": {
     "baseline_code_signature_text": "class LanguageParserProtocol(Protocol):",
-    "baseline_code_structure_hash": "094ee51f2d267193c6f3154002e12f151f42d38135071edd29d13da7d2deb654"
+    "baseline_code_structure_hash": "094ee51f2d267193c6f3154002e12f151f42d38135071edd29d13da7d2deb654",
+    "baseline_yaml_content_hash": "731038358df80327e6b0c887d95ed77daefcfc7e10f3cc07c397d64f7a2b39ca"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#LanguageParserProtocol.parse": {
     "baseline_code_signature_text": "def parse(self, source_code: str, file_path: str = '') -> ModuleDef:",
@@ -53,7 +55,8 @@
   },
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#LanguageTransformerProtocol": {
     "baseline_code_signature_text": "class LanguageTransformerProtocol(Protocol):",
-    "baseline_code_structure_hash": "908bf32017f09653a73c487ffbf63470ea3ab3732edda2fe3a94934db96f8a88"
+    "baseline_code_structure_hash": "908bf32017f09653a73c487ffbf63470ea3ab3732edda2fe3a94934db96f8a88",
+    "baseline_yaml_content_hash": "8dee9701e2dc9ec73c07c3514abed2d03c180a019d6813906ac1c6e0c4add942"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#LanguageTransformerProtocol.inject": {
     "baseline_code_signature_text": "def inject(self, source_code: str, docs: Dict[str, str]) -> str:",
@@ -71,7 +74,8 @@
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#Protocol": {},
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#StubGeneratorProtocol": {
     "baseline_code_signature_text": "class StubGeneratorProtocol(Protocol):",
-    "baseline_code_structure_hash": "25aa55004dd7ec1d3f9e1dd302e16dfe388e4a56f01d4a597cd4c3c46dc2d5bd"
+    "baseline_code_structure_hash": "25aa55004dd7ec1d3f9e1dd302e16dfe388e4a56f01d4a597cd4c3c46dc2d5bd",
+    "baseline_yaml_content_hash": "6d70a575c8266a36af1be6730b09f83ac28b923aaa45a90ce6a0d261550cfcd7"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/protocols.py#StubGeneratorProtocol.generate": {
     "baseline_code_signature_text": "def generate(self, module: ModuleDef) -> str:",
