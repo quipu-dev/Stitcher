@@ -92,6 +92,28 @@ class SemanticGraph:
             )
         return usages
 
+    def find_definition_location(self, target_fqn: str) -> Optional[UsageLocation]:
+        """
+        Query the Index DB for the definition location of a given FQN.
+        """
+        result = self.index_store.find_symbol_by_fqn(target_fqn)
+        if not result:
+            return None
+
+        symbol, file_path_str = result
+        abs_path = self.root_path / file_path_str
+
+        # Adapt SymbolRecord to UsageLocation for the renamer
+        return UsageLocation(
+            file_path=abs_path,
+            lineno=symbol.lineno,
+            col_offset=symbol.col_offset,
+            end_lineno=symbol.end_lineno,
+            end_col_offset=symbol.end_col_offset,
+            ref_type=ReferenceType.SYMBOL,  # Treat definition as a symbol reference to itself
+            target_node_fqn=target_fqn,
+        )
+
     def get_module(self, package_name: str) -> Optional[griffe.Module]:
         if package_name in self._modules:
             return self._modules[package_name]

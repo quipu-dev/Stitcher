@@ -20,11 +20,18 @@ class GlobalBatchRenamer:
         ops: List[WriteFileOp] = []
         usages_by_file: Dict[Path, List[UsageLocation]] = defaultdict(list)
 
-        # 1. Collect all usages for all renames and group by file
+        # 1. Collect all usages AND the definition for all renames, then group by file
         for old_fqn in self.rename_map.keys():
+            # Find all usages (imports, calls, etc.)
             usages = self.ctx.graph.find_usages(old_fqn)
             for usage in usages:
                 usages_by_file[usage.file_path].append(usage)
+
+            # CRITICAL FIX: Find the definition location and add it to the list of
+            # locations to be transformed.
+            definition_location = self.ctx.graph.find_definition_location(old_fqn)
+            if definition_location:
+                usages_by_file[definition_location.file_path].append(definition_location)
 
         # 2. For each affected file, apply a single transformation that handles ALL renames
         for file_path, file_usages in usages_by_file.items():

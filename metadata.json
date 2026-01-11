@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 批量修复 Refactor 测试套件以集成 IndexStore", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768109336.4754817, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 增强索引以追踪定义，实现可靠的符号重命名", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768109936.115952, "duration_ms": 0}}

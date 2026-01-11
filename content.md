@@ -1,762 +1,180 @@
-简要回答
-好的，我将作为“人类脚本”，手动对这 22 个失败的测试用例进行批量修复。核心策略是在每个测试的 Arrange 阶段利用 `create_populated_index` 构建真实的索引环境，并确保 `SemanticGraph` 和 `RefactorContext` 能够正确持有这个 `index_store`。
+好的，我完全理解了。
 
-## [WIP] fix: 批量修复 Refactor 测试套件以集成 IndexStore
+这些测试失败的根本原因高度一致且非常清晰：重构引擎在执行重命名操作时，成功地找到了所有符号的**使用点（usages）**并进行了修改，但唯独遗漏了对符号**定义点（definition）**本身的修改。这是一个核心的逻辑缺陷。
+
+用户的指令“增强 index 的能力”一针见血。当前，我们的索引和图谱查询 (`find_usages`) 只关注“引用”，而没有提供一个直接、可靠的方式来定位符号的“定义”。为了从根本上解决这个问题，我们必须把“定义”也作为索引的一等公民来对待。
+
+我将执行一个计划，通过增强索引、图谱和重构规划器的能力，确保符号定义在重命名过程中被正确处理。
+
+## [WIP] fix: 增强索引以追踪定义，实现可靠的符号重命名
 
 ### 错误分析
-随着 Phase 3 架构融合的推进，`SemanticGraph` 和 `RefactorContext` 已演进为依赖 `IndexStore` 提供语义查询服务。现有的测试用例仍在使用旧的构造函数，缺少 `index_store` 参数，导致 `TypeError`。
+
+所有四个失败的测试都暴露了同一个根本问题：`GlobalBatchRenamer` 在收集需要修改的代码位置时，其数据源 (`SemanticGraph.find_usages`) 只返回了符号被引用的位置，而没有包含符号被定义的那一行代码的位置。
+
+因此，当重构事务执行时：
+1.  所有 `import` 语句和函数调用都被正确地重命名了。
+2.  但 `class OldName: ...` 或 `def old_func(): ...` 这一行定义代码本身，由于从未被加入到待办事项列表中，所以被原封不动地保留了下来。
+3.  这导致了代码状态不一致：外部调用一个不再存在的旧名称，或者调用一个新名称但其定义仍然是旧的，从而引发 `AssertionError` 或潜在的 `ImportError`。
+
+这个问题的根源在于索引层 (`IndexStore`) 和图谱层 (`SemanticGraph`) 缺乏一个专门用于查询符号“定义”位置的接口。
 
 ### 用户需求
-批量修复 `stitcher-refactor` 包下的所有集成测试和单元测试，使其符合新的 API 契约。
+
+修复所有因“定义未被重命名”而失败的测试。核心需求是让 `Rename` 操作能够原子化地修改一个符号的所有引用以及其定义本身。
 
 ### 评论
-虽然修复数量较多，但模式高度统一。这是架构升级后的必然代价。通过这次修复，所有的重构测试都将运行在真实的 SQLite 索引之上，这不仅修复了报错，还显著提升了测试的真实度和对未来“确定性重构”的保障。
+
+这是一个典型的“本体论不完备”架构缺陷。系统正确地建模了“是什么”（符号）和“在哪里被使用”（引用），却忽略了“它在哪里被定义”这一关键信息的可查询性。根据 HFEA 协议，我们必须修复这个基础缺陷，而不是在规划器（Planner）层面打补丁。
+
+通过为索引增加直接查询符号定义的能力，我们让索引成为了更完整的“真理单一来源 (SSoT)”，这使得上层逻辑（如重构）可以建立在更确定性的基础之上。
 
 ### 目标
-1.  对 `packages/stitcher-refactor` 下的 17 个测试文件进行 `patch_file` 操作。
-2.  集成测试：使用 `create_populated_index` 初始化真实 DB。
-3.  单元测试：使用 `unittest.mock` 注入 Mock 索引。
+
+1.  **增强 `IndexStore`**: 添加一个 `find_symbol_by_fqn` 方法，使其能够根据完全限定名（FQN）直接查询并返回一个符号的定义记录 (`SymbolRecord`) 及其所在的文件路径。
+2.  **增强 `SemanticGraph`**: 添加一个 `find_definition_location` 方法，该方法利用 `IndexStore` 的新能力，将符号的定义位置封装成一个 `UsageLocation` 对象返回。
+3.  **修复 `GlobalBatchRenamer`**: 修改其 `analyze` 方法，使其在为每个符号收集使用点（usages）的同时，也主动查询其定义点（definition），并将两者合并，形成一个完整的待修改位置列表。
 
 ### 基本原理
-对于集成测试，我们遵循“基础设施优先”公理，使用 `test-utils` 提供的工业级工具构建环境。对于单元测试，我们通过 Mock 隔离复杂的 I/O，重点验证 `RefactorContext` 的协调逻辑。
+
+我们将通过一条清晰的调用链来解决这个问题：
+
+1.  `GlobalBatchRenamer` 在规划重命名时，除了调用 `graph.find_usages(fqn)`，还将调用新的 `graph.find_definition_location(fqn)`。
+2.  `SemanticGraph.find_definition_location` 会委托给 `IndexStore.find_symbol_by_fqn`。
+3.  `IndexStore.find_symbol_by_fqn` 执行一个 SQL 查询，直接从 `symbols` 表中通过 `canonical_fqn` 字段定位到唯一的符号定义，并返回其位置信息。
+4.  `GlobalBatchRenamer` 将这个“定义位置”与所有“使用位置”一视同仁地添加到按文件分组的待办列表中。
+5.  最终，`SymbolRenamerTransformer` 在访问代码时，会发现定义处的代码也匹配上了位置和 FQN，从而正确地将其重命名。
+
+这个方案从数据源头解决了问题，确保了重命名操作的原子性和完整性。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/refactor #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/refactor-suite #task/action/fix-all #task/state/continue
+
+#intent/fix #flow/ready #priority/critical #comp/refactor #comp/index #concept/state #scope/core #ai/instruct #task/domain/refactor #task/object/rename-engine #task/action/bug-fix #task-state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 Integration Tests (1/3) - 基础 Bug 复现类
+#### Acts 1: 增强 `IndexStore`，使其可以直接查询符号定义
 
-修复 `test_repro_sidecar_fqn.py`, `test_bug_init_relative_import.py`, `test_bug_relative_import_refactor.py`。
+首先，我们在 `stitcher-index` 包的 `store.py` 中添加 `find_symbol_by_fqn` 方法。这将为上层提供通过 FQN 直接查找符号定义的能力。
 
 ~~~~~act
 patch_file
-packages/stitcher-refactor/src/stitcher/refactor/tests/integration/test_repro_sidecar_fqn.py
+packages/stitcher-index/src/stitcher/index/store.py
 ~~~~~
 ~~~~~python.old
-from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
-
-
-def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_path):
+    def delete_file(self, file_id: int) -> None:
+        with self.db.get_connection() as conn:
+            conn.execute("DELETE FROM files WHERE id = ?", (file_id,))
 ~~~~~
 ~~~~~python.new
-from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.refactor.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory, create_populated_index
+    def delete_file(self, file_id: int) -> None:
+        with self.db.get_connection() as conn:
+            conn.execute("DELETE FROM files WHERE id = ?", (file_id,))
 
-
-def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_path):
+    def find_symbol_by_fqn(
+        self, canonical_fqn: str
+    ) -> Optional[Tuple[SymbolRecord, str]]:
+        """
+        Finds a symbol definition by its canonical FQN.
+        Returns a tuple of (SymbolRecord, file_path_str).
+        """
+        with self.db.get_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT s.*, f.path as file_path
+                FROM symbols s
+                JOIN files f ON s.file_id = f.id
+                WHERE s.canonical_fqn = ?
+                """,
+                (canonical_fqn,),
+            ).fetchone()
+            if row:
+                return (
+                    SymbolRecord(
+                        **{k: v for k, v in dict(row).items() if k != "file_path"}
+                    ),
+                    row["file_path"],
+                )
+        return None
 ~~~~~
+
+#### Acts 2: 增强 `SemanticGraph`，提供查找定义位置的接口
+
+接下来，我们在 `stitcher-refactor` 包的 `graph.py` 中添加 `find_definition_location` 方法。它将作为 `IndexStore` 和 `GlobalBatchRenamer` 之间的桥梁。
 
 ~~~~~act
 patch_file
-packages/stitcher-refactor/src/stitcher/refactor/tests/integration/test_repro_sidecar_fqn.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py
 ~~~~~
 ~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    # Load top level to ensure graph coverage
-    graph.load("mypkg")
+        return usages
 
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
+    def get_module(self, package_name: str) -> Optional[griffe.Module]:
+        if package_name in self._modules:
 ~~~~~
 ~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    # Load top level to ensure graph coverage
-    graph.load("mypkg")
+        return usages
 
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
+    def find_definition_location(self, target_fqn: str) -> Optional[UsageLocation]:
+        """
+        Query the Index DB for the definition location of a given FQN.
+        """
+        result = self.index_store.find_symbol_by_fqn(target_fqn)
+        if not result:
+            return None
 
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_bug_init_relative_import.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
+        symbol, file_path_str = result
+        abs_path = self.root_path / file_path_str
 
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_bug_relative_import_refactor.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-#### Acts 2: 修复 Integration Tests (2/3) - 核心功能 E2E 类
-
-修复 `test_debug_rename_failure.py`, `test_fail_concurrent_move_and_rename.py`, `test_monorepo_refactor_e2e.py`, `test_monorepo_refactor_with_tests_e2e.py`, `test_move_directory_e2e.py`。
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_debug_rename_failure.py
-~~~~~
-~~~~~python.old
-    # 2. LOAD GRAPH
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("stitcher")
-
-    # 3. EXECUTE REFACTOR
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. LOAD GRAPH
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("stitcher")
-
-    # 3. EXECUTE REFACTOR
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_fail_concurrent_move_and_rename.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_monorepo_refactor_e2e.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    # The new SemanticGraph should automatically find both 'src' dirs
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    assert project_root / "packages/pkg_a/src" in graph.search_paths
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    # The new SemanticGraph should automatically find both 'src' dirs
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    assert project_root / "packages/pkg_a/src" in graph.search_paths
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_monorepo_refactor_e2e.py
-~~~~~
-~~~~~python.old
-    # Load all packages
-    graph.load("pkga_lib")
-    graph.load("pkgb_app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # Load all packages
-    graph.load("pkga_lib")
-    graph.load("pkgb_app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_monorepo_refactor_with_tests_e2e.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    # Verify that all source and test roots were discovered
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    # Verify that all source and test roots were discovered
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_monorepo_refactor_with_tests_e2e.py
-~~~~~
-~~~~~python.old
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_move_directory_e2e.py
-~~~~~
-~~~~~python.old
-    # 2. ANALYSIS
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-    graph.load("app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. ANALYSIS
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    graph.load("app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-#### Acts 3: 修复 Integration Tests (3/3) - 目录、文件及命名空间
-
-修复 `test_move_directory_monorepo_e2e.py`, `test_move_file_e2e.py`, `test_move_nested_directory_e2e.py`, `test_rename_namespace_pkg_failure.py`, `test_rename_symbol_definition.py`, `test_rename_symbol_monorepo_e2e.py`, `test_rename_transformer_advanced.py`, `test_semantic_graph.py`。
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_move_directory_monorepo_e2e.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    # Load the top-level namespace package. Griffe will discover all its parts
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    # Load the top-level namespace package. Griffe will discover all its parts
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_move_directory_monorepo_e2e.py
-~~~~~
-~~~~~python.old
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_move_file_e2e.py
-~~~~~
-~~~~~python.old
-    # 2. Analyze
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. Analyze
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_move_nested_directory_e2e.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    # We load 'cascade' and 'app' to build the full semantic picture
-    graph.load("cascade")
-    graph.load("app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    # We load 'cascade' and 'app' to build the full semantic picture
-    graph.load("cascade")
-    graph.load("app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_namespace_pkg_failure.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-
-    # Load the namespace package. Griffe should traverse 'stitcher' -> 'core'
-    graph.load("stitcher")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-
-    # Load the namespace package. Griffe should traverse 'stitcher' -> 'core'
-    graph.load("stitcher")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_symbol_definition.py
-~~~~~
-~~~~~python.old
-    # 2. ACT: Run the refactoring operation.
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("common")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. ACT: Run the refactoring operation.
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("common")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_symbol_definition.py
-~~~~~
-~~~~~python.old
-    # 2. ACT: Run the refactoring operation.
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    # 2. ACT: Run the refactoring operation.
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_symbol_monorepo_e2e.py
-~~~~~
-~~~~~python.old
-    # 2. ACT
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("pkga_lib")
-~~~~~
-~~~~~python.new
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("pkga_lib")
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_symbol_monorepo_e2e.py
-~~~~~
-~~~~~python.old
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
-~~~~~
-~~~~~python.new
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_transformer_advanced.py
-~~~~~
-~~~~~python.old
-def test_rename_symbol_via_attribute_access(tmp_path):
-    # 1. Setup
-    project_root = (
-        WorkspaceFactory(tmp_path)
-        .with_pyproject(".")
-        .with_source("mypkg/__init__.py", "")
-        .with_source("mypkg/core.py", "class OldHelper: pass")
-        .with_source(
-            "main.py",
-            """
-            import mypkg.core
-
-            h = mypkg.core.OldHelper()
-            """,
+        # Adapt SymbolRecord to UsageLocation for the renamer
+        return UsageLocation(
+            file_path=abs_path,
+            lineno=symbol.lineno,
+            col_offset=symbol.col_offset,
+            end_lineno=symbol.end_lineno,
+            end_col_offset=symbol.end_col_offset,
+            ref_type=ReferenceType.SYMBOL,  # Treat definition as a symbol reference to itself
+            target_node_fqn=target_fqn,
         )
-        .build()
-    )
 
-    # 2. Analyze
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-    graph.load("main")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
+    def get_module(self, package_name: str) -> Optional[griffe.Module]:
+        if package_name in self._modules:
 ~~~~~
-~~~~~python.new
-def test_rename_symbol_via_attribute_access(tmp_path):
-    # 1. Setup
-    project_root = (
-        WorkspaceFactory(tmp_path)
-        .with_pyproject(".")
-        .with_source("mypkg/__init__.py", "")
-        .with_source("mypkg/core.py", "class OldHelper: pass")
-        .with_source(
-            "main.py",
-            """
-            import mypkg.core
 
-            h = mypkg.core.OldHelper()
-            """,
-        )
-        .build()
-    )
+#### Acts 3: 修复 `GlobalBatchRenamer`，将定义位置纳入重命名计划
 
-    # 2. Analyze
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    graph.load("main")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
+最后，我们修改 `stitcher-refactor` 包中的 `renamer.py`，让它在收集用法的循环中，同时获取并注册符号的定义位置。这是完成修复的关键一步。
 
 ~~~~~act
 patch_file
-packages/stitcher-refactor/tests/integration/test_rename_transformer_advanced.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/renamer.py
 ~~~~~
 ~~~~~python.old
-    # 2. Analyze
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-    graph.load("main")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace, graph=graph, sidecar_manager=sidecar_manager
-    )
+        # 1. Collect all usages for all renames and group by file
+        for old_fqn in self.rename_map.keys():
+            usages = self.ctx.graph.find_usages(old_fqn)
+            for usage in usages:
+                usages_by_file[usage.file_path].append(usage)
 ~~~~~
 ~~~~~python.new
-    # 2. Analyze
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    graph.load("main")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-    )
-~~~~~
+        # 1. Collect all usages AND the definition for all renames, then group by file
+        for old_fqn in self.rename_map.keys():
+            # Find all usages (imports, calls, etc.)
+            usages = self.ctx.graph.find_usages(old_fqn)
+            for usage in usages:
+                usages_by_file[usage.file_path].append(usage)
 
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_semantic_graph.py
-~~~~~
-~~~~~python.old
-    # 2. Execute: Load into SemanticGraph
-    workspace = Workspace(root_path=tmp_path)
-    graph = SemanticGraph(workspace=workspace)
-    graph.load("mypkg")
-~~~~~
-~~~~~python.new
-    # 2. Execute: Load into SemanticGraph
-    index_store = create_populated_index(tmp_path)
-    workspace = Workspace(root_path=tmp_path)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-~~~~~
-
-#### Acts 4: 修复单元测试 (Mock 模式)
-
-修复 `test_rename_operation.py`。注意这里需要同步更新 `mock_graph.find_usages`。
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/unit/test_rename_operation.py
-~~~~~
-~~~~~python.old
-    ctx = RefactorContext(
-        graph=mock_graph,
-        workspace=mock_workspace,
-        sidecar_manager=mock_sidecar_manager,
-    )
-
-    # 2. Define Test Data
-~~~~~
-~~~~~python.new
-    ctx = RefactorContext(
-        graph=mock_graph,
-        workspace=mock_workspace,
-        sidecar_manager=mock_sidecar_manager,
-        index_store=mock_index,
-    )
-
-    # 2. Define Test Data
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/unit/test_rename_operation.py
-~~~~~
-~~~~~python.old
-            "mypkg.core.OldHelper",
-        ),
-    ]
-
-    mock_registry.get_usages.return_value = locations
-
-    # Configure the mock graph for the _find_definition_node logic
-~~~~~
-~~~~~python.new
-            "mypkg.core.OldHelper",
-        ),
-    ]
-
-    mock_graph.find_usages.return_value = locations
-
-    # Configure the mock graph for the _find_definition_node logic
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/unit/test_rename_operation.py
-~~~~~
-~~~~~python.old
-    # 4. Verify
-    # The planner will get usages for the old_fqn and potentially its prefixes.
-    # We can check that it was called with the specific FQN.
-    mock_registry.get_usages.assert_any_call(old_fqn)
-
-    # We expect 2 code change ops + potentially sidecar ops
-~~~~~
-~~~~~python.new
-    # 4. Verify
-    # The planner will get usages for the old_fqn and potentially its prefixes.
-    # We can check that it was called with the specific FQN.
-    mock_graph.find_usages.assert_any_call(old_fqn)
-
-    # We expect 2 code change ops + potentially sidecar ops
+            # CRITICAL FIX: Find the definition location and add it to the list of
+            # locations to be transformed.
+            definition_location = self.ctx.graph.find_definition_location(old_fqn)
+            if definition_location:
+                usages_by_file[definition_location.file_path].append(definition_location)
 ~~~~~
 
 ### 下一步建议
-我们已经批量完成了所有失败测试的 API 适配。现在的关键步骤是运行这些测试。
 
-根据 Phase 3 的目标，如果这些测试全部通过，说明 `stitcher-refactor` 已经成功地从“自研扫描”切换到了“基于索引查询”模式。如果出现非 `TypeError` 的失败，那很可能是因为 Linker 在某些复杂场景（如 monorepo 跨包链接）下的逻辑还需要微调。
+我们已经从根本上解决了重构引擎的缺陷。现在，最重要的一步是重新运行测试套件，以验证我们的修复是否覆盖了所有失败的场景，并且没有引入新的回归问题。
 
-运行测试命令：
-`pytest packages/stitcher-refactor/tests`
+我建议你立即执行 `pytest`。如果所有测试通过，我们可以将这个工作单元标记为 `[COMMIT]` 并进行提交。
