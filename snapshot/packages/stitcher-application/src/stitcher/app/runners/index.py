@@ -1,20 +1,24 @@
 from stitcher.common import bus
 from needle.pointer import L
 from stitcher.index.db import DatabaseManager
-from stitcher.index.scanner import WorkspaceScanner
+from stitcher.index.indexer import FileIndexer
+from stitcher.workspace import Workspace
 
 
 class IndexRunner:
-    def __init__(self, db_manager: DatabaseManager, scanner: WorkspaceScanner):
+    def __init__(self, db_manager: DatabaseManager, indexer: FileIndexer):
         self.db_manager = db_manager
-        self.scanner = scanner
+        self.indexer = indexer
 
-    def run_build(self) -> bool:
+    def run_build(self, workspace: Workspace) -> bool:
         # Ensure DB is initialized (schema created)
         self.db_manager.initialize()
 
+        # Discover files using the workspace
+        files_to_index = workspace.discover_files()
+
         bus.info(L.index.run.start)
-        stats = self.scanner.scan()
+        stats = self.indexer.index_files(files_to_index)
 
         bus.success(
             L.index.run.complete,

@@ -5,7 +5,7 @@ from stitcher.config import StitcherConfig
 from stitcher.common import bus
 from needle.pointer import L
 from stitcher.index.store import IndexStore
-from stitcher.index.scanner import WorkspaceScanner
+from stitcher.index.indexer import FileIndexer
 from stitcher.refactor.engine import (
     SemanticGraph,
     RefactorContext,
@@ -22,11 +22,11 @@ class RefactorRunner:
         self,
         root_path: Path,
         index_store: IndexStore,
-        workspace_scanner: WorkspaceScanner,
+        file_indexer: FileIndexer,
     ):
         self.root_path = root_path
         self.index_store = index_store
-        self.workspace_scanner = workspace_scanner
+        self.file_indexer = file_indexer
 
     def run_apply(
         self,
@@ -38,18 +38,18 @@ class RefactorRunner:
         try:
             # 0. Ensure index is up to date
             bus.info(L.index.run.start)
-            self.workspace_scanner.scan()
+            workspace = Workspace(self.root_path, config)
+            files_to_index = workspace.discover_files()
+            self.file_indexer.index_files(files_to_index)
 
             # 1. Bootstrap services
             bus.info(L.refactor.run.loading_graph)
-            workspace = Workspace(self.root_path, config)
             bus.debug(
                 L.debug.log.refactor_workspace_paths, paths=workspace.get_search_paths()
             )
             sidecar_manager = SidecarManager(self.root_path)
             graph = SemanticGraph(workspace, self.index_store)
 
-            # Load all workspace symbols, including main packages and peripherals
             graph.load_from_workspace()
 
             ctx = RefactorContext(
@@ -82,7 +82,6 @@ class RefactorRunner:
 
             tm = TransactionManager(self.root_path)
             for op in file_ops:
-                # Add ops to transaction manager
                 if isinstance(op, WriteFileOp):
                     tm.add_write(op.path, op.content)
                 elif isinstance(op, MoveFileOp):
@@ -93,7 +92,6 @@ class RefactorRunner:
                     tm.add_delete_dir(op.path)
 
             bus.warning(L.refactor.run.preview_header, count=tm.pending_count)
-            # Use bus to display preview items (fallback to string rendering)
             for desc in tm.preview():
                 bus.info(desc)
 
