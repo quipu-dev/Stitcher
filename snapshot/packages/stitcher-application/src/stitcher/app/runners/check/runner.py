@@ -64,7 +64,7 @@ class CheckRunner:
                 module,
                 self.doc_manager,
                 self.sig_manager,
-                self._fingerprint_strategy,
+                self.fingerprint_strategy,
             )
             
             # Analyze using the subject
