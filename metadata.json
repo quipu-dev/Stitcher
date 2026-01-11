@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 使索引适配器感知工作区以生成正确的FQN", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768113422.6391466, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正重构测试中的反向断言", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768113504.5321248, "duration_ms": 0}}
