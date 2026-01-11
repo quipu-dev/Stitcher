@@ -27,6 +27,8 @@ class SymbolRecord:
     alias_target_fqn: Optional[str] = None
     alias_target_id: Optional[str] = None
     signature_hash: Optional[str] = None
+    signature_text: Optional[str] = None
+    docstring_hash: Optional[str] = None
 
 
 @dataclass

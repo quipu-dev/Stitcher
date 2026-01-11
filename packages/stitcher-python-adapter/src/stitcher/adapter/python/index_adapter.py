@@ -104,11 +104,16 @@ class PythonAdapter(LanguageAdapter):
             suri = SURIGenerator.for_symbol(rel_path, fragment)
             canonical_fqn = f"{logical_module_fqn}.{fragment}"
 
-            # Compute Hash
+            # Compute Hash & Metadata
             sig_hash = None
+            sig_text = None
+            doc_hash = None
+
             if entity_for_hash:
                 fp = self.hasher.compute(entity_for_hash)  # type: ignore
                 sig_hash = fp.get("current_code_structure_hash")
+                sig_text = fp.get("current_code_signature_text")
+                doc_hash = fp.get("current_code_docstring_hash")
 
             # Location Handling
             loc = getattr(entity_for_hash, "location", None)
@@ -137,6 +142,8 @@ class PythonAdapter(LanguageAdapter):
                     alias_target_fqn=alias_target_fqn,
                     alias_target_id=None,  # Decoupled: Linker will fill this
                     signature_hash=sig_hash,
+                    signature_text=sig_text,
+                    docstring_hash=doc_hash,
                 )
             )
             return fragment

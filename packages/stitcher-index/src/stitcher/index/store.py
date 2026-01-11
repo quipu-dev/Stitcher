@@ -80,8 +80,9 @@ class IndexStore:
                     INSERT INTO symbols (
                         id, file_id, name, logical_path, kind, 
                         canonical_fqn, alias_target_fqn, alias_target_id,
-                        lineno, col_offset, end_lineno, end_col_offset, signature_hash
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        lineno, col_offset, end_lineno, end_col_offset, signature_hash,
+                        signature_text, docstring_hash
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     [
                         (
@@ -98,6 +99,8 @@ class IndexStore:
                             s.end_lineno,
                             s.end_col_offset,
                             s.signature_hash,
+                            s.signature_text,
+                            s.docstring_hash,
                         )
                         for s in symbols
                     ],

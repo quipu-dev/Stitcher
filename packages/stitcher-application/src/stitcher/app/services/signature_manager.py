@@ -2,11 +2,16 @@ import json
 from pathlib import Path
 from typing import Dict
 
+import json
+from pathlib import Path
+from typing import Dict
+
 from stitcher.spec import (
     Fingerprint,
     InvalidFingerprintKeyError,
 )
 from stitcher.common.services import AssetPathResolver
+from stitcher.adapter.python.uri import SURIGenerator
 
 
 class SignatureManager:
@@ -29,7 +34,10 @@ class SignatureManager:
         sig_path = self._get_sig_path(file_path)
         sig_path.parent.mkdir(parents=True, exist_ok=True)
 
-        serialized_data = {fqn: fp.to_dict() for fqn, fp in hashes.items()}
+        serialized_data = {
+            SURIGenerator.for_symbol(file_path, fqn): fp.to_dict()
+            for fqn, fp in hashes.items()
+        }
 
         with sig_path.open("w", encoding="utf-8") as f:
             json.dump(serialized_data, f, indent=2, sort_keys=True)
@@ -44,10 +52,16 @@ class SignatureManager:
                 if not isinstance(data, dict):
                     return {}
                 result = {}
-                for fqn, fp_data in data.items():
-                    result[fqn] = Fingerprint.from_dict(fp_data)
+                for suri, fp_data in data.items():
+                    try:
+                        _path, fragment = SURIGenerator.parse(suri)
+                        if fragment:
+                            result[fragment] = Fingerprint.from_dict(fp_data)
+                    except (ValueError, InvalidFingerprintKeyError):
+                        # Gracefully skip malformed SURIs or invalid fingerprint data
+                        continue
                 return result
-        except (json.JSONDecodeError, OSError, InvalidFingerprintKeyError):
+        except (json.JSONDecodeError, OSError):
             return {}
 
     def reformat_hashes_for_file(self, file_path: str) -> bool:

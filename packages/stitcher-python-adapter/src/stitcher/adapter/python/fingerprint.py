@@ -81,12 +81,22 @@ class SignatureTextHasher:
         return " ".join(parts).replace("( ", "(").replace(" )", ")").replace(" :", ":")
 
 
+class DocstringHasher:
+    def update(
+        self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint
+    ) -> None:
+        doc = getattr(entity, "docstring", None)
+        if doc:
+            h = hashlib.sha256(doc.encode("utf-8")).hexdigest()
+            fingerprint["current_code_docstring_hash"] = h
+
+
 class PythonFingerprintStrategy:
     def __init__(self):
         self.hashers: List[EntityHasher] = [
             StructureHasher(),
             SignatureTextHasher(),
-            # Future: AstHasher(), MerkleHasher()
+            DocstringHasher(),
         ]
 
     def compute(self, entity: Union[FunctionDef, ClassDef]) -> Fingerprint:

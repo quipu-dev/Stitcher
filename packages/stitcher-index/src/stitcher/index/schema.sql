@@ -43,6 +43,12 @@ CREATE TABLE IF NOT EXISTS symbols (
     
     -- Structural hash of the symbol's signature
     signature_hash TEXT,
+    
+    -- The raw text signature of the symbol (e.g. "def foo(a: int) -> str:")
+    signature_text TEXT,
+    
+    -- The SHA256 hash of the docstring content
+    docstring_hash TEXT,
 
     FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
     FOREIGN KEY (alias_target_id) REFERENCES symbols(id) ON DELETE SET NULL
