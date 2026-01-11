@@ -109,6 +109,9 @@ class StitcherApp:
     def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:
         return load_config_from_path(self.root_path)
 
+    def ensure_index_fresh(self) -> None:
+        self.index_runner.run_build(self.workspace)
+
     def _configure_and_scan(self, config: StitcherConfig) -> List[ModuleDef]:
         if config.name != "default":
             bus.info(L.generate.target.processing, name=config.name)
@@ -135,6 +138,7 @@ class StitcherApp:
         return all_modules
 
     def run_from_config(self, dry_run: bool = False) -> List[Path]:
+        self.ensure_index_fresh()
         configs, project_name = self._load_configs()
         all_generated: List[Path] = []
         found_any = False
@@ -182,6 +186,7 @@ class StitcherApp:
         return all_created
 
     def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
+        self.ensure_index_fresh()
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
         all_modules: List[ModuleDef] = []
@@ -215,6 +220,7 @@ class StitcherApp:
         reconcile: bool = False,
         dry_run: bool = False,
     ) -> PumpResult:
+        self.ensure_index_fresh()
         bus.info(L.pump.run.start)
         configs, _ = self._load_configs()
         tm = TransactionManager(self.root_path, dry_run=dry_run)
@@ -244,6 +250,7 @@ class StitcherApp:
     def run_strip(
         self, files: Optional[List[Path]] = None, dry_run: bool = False
     ) -> List[Path]:
+        self.ensure_index_fresh()
         files_to_process = []
         if files:
             files_to_process = files
@@ -259,6 +266,7 @@ class StitcherApp:
         return modified
 
     def run_inject(self, dry_run: bool = False) -> List[Path]:
+        self.ensure_index_fresh()
         configs, _ = self._load_configs()
         all_modified: List[Path] = []
         found_any_docs = False
@@ -283,6 +291,7 @@ class StitcherApp:
         return all_modified
 
     def run_cov(self) -> bool:
+        self.ensure_index_fresh()
         configs, _ = self._load_configs()
         all_results: List[CoverageResult] = []
 
@@ -300,6 +309,7 @@ class StitcherApp:
         dry_run: bool = False,
         confirm_callback: Optional[Callable[[int], bool]] = None,
     ) -> bool:
+        self.ensure_index_fresh()
         configs, _ = self._load_configs()
         if not configs:
             bus.error(L.error.config.not_found)
