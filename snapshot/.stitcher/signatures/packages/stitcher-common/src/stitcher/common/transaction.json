@@ -122,8 +122,7 @@
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager._ops": {},
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager._rebase_ops": {
     "baseline_code_signature_text": "def _rebase_ops(self, ops: List[FileOp]) -> List[FileOp]:",
-    "baseline_code_structure_hash": "f4e148c5998a411bf9e10160f376208a1602542246ef1b67410113a28fdd3646",
-    "baseline_yaml_content_hash": "4fe6918e876d2a37c12845fc8ea596bb9604424b868d8dc91c8edf36ec9036ff"
+    "baseline_code_structure_hash": "f4e148c5998a411bf9e10160f376208a1602542246ef1b67410113a28fdd3646"
   },
   "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.add_delete_dir": {
     "baseline_code_signature_text": "def add_delete_dir(self, path: Union[str, Path]) -> None:",

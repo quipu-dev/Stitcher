@@ -13,8 +13,7 @@
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/parsers.py#DocstringSectionYields": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/parsers.py#GriffeDocstringParser": {
     "baseline_code_signature_text": "class GriffeDocstringParser(DocstringParserProtocol):",
-    "baseline_code_structure_hash": "c84b38419dc3ddfc13074ec45e9a116ff64c2300c79160d6394a6d5bffb6112d",
-    "baseline_yaml_content_hash": "569a5709448b4cd5200d52ed2498f0de9e0466391b9eb8de6d93bdbcc6d0f557"
+    "baseline_code_structure_hash": "c84b38419dc3ddfc13074ec45e9a116ff64c2300c79160d6394a6d5bffb6112d"
   },
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/parsers.py#GriffeDocstringParser.__init__": {
     "baseline_code_signature_text": "def __init__(self, style: str = 'google'):",
@@ -34,8 +33,7 @@
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/parsers.py#Parser": {},
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/parsers.py#RawDocstringParser": {
     "baseline_code_signature_text": "class RawDocstringParser(DocstringParserProtocol):",
-    "baseline_code_structure_hash": "2c70e325044b86eafc9530efc5fd07faf8656d41d618e6c4a708d7f3c418e923",
-    "baseline_yaml_content_hash": "5922122cccf14467e0934dd9547315cb778235d0a04be4d7da717da318741a1b"
+    "baseline_code_structure_hash": "2c70e325044b86eafc9530efc5fd07faf8656d41d618e6c4a708d7f3c418e923"
   },
   "py://packages/stitcher-python-adapter/src/stitcher/adapter/python/docstring/parsers.py#RawDocstringParser.parse": {
     "baseline_code_signature_text": "def parse(self, docstring_text: str) -> DocstringIR:",

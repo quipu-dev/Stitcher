@@ -10,8 +10,7 @@
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageLocation": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageRegistry": {
     "baseline_code_signature_text": "class UsageRegistry:",
-    "baseline_code_structure_hash": "967c896897154b5dae54e74f3892ab42d8088198a58ae52225e85f7f60321d33",
-    "baseline_yaml_content_hash": "484aa8dc6c520a7af91e59d8c888028d4ae0ed452b7263e1224bdd97221391c5"
+    "baseline_code_structure_hash": "967c896897154b5dae54e74f3892ab42d8088198a58ae52225e85f7f60321d33"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageRegistry.__init__": {
     "baseline_code_signature_text": "def __init__(self):",
@@ -32,8 +31,7 @@
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageScanVisitor": {
     "baseline_code_signature_text": "class UsageScanVisitor(cst.CSTVisitor):",
-    "baseline_code_structure_hash": "6545ac9f1e8e6748c06fffa4c31ff1dc7877f52d32c3668877dd7cb86de09c50",
-    "baseline_yaml_content_hash": "c4eb2da8387332274d2623b10594f6c47069aba9833c48a131d6aed7807ef093"
+    "baseline_code_structure_hash": "6545ac9f1e8e6748c06fffa4c31ff1dc7877f52d32c3668877dd7cb86de09c50"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageScanVisitor.METADATA_DEPENDENCIES": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageScanVisitor.__init__": {
@@ -42,8 +40,7 @@
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageScanVisitor._register_node": {
     "baseline_code_signature_text": "def _register_node(self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType):",
-    "baseline_code_structure_hash": "abf738b190d9ece13c1b60031acf1cf961a182f223400f30ef8767d05aa9e362",
-    "baseline_yaml_content_hash": "f306310008e15395c4cac50dedd8777fa6b6696bc20acd9c3befbf22499e39cf"
+    "baseline_code_structure_hash": "abf738b190d9ece13c1b60031acf1cf961a182f223400f30ef8767d05aa9e362"
   },
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageScanVisitor.active_symbols": {},
   "py://packages/stitcher-python-analysis/src/stitcher/python/analysis/cst/usage_visitor.py#UsageScanVisitor.current_module_fqn": {},

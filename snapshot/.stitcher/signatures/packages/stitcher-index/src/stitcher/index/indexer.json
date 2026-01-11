@@ -28,7 +28,6 @@
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#IndexStore": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#LanguageAdapter": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#Linker": {},
-  "py://packages/stitcher-index/src/stitcher/index/indexer.py#List": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#Path": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#Set": {},
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#hashlib": {},

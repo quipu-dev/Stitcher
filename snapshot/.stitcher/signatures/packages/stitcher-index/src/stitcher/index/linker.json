@@ -11,8 +11,7 @@
   "py://packages/stitcher-index/src/stitcher/index/linker.py#Linker.db": {},
   "py://packages/stitcher-index/src/stitcher/index/linker.py#Linker.link": {
     "baseline_code_signature_text": "def link(self) -> None:",
-    "baseline_code_structure_hash": "d279b3e3a641feb0779899f94ecd5288c78bcdeed580d2a7e8437bef237264d6",
-    "baseline_yaml_content_hash": "6f9fafdd6caee12a67e8e133b0c4edaffacbcc68e59eecf13185617e01648b1a"
+    "baseline_code_structure_hash": "d279b3e3a641feb0779899f94ecd5288c78bcdeed580d2a7e8437bef237264d6"
   },
   "py://packages/stitcher-index/src/stitcher/index/linker.py#log": {},
   "py://packages/stitcher-index/src/stitcher/index/linker.py#logging": {}

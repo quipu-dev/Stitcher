@@ -18,15 +18,10 @@
   "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.doc_manager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.fingerprint_strategy": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.root_path": {},
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.run": {
-    "baseline_code_signature_text": "def run(self) -> List[Path]:",
-    "baseline_code_structure_hash": "fb52c518ced5dce36777b9c36e0c8ccfdbd34c24c8a6d8493866d38bc9e729e7"
-  },
   "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.run_batch": {
     "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef]) -> List[Path]:",
     "baseline_code_structure_hash": "c1ff6f56f7d26ae7ea8261fb6f0d4edd05d0e48fb94eca8badf0ea5eed760684"
   },
-  "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.scanner": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.sig_manager": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/init.py#L": {},
   "py://packages/stitcher-application/src/stitcher/app/runners/init.py#List": {},
