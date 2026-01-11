@@ -13,7 +13,7 @@ from stitcher.workspace import Workspace
 from stitcher.adapter.python.griffe_parser import GriffePythonParser
 from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
-from stitcher.index.scanner import WorkspaceScanner
+from stitcher.index.indexer import FileIndexer
 from stitcher.adapter.python.index_adapter import PythonAdapter
 
 
@@ -25,14 +25,16 @@ def create_populated_index(root_path: Path) -> IndexStore:
     db_manager.initialize()
     store = IndexStore(db_manager)
 
-    # The scanner needs a workspace-aware adapter.
-    # The adapter itself is decoupled; the context is provided here.
+    # The indexer needs a workspace-aware adapter.
     workspace = Workspace(root_path)
     search_paths = workspace.get_search_paths()
 
-    scanner = WorkspaceScanner(root_path, store)
-    scanner.register_adapter(".py", PythonAdapter(root_path, search_paths))
-    scanner.scan()
+    # Discover files first, then index them.
+    files_to_index = workspace.discover_files()
+
+    indexer = FileIndexer(root_path, store)
+    indexer.register_adapter(".py", PythonAdapter(root_path, search_paths))
+    indexer.index_files(files_to_index)
 
     return store
 
