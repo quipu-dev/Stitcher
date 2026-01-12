@@ -1,59 +1,273 @@
-好的，我们已经完成了“阶段三：核心服务抽象化”的主要协议净化和解耦工作。现在我将生成一个 `[COMMIT]` 计划来提交这些变更。
+好的，我们来解决 `Runner` 内部硬编码实例化子组件的问题。
 
-## [COMMIT] refactor: 净化核心服务协议并解除实现细节耦合
+这是典型的违反依赖倒置原则的场景，正确的做法是使用**依赖注入 (Dependency Injection)**。`Runner` 不应该“知道”如何创建它的依赖（如 `Analyzer`, `Resolver`），而应该在构造时由外部（即`StitcherApp`，我们的“组合根”）将这些依赖的实例“注入”进来。
+
+为此，我们将：
+1.  为 `Analyzer`, `Resolver`, `Reporter` 定义清晰的协议。
+2.  重构 `CheckRunner` 以在其构造函数中接收这些协议的实现。
+3.  在 `StitcherApp` 中创建这些具体组件的实例，并将它们注入到 `CheckRunner` 中。
+
+## [WIP] refactor: Decouple Runners from sub-components via Dependency Injection
 
 ### 用户需求
-用户要求将最近关于 `DocumentManager`, `SignatureManager` 以及 `IndexStore` 的一系列协议净化和解耦工作作为一个完整的逻辑单元提交。
+用户要求解决 Runner (如 `CheckRunner`) 内部硬编码实例化其子组件 (`CheckAnalyzer`, `CheckResolver`, `CheckReporter`) 的问题。这造成了紧密耦合，使得 `CheckRunner` 难以进行独立的单元测试。
 
 ### 评论
-这是一次重大的架构改进。通过移除协议中泄漏的实现细节（如私有方法前缀和特定的序列化逻辑），我们真正实现了“面向接口编程”。这不仅清理了代码，更重要的是为系统的可测试性打下了坚实基础——现在我们可以轻松地为 Runner 提供内存中的 Mock 实现，而无需担心它们会去访问底层的文件系统或数据库。
+这是一个关键的架构重构，它将我们的依赖倒置实践从包级别深化到了类级别。通过将 `StitcherApp` 确立为“组合根 (Composition Root)”，负责创建和连接（“注入”）所有服务，我们极大地提升了系统的模块化和可测试性。现在，我们可以轻松地为 `CheckRunner` 注入一个 Mock 的 `Analyzer` 或 `Resolver` 来进行单元测试，而无需依赖复杂的 `monkeypatch`。
 
 ### 目标
-1.  提交对 `stitcher-spec` 中 `managers.py` 和 `storage.py` 的协议定义改进。
-2.  提交对 `stitcher-application` 中实现类和调用方 (`PumpRunner`) 的同步重构。
-3.  提交对 `stitcher-index` 中索引逻辑的解耦改进，包括将 `Linker` 职责下沉至 `IndexStore`。
+1.  **定义协议**: 在 `stitcher-application` 包内部为 `CheckRunner` 的子组件 (`Analyzer`, `Resolver`, `Reporter`) 创建新的协议定义。
+2.  **重构 `CheckRunner`**: 修改其 `__init__` 方法，不再创建子组件，而是接收实现了相应协议的实例作为参数。
+3.  **更新 `StitcherApp`**: 在 `StitcherApp` 的 `__init__` 方法中，实例化具体的 `CheckAnalyzer`, `CheckResolver`, `CheckReporter`，然后将它们作为依赖注入到 `CheckRunner` 的构造函数中。
 
 ### 基本原理
-本阶段重构严格遵循 **依赖倒置原则 (DIP)** 和 **最少知识原则 (LoD)**。通过净化协议，我们确保了核心业务逻辑（Runner 和 Indexer）只知道它们“需要什么能力”，而不知道这些能力是“如何通过 YAML 或 SQLite 实现的”。这种解耦是构建健壮插件式架构的先决条件。
+此计划遵循**依赖注入 (Dependency Injection - DI)** 设计模式。`StitcherApp` 充当**组合根 (Composition Root)**，它是系统中唯一负责构建对象图的地方。`CheckRunner` 作为客户端，只依赖于抽象的**协议 (Protocols/Interfaces)**，而不知道它所使用的具体实现是什么。这使得我们可以随时替换实现（例如在测试中换成 Mock 对象），而无需修改 `CheckRunner` 的代码。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/interfaces #comp/runtime #comp/index #scope/core #ai/instruct #task/domain/architecture #task/object/protocols #task/action/refactor #task/state/end #task/status/completed
+#intent/refine #flow/ready #priority/high #comp/runtime #comp/interfaces #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/dependency-injection #task/action/implementation #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 提交重构变更
+#### Acts 1: 为 CheckRunner 的子组件定义协议
 
-我们将所有受影响的文件添加到 Git 暂存区并创建提交。
+我们首先创建一个新文件来存放这些协议，使其与具体实现分离。
 
 ~~~~~act
-git_add
-packages/stitcher-spec/src/stitcher/spec/managers.py
-packages/stitcher-application/src/stitcher/app/services/doc_manager.py
-packages/stitcher-application/src/stitcher/app/services/signature_manager.py
-packages/stitcher-application/src/stitcher/app/runners/pump.py
-packages/stitcher-spec/src/stitcher/spec/storage.py
-packages/stitcher-index/src/stitcher/index/store.py
-packages/stitcher-index/src/stitcher/index/indexer.py
+write_file
+packages/stitcher-application/src/stitcher/app/runners/check/protocols.py
+~~~~~
+~~~~~python
+from typing import Protocol, List, Tuple
+from stitcher.spec import ModuleDef
+from stitcher.spec.interaction import InteractionContext
+from stitcher.app.types import FileCheckResult
+
+
+class CheckAnalyzerProtocol(Protocol):
+    def analyze_subject(
+        self, subject: "CheckSubject"
+    ) -> Tuple[FileCheckResult, List[InteractionContext]]: ...
+
+
+class CheckResolverProtocol(Protocol):
+    def auto_reconcile_docs(
+        self, results: List[FileCheckResult], modules: List[ModuleDef]
+    ): ...
+
+    def resolve_conflicts(
+        self,
+        results: List[FileCheckResult],
+        conflicts: List[InteractionContext],
+        force_relink: bool = False,
+        reconcile: bool = False,
+    ) -> bool: ...
+
+    def reformat_all(self, modules: List[ModuleDef]): ...
+
+
+class CheckReporterProtocol(Protocol):
+    def report(self, results: List[FileCheckResult]) -> bool: ...
+~~~~~
+
+#### Acts 2: 重构 CheckRunner 以接受注入的依赖项
+
+现在，我们修改 `CheckRunner` 的构造函数，使其依赖于抽象协议而不是具体实现。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/check/runner.py
+~~~~~
+~~~~~python.old
+from stitcher.spec import (
+    ModuleDef,
+    LanguageParserProtocol,
+    FingerprintStrategyProtocol,
+    DifferProtocol,
+    IndexStoreProtocol,
+)
+from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
+from stitcher.spec.interaction import InteractionHandler, InteractionContext
+from stitcher.app.types import FileCheckResult
+
+from .analyzer import CheckAnalyzer
+from .resolver import CheckResolver
+from .reporter import CheckReporter
+
+
+from .subject import ASTCheckSubjectAdapter, IndexCheckSubjectAdapter
+
+
+class CheckRunner:
+    def __init__(
+        self,
+        root_path: Path,
+        parser: LanguageParserProtocol,
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
+        differ: DifferProtocol,
+        interaction_handler: InteractionHandler | None,
+        fingerprint_strategy: FingerprintStrategyProtocol,
+        index_store: IndexStoreProtocol,
+    ):
+        # Keep services needed by both adapter and resolver
+        self.root_path = root_path
+        self.parser = parser
+        self.doc_manager = doc_manager
+        self.sig_manager = sig_manager
+        self.fingerprint_strategy = fingerprint_strategy
+        self.index_store = index_store
+
+        # Inject dependencies into sub-components
+        self.analyzer = CheckAnalyzer(root_path, differ)
+        self.resolver = CheckResolver(
+            root_path,
+            parser,
+            doc_manager,
+            sig_manager,
+            interaction_handler,
+            fingerprint_strategy,
+        )
+        self.reporter = CheckReporter()
+
+    def analyze_paths(
+        self, file_paths: List[str]
+    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
+~~~~~
+~~~~~python.new
+from stitcher.spec import (
+    ModuleDef,
+    FingerprintStrategyProtocol,
+    IndexStoreProtocol,
+)
+from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
+from stitcher.spec.interaction import InteractionContext
+from stitcher.app.types import FileCheckResult
+
+from .protocols import (
+    CheckAnalyzerProtocol,
+    CheckResolverProtocol,
+    CheckReporterProtocol,
+)
+from .subject import IndexCheckSubjectAdapter, ASTCheckSubjectAdapter
+
+
+class CheckRunner:
+    def __init__(
+        self,
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
+        index_store: IndexStoreProtocol,
+        analyzer: CheckAnalyzerProtocol,
+        resolver: CheckResolverProtocol,
+        reporter: CheckReporterProtocol,
+    ):
+        # Keep services needed by adapter
+        self.doc_manager = doc_manager
+        self.sig_manager = sig_manager
+        self.fingerprint_strategy = fingerprint_strategy
+        self.index_store = index_store
+
+        # Injected sub-components
+        self.analyzer = analyzer
+        self.resolver = resolver
+        self.reporter = reporter
+
+    def analyze_paths(
+        self, file_paths: List[str]
+    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
+~~~~~
+
+#### Acts 3: 在 StitcherApp (组合根) 中实例化并注入依赖
+
+最后，我们在 `StitcherApp` 中创建这些子组件的实例，并传递给 `CheckRunner`。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+from stitcher.spec.interaction import InteractionHandler
+from .runners import (
+    CheckRunner,
+    InitRunner,
+    PumpRunner,
+    TransformRunner,
+    CoverageRunner,
+    RefactorRunner,
+    IndexRunner,
+)
+from stitcher.common.transaction import TransactionManager
+~~~~~
+~~~~~python.new
+from stitcher.spec.interaction import InteractionHandler
+from .runners import (
+    CheckRunner,
+    InitRunner,
+    PumpRunner,
+    TransformRunner,
+    CoverageRunner,
+    RefactorRunner,
+    IndexRunner,
+)
+from .runners.check.analyzer import CheckAnalyzer
+from .runners.check.resolver import CheckResolver
+from .runners.check.reporter import CheckReporter
+from stitcher.common.transaction import TransactionManager
 ~~~~~
 
 ~~~~~act
-git_commit
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
-~~~~~text
-refactor: purify core service protocols and decouple implementation details
+~~~~~python.old
+        )
 
-This commit completes the primary objectives of Phase 3: Service Abstraction by purifying the interfaces in stitcher-spec and removing implementation-specific leaks in the application and index layers.
+        # 3. Runners (Command Handlers)
+        self.check_runner = CheckRunner(
+            root_path,
+            parser,
+            self.doc_manager,
+            self.sig_manager,
+            self.differ,
+            interaction_handler,
+            fingerprint_strategy=self.fingerprint_strategy,
+            index_store=self.index_store,
+        )
+        self.pump_runner = PumpRunner(
+            root_path,
+            self.doc_manager,
+~~~~~
+~~~~~python.new
+        )
 
-Key changes:
-- Purified DocumentManagerProtocol and SignatureManagerProtocol by removing private methods and exposing high-level semantic APIs (e.g., compute_ir_hash, dump_data).
-- Updated PumpRunner to use the new protocol-level methods, decoupling it from YAML/JSON serialization details.
-- Expanded IndexStoreProtocol to cover write/sync operations, enabling FileIndexer to depend solely on abstraction.
-- Absorbed Linker logic into IndexStore, removing the need for FileIndexer to hold a direct database reference.
+        # 3. Runners (Command Handlers)
+        check_analyzer = CheckAnalyzer(root_path, self.differ)
+        check_resolver = CheckResolver(
+            root_path,
+            parser,
+            self.doc_manager,
+            self.sig_manager,
+            interaction_handler,
+            self.fingerprint_strategy,
+        )
+        check_reporter = CheckReporter()
+        self.check_runner = CheckRunner(
+            self.doc_manager,
+            self.sig_manager,
+            self.fingerprint_strategy,
+            self.index_store,
+            analyzer=check_analyzer,
+            resolver=check_resolver,
+            reporter=check_reporter,
+        )
 
-These changes significantly improve system testability and enforce strict adherence to the Dependency Inversion Principle across package boundaries.
+        self.pump_runner = PumpRunner(
+            root_path,
+            self.doc_manager,
 ~~~~~
 
 ### 下一步建议
-随着核心服务的协议已经净化，下一步建议进入 **“阶段四：Refactor 引擎泛化”**，或者解决 Runner 内部硬编码实例化子组件的问题，通过引入工厂模式或依赖注入框架，彻底完成 `stitcher-application` 的解耦。
+我们已经成功地重构了 `CheckRunner`。下一步，我们应该将这种依赖注入模式应用到其他同样复杂的 Runner 上，特别是 `PumpRunner`，以统一整个应用的服务构建和依赖管理方式。

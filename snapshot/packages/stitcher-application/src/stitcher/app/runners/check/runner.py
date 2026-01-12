@@ -4,54 +4,42 @@ from typing import List, Tuple
 
 from stitcher.spec import (
     ModuleDef,
-    LanguageParserProtocol,
     FingerprintStrategyProtocol,
-    DifferProtocol,
     IndexStoreProtocol,
 )
 from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
-from stitcher.spec.interaction import InteractionHandler, InteractionContext
+from stitcher.spec.interaction import InteractionContext
 from stitcher.app.types import FileCheckResult
 
-from .analyzer import CheckAnalyzer
-from .resolver import CheckResolver
-from .reporter import CheckReporter
-
-
-from .subject import ASTCheckSubjectAdapter, IndexCheckSubjectAdapter
+from .protocols import (
+    CheckAnalyzerProtocol,
+    CheckResolverProtocol,
+    CheckReporterProtocol,
+)
+from .subject import IndexCheckSubjectAdapter, ASTCheckSubjectAdapter
 
 
 class CheckRunner:
     def __init__(
         self,
-        root_path: Path,
-        parser: LanguageParserProtocol,
         doc_manager: DocumentManagerProtocol,
         sig_manager: SignatureManagerProtocol,
-        differ: DifferProtocol,
-        interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
         index_store: IndexStoreProtocol,
+        analyzer: CheckAnalyzerProtocol,
+        resolver: CheckResolverProtocol,
+        reporter: CheckReporterProtocol,
     ):
-        # Keep services needed by both adapter and resolver
-        self.root_path = root_path
-        self.parser = parser
+        # Keep services needed by adapter
         self.doc_manager = doc_manager
         self.sig_manager = sig_manager
         self.fingerprint_strategy = fingerprint_strategy
         self.index_store = index_store
 
-        # Inject dependencies into sub-components
-        self.analyzer = CheckAnalyzer(root_path, differ)
-        self.resolver = CheckResolver(
-            root_path,
-            parser,
-            doc_manager,
-            sig_manager,
-            interaction_handler,
-            fingerprint_strategy,
-        )
-        self.reporter = CheckReporter()
+        # Injected sub-components
+        self.analyzer = analyzer
+        self.resolver = resolver
+        self.reporter = reporter
 
     def analyze_paths(
         self, file_paths: List[str]
