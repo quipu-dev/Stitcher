@@ -13,10 +13,6 @@ class PumpEngine:
     differ: DifferProtocol
 
     def analyze(self, subject: AnalysisSubject) -> List[InteractionContext]:
-        """
-        Analyzes the subject to find symbols with new or conflicting docstrings
-        in the source code that should be "pumped" into the YAML documentation.
-        """
         conflicts: List[InteractionContext] = []
         states = subject.get_all_symbol_states()
 

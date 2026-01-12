@@ -1,0 +1,3 @@
+"PumpEngine.analyze": |-
+  Analyzes the subject to find symbols with new or conflicting docstrings
+  in the source code that should be "pumped" into the YAML documentation.
