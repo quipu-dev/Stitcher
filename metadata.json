@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(tests): Refactor execution planner tests to target PumpExecutor", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768198304.6212618, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor: 通过依赖注入和模块化重构实现 Runner 解耦", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768198379.3319516, "duration_ms": 0}}
