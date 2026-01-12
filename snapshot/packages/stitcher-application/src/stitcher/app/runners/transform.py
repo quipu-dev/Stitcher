@@ -3,8 +3,11 @@ from pathlib import Path
 
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.spec import LanguageTransformerProtocol, ModuleDef
-from stitcher.app.services import DocumentManager
+from stitcher.spec import (
+    LanguageTransformerProtocol,
+    ModuleDef,
+    DocumentManagerProtocol,
+)
 from stitcher.common.transaction import TransactionManager
 
 
@@ -12,7 +15,7 @@ class TransformRunner:
     def __init__(
         self,
         root_path: Path,
-        doc_manager: DocumentManager,
+        doc_manager: DocumentManagerProtocol,
         transformer: LanguageTransformerProtocol,
     ):
         self.root_path = root_path

@@ -12,8 +12,9 @@ from stitcher.spec import (
     Fingerprint,
     LanguageParserProtocol,
     FingerprintStrategyProtocol,
+    DocumentManagerProtocol,
+    SignatureManagerProtocol,
 )
-from stitcher.app.services import DocumentManager, SignatureManager
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import FileCheckResult
@@ -24,8 +25,8 @@ class CheckResolver:
         self,
         root_path: Path,
         parser: LanguageParserProtocol,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
         interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
     ):

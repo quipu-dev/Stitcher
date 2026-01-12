@@ -3,8 +3,9 @@ from stitcher.spec import (
     ModuleDef,
     Fingerprint,
     FingerprintStrategyProtocol,
+    DocumentManagerProtocol,
+    SignatureManagerProtocol,
 )
-from stitcher.app.services import DocumentManager, SignatureManager
 from stitcher.index.store import IndexStore
 from stitcher.spec.index import SymbolRecord
 from .protocols import SymbolState, CheckSubject
@@ -15,8 +16,8 @@ class IndexCheckSubjectAdapter(CheckSubject):
         self,
         file_path: str,
         index_store: IndexStore,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
     ):
         self._file_path = file_path
         self._index_store = index_store
@@ -112,8 +113,8 @@ class ASTCheckSubjectAdapter(CheckSubject):
     def __init__(
         self,
         module_def: ModuleDef,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
         fingerprint_strategy: FingerprintStrategyProtocol,
     ):
         self._module = module_def

@@ -14,14 +14,12 @@ from stitcher.spec import (
     LanguageTransformerProtocol,
     FingerprintStrategyProtocol,
     DocstringIR,
+    DocumentManagerProtocol,
+    SignatureManagerProtocol,
+    DifferProtocol,
+    DocstringMergerProtocol,
 )
 from stitcher.config import StitcherConfig
-from stitcher.app.services import (
-    DocumentManager,
-    SignatureManager,
-    Differ,
-    DocstringMerger,
-)
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import PumpResult
@@ -35,11 +33,11 @@ class PumpRunner:
     def __init__(
         self,
         root_path: Path,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
         transformer: LanguageTransformerProtocol,
-        differ: Differ,
-        merger: DocstringMerger,
+        differ: DifferProtocol,
+        merger: DocstringMergerProtocol,
         interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
         index_store: IndexStore,

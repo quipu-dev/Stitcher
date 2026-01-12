@@ -6,11 +6,9 @@ from stitcher.spec import (
     ModuleDef,
     LanguageParserProtocol,
     FingerprintStrategyProtocol,
-)
-from stitcher.app.services import (
-    DocumentManager,
-    SignatureManager,
-    Differ,
+    DocumentManagerProtocol,
+    SignatureManagerProtocol,
+    DifferProtocol,
 )
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.types import FileCheckResult
@@ -29,9 +27,9 @@ class CheckRunner:
         self,
         root_path: Path,
         parser: LanguageParserProtocol,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
-        differ: Differ,
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
+        differ: DifferProtocol,
         interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
         index_store: IndexStore,

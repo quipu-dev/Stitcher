@@ -3,16 +3,21 @@ from pathlib import Path
 
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.spec import Fingerprint, ModuleDef, FingerprintStrategyProtocol
-from stitcher.app.services import DocumentManager, SignatureManager
+from stitcher.spec import (
+    Fingerprint,
+    ModuleDef,
+    FingerprintStrategyProtocol,
+    DocumentManagerProtocol,
+    SignatureManagerProtocol,
+)
 
 
 class InitRunner:
     def __init__(
         self,
         root_path: Path,
-        doc_manager: DocumentManager,
-        sig_manager: SignatureManager,
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
         fingerprint_strategy: FingerprintStrategyProtocol,
     ):
         self.root_path = root_path
