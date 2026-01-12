@@ -31,6 +31,8 @@ from .runners import (
 from .runners.check.analyzer import CheckAnalyzer
 from .runners.check.resolver import CheckResolver
 from .runners.check.reporter import CheckReporter
+from .runners.pump.analyzer import PumpAnalyzer
+from .runners.pump.executor import PumpExecutor
 from stitcher.common.transaction import TransactionManager
 from typing import Callable
 from .types import PumpResult, FileCheckResult, CoverageResult
@@ -101,17 +103,23 @@ class StitcherApp:
             reporter=check_reporter,
         )
 
-        self.pump_runner = PumpRunner(
+        pump_analyzer = PumpAnalyzer(
+            self.doc_manager, self.sig_manager, self.index_store, self.differ
+        )
+        pump_executor = PumpExecutor(
             root_path,
             self.doc_manager,
             self.sig_manager,
             transformer,
-            self.differ,
             self.merger,
-            interaction_handler,
-            fingerprint_strategy=self.fingerprint_strategy,
-            index_store=self.index_store,
+            self.fingerprint_strategy,
         )
+        self.pump_runner = PumpRunner(
+            analyzer=pump_analyzer,
+            executor=pump_executor,
+            interaction_handler=interaction_handler,
+        )
+
         self.init_runner = InitRunner(
             root_path,
             self.doc_manager,
