@@ -36,10 +36,11 @@ def parse_sidecar_references(content: str) -> List[Tuple[str, int, int]]:
         # data.lc.data is a dict-like structure or list where keys are indices?
         # Actually, for CommentedMap, .lc.item(key) returns (lineno, colno, ...)
 
-        if hasattr(data, "lc") and hasattr(data.lc, "item"):
+        lc = getattr(data, "lc", None)
+        if lc and hasattr(lc, "item"):
             # lc.item(key) returns [line, col, pre_key_comment_line, key_comment_line]
             # line is 0-based.
-            pos = data.lc.item(key)
+            pos = lc.item(key)
             if pos:
                 lineno = pos[0] + 1  # Convert to 1-based
                 col_offset = pos[1]

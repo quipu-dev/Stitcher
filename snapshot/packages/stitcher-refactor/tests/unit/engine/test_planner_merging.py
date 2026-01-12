@@ -14,7 +14,7 @@ from stitcher.common.transaction import WriteFileOp, MoveFileOp
 
 
 @pytest.fixture
-def mock_context(tmp_path: Path) -> RefactorContext:
+def mock_context(tmp_path: Path) -> Mock:
     """Creates a mock RefactorContext with a mock graph."""
     mock_index = Mock(spec=IndexStore)
     mock_graph = MagicMock(spec=SemanticGraph)

@@ -19,7 +19,7 @@ class RenameNamespaceOperation(AbstractOperation):
     def analyze(self, ctx: RefactorContext) -> List[FileOp]:
         ops: List[FileOp] = []
 
-        usages = ctx.graph.registry.get_usages(self.old_prefix)
+        usages = ctx.graph.find_usages(self.old_prefix)
         import_usages = [u for u in usages if u.ref_type == ReferenceType.IMPORT_PATH]
 
         usages_by_file: Dict[Path, List[UsageLocation]] = defaultdict(list)

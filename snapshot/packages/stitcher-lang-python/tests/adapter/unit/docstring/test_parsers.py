@@ -28,12 +28,14 @@ class TestGriffeDocstringParser:
         args_section = next(s for s in ir.sections if s.kind == "parameters")
         # Griffe parses standard headers into kind, leaving title as None
         assert args_section.title is None
+        assert isinstance(args_section.content, list)
         assert len(args_section.content) == 2
         assert args_section.content[0].name == "x"
         assert args_section.content[0].annotation == "int"
         assert args_section.content[0].description == "The x value."
 
         returns_section = next(s for s in ir.sections if s.kind == "returns")
+        assert isinstance(returns_section.content, list)
         assert len(returns_section.content) == 1
         assert returns_section.content[0].annotation == "bool"
         assert returns_section.content[0].description == "True if success."
@@ -60,6 +62,7 @@ class TestGriffeDocstringParser:
         args_section = next(s for s in ir.sections if s.kind == "parameters")
         # Griffe parses standard headers into kind, leaving title as None
         assert args_section.title is None
+        assert isinstance(args_section.content, list)
         assert args_section.content[0].name == "x"
         assert args_section.content[0].annotation == "int"
         assert args_section.content[0].description == "The x value."

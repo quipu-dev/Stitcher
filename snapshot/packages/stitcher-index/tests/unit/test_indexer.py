@@ -5,11 +5,14 @@ from stitcher.test_utils.workspace import WorkspaceFactory
 from stitcher.workspace import Workspace
 
 
+from pathlib import Path
+
+
 class MockAdapter:
-    def parse(self, path, content):
-        logical = path.stem
+    def parse(self, file_path: Path, content: str):
+        logical = file_path.stem
         sym = SymbolRecord(
-            id=f"py://{path.name}#Main",
+            id=f"py://{file_path.name}#Main",
             name="Main",
             kind="class",
             lineno=1,
