@@ -1,453 +1,191 @@
-好的，我们开始执行“阶段三：核心服务抽象化”的第一个子任务：对 `IndexStore` 进行协议化，以解耦 `stitcher-application` 和 `stitcher-index`。
+好的，感谢你提供 `stitcher-refactor` 包的上下文。现在我可以全面诊断并修复所有 `pyright` 错误。
 
-## [WIP] refactor(spec): 定义 IndexStoreProtocol 并更新 Runner 依赖
+## [WIP] fix(typing): 更新下游组件以使用服务协议
+
+### 错误分析
+`pyright` 报告了三个类型不匹配的错误，根本原因在于：虽然我们在上层（`StitcherApp` 和 `Runners`）已经切换到了协议，但这些协议的直接消费者（下游组件）的构造函数 (`__init__`) 或数据类定义仍然期望接收旧的、具体的实现类。
+1.  **`CheckAnalyzer` 错误**: `CheckRunner` 将 `DifferProtocol` 传递给 `CheckAnalyzer`，但 `CheckAnalyzer` 的 `__init__` 仍然声明它需要一个具体的 `Differ` 实例。
+2.  **`RefactorRunner` 错误 (1)**: 在 `RefactorRunner.run_apply` 内部，创建 `RefactorContext` 时传入了 `IndexStoreProtocol`，但 `RefactorContext` 数据类定义中，`index_store` 字段被注解为具体的 `IndexStore`。
+3.  **`RefactorRunner` 错误 (2)**: 同样在 `RefactorRunner.run_apply` 中，创建 `SemanticGraph` 时传入了 `IndexStoreProtocol`，但 `SemanticGraph` 的 `__init__` 方法仍然声明它需要一个具体的 `IndexStore` 实例。
 
 ### 用户需求
-根据路线图 3.1，为 `IndexStore` 定义一个正式的协议 (`IndexStoreProtocol`)，并更新所有依赖 `IndexStore` 的 Runner，使其依赖于这个新的抽象协议，而不是具体的实现类。
+修复因服务协议化而导致的下游组件类型签名不匹配问题，使 `pyright` 类型检查通过。
 
 ### 评论
-这是实现依赖倒置的关键一步。当前，`stitcher-application` 中的所有 Runner 都直接耦合了 `stitcher-index` 的 `IndexStore`，这使得应用层强依赖于索引层的具体实现（如 SQLite）。通过引入协议，我们可以为单元测试创建轻量级的内存版 `IndexStore` Mock，并为未来替换存储后端（如 PostgreSQL）提供了可能。
+这是典型的依赖倒置重构过程中的连锁反应。将依赖抽象化后，必须确保依赖链上的所有环节都更新为引用新的抽象，而不仅仅是注入点。现在有了完整的上下文，我们可以一次性完成这个闭环修复。
 
 ### 目标
-1.  在 `packages/stitcher-spec/src/stitcher/spec/` 下创建新的 `storage.py` 文件，并定义 `IndexStoreProtocol`。
-2.  `IndexStoreProtocol` 将包含 `stitcher-application` 中各个 Runner 实际使用的公共接口。
-3.  更新 `stitcher-spec` 的 `__init__.py` 以导出新协议。
-4.  修改 `CheckRunner`, `PumpRunner`, `CoverageRunner`, 和 `RefactorRunner` 的 `__init__` 方法，将类型注解从 `IndexStore` 更改为 `IndexStoreProtocol`。
-5.  更新 `CheckRunner` 的子组件 `IndexCheckSubjectAdapter` 以接受协议。
+1.  修改 `CheckAnalyzer` 的构造函数，使其接受 `DifferProtocol`。
+2.  修改 `RefactorContext` 数据类的定义，使其 `index_store` 字段类型为 `IndexStoreProtocol`。
+3.  修改 `SemanticGraph` 的构造函数，使其接受 `IndexStoreProtocol`。
 
 ### 基本原理
-我们遵循依赖倒置原则，将具体实现（`IndexStore`）与高层业务逻辑（Runners）通过一个抽象层（`IndexStoreProtocol`）进行解耦。该协议定义了应用层所需的数据查询契约，而不暴露底层存储的任何细节。
+通过将类型提示从具体类（`Differ`, `IndexStore`）更新为协议（`DifferProtocol`, `IndexStoreProtocol`），我们确保了整个依赖注入链的类型一致性，从而满足了类型检查器的要求，并完成了对这些组件的彻底解耦。
 
 ### 标签
-#intent/refine #flow/ready #priority/high
-#comp/interfaces #comp/runtime #comp/index
-#concept/architecture #scope/core #scope/api
-#ai/instruct
-#task/domain/architecture #task/object/service-abstraction #task/action/define-protocols
+#intent/fix #flow/ready #priority/high
+#comp/runtime #comp/refactor
+#concept/architecture #scope/core #scope/dx
+#ai/delegate
+#task/domain/architecture #task/object/type-safety #task/action/fix-types
 #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 IndexStoreProtocol
-
-我们在 `stitcher-spec` 中创建一个新的 `storage.py` 文件来存放存储相关的协议。
-
-~~~~~act
-write_file
-packages/stitcher-spec/src/stitcher/spec/storage.py
-~~~~~
-~~~~~python
-from typing import Protocol, List, Optional, Tuple
-
-from .index import SymbolRecord, ReferenceRecord
-
-
-class IndexStoreProtocol(Protocol):
-    """
-    Defines the contract for querying the semantic index.
-    Application-layer services depend on this protocol, not a concrete
-    database implementation.
-    """
-
-    def get_symbols_by_file_path(self, file_path: str) -> List[SymbolRecord]:
-        """Retrieve all symbols defined in a specific file."""
-        ...
-
-    def find_symbol_by_fqn(self, target_fqn: str) -> Optional[Tuple[SymbolRecord, str]]:
-        """
-        Find a single symbol by its fully qualified name and return the symbol
-        and its containing file path.
-        """
-        ...
-
-    def find_references(self, target_fqn: str) -> List[Tuple[ReferenceRecord, str]]:
-        """
-        Find all references pointing to a given fully qualified name and return
-        each reference and its containing file path.
-        """
-        ...
-~~~~~
-
-#### Acts 2: 导出新协议
-
-现在，我们从 `stitcher.spec` 包的入口点导出 `IndexStoreProtocol`。
+#### Acts 1: 更新 CheckAnalyzer 的类型提示
 
 ~~~~~act
 patch_file
-packages/stitcher-spec/src/stitcher/spec/__init__.py
+packages/stitcher-application/src/stitcher/app/runners/check/analyzer.py
 ~~~~~
 ~~~~~python.old
-    DocstringSerializerProtocol,
-    DocumentManagerProtocol,
-    SignatureManagerProtocol,
-    DifferProtocol,
-    DocstringMergerProtocol,
-)
+from pathlib import Path
+from typing import List, Tuple
 
-__all__ = [
-    "DocstringIR",
-~~~~~
-~~~~~python.new
-    DocstringSerializerProtocol,
-    DocumentManagerProtocol,
-    SignatureManagerProtocol,
-    DifferProtocol,
-    DocstringMergerProtocol,
-)
-from .storage import IndexStoreProtocol
-
-__all__ = [
-    "DocstringIR",
-~~~~~
-~~~~~act
-patch_file
-packages/stitcher-spec/src/stitcher/spec/__init__.py
-~~~~~
-~~~~~python.old
-    "DifferProtocol",
-    "DocstringMergerProtocol",
-    "Fingerprint",
-    "InvalidFingerprintKeyError",
-    "Argument",
-~~~~~
-~~~~~python.new
-    "DifferProtocol",
-    "DocstringMergerProtocol",
-    "IndexStoreProtocol",
-    "Fingerprint",
-    "InvalidFingerprintKeyError",
-    "Argument",
-~~~~~
-
-#### Acts 3: 更新 Runners 以使用 IndexStoreProtocol
-
-我们将逐一更新 `stitcher-application` 中依赖 `IndexStore` 的所有组件。
-
-首先是 `CheckRunner`。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/check/runner.py
-~~~~~
-~~~~~python.old
-    DocumentManagerProtocol,
-    SignatureManagerProtocol,
-    DifferProtocol,
-)
-from stitcher.spec.interaction import InteractionHandler, InteractionContext
+from stitcher.spec import ConflictType
+from stitcher.app.services import Differ
+from stitcher.spec.interaction import InteractionContext
 from stitcher.app.types import FileCheckResult
-from stitcher.index.store import IndexStore
+from .protocols import CheckSubject
 
-from .analyzer import CheckAnalyzer
-from .resolver import CheckResolver
+
+class CheckAnalyzer:
+    def __init__(self, root_path: Path, differ: Differ):
+        self.root_path = root_path
+        self.differ = differ
+
+    def analyze_subject(
 ~~~~~
 ~~~~~python.new
-    DocumentManagerProtocol,
-    SignatureManagerProtocol,
-    DifferProtocol,
-    IndexStoreProtocol,
-)
-from stitcher.spec.interaction import InteractionHandler, InteractionContext
+from pathlib import Path
+from typing import List, Tuple
+
+from stitcher.spec import ConflictType, DifferProtocol
+from stitcher.spec.interaction import InteractionContext
 from stitcher.app.types import FileCheckResult
+from .protocols import CheckSubject
 
-from .analyzer import CheckAnalyzer
-from .resolver import CheckResolver
-~~~~~
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/check/runner.py
-~~~~~
-~~~~~python.old
-        differ: DifferProtocol,
-        interaction_handler: InteractionHandler | None,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-        index_store: IndexStore,
-    ):
-        # Keep services needed by both adapter and resolver
+
+class CheckAnalyzer:
+    def __init__(self, root_path: Path, differ: DifferProtocol):
         self.root_path = root_path
-        self.parser = parser
-        self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
-        self.fingerprint_strategy = fingerprint_strategy
-        self.index_store = index_store
-
-        # Inject dependencies into sub-components
-~~~~~
-~~~~~python.new
-        differ: DifferProtocol,
-        interaction_handler: InteractionHandler | None,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-        index_store: IndexStoreProtocol,
-    ):
-        # Keep services needed by both adapter and resolver
-        self.root_path = root_path
-        self.parser = parser
-        self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
-        self.fingerprint_strategy = fingerprint_strategy
-        self.index_store = index_store
-
-        # Inject dependencies into sub-components
-~~~~~
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/check/runner.py
-~~~~~
-~~~~~python.old
-    def analyze_paths(
-        self, file_paths: List[str]
-    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
-        all_results: List[FileCheckResult] = []
-        all_conflicts: List[InteractionContext] = []
-
-        for file_path in file_paths:
-            subject = IndexCheckSubjectAdapter(
-                file_path, self.index_store, self.doc_manager, self.sig_manager
-            )
-            result, conflicts = self.analyzer.analyze_subject(subject)
-            all_results.append(result)
-            all_conflicts.extend(conflicts)
-
-        return all_results, all_conflicts
-~~~~~
-~~~~~python.new
-    def analyze_paths(
-        self, file_paths: List[str]
-    ) -> Tuple[List[FileCheckResult], List[InteractionContext]]:
-        all_results: List[FileCheckResult] = []
-        all_conflicts: List[InteractionContext] = []
-
-        for file_path in file_paths:
-            subject = IndexCheckSubjectAdapter(
-                file_path, self.index_store, self.doc_manager, self.sig_manager
-            )
-            result, conflicts = self.analyzer.analyze_subject(subject)
-            all_results.append(result)
-            all_conflicts.extend(conflicts)
-
-        return all_results, all_conflicts
-~~~~~
-
-接下来是 `IndexCheckSubjectAdapter`。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/check/subject.py
-~~~~~
-~~~~~python.old
-    FingerprintStrategyProtocol,
-    DocumentManagerProtocol,
-    SignatureManagerProtocol,
-)
-from stitcher.index.store import IndexStore
-from stitcher.spec.index import SymbolRecord
-from .protocols import SymbolState, CheckSubject
-~~~~~
-~~~~~python.new
-    FingerprintStrategyProtocol,
-    DocumentManagerProtocol,
-    SignatureManagerProtocol,
-    IndexStoreProtocol,
-)
-from stitcher.spec.index import SymbolRecord
-from .protocols import SymbolState, CheckSubject
-~~~~~
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/check/subject.py
-~~~~~
-~~~~~python.old
-class IndexCheckSubjectAdapter(CheckSubject):
-    def __init__(
-        self,
-        file_path: str,
-        index_store: IndexStore,
-        doc_manager: DocumentManagerProtocol,
-        sig_manager: SignatureManagerProtocol,
-    ):
-        self._file_path = file_path
-        self._index_store = index_store
-        self._doc_manager = doc_manager
-        self._sig_manager = sig_manager
-~~~~~
-~~~~~python.new
-class IndexCheckSubjectAdapter(CheckSubject):
-    def __init__(
-        self,
-        file_path: str,
-        index_store: IndexStoreProtocol,
-        doc_manager: DocumentManagerProtocol,
-        sig_manager: SignatureManagerProtocol,
-    ):
-        self._file_path = file_path
-        self._index_store = index_store
-        self._doc_manager = doc_manager
-        self._sig_manager = sig_manager
-~~~~~
-
-现在是 `PumpRunner`。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/pump.py
-~~~~~
-~~~~~python.old
-    DocstringMergerProtocol,
-)
-from stitcher.config import StitcherConfig
-from stitcher.spec.interaction import InteractionHandler, InteractionContext
-from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
-from stitcher.app.types import PumpResult
-from stitcher.index.store import IndexStore
-
-
-from stitcher.common.transaction import TransactionManager
-~~~~~
-~~~~~python.new
-    DocstringMergerProtocol,
-    IndexStoreProtocol,
-)
-from stitcher.config import StitcherConfig
-from stitcher.spec.interaction import InteractionHandler, InteractionContext
-from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
-from stitcher.app.types import PumpResult
-
-
-from stitcher.common.transaction import TransactionManager
-~~~~~
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/pump.py
-~~~~~
-~~~~~python.old
-        merger: DocstringMergerProtocol,
-        interaction_handler: InteractionHandler | None,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-        index_store: IndexStore,
-    ):
-        self.root_path = root_path
-        self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
-        self.transformer = transformer
         self.differ = differ
-        self.merger = merger
-        self.interaction_handler = interaction_handler
-        self.fingerprint_strategy = fingerprint_strategy
-        self.index_store = index_store
-~~~~~
-~~~~~python.new
-        merger: DocstringMergerProtocol,
-        interaction_handler: InteractionHandler | None,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-        index_store: IndexStoreProtocol,
-    ):
-        self.root_path = root_path
-        self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
-        self.transformer = transformer
-        self.differ = differ
-        self.merger = merger
-        self.interaction_handler = interaction_handler
-        self.fingerprint_strategy = fingerprint_strategy
-        self.index_store = index_store
+
+    def analyze_subject(
 ~~~~~
 
-然后是 `CoverageRunner`。
+#### Acts 2: 更新 RefactorContext 的类型提示
 
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/runners/coverage.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/context.py
 ~~~~~
 ~~~~~python.old
-from stitcher.spec import DocumentManagerProtocol
-from stitcher.app.types import CoverageResult
+from dataclasses import dataclass
+
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.workspace import Workspace
 from stitcher.index.store import IndexStore
+from .graph import SemanticGraph
 
 
-class CoverageRunner:
-    def __init__(
-        self,
-        root_path: Path,
-        doc_manager: DocumentManagerProtocol,
-        index_store: IndexStore,
-    ):
-        self.root_path = root_path
-        self.doc_manager = doc_manager
-        self.index_store = index_store
+@dataclass
+class RefactorContext:
+    workspace: Workspace
+    graph: SemanticGraph
+    sidecar_manager: SidecarManager
+    index_store: IndexStore
 ~~~~~
 ~~~~~python.new
-from stitcher.spec import DocumentManagerProtocol, IndexStoreProtocol
-from stitcher.app.types import CoverageResult
+from dataclasses import dataclass
 
-
-class CoverageRunner:
-    def __init__(
-        self,
-        root_path: Path,
-        doc_manager: DocumentManagerProtocol,
-        index_store: IndexStoreProtocol,
-    ):
-        self.root_path = root_path
-        self.doc_manager = doc_manager
-        self.index_store = index_store
-~~~~~
-
-最后是 `RefactorRunner`。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/runners/refactor.py
-~~~~~
-~~~~~python.old
-from stitcher.common import bus
-from needle.pointer import L
-from stitcher.index.store import IndexStore
-from stitcher.index.indexer import FileIndexer
-from stitcher.refactor.engine import (
-    SemanticGraph,
-~~~~~
-~~~~~python.new
-from stitcher.common import bus
-from needle.pointer import L
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.workspace import Workspace
 from stitcher.spec import IndexStoreProtocol
-from stitcher.index.indexer import FileIndexer
-from stitcher.refactor.engine import (
-    SemanticGraph,
+from .graph import SemanticGraph
+
+
+@dataclass
+class RefactorContext:
+    workspace: Workspace
+    graph: SemanticGraph
+    sidecar_manager: SidecarManager
+    index_store: IndexStoreProtocol
 ~~~~~
+
+#### Acts 3: 更新 SemanticGraph 的类型提示
+
 ~~~~~act
 patch_file
-packages/stitcher-application/src/stitcher/app/runners/refactor.py
+packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py
 ~~~~~
 ~~~~~python.old
-class RefactorRunner:
-    def __init__(
-        self,
-        root_path: Path,
-        index_store: IndexStore,
-        file_indexer: FileIndexer,
-    ):
-        self.root_path = root_path
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Dict, Optional
+import logging
+import griffe
+from stitcher.workspace import Workspace
+from stitcher.index.store import IndexStore
+from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
+
+log = logging.getLogger(__name__)
+
+
+@dataclass
+class SymbolNode:
+    fqn: str
+    kind: str
+    path: Path
+
+
+class SemanticGraph:
+    def __init__(self, workspace: Workspace, index_store: IndexStore):
+        self.workspace = workspace
+        self.root_path = workspace.root_path
         self.index_store = index_store
-        self.file_indexer = file_indexer
+        self.search_paths = self.workspace.get_search_paths()
+        self._griffe_loader = griffe.GriffeLoader(search_paths=self.search_paths)
+        self._modules: Dict[str, griffe.Module] = {}
+
+    def load(self, package_name: str, submodules: bool = True) -> None:
 ~~~~~
 ~~~~~python.new
-class RefactorRunner:
-    def __init__(
-        self,
-        root_path: Path,
-        index_store: IndexStoreProtocol,
-        file_indexer: FileIndexer,
-    ):
-        self.root_path = root_path
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Dict, Optional
+import logging
+import griffe
+from stitcher.workspace import Workspace
+from stitcher.spec import IndexStoreProtocol
+from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
+
+log = logging.getLogger(__name__)
+
+
+@dataclass
+class SymbolNode:
+    fqn: str
+    kind: str
+    path: Path
+
+
+class SemanticGraph:
+    def __init__(self, workspace: Workspace, index_store: IndexStoreProtocol):
+        self.workspace = workspace
+        self.root_path = workspace.root_path
         self.index_store = index_store
-        self.file_indexer = file_indexer
+        self.search_paths = self.workspace.get_search_paths()
+        self._griffe_loader = griffe.GriffeLoader(search_paths=self.search_paths)
+        self._modules: Dict[str, griffe.Module] = {}
+
+    def load(self, package_name: str, submodules: bool = True) -> None:
 ~~~~~
 
 ### 下一步建议
-我们已经成功地将 `IndexStore` 的依赖从 `stitcher-application` 中抽象出来。现在，`application` 包只知道 `IndexStoreProtocol` 这个契约，而不知道底层的 SQLite 实现。
-
-下一步，我建议：
-1.  **运行 `pyright`**：验证所有类型注解都已正确更新，没有引入新的类型错误。
-2.  **结构化协议文件**：根据路线图的建议，将 `DocumentManagerProtocol` 和 `SignatureManagerProtocol` 从 `protocols.py` 移动到新的 `managers.py` 文件中，以保持 `spec` 包的结构清晰。
+所有已知的 `pyright` 错误都已被修复。我建议：
+1.  **再次运行 `pyright`** 以确认问题已完全解决。
+2.  如果通过，我们可以创建一个 `[COMMIT]` 计划来提交这些类型修复，正式完成 `IndexStore` 的协议化。
+3.  继续执行路线图，**结构化协议文件**，将协议移动到 `storage.py` 和 `managers.py` 中。

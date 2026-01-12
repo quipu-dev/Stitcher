@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 import logging
 import griffe
 from stitcher.workspace import Workspace
-from stitcher.index.store import IndexStore
+from stitcher.spec import IndexStoreProtocol
 from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
 
 log = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class SymbolNode:
 
 
 class SemanticGraph:
-    def __init__(self, workspace: Workspace, index_store: IndexStore):
+    def __init__(self, workspace: Workspace, index_store: IndexStoreProtocol):
         self.workspace = workspace
         self.root_path = workspace.root_path
         self.index_store = index_store
