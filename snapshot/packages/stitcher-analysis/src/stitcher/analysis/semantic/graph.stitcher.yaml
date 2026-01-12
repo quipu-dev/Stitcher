@@ -6,5 +6,3 @@
   definition and all references. Maps DB records to UsageLocation objects.
 "SemanticGraph.load_from_workspace": |-
   Discovers and loads all packages and peripheral files defined in the workspace.
-"SymbolNode": |-
-  Represents a symbol definition found in the graph.
