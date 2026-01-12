@@ -71,8 +71,9 @@ def test_executor_overwrite_and_strip(
     # Mock transformer strip call
     executor.transformer.strip.return_value = "stripped content"
     
-    # Mock read_text for the source file
-    executor.root_path / "src/main.py".read_text.return_value = "original content"
+    # Mock Path.read_text for the source file read in _execute_strip_jobs
+    source_path = executor.root_path / "src/main.py"
+    source_path.read_text.return_value = "original content"
 
     executor.execute([sample_module], decisions=decisions, tm=mock_tm, strip=True)
     

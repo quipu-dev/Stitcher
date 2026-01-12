@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test(application): Add unit tests for Pump command components", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768200900.1059132, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 解决单元测试文件导入冲突并修复 PumpExecutor 的 Mock 语法错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768200982.5627427, "duration_ms": 0}}
