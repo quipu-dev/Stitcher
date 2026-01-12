@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 CheckRunner 中的 Pointer 匹配逻辑和行为回退", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768212461.0698965, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(check): 修复交互式检查中的状态更新逻辑以正确清除已解决的错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768212739.2300484, "duration_ms": 0}}

@@ -114,6 +114,12 @@ class CheckResolver:
             elif action == ResolutionAction.RECONCILE:
                 resolutions_by_file[context.file_path].append((context.fqn, action))
                 reconciled_results[context.file_path]["reconcile"].append(context.fqn)
+            elif action in (
+                ResolutionAction.HYDRATE_OVERWRITE,
+                ResolutionAction.HYDRATE_KEEP_EXISTING,
+            ):
+                resolutions_by_file[context.file_path].append((context.fqn, action))
+                reconciled_results[context.file_path]["reconcile"].append(context.fqn)
             elif action == ResolutionAction.PURGE_DOC:
                 resolutions_by_file[context.file_path].append((context.fqn, action))
                 reconciled_results[context.file_path]["purged"].append(context.fqn)
@@ -171,11 +177,30 @@ class CheckResolver:
     def _update_results(self, results: List[FileCheckResult], reconciled_data: dict):
         for res in results:
             if res.path in reconciled_data:
-                res.reconciled["force_relink"] = reconciled_data[res.path][
-                    "force_relink"
-                ]
-                res.reconciled["reconcile"] = reconciled_data[res.path]["reconcile"]
-                res.reconciled["purged"] = reconciled_data[res.path].get("purged", [])
+                file_data = reconciled_data[res.path]
+
+                # Update reconciled info (for reporting success)
+                res.reconciled["force_relink"] = file_data["force_relink"]
+                res.reconciled["reconcile"] = file_data["reconcile"]
+                res.reconciled["purged"] = file_data.get("purged", [])
+
+                # Clear resolved errors so the result becomes clean
+                # 1. Force Relink -> Fixes Signature Drift
+                for fqn in file_data["force_relink"]:
+                    if fqn in res.errors["signature_drift"]:
+                        res.errors["signature_drift"].remove(fqn)
+
+                # 2. Reconcile / Hydrate -> Fixes Co-Evolution AND Conflict
+                for fqn in file_data["reconcile"]:
+                    if fqn in res.errors["co_evolution"]:
+                        res.errors["co_evolution"].remove(fqn)
+                    if fqn in res.errors["conflict"]:
+                        res.errors["conflict"].remove(fqn)
+
+                # 3. Purge -> Fixes Extra
+                for fqn in file_data.get("purged", []):
+                    if fqn in res.errors["extra"]:
+                        res.errors["extra"].remove(fqn)
 
     def _apply_resolutions(
         self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]
