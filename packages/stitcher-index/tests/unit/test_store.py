@@ -1,4 +1,4 @@
-from stitcher.index.types import SymbolRecord, ReferenceRecord
+from stitcher.spec.index import SymbolRecord, ReferenceRecord
 
 
 def test_file_lifecycle(store):

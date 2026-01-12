@@ -819,7 +819,6 @@ dependencies = [
     { name = "libcst" },
     { name = "stitcher-common" },
     { name = "stitcher-index" },
-    { name = "stitcher-python-analysis" },
     { name = "stitcher-spec" },
 ]
 
@@ -829,7 +828,6 @@ requires-dist = [
     { name = "libcst" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-index", editable = "packages/stitcher-index" },
-    { name = "stitcher-python-analysis", editable = "packages/stitcher-python-analysis" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
 ]
 
@@ -909,8 +907,10 @@ dependencies = [
     { name = "pyneedle" },
     { name = "pyyaml" },
     { name = "stitcher-application" },
+    { name = "stitcher-common" },
     { name = "stitcher-index" },
     { name = "stitcher-python-adapter" },
+    { name = "stitcher-spec" },
     { name = "stitcher-workspace" },
     { name = "tomli-w" },
 ]
@@ -920,8 +920,10 @@ requires-dist = [
     { name = "pyneedle", editable = "packages/pyneedle" },
     { name = "pyyaml" },
     { name = "stitcher-application", editable = "packages/stitcher-application" },
+    { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-python-adapter", editable = "packages/stitcher-python-adapter" },
+    { name = "stitcher-spec", editable = "packages/stitcher-spec" },
     { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
     { name = "tomli-w" },
 ]

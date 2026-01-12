@@ -1,6 +1,6 @@
 from typing import Protocol, List, Tuple
 from pathlib import Path
-from .types import SymbolRecord, ReferenceRecord
+from stitcher.spec.index import SymbolRecord, ReferenceRecord
 
 
 class LanguageAdapter(Protocol):

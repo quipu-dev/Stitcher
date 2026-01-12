@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "Python language adapter for Stitcher, implementing core protocols."
 requires-python = ">=3.10"
 dependencies = [
-    "stitcher-python-analysis",
     "stitcher-spec",
     "stitcher-common",
     "stitcher-index",
@@ -20,7 +19,7 @@ dependencies = [
 packages = ["src/stitcher"]
 
 [tool.uv.sources]
-stitcher-python-analysis = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-index = { workspace = true }
+stitcher-test-utils = { workspace = true }

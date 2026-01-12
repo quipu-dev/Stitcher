@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, Optional, Any, Union, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from stitcher.index.types import SymbolRecord
+    from stitcher.spec.index import SymbolRecord
 
 from stitcher.spec import (
     ModuleDef,

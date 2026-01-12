@@ -1,6 +1,6 @@
 from typing import Optional, List, Tuple
 from .db import DatabaseManager
-from .types import FileRecord, SymbolRecord, ReferenceRecord
+from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord
 
 
 class IndexStore:

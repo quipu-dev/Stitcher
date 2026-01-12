@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Dict, Set, Any
 
 from .store import IndexStore
-from .types import FileRecord
-from .protocols import LanguageAdapter
+from stitcher.spec.index import FileRecord
+from stitcher.spec.registry import LanguageAdapter
 from .linker import Linker
 
 log = logging.getLogger(__name__)

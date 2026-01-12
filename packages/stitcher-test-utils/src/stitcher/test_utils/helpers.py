@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 from stitcher.app import StitcherApp
-from stitcher.app.protocols import InteractionHandler
+from stitcher.spec.interaction import InteractionHandler
 from stitcher.adapter.python import (
     PythonTransformer,
     PythonFingerprintStrategy,

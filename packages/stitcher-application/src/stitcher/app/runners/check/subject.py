@@ -6,7 +6,7 @@ from stitcher.spec import (
 )
 from stitcher.app.services import DocumentManager, SignatureManager
 from stitcher.index.store import IndexStore
-from stitcher.index.types import SymbolRecord
+from stitcher.spec.index import SymbolRecord
 from .protocols import SymbolState, CheckSubject
 
 
