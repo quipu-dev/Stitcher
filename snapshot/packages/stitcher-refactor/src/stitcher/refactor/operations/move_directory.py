@@ -22,9 +22,13 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
     def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
         intents: List[RefactorIntent] = []
 
+        # Resolve paths against the project root
+        src_dir = ctx.workspace.root_path.joinpath(self.src_dir)
+        dest_dir = ctx.workspace.root_path.joinpath(self.dest_dir)
+
         # 1. Declare namespace rename intent
-        old_prefix = self._path_to_fqn(self.src_dir, ctx.graph.search_paths)
-        new_prefix = self._path_to_fqn(self.dest_dir, ctx.graph.search_paths)
+        old_prefix = self._path_to_fqn(src_dir, ctx.graph.search_paths)
+        new_prefix = self._path_to_fqn(dest_dir, ctx.graph.search_paths)
         if old_prefix and new_prefix and old_prefix != new_prefix:
             # We explicitly check for truthiness above, so they are str here
             intents.append(RenameIntent(old_prefix, new_prefix))
@@ -39,15 +43,15 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
 
         # 2. Declare physical file moves and sidecar updates for all files
         processed_files = set()
-        all_files = [p for p in self.src_dir.rglob("*") if p.is_file()]
+        all_files = [p for p in src_dir.rglob("*") if p.is_file()]
 
         for src_item in all_files:
             if src_item.suffix != ".py":
                 continue
 
             processed_files.add(src_item)
-            relative_path = src_item.relative_to(self.src_dir)
-            dest_item = self.dest_dir / relative_path
+            relative_path = src_item.relative_to(src_dir)
+            dest_item = dest_dir / relative_path
 
             # Declare file move
             intents.append(MoveFileIntent(src_item, dest_item))
@@ -87,15 +91,15 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
         for src_item in all_files:
             if src_item in processed_files:
                 continue
-            relative_path = src_item.relative_to(self.src_dir)
-            dest_item = self.dest_dir / relative_path
+            relative_path = src_item.relative_to(src_dir)
+            dest_item = dest_dir / relative_path
             intents.append(MoveFileIntent(src_item, dest_item))
 
         # 3. Declare deletion of the source directory
-        intents.append(DeleteDirectoryIntent(self.src_dir))
+        intents.append(DeleteDirectoryIntent(src_dir))
 
         # 4. Declare scaffolding of __init__.py files
-        intents.extend(self._scaffold_init_intents(self.dest_dir, ctx))
+        intents.extend(self._scaffold_init_intents(dest_dir, ctx))
 
         return intents
 
@@ -107,16 +111,29 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
 
         active_root = None
         for sp in search_paths:
-            if directory_path.is_relative_to(sp):
-                if active_root is None or len(sp.parts) > len(active_root.parts):
-                    active_root = sp
+            try:
+                if directory_path.is_relative_to(sp):
+                    if active_root is None or len(sp.parts) > len(active_root.parts):
+                        active_root = sp
+            except AttributeError:
+                try:
+                    directory_path.relative_to(sp)
+                    if active_root is None or len(sp.parts) > len(active_root.parts):
+                        active_root = sp
+                except ValueError:
+                    continue
 
         if not active_root:
             return []
 
         current = directory_path
 
-        while current != active_root and current.is_relative_to(active_root):
+        while current != active_root:
+            try:
+                current.relative_to(active_root)
+            except ValueError:
+                break
+                
             init_file = current / "__init__.py"
             if not init_file.exists():
                 intents.append(ScaffoldIntent(path=init_file, content=""))
