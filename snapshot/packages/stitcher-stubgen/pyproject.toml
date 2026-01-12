@@ -20,3 +20,4 @@ packages = ["src/stitcher"]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-config = { workspace = true }
+stitcher-test-utils = { workspace = true }

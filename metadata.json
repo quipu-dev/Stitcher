@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 更新 stitcher-test-utils 的依赖关系以匹配实际引用", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768193549.2094517, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 同步 stitcher-python-adapter 与 stitcher-stubgen 的依赖关系", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768193629.6407866, "duration_ms": 0}}
