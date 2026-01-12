@@ -1,42 +1,3 @@
-根据 **Stitcher 架构重构路线图** 的阶段二规划，我将为你生成用于“语言能力统一与合并”的重构脚本。
-
-## [WIP] feat: 创建阶段二重构脚本：统一 Python 语言能力
-
-### 用户需求
-编写一个名为 `002_phase_2_unify_python_lang.py` 的重构脚本，将 `stitcher-python-adapter` 和 `stitcher-python-analysis` 中的所有代码、文档和逻辑迁移到新创建的 `stitcher-lang-python` 包中。
-
-### 评论
-这是架构重构中最具实质性的一步。通过将分散的“解析”、“分析”、“转换”和“索引适配”能力整合到一个垂直的语言插件包中，我们不仅消除了物理包的冗余，还为将来支持多语言（如 TypeScript 或 Go）建立了一个清晰的模板。Stitcher 的 `Move` 和 `MoveDir` 操作将确保所有跨包引用（例如 `application` 对 `adapter` 的依赖）都能被精确自动地更新。
-
-### 目标
-1.  定义从 `adapter` 包到 `lang-python` 包的文件迁移映射。
-2.  定义从 `analysis` 包到 `lang-python` 包的文件迁移映射。
-3.  重组 Python 内部目录结构，使其符合新的垂直功能切分（Parser, Analysis, Transform, Docstring）。
-4.  确保 Sidecar 文件（`.stitcher.yaml`）随源码同步移动。
-
-### 基本原理
-我们利用 Stitcher `Move` 指令的语义感知特性。当我们将 `griffe_parser.py` 移动到新的位置时，Stitcher 会自动计算出 FQN 的变化（从 `stitcher.adapter.python.griffe_parser` 变为 `stitcher.lang.python.parser.griffe`），并自动修补整个工作区中所有引用了该模块或其中类/函数的 `import` 语句。
-
-### 标签
-#intent/build #flow/ready #priority/high
-#comp/build #concept/parser #scope/dx
-#ai/instruct
-#task/domain/language-support
-#task/object/stitcher-lang-python
-#task/action/refactor
-#task/state/continue #task/status/active
-
----
-
-### Script
-
-#### Acts 1: 创建阶段二重构脚本
-
-~~~~~act
-write_file
-migrations/002_phase_2_unify_python_lang.py
-~~~~~
-~~~~~python
 from pathlib import Path
 from stitcher.refactor.migration import MigrationSpec, Move, MoveDir
 
@@ -137,9 +98,3 @@ def upgrade(spec: MigrationSpec):
         Path("packages/stitcher-python-analysis/tests"),
         Path("packages/stitcher-lang-python/tests/analysis")
     ))
-~~~~~
-
-### 下一步建议
-1.  **执行 Dry-run**：建议你先执行 `stitcher refactor apply migrations/002_phase_2_unify_python_lang.py --dry-run` 来审查即将发生的巨大变更。
-2.  **清理旧包**：在确认重构成功并运行测试后，你需要物理删除 `packages/stitcher-python-adapter` 和 `packages/stitcher-python-analysis` 目录，并从 `pyproject.toml` 的工作区定义中移除它们。
-3.  **修复导入循环（如果有）**：合并后，请检查是否有原来分属两包的模块现在产生了循环引用。
