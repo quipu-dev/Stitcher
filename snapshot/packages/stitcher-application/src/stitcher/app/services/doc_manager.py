@@ -42,6 +42,16 @@ class DocumentManager:
     def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
         return self.serializer.to_yaml(ir)
 
+    def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        return self._serialize_ir(ir)
+
+    def compute_ir_hash(self, ir: DocstringIR) -> str:
+        serialized = self._serialize_ir(ir)
+        return self.compute_yaml_content_hash(serialized)
+
+    def dump_data(self, data: Dict[str, Any]) -> str:
+        return self.adapter.dump(data)
+
     def _extract_from_function(
         self, func: FunctionDef, prefix: str = ""
     ) -> Dict[str, DocstringIR]:

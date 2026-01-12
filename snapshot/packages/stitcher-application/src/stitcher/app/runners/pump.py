@@ -256,10 +256,7 @@ class PumpRunner:
                     if fqn in source_docs:
                         ir_to_save = new_yaml_docs.get(fqn)
                         if ir_to_save:
-                            serialized = self.doc_manager._serialize_ir(ir_to_save)
-                            doc_hash = self.doc_manager.compute_yaml_content_hash(
-                                serialized
-                            )
+                            doc_hash = self.doc_manager.compute_ir_hash(ir_to_save)
                             fp["baseline_yaml_content_hash"] = doc_hash
                             fqn_was_updated = True
 
@@ -283,18 +280,18 @@ class PumpRunner:
             if not file_has_errors:
                 if file_had_updates:
                     final_data = {
-                        k: self.doc_manager._serialize_ir(v)
+                        k: self.doc_manager.serialize_ir(v)
                         for k, v in new_yaml_docs.items()
                     }
                     module_path = self.root_path / module.file_path
                     doc_path = module_path.with_suffix(".stitcher.yaml")
-                    yaml_content = self.doc_manager.adapter.dump(final_data)
+                    yaml_content = self.doc_manager.dump_data(final_data)
                     tm.add_write(
                         str(doc_path.relative_to(self.root_path)), yaml_content
                     )
 
                 if signatures_need_save:
-                    sig_path = self.sig_manager._get_sig_path(module.file_path)
+                    sig_path = self.sig_manager.get_signature_path(module.file_path)
                     rel_sig_path = str(sig_path.relative_to(self.root_path))
 
                     if not new_hashes:
