@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 迁移测试用例以使用 violation_type 指针", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768210588.659464, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 移除废弃的 ConflictType 和 Resolution 模型", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768210708.5796015, "duration_ms": 0}}

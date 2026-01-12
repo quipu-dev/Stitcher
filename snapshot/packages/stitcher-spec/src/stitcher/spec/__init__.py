@@ -11,10 +11,7 @@ from .models import (
     FunctionDef,
     ModuleDef,
     SourceLocation,
-    ConflictType,
     ResolutionAction,
-    Resolution,
-    ResolutionPlan,
     FunctionExecutionPlan,
 )
 from .refactor import RefactorUsage, RefactoringStrategyProtocol
@@ -60,10 +57,7 @@ __all__ = [
     "ModuleDef",
     "SourceLocation",
     # Reconciliation Models
-    "ConflictType",
     "ResolutionAction",
-    "Resolution",
-    "ResolutionPlan",
     "FunctionExecutionPlan",
     # Refactor
     "RefactorUsage",
