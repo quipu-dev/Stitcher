@@ -1,6 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Dict, DefaultDict, TYPE_CHECKING
+from typing import List, Dict, DefaultDict, TYPE_CHECKING, Any
 
 from stitcher.common.adapters.yaml_adapter import YamlAdapter
 import json
@@ -26,12 +26,38 @@ from stitcher.refactor.engine.intent import (
 )
 from stitcher.refactor.engine.renamer import GlobalBatchRenamer
 from stitcher.refactor.operations.base import SidecarUpdateMixin
+from stitcher.adapter.python.uri import SURIGenerator
 
 
 class Planner(SidecarUpdateMixin):
-    def plan(self, spec: "MigrationSpec", ctx: RefactorContext) -> List[FileOp]:
-        # Local import to break circular dependency
+    def _update_signature_file_data(
+        self,
+        data: Dict[str, Any],
+        src_path_abs: Path,
+        dest_path_abs: Path,
+        ctx: RefactorContext,
+    ) -> Dict[str, Any]:
+        """Updates SURI keys in a signature file dictionary."""
+        new_data = {}
+        src_path_rel_str = src_path_abs.relative_to(ctx.workspace.root_path).as_posix()
+        dest_path_rel_str = dest_path_abs.relative_to(
+            ctx.workspace.root_path
+        ).as_posix()
 
+        for suri, value in data.items():
+            try:
+                path_str, fragment = SURIGenerator.parse(suri)
+                if path_str == src_path_rel_str:
+                    new_suri = SURIGenerator.build(dest_path_rel_str, fragment)
+                    new_data[new_suri] = value
+                else:
+                    new_data[suri] = value
+            except ValueError:
+                # Not a valid SURI, preserve it as is
+                new_data[suri] = value
+        return new_data
+
+    def plan(self, spec: "MigrationSpec", ctx: RefactorContext) -> List[FileOp]:
         all_ops: List[FileOp] = []
 
         # --- 1. Intent Collection ---
@@ -45,7 +71,6 @@ class Planner(SidecarUpdateMixin):
         rename_map: Dict[str, str] = {}
         for intent in all_intents:
             if isinstance(intent, RenameIntent):
-                # TODO: Handle rename chains (A->B, B->C should become A->C)
                 rename_map[intent.old_fqn] = intent.new_fqn
 
         # Process symbol renames in code
@@ -60,29 +85,35 @@ class Planner(SidecarUpdateMixin):
             if isinstance(intent, SidecarUpdateIntent):
                 sidecar_updates[intent.sidecar_path].append(intent)
 
-        # TODO: Inject real adapters instead of instantiating them here.
         yaml_adapter = YamlAdapter()
         for path, intents in sidecar_updates.items():
-            # Load the sidecar file only once
-            is_yaml = path.suffix == ".yaml"
-            data = (
-                yaml_adapter.load(path)
-                if is_yaml
-                else json.loads(path.read_text("utf-8"))
-            )
+            is_sig_file = path.suffix == ".json"
+            is_doc_file = path.suffix == ".yaml"
 
-            # Apply all intents for this file
+            if is_doc_file:
+                data = yaml_adapter.load(path)
+            elif is_sig_file:
+                data = json.loads(path.read_text("utf-8")) if path.exists() else {}
+            else:
+                continue  # Skip unknown sidecar types
+
             for intent in intents:
-                data = self._update_sidecar_data(
-                    data, intent.module_fqn, intent.old_fqn, intent.new_fqn
-                )
+                # Use SURI-aware logic for signature files if path info is available
+                if is_sig_file and intent.src_path and intent.dest_path:
+                    data = self._update_signature_file_data(
+                        data, intent.src_path, intent.dest_path, ctx
+                    )
+                # Use FQN-based logic for doc files
+                elif is_doc_file:
+                    data = self._update_sidecar_data(
+                        data, intent.module_fqn, intent.old_fqn, intent.new_fqn
+                    )
 
-            # Dump the final state
-            content = (
-                yaml_adapter.dump(data)
-                if is_yaml
-                else json.dumps(data, indent=2, sort_keys=True)
-            )
+            if is_doc_file:
+                content = yaml_adapter.dump(data)
+            else:  # is_sig_file
+                content = json.dumps(data, indent=2, sort_keys=True)
+
             all_ops.append(WriteFileOp(path.relative_to(ctx.graph.root_path), content))
 
         # Process simple filesystem intents

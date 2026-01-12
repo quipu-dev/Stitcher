@@ -57,3 +57,6 @@ class SidecarUpdateIntent(RefactorIntent):
     module_fqn: Optional[str]
     old_fqn: str
     new_fqn: str
+    # Optional: For file types like signatures that need path info, not just FQN
+    src_path: Optional[Path] = None
+    dest_path: Optional[Path] = None

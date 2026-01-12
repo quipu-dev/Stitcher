@@ -66,6 +66,8 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
                         module_fqn=old_module_fqn,
                         old_fqn=old_module_fqn,
                         new_fqn=new_module_fqn,
+                        src_path=src_path,
+                        dest_path=dest_path,
                     )
                 )
 
