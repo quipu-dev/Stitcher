@@ -1,40 +1,3 @@
-好的，我已经根据阶段二的规划，创建了用于 Python 语言能力统一的重构脚本。
-
-## [WIP] feat: 创建阶段二重构脚本 002_phase_2_unify_python_lang.py
-
-### 用户需求
-根据路线图，创建用于合并 Python 语言能力的重构脚本。
-
-### 评论
-该脚本将利用 Stitcher 的语义重构引擎，将原本分散在两个包中的 Python 逻辑物理搬迁到 `stitcher-lang-python`。这不仅是物理位置的移动，更重要的是，Stitcher 会自动修正整个 Monorepo 中数百处 `import` 引用，将旧的命名空间（如 `stitcher.adapter.python`）平滑升级为 `stitcher.lang.python`。
-
-### 目标
-1.  在 `migrations/` 目录下生成 `002_phase_2_unify_python_lang.py`。
-2.  脚本应包含对解析、索引、文档和转换逻辑的 `Move` 和 `MoveDir` 操作。
-
-### 基本原理
-利用 `MigrationSpec` 的事务性 API，定义从旧包到新包的映射关系。`Move` 操作会根据文件在源代码树中的新旧相对位置，自动重新计算并更新受影响的符号的 FQN，从而触发全局引用的自动更新。
-
-### 标签
-#intent/build #flow/ready #priority/high
-#comp/build #concept/navigation #scope/dx
-#ai/instruct
-#task/domain/language-support
-#task/object/refactor-script
-#task/action/generation
-#task/state/continue #task/status/active
-
----
-
-### Script
-
-#### Acts 1: 生成重构脚本
-
-~~~~~act
-write_file
-migrations/002_phase_2_unify_python_lang.py
-~~~~~
-~~~~~python
 from pathlib import Path
 from stitcher.refactor.migration import MigrationSpec, Move, MoveDir
 
@@ -92,10 +55,3 @@ def upgrade(spec: MigrationSpec):
         Path("packages/stitcher-python-analysis/src/stitcher/analysis/python/models.py"),
         Path("packages/stitcher-lang-python/src/stitcher/lang/python/analysis/models.py")
     ))
-~~~~~
-
-### 下一步建议
-1.  **执行空运行**：在 shell 中执行 `stitcher refactor apply migrations/002_phase_2_unify_python_lang.py --dry-run`。
-2.  **检查预览**：仔细预览输出，确保 `[MOVE]` 和 `[WRITE]` 操作符合预期，特别是跨包引用的更新。
-3.  **正式执行**：确认无误后，移除 `--dry-run` 标志进行物理迁移。
-4.  **手动清理**：由于 `MoveDir` 仅移动内容，迁移完成后请手动删除已经变成空目录的旧包。

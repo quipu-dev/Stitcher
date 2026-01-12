@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M uv.lock", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768194085.721365, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 创建阶段二重构脚本 002_phase_2_unify_python_lang.py", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768194086.5403385, "duration_ms": 0}}
