@@ -1,6 +1,6 @@
 from stitcher.common.transaction import TransactionManager
 from .context import RefactorContext
-from .graph import SemanticGraph
+from stitcher.analysis.semantic import SemanticGraph
 from .planner import Planner
 from .intent import (
     RefactorIntent,

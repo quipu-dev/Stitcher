@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from .base import AbstractOperation, SidecarUpdateMixin
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.graph import SymbolNode
+from stitcher.analysis.semantic import SymbolNode
 from stitcher.refactor.engine.intent import (
     RefactorIntent,
     RenameIntent,

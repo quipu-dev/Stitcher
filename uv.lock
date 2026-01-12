@@ -694,20 +694,24 @@ name = "stitcher-analysis"
 version = "0.1.0"
 source = { editable = "packages/stitcher-analysis" }
 dependencies = [
+    { name = "griffe" },
     { name = "pyneedle-pointer" },
     { name = "stitcher-common" },
     { name = "stitcher-config" },
     { name = "stitcher-index" },
     { name = "stitcher-spec" },
+    { name = "stitcher-workspace" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "griffe" },
     { name = "pyneedle-pointer", editable = "packages/pyneedle-pointer" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-config", editable = "packages/stitcher-config" },
     { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
+    { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
 ]
 
 [[package]]
@@ -890,8 +894,8 @@ name = "stitcher-refactor"
 version = "0.1.0"
 source = { editable = "packages/stitcher-refactor" }
 dependencies = [
-    { name = "griffe" },
     { name = "libcst" },
+    { name = "stitcher-analysis" },
     { name = "stitcher-common" },
     { name = "stitcher-index" },
     { name = "stitcher-lang-python" },
@@ -902,8 +906,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "griffe" },
     { name = "libcst" },
+    { name = "stitcher-analysis", editable = "packages/stitcher-analysis" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-lang-python", editable = "packages/stitcher-lang-python" },

@@ -1,7 +1,7 @@
 import json
 import yaml
 
-from stitcher.refactor.engine.graph import SemanticGraph
+from stitcher.analysis.semantic import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.common.transaction import (
     TransactionManager,

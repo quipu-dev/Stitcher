@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 from pathlib import Path
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.graph import (
+from stitcher.analysis.semantic import (
     SemanticGraph,
     SymbolNode,
 )

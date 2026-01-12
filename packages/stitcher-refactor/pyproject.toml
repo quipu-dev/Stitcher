@@ -12,7 +12,7 @@ dependencies = [
     "stitcher-spec",
     "stitcher-common",
     "stitcher-workspace",
-    "griffe",
+    "stitcher-analysis",
     "libcst",
     "tomli>=2.0.1; python_version < '3.11'",
     "stitcher-index",
@@ -27,3 +27,4 @@ stitcher-common = { workspace = true }
 stitcher-index = { workspace = true }
 stitcher-lang-python = { workspace = true }
 stitcher-workspace = { workspace = true }
+stitcher-analysis = { workspace = true }

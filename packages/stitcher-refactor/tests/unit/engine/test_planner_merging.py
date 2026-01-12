@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.engine.graph import SemanticGraph
+from stitcher.analysis.semantic import SemanticGraph
 from stitcher.index.store import IndexStore
 from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation

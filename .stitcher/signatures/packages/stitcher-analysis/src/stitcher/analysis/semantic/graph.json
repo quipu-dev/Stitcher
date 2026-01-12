@@ -1,52 +1,52 @@
 {
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph": {
     "baseline_code_signature_text": "class SemanticGraph:",
     "baseline_code_structure_hash": "9e1213c21037609f2accea4aa157f6c45646652d68fd7d8837a9dcadb2a1c3a2",
     "baseline_yaml_content_hash": "107d9d8ce7f48e351911bdc4c4aa8d442967c10b114179df109ff56a3e7c8f43"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.__init__": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.__init__": {
     "baseline_code_signature_text": "def __init__(self, workspace: Workspace, index_store: IndexStoreProtocol):",
     "baseline_code_structure_hash": "924f5530e2b54428c51436720ee5b1c41d2ea4ae703b53aaaa40eafecd60cbd4"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph._griffe_loader": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph._modules": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.find_symbol": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph._griffe_loader": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph._modules": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.find_symbol": {
     "baseline_code_signature_text": "def find_symbol(self, fqn: str) -> Optional[SymbolNode]:",
     "baseline_code_structure_hash": "0e54ff0ca01f3a1035db618129357de8cbfa7995704b7785fd18aa6ca23b6162"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.find_usages": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.find_usages": {
     "baseline_code_signature_text": "def find_usages(self, target_fqn: str) -> List[UsageLocation]:",
     "baseline_code_structure_hash": "db4b93331a7212b63f08ad11b022cab1bb71f7d41801009e7d7368c3e24d563e",
     "baseline_yaml_content_hash": "5ff7743a7823ca76b9d36d51350261b0383274a1fada56c1c9b520167e9107a9"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.get_module": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.get_module": {
     "baseline_code_signature_text": "def get_module(self, package_name: str) -> Optional[griffe.Module]:",
     "baseline_code_structure_hash": "7c7c46478e42f9acb9374bb4612a99c58463121f0329adc05887ba617de4cc67"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.index_store": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.iter_members": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.index_store": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.iter_members": {
     "baseline_code_signature_text": "def iter_members(self, package_name: str) -> List[SymbolNode]:",
     "baseline_code_structure_hash": "36087388280955b4f0deca49ec8cae4e14e5978b4431bb2e67865bea169a2a56"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.load": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.load": {
     "baseline_code_signature_text": "def load(self, package_name: str, submodules: bool = True) -> None:",
     "baseline_code_structure_hash": "2260094850da912c9148938adc2adebb1ede5146cd6c17fe5faf2491f7c51609"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.load_from_workspace": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.load_from_workspace": {
     "baseline_code_signature_text": "def load_from_workspace(self) -> None:",
     "baseline_code_structure_hash": "e5f029f7b4d9d097285699c4c3939b657f0c1c326004d9e9f7dd14b6b83e9c8e",
     "baseline_yaml_content_hash": "eabe15f7da6d8745ca9c12d7981ec91b9c02b2e3667ef4f5212350d486c0b4d7"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.root_path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.search_paths": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SemanticGraph.workspace": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SymbolNode": {
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.root_path": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.search_paths": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SemanticGraph.workspace": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SymbolNode": {
     "baseline_code_signature_text": "class SymbolNode:",
     "baseline_code_structure_hash": "6d1f0076516df53dfd78ff363213a4e05c32e5e19d824e9701c0ff10af133855",
     "baseline_yaml_content_hash": "4900ac88eeb806545cd45ed7908a5b05093c43924866887b710ab2f65adc727f"
   },
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SymbolNode.fqn": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SymbolNode.kind": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#SymbolNode.path": {},
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/graph.py#log": {}
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SymbolNode.fqn": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SymbolNode.kind": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#SymbolNode.path": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/graph.py#log": {}
 }
