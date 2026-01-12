@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] chore: 清理 stitcher-analysis 中的死代码", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768211322.373974, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 将 ConsistencyEngine 集成到 CheckRunner", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768211587.6394007, "duration_ms": 0}}

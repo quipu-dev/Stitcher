@@ -83,7 +83,6 @@ class StitcherApp:
         )
 
         # 3. Runners (Command Handlers)
-        check_analyzer = CheckAnalyzer(root_path, self.differ)
         check_resolver = CheckResolver(
             root_path,
             parser,
@@ -98,9 +97,10 @@ class StitcherApp:
             self.sig_manager,
             self.fingerprint_strategy,
             self.index_store,
-            analyzer=check_analyzer,
+            differ=self.differ,
             resolver=check_resolver,
             reporter=check_reporter,
+            root_path=self.root_path,
         )
 
         pump_analyzer = PumpAnalyzer(
