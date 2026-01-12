@@ -1,20 +1,14 @@
-from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Optional
 import logging
 import griffe
+
 from stitcher.workspace import Workspace
 from stitcher.spec import IndexStoreProtocol
 from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
+from .models import SymbolNode
 
 log = logging.getLogger(__name__)
-
-
-@dataclass
-class SymbolNode:
-    fqn: str
-    kind: str
-    path: Path
 
 
 class SemanticGraph:
