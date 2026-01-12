@@ -86,6 +86,7 @@ def test_ghost_keys_trigger_extra_error(tmp_path, monkeypatch):
 
     # We expect EXTRA errors for both ghost keys
     spy_bus.assert_id_called(L.check.issue.extra, level="error")
+    print(spy_bus.get_messages())
 
     # Verify specific keys
     extra_msgs = [
