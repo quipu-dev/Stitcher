@@ -4,11 +4,12 @@ from stitcher.test_utils import WorkspaceFactory, create_test_app
 from stitcher.refactor.migration import MigrationSpec, Move
 
 
-def test_move_file_operation_updates_suri_in_signatures(workspace_factory: WorkspaceFactory):
+def test_move_file_operation_updates_suri_in_signatures(tmp_path: Path):
     """
     Verify that moving a file also updates the SURI keys in the signature file.
     """
     # --- Arrange ---
+    workspace_factory = WorkspaceFactory(root_path=tmp_path)
     workspace_root = workspace_factory.with_config({
         "scan_paths": ["src"]
     }).with_source(
