@@ -914,6 +914,12 @@ requires-dist = [
 name = "stitcher-spec"
 version = "0.1.0"
 source = { editable = "packages/stitcher-spec" }
+dependencies = [
+    { name = "pyneedle-pointer" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyneedle-pointer", editable = "packages/pyneedle-pointer" }]
 
 [[package]]
 name = "stitcher-stubgen"
