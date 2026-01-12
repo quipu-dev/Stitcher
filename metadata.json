@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor: 将 ConsistencyEngine 集成到 CheckRunner", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768214824.3517091, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(pump): 将 PumpAnalyzer 提取到 stitcher-analysis 中的 PumpEngine", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768215017.2253006, "duration_ms": 0}}

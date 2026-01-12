@@ -1,25 +1,40 @@
 from typing import List
+
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.spec import ModuleDef, ResolutionAction
+from stitcher.spec import (
+    ModuleDef,
+    ResolutionAction,
+    FingerprintStrategyProtocol,
+)
+from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
 from stitcher.spec.interaction import InteractionHandler
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import PumpResult
 from stitcher.config import StitcherConfig
 from stitcher.common.transaction import TransactionManager
-from .protocols import PumpAnalyzerProtocol, PumpExecutorProtocol
+from stitcher.analysis.engines import PumpEngine
+from .protocols import PumpExecutorProtocol
+from ..check.subject import ASTCheckSubjectAdapter
 
 
 class PumpRunner:
     def __init__(
         self,
-        analyzer: PumpAnalyzerProtocol,
+        pump_engine: PumpEngine,
         executor: PumpExecutorProtocol,
         interaction_handler: InteractionHandler | None,
+        # Dependencies required for subject creation
+        doc_manager: DocumentManagerProtocol,
+        sig_manager: SignatureManagerProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
     ):
-        self.analyzer = analyzer
+        self.pump_engine = pump_engine
         self.executor = executor
         self.interaction_handler = interaction_handler
+        self.doc_manager = doc_manager
+        self.sig_manager = sig_manager
+        self.fingerprint_strategy = fingerprint_strategy
 
     def run_batch(
         self,
@@ -31,7 +46,18 @@ class PumpRunner:
         reconcile: bool = False,
     ) -> PumpResult:
         # --- Phase 1: Analysis ---
-        all_conflicts = self.analyzer.analyze(modules)
+        all_conflicts = []
+        # The runner is responsible for adapting ModuleDefs to AnalysisSubjects
+        for module in modules:
+            subject = ASTCheckSubjectAdapter(
+                module,
+                self.doc_manager,
+                self.sig_manager,
+                self.fingerprint_strategy,
+                tm.root_path,
+            )
+            conflicts = self.pump_engine.analyze(subject)
+            all_conflicts.extend(conflicts)
 
         # --- Phase 2: Decision ---
         decisions = {}
@@ -48,4 +74,5 @@ class PumpRunner:
                 decisions[context.fqn] = action
 
         # --- Phase 3: Execution ---
+        # The executor still works with ModuleDefs, which is fine.
         return self.executor.execute(modules, decisions, tm, strip)

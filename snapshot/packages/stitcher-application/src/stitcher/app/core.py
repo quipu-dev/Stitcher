@@ -30,8 +30,8 @@ from .runners import (
 )
 from .runners.check.resolver import CheckResolver
 from .runners.check.reporter import CheckReporter
-from .runners.pump.analyzer import PumpAnalyzer
 from .runners.pump.executor import PumpExecutor
+from stitcher.analysis.engines import PumpEngine, create_pump_engine
 from stitcher.common.transaction import TransactionManager
 from typing import Callable
 from .types import PumpResult, FileCheckResult, CoverageResult
@@ -102,9 +102,7 @@ class StitcherApp:
             root_path=self.root_path,
         )
 
-        pump_analyzer = PumpAnalyzer(
-            self.doc_manager, self.sig_manager, self.index_store, self.differ
-        )
+        pump_engine = create_pump_engine(differ=self.differ)
         pump_executor = PumpExecutor(
             root_path,
             self.doc_manager,
@@ -114,9 +112,13 @@ class StitcherApp:
             self.fingerprint_strategy,
         )
         self.pump_runner = PumpRunner(
-            analyzer=pump_analyzer,
+            pump_engine=pump_engine,
             executor=pump_executor,
             interaction_handler=interaction_handler,
+            # Pass dependencies needed for subject creation
+            doc_manager=self.doc_manager,
+            sig_manager=self.sig_manager,
+            fingerprint_strategy=self.fingerprint_strategy,
         )
 
         self.init_runner = InitRunner(
