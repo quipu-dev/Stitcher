@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: D 001_unify_transaction_system.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768191431.8830488, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 创建阶段一协议下沉重构脚本", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768191687.472577, "duration_ms": 0}}
