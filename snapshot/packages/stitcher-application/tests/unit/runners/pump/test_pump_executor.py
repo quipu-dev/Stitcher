@@ -1,4 +1,4 @@
-from unittest.mock import create_autospec, MagicMock, ANY
+from unittest.mock import create_autospec, ANY
 from pathlib import Path
 
 import pytest
@@ -54,15 +54,15 @@ def executor(
         sig_manager=mock_sig_manager,
         transformer=create_autospec(LanguageTransformerProtocol, instance=True),
         merger=create_autospec(DocstringMergerProtocol, instance=True),
-        fingerprint_strategy=create_autospec(FingerprintStrategyProtocol, instance=True),
+        fingerprint_strategy=create_autospec(
+            FingerprintStrategyProtocol, instance=True
+        ),
     )
 
 
 @pytest.fixture
 def sample_module() -> ModuleDef:
-    return ModuleDef(
-        file_path="src/main.py", functions=[FunctionDef(name="func_a")]
-    )
+    return ModuleDef(file_path="src/main.py", functions=[FunctionDef(name="func_a")])
 
 
 def test_executor_hydrates_new_doc(executor: PumpExecutor, sample_module: ModuleDef):

@@ -11,7 +11,9 @@ from stitcher.spec import DifferProtocol, ConflictType
 
 # Test Double: A Fake implementation of the CheckSubject protocol for controlled input.
 class FakeCheckSubject(CheckSubject):
-    def __init__(self, file_path: str, states: Dict[str, SymbolState], is_doc: bool = True):
+    def __init__(
+        self, file_path: str, states: Dict[str, SymbolState], is_doc: bool = True
+    ):
         self._file_path = file_path
         self._states = states
         self._is_documentable = is_doc
