@@ -1,7 +1,7 @@
 from typing import List, Tuple
-from io import StringIO
 from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
+
 
 def parse_sidecar_references(content: str) -> List[Tuple[str, int, int]]:
     """
@@ -20,22 +20,22 @@ def parse_sidecar_references(content: str) -> List[Tuple[str, int, int]]:
         return []
 
     references = []
-    
+
     if not isinstance(data, dict):
         return references
 
     # ruamel.yaml attaches metadata to the loaded dict/objects
     # We can inspect this metadata to find line numbers.
-    
+
     for key in data.keys():
         # The key itself usually corresponds to a Python FQN (e.g. "my_pkg.mod.func")
         # We treat this as a reference to that Python symbol.
-        
+
         # Accessing line info for keys is tricky in ruamel.yaml.
         # It is stored in data.lc.data (for dicts).
         # data.lc.data is a dict-like structure or list where keys are indices?
         # Actually, for CommentedMap, .lc.item(key) returns (lineno, colno, ...)
-        
+
         if hasattr(data, "lc") and hasattr(data.lc, "item"):
             # lc.item(key) returns [line, col, pre_key_comment_line, key_comment_line]
             # line is 0-based.

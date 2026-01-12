@@ -47,10 +47,10 @@ class PythonRefactoringStrategy(RefactoringStrategyProtocol):
         try:
             module = cst.parse_module(source_code)
             wrapper = cst.MetadataWrapper(module)
-            
+
             transformer = SymbolRenamerTransformer(rename_map, internal_locations)
             modified_module = wrapper.visit(transformer)
-            
+
             return modified_module.code
         except Exception:
             # In case of syntax errors or other CST issues, return original code
