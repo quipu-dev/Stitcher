@@ -1,35 +1,3 @@
-## [WIP] test(refactor): 添加符号重命名更新 Signature SURI 的集成测试
-
-### 用户需求
-验证在执行 `RenameSymbolOperation` 时，除了更新源代码和 YAML 文档外，是否能正确更新 `.json` 签名文件中以 SURI (`py://...`) 为键的条目。
-
-### 评论
-此测试是验证步骤 1 中 `SidecarUpdateMixin` 逻辑修复的核心验收标准。它覆盖了之前被忽略的“SURI Fragment 更新”路径。
-
-### 目标
-创建 `packages/stitcher-refactor/tests/integration/test_rename_suri_update.py`。
-
-### 基本原理
-测试场景如下：
-1.  创建一个包含类定义的 Python 文件。
-2.  创建一个对应的 Signature 文件，其中包含该类的 SURI 键（`py://...#ClassName`）。
-3.  执行重命名操作 (`ClassName` -> `NewName`)。
-4.  断言 Signature 文件中的键已变更为 `py://...#NewName`，且对应的值（指纹数据）保持不变。
-
-### 标签
-#intent/tooling #flow/ready #priority/high #comp/tests #concept/state #scope/core #ai/instruct #task/domain/testing #task/object/suri-rename #task/action/verify #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建测试文件
-
-~~~~~act
-write_file
-packages/stitcher-refactor/tests/integration/test_rename_suri_update.py
-~~~~~
-~~~~~python
 import json
 from stitcher.analysis.semantic import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
@@ -191,9 +159,3 @@ class MyClass:
     assert old_suri not in updated_data
     assert new_suri in updated_data
     assert updated_data[new_suri]["hash"] == "123"
-~~~~~
-
-### 下一步建议
-运行测试。如果测试通过，说明我们已经成功在不引入新架构包的情况下，修复了 Sidecar SURI 更新的核心痛点。
-
-之后，我们可以根据需要在未来的迭代中逐步考虑是否仍要剥离 `stitcher-lang-sidecar`，或者在当前的 `stitcher-refactor` 中继续优化逻辑。目前来看，"Fix in place" 策略是成功的。

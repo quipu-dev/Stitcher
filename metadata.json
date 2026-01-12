@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: D test_adapter.py, D test_parser.py, A test_sidecar_parser.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768226170.1518474, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test(refactor): 添加符号重命名更新 Signature SURI 的集成测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768226336.1938713, "duration_ms": 0}}
