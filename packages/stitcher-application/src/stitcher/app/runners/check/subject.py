@@ -51,10 +51,7 @@ class IndexCheckSubjectAdapter(CheckSubject):
         stored_hashes = self._sig_manager.load_composite_hashes(self.file_path)
 
         yaml_content_hashes = {
-            fqn: self._doc_manager.compute_yaml_content_hash(
-                self._doc_manager._serialize_ir(ir)
-            )
-            for fqn, ir in yaml_docs.items()
+            fqn: self._doc_manager.compute_ir_hash(ir) for fqn, ir in yaml_docs.items()
         }
 
         # 2. Map symbols for easy lookup

@@ -1,11 +1,16 @@
 from typing import Optional, List, Tuple
 from .db import DatabaseManager
+from .linker import Linker
 from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord
 
 
 class IndexStore:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
+        self._linker = Linker(db_manager)
+
+    def resolve_missing_links(self) -> None:
+        self._linker.link()
 
     def sync_file(
         self, path: str, content_hash: str, mtime: float, size: int

@@ -7,6 +7,7 @@
     "baseline_code_signature_text": "def __init__(self, db_manager: DatabaseManager):",
     "baseline_code_structure_hash": "33fb90ba984edd391f3364b3681ac9de814db2162cdca6e3e8b0b4ee6a29ba5a"
   },
+  "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore._linker": {},
   "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.db": {},
   "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.delete_file": {
     "baseline_code_signature_text": "def delete_file(self, file_id: int) -> None:",
@@ -43,6 +44,10 @@
   "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_symbols_by_file_path": {
     "baseline_code_signature_text": "def get_symbols_by_file_path(self, file_path: str) -> List[SymbolRecord]:",
     "baseline_code_structure_hash": "e68bf15c3abab873819d8ab9be5972e24abb9a7609b7845df9adff73c5ee692d"
+  },
+  "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.resolve_missing_links": {
+    "baseline_code_signature_text": "def resolve_missing_links(self) -> None:",
+    "baseline_code_structure_hash": "e9cb819f2d582a942ce72446df467482772baee91f35b8d8b274ab1a6d8d9aff"
   },
   "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.sync_file": {
     "baseline_code_signature_text": "def sync_file(self, path: str, content_hash: str, mtime: float, size: int) -> Tuple[int, bool]:",

@@ -3,20 +3,18 @@ import logging
 from pathlib import Path
 from typing import Dict, Set, Any
 
-from .store import IndexStore
+from stitcher.spec import IndexStoreProtocol
 from stitcher.spec.index import FileRecord
 from stitcher.spec.registry import LanguageAdapter
-from .linker import Linker
 
 log = logging.getLogger(__name__)
 
 
 class FileIndexer:
-    def __init__(self, root_path: Path, store: IndexStore):
+    def __init__(self, root_path: Path, store: IndexStoreProtocol):
         self.root_path = root_path
         self.store = store
         self.adapters: Dict[str, LanguageAdapter] = {}
-        self.linker = Linker(store.db)
 
     def register_adapter(self, extension: str, adapter: LanguageAdapter):
         self.adapters[extension] = adapter
@@ -94,7 +92,7 @@ class FileIndexer:
                 stats["error_details"].append((str(abs_path), str(e)))
 
         # --- Linking ---
-        self.linker.link()
+        self.store.resolve_missing_links()
         return stats
 
     def _process_file_content(

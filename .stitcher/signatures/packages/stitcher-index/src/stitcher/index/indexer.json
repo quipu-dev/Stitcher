@@ -4,8 +4,8 @@
     "baseline_code_structure_hash": "77183fff1c8f5c2024c916a3586ff862db65f4452efdc652381694809bcc3455"
   },
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, store: IndexStore):",
-    "baseline_code_structure_hash": "d70efa7425fcf910431ea7898a3909fba4d8d02a58b5ef86d97db68d96d9f2d8"
+    "baseline_code_signature_text": "def __init__(self, root_path: Path, store: IndexStoreProtocol):",
+    "baseline_code_structure_hash": "df6496de185eb42f41c6e7a907e69c332c44b11b25c8312cea7710c6d0daa9ff"
   },
   "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer._process_file_content": {
     "baseline_code_signature_text": "def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes) -> None:",

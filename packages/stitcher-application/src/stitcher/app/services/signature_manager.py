@@ -19,6 +19,9 @@ class SignatureManager:
     def _get_sig_path(self, file_path: str) -> Path:
         return self.resolver.get_signature_path(file_path)
 
+    def get_signature_path(self, file_path: str) -> Path:
+        return self._get_sig_path(file_path)
+
     def serialize_hashes(self, file_path: str, hashes: Dict[str, Fingerprint]) -> str:
         serialized_data = {
             SURIGenerator.for_symbol(file_path, fqn): fp.to_dict()

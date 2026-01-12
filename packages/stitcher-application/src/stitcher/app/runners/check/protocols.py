@@ -1,6 +1,9 @@
-from typing import Protocol, Dict, Optional
+from typing import Protocol, Dict, Optional, List, Tuple
 from dataclasses import dataclass
-from stitcher.spec import DocstringIR
+
+from stitcher.spec import DocstringIR, ModuleDef
+from stitcher.spec.interaction import InteractionContext
+from stitcher.app.types import FileCheckResult
 
 
 @dataclass
@@ -32,3 +35,29 @@ class CheckSubject(Protocol):
     def is_documentable(self) -> bool: ...
 
     def get_all_symbol_states(self) -> Dict[str, SymbolState]: ...
+
+
+class CheckAnalyzerProtocol(Protocol):
+    def analyze_subject(
+        self, subject: "CheckSubject"
+    ) -> Tuple[FileCheckResult, List[InteractionContext]]: ...
+
+
+class CheckResolverProtocol(Protocol):
+    def auto_reconcile_docs(
+        self, results: List[FileCheckResult], modules: List[ModuleDef]
+    ): ...
+
+    def resolve_conflicts(
+        self,
+        results: List[FileCheckResult],
+        conflicts: List[InteractionContext],
+        force_relink: bool = False,
+        reconcile: bool = False,
+    ) -> bool: ...
+
+    def reformat_all(self, modules: List[ModuleDef]): ...
+
+
+class CheckReporterProtocol(Protocol):
+    def report(self, results: List[FileCheckResult]) -> bool: ...

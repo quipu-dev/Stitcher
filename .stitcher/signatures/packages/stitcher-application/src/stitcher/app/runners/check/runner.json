@@ -4,8 +4,8 @@
     "baseline_code_structure_hash": "51cb9a01b6a0263aeb242f78835ea5fd9cced46725a16807875266497033e248"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.__init__": {
-    "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, doc_manager: DocumentManagerProtocol, sig_manager: SignatureManagerProtocol, differ: DifferProtocol, interaction_handler: InteractionHandler | None, fingerprint_strategy: FingerprintStrategyProtocol, index_store: IndexStoreProtocol):",
-    "baseline_code_structure_hash": "9c64304cc196a983a26077c180d028ec478c868609ee7c72d3579ca5397ab3a9"
+    "baseline_code_signature_text": "def __init__(self, doc_manager: DocumentManagerProtocol, sig_manager: SignatureManagerProtocol, fingerprint_strategy: FingerprintStrategyProtocol, index_store: IndexStoreProtocol, analyzer: CheckAnalyzerProtocol, resolver: CheckResolverProtocol, reporter: CheckReporterProtocol):",
+    "baseline_code_structure_hash": "2a203bc28ac6004aa9ab949b2f302e2805a069fdf5f3feb66361af50a51fd57f"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.analyze_batch": {
     "baseline_code_signature_text": "def analyze_batch(self, modules: List[ModuleDef]) -> Tuple[List[FileCheckResult], List[InteractionContext]]:",

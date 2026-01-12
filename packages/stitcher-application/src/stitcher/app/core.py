@@ -28,6 +28,11 @@ from .runners import (
     RefactorRunner,
     IndexRunner,
 )
+from .runners.check.analyzer import CheckAnalyzer
+from .runners.check.resolver import CheckResolver
+from .runners.check.reporter import CheckReporter
+from .runners.pump.analyzer import PumpAnalyzer
+from .runners.pump.executor import PumpExecutor
 from stitcher.common.transaction import TransactionManager
 from typing import Callable
 from .types import PumpResult, FileCheckResult, CoverageResult
@@ -78,27 +83,43 @@ class StitcherApp:
         )
 
         # 3. Runners (Command Handlers)
-        self.check_runner = CheckRunner(
+        check_analyzer = CheckAnalyzer(root_path, self.differ)
+        check_resolver = CheckResolver(
             root_path,
             parser,
             self.doc_manager,
             self.sig_manager,
-            self.differ,
             interaction_handler,
-            fingerprint_strategy=self.fingerprint_strategy,
-            index_store=self.index_store,
+            self.fingerprint_strategy,
         )
-        self.pump_runner = PumpRunner(
+        check_reporter = CheckReporter()
+        self.check_runner = CheckRunner(
+            self.doc_manager,
+            self.sig_manager,
+            self.fingerprint_strategy,
+            self.index_store,
+            analyzer=check_analyzer,
+            resolver=check_resolver,
+            reporter=check_reporter,
+        )
+
+        pump_analyzer = PumpAnalyzer(
+            self.doc_manager, self.sig_manager, self.index_store, self.differ
+        )
+        pump_executor = PumpExecutor(
             root_path,
             self.doc_manager,
             self.sig_manager,
             transformer,
-            self.differ,
             self.merger,
-            interaction_handler,
-            fingerprint_strategy=self.fingerprint_strategy,
-            index_store=self.index_store,
+            self.fingerprint_strategy,
         )
+        self.pump_runner = PumpRunner(
+            analyzer=pump_analyzer,
+            executor=pump_executor,
+            interaction_handler=interaction_handler,
+        )
+
         self.init_runner = InitRunner(
             root_path,
             self.doc_manager,

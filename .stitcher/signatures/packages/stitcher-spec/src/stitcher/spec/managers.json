@@ -8,6 +8,10 @@
     "baseline_code_structure_hash": "e56a0adff3469aa6298fdb962bf102b0ba1154d1d861c3a7668a0fffb4def6ea"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.adapter": {},
+  "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.compute_ir_hash": {
+    "baseline_code_signature_text": "def compute_ir_hash(self, ir: DocstringIR) -> str:",
+    "baseline_code_structure_hash": "1c06e4cb242c9eeb0d45807faa0e6ee871f890a7cb5d47bdb5acd5f529162032"
+  },
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.compute_yaml_content_hash": {
     "baseline_code_signature_text": "def compute_yaml_content_hash(self, content: Union[str, Dict[str, Any]]) -> str:",
     "baseline_code_structure_hash": "9b0193fc54ae81f01144d1408e8008630f86ad52d4feca7eaea809e9ef11ae6c"
@@ -15,6 +19,10 @@
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.compute_yaml_content_hashes": {
     "baseline_code_signature_text": "def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:",
     "baseline_code_structure_hash": "dfcbf92e9dc8b80168adf3b58c20280a105de891575b7ac2e92e68c31a7032bd"
+  },
+  "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.dump_data": {
+    "baseline_code_signature_text": "def dump_data(self, data: Dict[str, Any]) -> str:",
+    "baseline_code_structure_hash": "87f7e2826b33e290acbcf8b13fbf140b1568a495c149839f651816938df73f32"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.flatten_module_docs": {
     "baseline_code_signature_text": "def flatten_module_docs(self, module: ModuleDef) -> Dict[str, DocstringIR]:",
@@ -40,6 +48,10 @@
     "baseline_code_signature_text": "def save_docs_for_module(self, module: ModuleDef) -> Path:",
     "baseline_code_structure_hash": "02e5fe452fa0690256cf2ccf7dd9bf4ee571745329485156eea4f2879692527a"
   },
+  "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.serialize_ir": {
+    "baseline_code_signature_text": "def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
+    "baseline_code_structure_hash": "e996d2c301e430e6574db44e0738e91ecac3f5c31cd175bcf5fd36a69b383c16"
+  },
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#SignatureManagerProtocol": {
     "baseline_code_signature_text": "class SignatureManagerProtocol(Protocol):",
     "baseline_code_structure_hash": "2e09689baddd7f6aacdaf27837e7541aa1391be8402cc53bcd04bb93cf870499"
@@ -47,6 +59,10 @@
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#SignatureManagerProtocol._get_sig_path": {
     "baseline_code_signature_text": "def _get_sig_path(self, file_path: str) -> Path:",
     "baseline_code_structure_hash": "0a29a82a7da0ca3cfebe2ff7ca3719ba5ac9199b4c6a734154a50b678c5b6f46"
+  },
+  "py://packages/stitcher-spec/src/stitcher/spec/managers.py#SignatureManagerProtocol.get_signature_path": {
+    "baseline_code_signature_text": "def get_signature_path(self, file_path: str) -> Path:",
+    "baseline_code_structure_hash": "6594f8b9462eeb6df0236bbeed7e5e314786eb889bf3ad75eb23a6508498c525"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#SignatureManagerProtocol.load_composite_hashes": {
     "baseline_code_signature_text": "def load_composite_hashes(self, file_path: str) -> Dict[str, Fingerprint]:",

@@ -1,4 +1,36 @@
 {
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckAnalyzerProtocol": {
+    "baseline_code_signature_text": "class CheckAnalyzerProtocol(Protocol):",
+    "baseline_code_structure_hash": "f2eb8c0a71729900fa9260cf3c94d84c3dd2535e1535bb8ad0c259fbfcd6fae7"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckAnalyzerProtocol.analyze_subject": {
+    "baseline_code_signature_text": "def analyze_subject(self, subject: CheckSubject) -> Tuple[FileCheckResult, List[InteractionContext]]:",
+    "baseline_code_structure_hash": "310625567e6cfa0d95d6b57c838bb6784216ed3f0423806434a4c07b5c11b045"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckReporterProtocol": {
+    "baseline_code_signature_text": "class CheckReporterProtocol(Protocol):",
+    "baseline_code_structure_hash": "76422098269aef744346b0ed1ca2c3cc84b3b8c7e5437aadffe93fed7ddc3216"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckReporterProtocol.report": {
+    "baseline_code_signature_text": "def report(self, results: List[FileCheckResult]) -> bool:",
+    "baseline_code_structure_hash": "3b154b57774cb70599d76bad8a376720541936fda6490637a561551c556354f4"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckResolverProtocol": {
+    "baseline_code_signature_text": "class CheckResolverProtocol(Protocol):",
+    "baseline_code_structure_hash": "f4ad808258eca9459c910f768dc94db129b21b9fceb189a7465d8ec1bfe30a17"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckResolverProtocol.auto_reconcile_docs": {
+    "baseline_code_signature_text": "def auto_reconcile_docs(self, results: List[FileCheckResult], modules: List[ModuleDef]):",
+    "baseline_code_structure_hash": "b19909870f99eac4c1aecbac8e9ad003854fe8513ee72cabbe21639f31f38718"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckResolverProtocol.reformat_all": {
+    "baseline_code_signature_text": "def reformat_all(self, modules: List[ModuleDef]):",
+    "baseline_code_structure_hash": "1ffd9769c49297ddeaccf6ce1061dfa70a81478a8bbd6e4d5720439f020f4f7a"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckResolverProtocol.resolve_conflicts": {
+    "baseline_code_signature_text": "def resolve_conflicts(self, results: List[FileCheckResult], conflicts: List[InteractionContext], force_relink: bool = False, reconcile: bool = False) -> bool:",
+    "baseline_code_structure_hash": "7c312fb41ba8a7400e0883713391a167220fa568d784e32a0b58963a346d7366"
+  },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/protocols.py#CheckSubject": {
     "baseline_code_signature_text": "class CheckSubject(Protocol):",
     "baseline_code_structure_hash": "5f81d00b387bd2a679d5085dfe1b69b37f35f4f66a33b598cbe3fd53de31b956",

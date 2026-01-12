@@ -1,0 +1,22 @@
+{
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump/analyzer.py#PumpAnalyzer": {
+    "baseline_code_signature_text": "class PumpAnalyzer:",
+    "baseline_code_structure_hash": "379304c59004be36a586342bef2604b2fdf9f20754d6d55dd57f205302214625"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump/analyzer.py#PumpAnalyzer.__init__": {
+    "baseline_code_signature_text": "def __init__(self, doc_manager: DocumentManagerProtocol, sig_manager: SignatureManagerProtocol, index_store: IndexStoreProtocol, differ: DifferProtocol):",
+    "baseline_code_structure_hash": "4cc3e2d87e6bd2ea4d72fcb1a0790574de8fd9683c504b1faaa8e65f2fccc5ae"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump/analyzer.py#PumpAnalyzer._get_dirty_source_docs": {
+    "baseline_code_signature_text": "def _get_dirty_source_docs(self, module: ModuleDef) -> Dict[str, DocstringIR]:",
+    "baseline_code_structure_hash": "8bc3e1aa704e724594780e0af063c74438385269a804b28f5ff1b7872e90563f"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump/analyzer.py#PumpAnalyzer.analyze": {
+    "baseline_code_signature_text": "def analyze(self, modules: List[ModuleDef]) -> List[InteractionContext]:",
+    "baseline_code_structure_hash": "81d862c32db546bd5295d111afe63a4d394b2730fd0cae4043b7739279131648"
+  },
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump/analyzer.py#PumpAnalyzer.differ": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump/analyzer.py#PumpAnalyzer.doc_manager": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump/analyzer.py#PumpAnalyzer.index_store": {},
+  "py://packages/stitcher-application/src/stitcher/app/runners/pump/analyzer.py#PumpAnalyzer.sig_manager": {}
+}

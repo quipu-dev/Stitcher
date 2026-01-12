@@ -241,9 +241,10 @@ class CheckResolver:
                         doc_path.unlink()
                 else:
                     final_data = {
-                        k: self.doc_manager._serialize_ir(v) for k, v in docs.items()
+                        k: self.doc_manager.serialize_ir(v) for k, v in docs.items()
                     }
-                    self.doc_manager.adapter.save(doc_path, final_data)
+                    content = self.doc_manager.dump_data(final_data)
+                    doc_path.write_text(content, encoding="utf-8")
 
     def reformat_all(self, modules: List[ModuleDef]):
         bus.info(L.check.run.reformatting)

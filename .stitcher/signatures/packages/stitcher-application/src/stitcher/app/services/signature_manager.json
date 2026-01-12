@@ -12,6 +12,10 @@
     "baseline_code_signature_text": "def _get_sig_path(self, file_path: str) -> Path:",
     "baseline_code_structure_hash": "0a29a82a7da0ca3cfebe2ff7ca3719ba5ac9199b4c6a734154a50b678c5b6f46"
   },
+  "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#SignatureManager.get_signature_path": {
+    "baseline_code_signature_text": "def get_signature_path(self, file_path: str) -> Path:",
+    "baseline_code_structure_hash": "6594f8b9462eeb6df0236bbeed7e5e314786eb889bf3ad75eb23a6508498c525"
+  },
   "py://packages/stitcher-application/src/stitcher/app/services/signature_manager.py#SignatureManager.load_composite_hashes": {
     "baseline_code_signature_text": "def load_composite_hashes(self, file_path: str) -> Dict[str, Fingerprint]:",
     "baseline_code_structure_hash": "97662998174f7e041e067768e1906ca97e1c556b4b49953c08aca3ccaac2055e",
