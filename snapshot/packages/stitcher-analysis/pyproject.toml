@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stitcher-analysis"
+version = "0.1.0"
+description = "Analysis, rule, and reasoning engine for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "stitcher-spec",
+    "stitcher-common",
+    "stitcher-index",
+    "stitcher-config",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+
+[tool.uv.sources]
+stitcher-spec = { workspace = true }
+stitcher-common = { workspace = true }
+stitcher-index = { workspace = true }
+stitcher-config = { workspace = true }

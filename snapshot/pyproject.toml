@@ -25,6 +25,7 @@ dev = [
     "stitcher-workspace",
     "stitcher-lang-python",
     "stitcher-lang-sidecar",
+    "stitcher-analysis",
 ]
 
 [tool.setuptools.packages.find]
@@ -52,6 +53,7 @@ stitcher-index = { workspace = true }
 stitcher-workspace = { workspace = true }
 stitcher-lang-python = { workspace = true }
 stitcher-lang-sidecar = { workspace = true }
+stitcher-analysis = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
@@ -72,6 +74,7 @@ pythonpath = [
     "packages/pyneedle-runtime/src",
     "packages/pyneedle-spec/src",
     "packages/stitcher-lang-python/src",
+    "packages/stitcher-analysis/src",
 ]
 
 [tool.stitcher.targets.stitcher]
@@ -87,6 +90,7 @@ scan_paths = [
     "packages/stitcher-workspace/src",
     "packages/stitcher-test-utils/src",
     "packages/stitcher-lang-python/src",
+    "packages/stitcher-analysis/src",
 ]
 stub_package = "packages/stitcher-stubs"
 
@@ -118,4 +122,5 @@ extraPaths = [
     "packages/stitcher-index/src",
     "packages/stitcher-workspace/src",
     "packages/stitcher-lang-python/src",
+    "packages/stitcher-analysis/src",
 ]
