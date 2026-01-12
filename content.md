@@ -1,191 +1,59 @@
-根据分析，将 `Linker` 的职责下沉到 `IndexStore` 是最符合依赖倒置原则的方案。
+好的，我们已经完成了“阶段三：核心服务抽象化”的主要协议净化和解耦工作。现在我将生成一个 `[COMMIT]` 计划来提交这些变更。
 
-**分析结论**:
-1.  **领域归属**: “链接（Linking）”本质上是索引数据的一致性维护操作。具体的存储后端（如 SQLite）最知道如何高效地执行这种批量更新（如使用 SQL JOIN 更新）。因此，这是 `IndexStore` 的一种固有能力，而非外部逻辑。
-2.  **解耦收益**: 将链接逻辑隐藏在 `IndexStoreProtocol` 之后，`FileIndexer` 就不再需要知道“链接器”的存在，也不需要持有数据库连接。这使得我们可以在单元测试中轻松 Mock 掉整个存储层，而无需模拟复杂的 SQL 链接过程。
-
-**实施方案**:
-1.  **协议层**: 在 `IndexStoreProtocol` 中增加 `resolve_missing_links()` 方法。
-2.  **实现层**: 在 `IndexStore` 中实现该方法，由它在内部调用 `Linker`（或直接执行 SQL）。
-3.  **调用层**: 修改 `FileIndexer`，移除 `Linker` 属性，改为调用 `self.store.resolve_missing_links()`。
-
-## [WIP] refactor: 将 Linker 职责下沉至 IndexStore 以实现完全解耦
+## [COMMIT] refactor: 净化核心服务协议并解除实现细节耦合
 
 ### 用户需求
-目前 `FileIndexer` 直接实例化并使用 `Linker`，这导致它必须访问底层的 `DatabaseManager` (通过 `getattr(store, "db")` 这种临时 hack)。用户希望消除这种对实现细节的依赖，将链接逻辑抽象为 `IndexStore` 的一部分。
+用户要求将最近关于 `DocumentManager`, `SignatureManager` 以及 `IndexStore` 的一系列协议净化和解耦工作作为一个完整的逻辑单元提交。
 
 ### 评论
-这是一个非常清晰的重构。通过这次修改，`FileIndexer` 将变成一个纯粹的编排器：它读取文件 -> 解析 -> 传给 Store -> 要求 Store 整理数据。它不再关心数据是如何存储或如何建立关联的。这使得 `FileIndexer` 变得极易测试且完全符合 DIP 原则。
+这是一次重大的架构改进。通过移除协议中泄漏的实现细节（如私有方法前缀和特定的序列化逻辑），我们真正实现了“面向接口编程”。这不仅清理了代码，更重要的是为系统的可测试性打下了坚实基础——现在我们可以轻松地为 Runner 提供内存中的 Mock 实现，而无需担心它们会去访问底层的文件系统或数据库。
 
 ### 目标
-1.  **更新 Protocol**: 在 `IndexStoreProtocol` 中添加 `resolve_missing_links` 接口。
-2.  **增强 Store**: 在 `IndexStore` 中实现该接口，封装 `Linker` 的调用。
-3.  **净化 Indexer**: 从 `FileIndexer` 中彻底移除 `Linker` 和 `DatabaseManager` 的痕迹。
+1.  提交对 `stitcher-spec` 中 `managers.py` 和 `storage.py` 的协议定义改进。
+2.  提交对 `stitcher-application` 中实现类和调用方 (`PumpRunner`) 的同步重构。
+3.  提交对 `stitcher-index` 中索引逻辑的解耦改进，包括将 `Linker` 职责下沉至 `IndexStore`。
 
 ### 基本原理
-**单一职责原则 (SRP)** 和 **高内聚**: 数据的一致性维护（链接）应与数据存储紧密结合。
-**依赖倒置原则 (DIP)**: `FileIndexer` 只应依赖于抽象的存储能力，而不是具体的 SQL 维护工具。
+本阶段重构严格遵循 **依赖倒置原则 (DIP)** 和 **最少知识原则 (LoD)**。通过净化协议，我们确保了核心业务逻辑（Runner 和 Indexer）只知道它们“需要什么能力”，而不知道这些能力是“如何通过 YAML 或 SQLite 实现的”。这种解耦是构建健壮插件式架构的先决条件。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/interfaces #comp/index #scope/core #ai/instruct #task/domain/architecture #task/object/linker #task/action/absorb #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/interfaces #comp/runtime #comp/index #scope/core #ai/instruct #task/domain/architecture #task/object/protocols #task/action/refactor #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 IndexStoreProtocol
+#### Acts 1: 提交重构变更
 
-在协议中增加链接能力。
+我们将所有受影响的文件添加到 Git 暂存区并创建提交。
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-spec/src/stitcher/spec/managers.py
+packages/stitcher-application/src/stitcher/app/services/doc_manager.py
+packages/stitcher-application/src/stitcher/app/services/signature_manager.py
+packages/stitcher-application/src/stitcher/app/runners/pump.py
 packages/stitcher-spec/src/stitcher/spec/storage.py
-~~~~~
-~~~~~python.old
-    def update_analysis(
-        self,
-        file_id: int,
-        symbols: List[SymbolRecord],
-        references: List[ReferenceRecord],
-    ) -> None: ...
-
-    def delete_file(self, file_id: int) -> None: ...
-~~~~~
-~~~~~python.new
-    def update_analysis(
-        self,
-        file_id: int,
-        symbols: List[SymbolRecord],
-        references: List[ReferenceRecord],
-    ) -> None: ...
-
-    def delete_file(self, file_id: int) -> None: ...
-
-    def resolve_missing_links(self) -> None: ...
-~~~~~
-
-#### Acts 2: 在 IndexStore 中实现链接逻辑
-
-我们将 `Linker` 作为 `IndexStore` 的内部实现细节使用。
-
-~~~~~act
-patch_file
 packages/stitcher-index/src/stitcher/index/store.py
-~~~~~
-~~~~~python.old
-from typing import Optional, List, Tuple
-from .db import DatabaseManager
-from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord
-
-
-class IndexStore:
-    def __init__(self, db_manager: DatabaseManager):
-        self.db = db_manager
-
-    def sync_file(
-        self, path: str, content_hash: str, mtime: float, size: int
-~~~~~
-~~~~~python.new
-from typing import Optional, List, Tuple
-from .db import DatabaseManager
-from .linker import Linker
-from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord
-
-
-class IndexStore:
-    def __init__(self, db_manager: DatabaseManager):
-        self.db = db_manager
-        self._linker = Linker(db_manager)
-
-    def resolve_missing_links(self) -> None:
-        self._linker.link()
-
-    def sync_file(
-        self, path: str, content_hash: str, mtime: float, size: int
-~~~~~
-
-#### Acts 3: 净化 FileIndexer
-
-移除 `Linker` 的实例化和 Hack 代码，改用 `store` 的方法。
-
-~~~~~act
-patch_file
 packages/stitcher-index/src/stitcher/index/indexer.py
-~~~~~
-~~~~~python.old
-from stitcher.spec import IndexStoreProtocol
-from stitcher.spec.index import FileRecord
-from stitcher.spec.registry import LanguageAdapter
-from .linker import Linker
-
-log = logging.getLogger(__name__)
-
-
-class FileIndexer:
-    def __init__(self, root_path: Path, store: IndexStoreProtocol):
-        self.root_path = root_path
-        self.store = store
-        self.adapters: Dict[str, LanguageAdapter] = {}
-        # FIXME: Linker still depends on the concrete DB manager. This will be addressed
-        # in a subsequent refactoring task. For now, we assume the provided store
-        # has a 'db' attribute if it's the concrete IndexStore.
-        self.linker = Linker(getattr(store, "db", None))
-
-    def register_adapter(self, extension: str, adapter: LanguageAdapter):
-        self.adapters[extension] = adapter
-
-    def index_files(self, discovered_paths: Set[str]) -> Dict[str, Any]:
-        stats: Dict[str, Any] = {
-~~~~~
-~~~~~python.new
-from stitcher.spec import IndexStoreProtocol
-from stitcher.spec.index import FileRecord
-from stitcher.spec.registry import LanguageAdapter
-
-log = logging.getLogger(__name__)
-
-
-class FileIndexer:
-    def __init__(self, root_path: Path, store: IndexStoreProtocol):
-        self.root_path = root_path
-        self.store = store
-        self.adapters: Dict[str, LanguageAdapter] = {}
-
-    def register_adapter(self, extension: str, adapter: LanguageAdapter):
-        self.adapters[extension] = adapter
-
-    def index_files(self, discovered_paths: Set[str]) -> Dict[str, Any]:
-        stats: Dict[str, Any] = {
 ~~~~~
 
 ~~~~~act
-patch_file
-packages/stitcher-index/src/stitcher/index/indexer.py
+git_commit
 ~~~~~
-~~~~~python.old
-                stats["errors"] += 1
-                stats["error_details"].append((str(abs_path), str(e)))
+~~~~~text
+refactor: purify core service protocols and decouple implementation details
 
-        # --- Linking ---
-        self.linker.link()
-        return stats
+This commit completes the primary objectives of Phase 3: Service Abstraction by purifying the interfaces in stitcher-spec and removing implementation-specific leaks in the application and index layers.
 
-    def _process_file_content(
-        self, file_id: int, abs_path: Path, content_bytes: bytes
-    ) -> None:
-~~~~~
-~~~~~python.new
-                stats["errors"] += 1
-                stats["error_details"].append((str(abs_path), str(e)))
+Key changes:
+- Purified DocumentManagerProtocol and SignatureManagerProtocol by removing private methods and exposing high-level semantic APIs (e.g., compute_ir_hash, dump_data).
+- Updated PumpRunner to use the new protocol-level methods, decoupling it from YAML/JSON serialization details.
+- Expanded IndexStoreProtocol to cover write/sync operations, enabling FileIndexer to depend solely on abstraction.
+- Absorbed Linker logic into IndexStore, removing the need for FileIndexer to hold a direct database reference.
 
-        # --- Linking ---
-        self.store.resolve_missing_links()
-        return stats
-
-    def _process_file_content(
-        self, file_id: int, abs_path: Path, content_bytes: bytes
-    ) -> None:
+These changes significantly improve system testability and enforce strict adherence to the Dependency Inversion Principle across package boundaries.
 ~~~~~
 
 ### 下一步建议
-现在 `FileIndexer` 已经完全与 SQLite 解耦。接下来的工作是解决“组合根”问题，即 Runner 内部硬编码实例化子组件的问题（如 `CheckRunner` 内部的 `CheckAnalyzer` 和 `CheckResolver`），将其改为通过构造函数注入或工厂模式创建。这将完成服务抽象化的最后一块拼图。
+随着核心服务的协议已经净化，下一步建议进入 **“阶段四：Refactor 引擎泛化”**，或者解决 Runner 内部硬编码实例化子组件的问题，通过引入工厂模式或依赖注入框架，彻底完成 `stitcher-application` 的解耦。
