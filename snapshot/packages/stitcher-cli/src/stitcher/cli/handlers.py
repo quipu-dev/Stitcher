@@ -2,7 +2,7 @@ import sys
 from typing import List, Optional
 from needle.pointer import L
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
-from stitcher.spec import ResolutionAction, ConflictType
+from stitcher.spec import ResolutionAction
 from .interactive import TyperInteractiveRenderer, SemanticMenuOption
 
 
@@ -30,8 +30,9 @@ class TyperInteractionHandler(InteractionHandler):
 
             # Build Options
             options = []
+            violation = context.violation_type
 
-            if context.conflict_type == ConflictType.SIGNATURE_DRIFT:
+            if violation == L.check.state.signature_drift:
                 options.append(
                     SemanticMenuOption(
                         key="f",
@@ -40,7 +41,7 @@ class TyperInteractionHandler(InteractionHandler):
                         desc_id=L.interactive.option.relink.desc,
                     )
                 )
-            elif context.conflict_type == ConflictType.DANGLING_DOC:
+            elif violation == L.check.issue.extra:  # DANGLING_DOC
                 options.append(
                     SemanticMenuOption(
                         key="p",
@@ -49,7 +50,7 @@ class TyperInteractionHandler(InteractionHandler):
                         desc_id=L.interactive.option.purge.desc,
                     )
                 )
-            elif context.conflict_type == ConflictType.CO_EVOLUTION:
+            elif violation == L.check.state.co_evolution:
                 options.append(
                     SemanticMenuOption(
                         key="r",
@@ -58,7 +59,7 @@ class TyperInteractionHandler(InteractionHandler):
                         desc_id=L.interactive.option.reconcile.desc,
                     )
                 )
-            elif context.conflict_type == ConflictType.DOC_CONTENT_CONFLICT:
+            elif violation == L.check.issue.conflict:  # DOC_CONTENT_CONFLICT
                 options.append(
                     SemanticMenuOption(
                         key="f",
@@ -75,16 +76,17 @@ class TyperInteractionHandler(InteractionHandler):
                         desc_id=L.interactive.option.keep.desc,
                     )
                 )
-                # NOTE: Skip is disabled for pump to prevent data loss with file-level strip
-                if context.conflict_type != ConflictType.DOC_CONTENT_CONFLICT:
-                    options.append(
-                        SemanticMenuOption(
-                            key="s",
-                            action=ResolutionAction.SKIP,
-                            label_id=L.interactive.option.skip.label,
-                            desc_id=L.interactive.option.skip.desc,
-                        )
+
+            # NOTE: Skip is disabled for pump to prevent data loss with file-level strip
+            if violation != L.check.issue.conflict:
+                options.append(
+                    SemanticMenuOption(
+                        key="s",
+                        action=ResolutionAction.SKIP,
+                        label_id=L.interactive.option.skip.label,
+                        desc_id=L.interactive.option.skip.desc,
                     )
+                )
 
             options.append(
                 SemanticMenuOption(

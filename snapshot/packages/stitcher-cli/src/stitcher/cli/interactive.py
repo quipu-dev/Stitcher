@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Any, Union
 from needle.pointer import SemanticPointer, L
-from stitcher.spec import ResolutionAction, ConflictType
+from stitcher.spec import ResolutionAction
 from stitcher.spec.interaction import InteractionContext
 import typer
 import click
@@ -50,12 +50,12 @@ class TyperInteractiveRenderer:
 
         # Reason
         reason_map = {
-            ConflictType.SIGNATURE_DRIFT: L.interactive.reason.signature_drift,
-            ConflictType.CO_EVOLUTION: L.interactive.reason.co_evolution,
-            ConflictType.DOC_CONTENT_CONFLICT: L.interactive.reason.doc_content_conflict,
-            ConflictType.DANGLING_DOC: L.interactive.reason.dangling_doc,
+            L.check.state.signature_drift: L.interactive.reason.signature_drift,
+            L.check.state.co_evolution: L.interactive.reason.co_evolution,
+            L.check.issue.conflict: L.interactive.reason.doc_content_conflict,
+            L.check.issue.extra: L.interactive.reason.dangling_doc,
         }
-        reason_l = reason_map.get(context.conflict_type)
+        reason_l = reason_map.get(context.violation_type)
         if reason_l:
             typer.secho("  " + self.operator(reason_l), fg=typer.colors.YELLOW)
 
