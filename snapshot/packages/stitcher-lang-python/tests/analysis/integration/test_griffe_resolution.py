@@ -1,6 +1,6 @@
 import pytest
 from stitcher.test_utils import WorkspaceFactory
-from stitcher.adapter.python import GriffePythonParser
+from stitcher.lang.python import GriffePythonParser
 
 
 def test_griffe_resolves_imports(tmp_path):

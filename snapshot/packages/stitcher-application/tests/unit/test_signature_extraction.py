@@ -1,5 +1,5 @@
 from stitcher.spec import Argument, ArgumentKind, FunctionDef
-from stitcher.adapter.python import PythonFingerprintStrategy
+from stitcher.lang.python import PythonFingerprintStrategy
 
 
 def test_extract_signature_text_simple():

@@ -6,7 +6,7 @@ from stitcher.common import bus
 from needle.pointer import L
 from stitcher.spec import ModuleDef, LanguageParserProtocol
 from stitcher.config import StitcherConfig
-from stitcher.adapter.python import parse_plugin_entry, InspectionError
+from stitcher.lang.python import parse_plugin_entry, InspectionError
 
 
 class ScannerService:

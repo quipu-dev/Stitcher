@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M uv.lock", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768195641.3601687, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 批量修复遗留的 Python 适配器导入路径", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768195643.0577967, "duration_ms": 0}}

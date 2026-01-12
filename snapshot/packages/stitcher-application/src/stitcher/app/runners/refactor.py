@@ -15,7 +15,7 @@ from stitcher.refactor.engine import (
 from stitcher.refactor.migration import MigrationLoader, MigrationError
 from stitcher.workspace import Workspace
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.adapter.python import PythonAdapter
+from stitcher.lang.python import PythonAdapter
 
 
 class RefactorRunner:

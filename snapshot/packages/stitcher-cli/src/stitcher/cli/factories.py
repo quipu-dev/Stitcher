@@ -5,7 +5,7 @@ from typing import Optional
 from stitcher.app import StitcherApp
 from stitcher.spec.interaction import InteractionHandler
 from stitcher.common import stitcher_operator as nexus
-from stitcher.adapter.python import (
+from stitcher.lang.python import (
     GriffePythonParser,
     PythonTransformer,
     PythonFingerprintStrategy,

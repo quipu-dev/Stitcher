@@ -6,7 +6,7 @@ from stitcher.spec import (
     DocstringSection,
     SectionKind,
 )
-from stitcher.adapter.python import get_docstring_codec, get_docstring_serializer
+from stitcher.lang.python.docstring import get_docstring_codec, get_docstring_serializer
 
 
 @pytest.fixture(scope="module")

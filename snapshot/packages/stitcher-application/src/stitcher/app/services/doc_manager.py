@@ -15,7 +15,7 @@ from stitcher.spec import (
     DocstringSerializerProtocol,
 )
 from stitcher.common import DocumentAdapter, YamlAdapter
-from stitcher.adapter.python import RawDocstringParser, RawSerializer
+from stitcher.lang.python.docstring import RawDocstringParser, RawSerializer
 from stitcher.common.services import AssetPathResolver
 
 

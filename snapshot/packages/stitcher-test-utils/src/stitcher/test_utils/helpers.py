@@ -3,7 +3,7 @@ from typing import Optional
 
 from stitcher.app import StitcherApp
 from stitcher.spec.interaction import InteractionHandler
-from stitcher.adapter.python import (
+from stitcher.lang.python import (
     PythonTransformer,
     PythonFingerprintStrategy,
 )

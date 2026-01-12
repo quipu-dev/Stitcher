@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from stitcher.adapter.python import GriffePythonParser
+from stitcher.lang.python import GriffePythonParser
 
 
 def test_parser_fails_on_local_typing_import():

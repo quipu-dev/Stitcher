@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from stitcher.spec import ModuleDef, FunctionDef, Argument, ArgumentKind, Fingerprint
 from stitcher.app.services import SignatureManager
-from stitcher.adapter.python import PythonFingerprintStrategy
+from stitcher.lang.python import PythonFingerprintStrategy
 
 
 def create_func(name="func", args=None, ret=None):
