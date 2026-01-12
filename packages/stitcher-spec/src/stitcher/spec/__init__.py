@@ -17,6 +17,7 @@ from .models import (
     ResolutionPlan,
     FunctionExecutionPlan,
 )
+from .refactor import RefactorUsage, RefactoringStrategyProtocol
 from .fingerprint import Fingerprint, InvalidFingerprintKeyError
 from .protocols import (
     LanguageParserProtocol,
@@ -64,4 +65,7 @@ __all__ = [
     "Resolution",
     "ResolutionPlan",
     "FunctionExecutionPlan",
+    # Refactor
+    "RefactorUsage",
+    "RefactoringStrategyProtocol",
 ]

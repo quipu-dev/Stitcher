@@ -7,6 +7,7 @@ from .parser.griffe import GriffePythonParser
 from .parser.cst import PythonParser
 from .transform.facade import PythonTransformer
 from .uri import SURIGenerator
+from .refactor import PythonRefactoringStrategy
 
 __all__ = [
     "PythonAdapter",
@@ -17,4 +18,5 @@ __all__ = [
     "PythonParser",
     "PythonTransformer",
     "SURIGenerator",
+    "PythonRefactoringStrategy",
 ]

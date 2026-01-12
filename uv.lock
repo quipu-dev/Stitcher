@@ -19,6 +19,7 @@ members = [
     "stitcher-config",
     "stitcher-index",
     "stitcher-lang-python",
+    "stitcher-lang-sidecar",
     "stitcher-python",
     "stitcher-refactor",
     "stitcher-spec",
@@ -644,6 +645,15 @@ wheels = [
 ]
 
 [[package]]
+name = "ruamel-yaml"
+version = "0.19.1"
+source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
+sdist = { url = "https://mirrors.aliyun.com/pypi/packages/c7/3b/ebda527b56beb90cb7652cb1c7e4f91f48649fbcd8d2eb2fb6e77cd3329b/ruamel_yaml-0.19.1.tar.gz", hash = "sha256:53eb66cd27849eff968ebf8f0bf61f46cdac2da1d1f3576dd4ccee9b25c31993" }
+wheels = [
+    { url = "https://mirrors.aliyun.com/pypi/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl", hash = "sha256:27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93" },
+]
+
+[[package]]
 name = "ruff"
 version = "0.14.10"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -783,6 +793,23 @@ requires-dist = [
 ]
 
 [[package]]
+name = "stitcher-lang-sidecar"
+version = "0.1.0"
+source = { editable = "packages/stitcher-lang-sidecar" }
+dependencies = [
+    { name = "ruamel-yaml" },
+    { name = "stitcher-common" },
+    { name = "stitcher-spec" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ruamel-yaml", specifier = ">=0.17.0" },
+    { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-spec", editable = "packages/stitcher-spec" },
+]
+
+[[package]]
 name = "stitcher-python"
 version = "0.1.0"
 source = { virtual = "." }
@@ -802,6 +829,7 @@ dev = [
     { name = "stitcher-cli" },
     { name = "stitcher-index" },
     { name = "stitcher-lang-python" },
+    { name = "stitcher-lang-sidecar" },
     { name = "stitcher-refactor" },
     { name = "stitcher-stubgen" },
     { name = "stitcher-test-utils" },
@@ -823,6 +851,7 @@ requires-dist = [
     { name = "stitcher-cli", marker = "extra == 'dev'", editable = "packages/stitcher-cli" },
     { name = "stitcher-index", marker = "extra == 'dev'", editable = "packages/stitcher-index" },
     { name = "stitcher-lang-python", marker = "extra == 'dev'", editable = "packages/stitcher-lang-python" },
+    { name = "stitcher-lang-sidecar", marker = "extra == 'dev'", editable = "packages/stitcher-lang-sidecar" },
     { name = "stitcher-refactor", marker = "extra == 'dev'", editable = "packages/stitcher-refactor" },
     { name = "stitcher-stubgen", marker = "extra == 'dev'", editable = "packages/stitcher-stubgen" },
     { name = "stitcher-test-utils", marker = "extra == 'dev'", editable = "packages/stitcher-test-utils" },

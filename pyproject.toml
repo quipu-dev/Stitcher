@@ -24,6 +24,7 @@ dev = [
     "stitcher-index",
     "stitcher-workspace",
     "stitcher-lang-python",
+    "stitcher-lang-sidecar",
 ]
 
 [tool.setuptools.packages.find]
@@ -50,6 +51,7 @@ stitcher-refactor = { workspace = true }
 stitcher-index = { workspace = true }
 stitcher-workspace = { workspace = true }
 stitcher-lang-python = { workspace = true }
+stitcher-lang-sidecar = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
