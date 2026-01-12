@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 通过重定位 Differ 服务解决循环依赖", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768211867.0430489, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正 core.py 中 Differ 的导入路径", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768211912.8130183, "duration_ms": 0}}

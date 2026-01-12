@@ -15,9 +15,9 @@ from stitcher.app.services import (
     DocumentManager,
     SignatureManager,
     ScannerService,
-    Differ,
     DocstringMerger,
 )
+from stitcher.common.services import Differ
 from stitcher.spec.interaction import InteractionHandler
 from .runners import (
     CheckRunner,
