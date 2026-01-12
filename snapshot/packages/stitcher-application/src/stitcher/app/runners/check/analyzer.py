@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import List, Tuple
 
-from stitcher.spec import ConflictType, DifferProtocol
+from needle.pointer import L
+from stitcher.spec import DifferProtocol
 from stitcher.spec.interaction import InteractionContext
 from stitcher.app.types import FileCheckResult
 from .protocols import CheckSubject
@@ -45,7 +46,7 @@ class CheckAnalyzer:
             elif not state.exists_in_code and state.exists_in_yaml:
                 unresolved_conflicts.append(
                     InteractionContext(
-                        subject.file_path, fqn, ConflictType.DANGLING_DOC
+                        subject.file_path, fqn, violation_type=L.check.issue.extra
                     )
                 )
 
@@ -73,14 +74,17 @@ class CheckAnalyzer:
                     "current",
                 )
 
-                conflict_type = (
-                    ConflictType.SIGNATURE_DRIFT
+                violation_type = (
+                    L.check.state.signature_drift
                     if yaml_matches
-                    else ConflictType.CO_EVOLUTION
+                    else L.check.state.co_evolution
                 )
                 unresolved_conflicts.append(
                     InteractionContext(
-                        subject.file_path, fqn, conflict_type, signature_diff=sig_diff
+                        subject.file_path,
+                        fqn,
+                        violation_type=violation_type,
+                        signature_diff=sig_diff,
                     )
                 )
 

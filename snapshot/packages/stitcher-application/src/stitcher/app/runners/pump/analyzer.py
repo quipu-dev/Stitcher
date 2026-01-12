@@ -1,8 +1,8 @@
 from typing import Dict, List
 
+from needle.pointer import L
 from stitcher.spec import (
     ModuleDef,
-    ConflictType,
     DocstringIR,
     DifferProtocol,
     IndexStoreProtocol,
@@ -77,7 +77,7 @@ class PumpAnalyzer:
                         InteractionContext(
                             module.file_path,
                             key,
-                            ConflictType.DOC_CONTENT_CONFLICT,
+                            violation_type=L.check.issue.conflict,
                             doc_diff=doc_diff,
                         )
                     )

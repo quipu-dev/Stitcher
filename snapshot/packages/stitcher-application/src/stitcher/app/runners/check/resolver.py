@@ -7,7 +7,6 @@ from stitcher.common import bus
 from needle.pointer import L
 from stitcher.spec import (
     ModuleDef,
-    ConflictType,
     ResolutionAction,
     Fingerprint,
     LanguageParserProtocol,
@@ -160,11 +159,12 @@ class CheckResolver:
     ):
         for res in results:
             if res.path == context.file_path:
-                error_key = {
-                    ConflictType.SIGNATURE_DRIFT: "signature_drift",
-                    ConflictType.CO_EVOLUTION: "co_evolution",
-                    ConflictType.DANGLING_DOC: "extra",
-                }.get(context.conflict_type, "unknown")
+                error_key_map = {
+                    str(L.check.state.signature_drift): "signature_drift",
+                    str(L.check.state.co_evolution): "co_evolution",
+                    str(L.check.issue.extra): "extra",
+                }
+                error_key = error_key_map.get(str(context.violation_type), "unknown")
                 res.errors[error_key].append(context.fqn)
                 break
 
