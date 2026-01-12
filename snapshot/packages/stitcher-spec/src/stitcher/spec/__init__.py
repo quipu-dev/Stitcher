@@ -26,6 +26,10 @@ from .protocols import (
     DocstringParserProtocol,
     DocstringRendererProtocol,
     DocstringSerializerProtocol,
+    DocumentManagerProtocol,
+    SignatureManagerProtocol,
+    DifferProtocol,
+    DocstringMergerProtocol,
 )
 
 __all__ = [
@@ -40,6 +44,10 @@ __all__ = [
     "DocstringParserProtocol",
     "DocstringRendererProtocol",
     "DocstringSerializerProtocol",
+    "DocumentManagerProtocol",
+    "SignatureManagerProtocol",
+    "DifferProtocol",
+    "DocstringMergerProtocol",
     "Fingerprint",
     "InvalidFingerprintKeyError",
     "Argument",

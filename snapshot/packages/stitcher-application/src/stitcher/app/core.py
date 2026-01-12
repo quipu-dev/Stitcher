@@ -394,4 +394,5 @@ class StitcherApp:
             )
 
     def run_index_build(self) -> bool:
-        return self.index_runner.run_build(self.workspace)
+        stats = self.index_runner.run_build(self.workspace)
+        return stats.get("success", False)

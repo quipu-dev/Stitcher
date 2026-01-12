@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(spec): 定义核心服务协议并更新 Runner 依赖", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768195994.203741, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 导出核心协议并修正核心应用返回类型", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768196074.3784559, "duration_ms": 0}}
