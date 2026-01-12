@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] 创建 `stitcher-lang-sidecar` 包所需的测试文件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768224540.3157544, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 增强 SidecarUpdateMixin 以支持 SURI Fragment 重命名", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768226115.2423644, "duration_ms": 0}}

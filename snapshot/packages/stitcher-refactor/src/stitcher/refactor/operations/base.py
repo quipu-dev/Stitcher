@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 
 from stitcher.lang.python.analysis.utils import path_to_logical_fqn
+from stitcher.lang.python.uri import SURIGenerator
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.intent import RefactorIntent
 
@@ -36,24 +37,57 @@ class SidecarUpdateMixin:
         new_data = {}
         modified = False
 
+        # Calculate logical fragments if applicable (for In-File Rename)
+        old_fragment = None
+        new_fragment = None
+
+        if module_fqn and old_fqn.startswith(module_fqn + "."):
+            old_fragment = old_fqn[len(module_fqn) + 1 :]
+            # We assume the module part is the same for simple symbol renames.
+            if new_fqn.startswith(module_fqn + "."):
+                new_fragment = new_fqn[len(module_fqn) + 1 :]
+
         for key, value in data.items():
             # --- Case 1: SURI Update (py://path/to/file.py#symbol) ---
-            if key.startswith("py://") and old_file_path and new_file_path:
-                # Format: py://<path>#<fragment>
-                # We check if the path component matches our old file path.
-                prefix = f"py://{old_file_path}#"
-                if key.startswith(prefix):
-                    fragment = key[len(prefix) :]
-                    # Reconstruct with new path
-                    new_key = f"py://{new_file_path}#{fragment}"
+            if key.startswith("py://"):
+                try:
+                    path, fragment = SURIGenerator.parse(key)
+                except ValueError:
+                    new_data[key] = value
+                    continue
+
+                suri_changed = False
+
+                # 1. Update Path (File Move)
+                if (
+                    old_file_path
+                    and new_file_path
+                    and path == old_file_path
+                ):
+                    path = new_file_path
+                    suri_changed = True
+
+                # 2. Update Fragment (Symbol Rename)
+                if fragment and old_fragment and new_fragment:
+                    if fragment == old_fragment:
+                        fragment = new_fragment
+                        suri_changed = True
+                    elif fragment.startswith(old_fragment + "."):
+                        # Nested symbol rename (e.g. Class.method -> NewClass.method)
+                        suffix = fragment[len(old_fragment) :]
+                        fragment = new_fragment + suffix
+                        suri_changed = True
+
+                if suri_changed:
+                    # Reconstruct SURI
+                    new_key = (
+                        f"py://{path}#{fragment}" if fragment else f"py://{path}"
+                    )
                     new_data[new_key] = value
                     modified = True
                     continue
-                # If path matches exactly (unlikely for symbol key but possible for file key)
-                if key == f"py://{old_file_path}":
-                    new_key = f"py://{new_file_path}"
-                    new_data[new_key] = value
-                    modified = True
+                else:
+                    new_data[key] = value
                     continue
 
             # --- Case 2: Standard FQN Update ---
