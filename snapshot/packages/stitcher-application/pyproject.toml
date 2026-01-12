@@ -11,7 +11,7 @@ dependencies = [
     "stitcher-spec",
     "stitcher-common",
     "stitcher-config",
-    "stitcher-python-adapter",
+    "stitcher-lang-python",
     "stitcher-stubgen",
     "stitcher-workspace",
     "stitcher-index",
@@ -25,7 +25,7 @@ packages = ["src/stitcher"]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-config = { workspace = true }
-stitcher-python-adapter = { workspace = true }
+stitcher-lang-python = { workspace = true }
 stitcher-stubgen = { workspace = true }
 stitcher-workspace = { workspace = true }
 stitcher-index = { workspace = true }

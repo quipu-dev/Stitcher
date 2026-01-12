@@ -12,7 +12,7 @@ dependencies = [
     "PyYAML",
     "tomli-w",
     "stitcher-application",
-    "stitcher-python-adapter",
+    "stitcher-lang-python",
     "stitcher-index",
     "stitcher-workspace",
     "stitcher-common",
@@ -25,7 +25,7 @@ packages = ["src/stitcher"]
 [tool.uv.sources]
 pyneedle = { workspace = true }
 stitcher-application = { workspace = true }
-stitcher-python-adapter = { workspace = true }
+stitcher-lang-python = { workspace = true }
 stitcher-workspace = { workspace = true }
 stitcher-index = { workspace = true }
 stitcher-common = { workspace = true }

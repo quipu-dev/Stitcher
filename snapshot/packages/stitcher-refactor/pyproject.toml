@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Transactional refactoring engine for Stitcher."
 requires-python = ">=3.10"
 dependencies = [
-    "stitcher-python-analysis",
+    "stitcher-lang-python",
     "stitcher-spec",
     "stitcher-common",
     "stitcher-workspace",
@@ -25,5 +25,5 @@ packages = ["src/stitcher"]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-index = { workspace = true }
-stitcher-python-analysis = { workspace = true }
+stitcher-lang-python = { workspace = true }
 stitcher-workspace = { workspace = true }

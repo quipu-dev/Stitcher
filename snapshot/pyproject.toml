@@ -32,10 +32,6 @@ exclude = ["migrations*"]
 [tool.uv.workspace]
 members = [
     "packages/*",
-    "packages/stitcher-test-utils",
-    "packages/stitcher-python-analysis",
-    "packages/stitcher-index",
-    "packages/stitcher-lang-python",
 ]
 
 [tool.uv.sources]
@@ -47,13 +43,11 @@ stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-config = { workspace = true }
 stitcher-application = { workspace = true }
-stitcher-python-adapter = { workspace = true }
 stitcher-cli = { workspace = true }
 stitcher-stubgen = { workspace = true }
 stitcher-test-utils = { workspace = true }
 stitcher-refactor = { workspace = true }
 stitcher-index = { workspace = true }
-stitcher-python-analysis = { workspace = true }
 stitcher-workspace = { workspace = true }
 stitcher-lang-python = { workspace = true }
 
@@ -67,8 +61,6 @@ pythonpath = [
     "packages/stitcher-common/src",
     "packages/stitcher-config/src",
     "packages/stitcher-index/src",
-    "packages/stitcher-python-adapter/src",
-    "packages/stitcher-python-analysis/src",
     "packages/stitcher-refactor/src",
     "packages/stitcher-spec/src",
     "packages/stitcher-workspace/src",
@@ -87,8 +79,6 @@ scan_paths = [
     "packages/stitcher-common/src",
     "packages/stitcher-config/src",
     "packages/stitcher-index/src",
-    "packages/stitcher-python-adapter/src",
-    "packages/stitcher-python-analysis/src",
     "packages/stitcher-refactor/src",
     "packages/stitcher-spec/src",
     "packages/stitcher-stubgen/src",
@@ -108,12 +98,9 @@ stub_package = "packages/needle-stubs"
 
 [tool.pyright]
 include = ["packages", "tests"]
-# 显式告知 IDE 所有子包的源码位置，解决 Monorepo 解析问题
 extraPaths = [
     "packages/stitcher-spec/src",
     "packages/stitcher-common/src",
-    "packages/stitcher-scanner/src",
-    "packages/stitcher-io/src",
     "packages/stitcher-config/src",
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
@@ -126,7 +113,6 @@ extraPaths = [
     "packages/needle-stubs/src",
     "packages/stitcher-refactor/src",
     "packages/stitcher-stubgen/src",
-    "packages/stitcher-python-analysis/src",
     "packages/stitcher-index/src",
     "packages/stitcher-workspace/src",
     "packages/stitcher-lang-python/src",

@@ -1,5 +1,0 @@
-"GriffePythonParser": |-
-  A Python parser implementation using Griffe.
-  Migrated from stitcher-python-adapter.
-"GriffePythonParser.parse": |-
-  Parses the given source code into a Stitcher ModuleDef IR using Griffe.
