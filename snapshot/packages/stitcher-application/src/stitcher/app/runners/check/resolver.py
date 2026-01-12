@@ -169,6 +169,7 @@ class CheckResolver:
                     str(L.check.state.signature_drift): "signature_drift",
                     str(L.check.state.co_evolution): "co_evolution",
                     str(L.check.issue.extra): "extra",
+                    str(L.check.issue.conflict): "conflict",
                 }
                 error_key = error_key_map.get(str(context.violation_type), "unknown")
                 res.errors[error_key].append(context.fqn)

@@ -76,14 +76,18 @@ class CheckRunner:
         for violation in analysis_result.violations:
             # Direct object lookup
             if violation.kind in KIND_TO_LEGACY_MAP:
-                category, key = KIND_TO_LEGACY_MAP[violation.kind]
-                target_dict = getattr(legacy_result, category)
+                # CRITICAL: Do not add interactive violations to the legacy result yet.
+                # They are handled via the conflict resolution workflow (CheckResolver).
+                # If they are skipped/unresolved, the resolver will add them back to errors.
+                if violation.kind not in INTERACTIVE_VIOLATIONS:
+                    category, key = KIND_TO_LEGACY_MAP[violation.kind]
+                    target_dict = getattr(legacy_result, category)
 
-                if violation.kind == L.check.file.untracked_with_details:
-                    keys = violation.context.get("keys", [])
-                    target_dict[key].extend(keys)
-                else:
-                    target_dict[key].append(violation.fqn)
+                    if violation.kind == L.check.file.untracked_with_details:
+                        keys = violation.context.get("keys", [])
+                        target_dict[key].extend(keys)
+                    else:
+                        target_dict[key].append(violation.fqn)
 
             if violation.kind in INTERACTIVE_VIOLATIONS:
                 conflicts.append(
