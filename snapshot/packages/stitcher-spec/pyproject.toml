@@ -7,7 +7,12 @@ name = "stitcher-spec"
 version = "0.1.0"
 description = "Intermediate Representation (IR) models for Stitcher."
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pyneedle-pointer",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/stitcher"]
+
+[tool.uv.sources]
+pyneedle-pointer = { workspace = true }

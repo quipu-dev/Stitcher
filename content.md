@@ -1,190 +1,121 @@
-Of course. Let's proceed with building the Consistency Engine, which will orchestrate the rules we've just created.
-
-## [WIP] feat(analysis): Implement ConsistencyEngine to orchestrate rules
+## [WIP] feat(spec): Upgrade InteractionContext to use SemanticPointer
 
 ### 用户需求
 
-实施 Phase 1.4：构建一致性引擎 (`ConsistencyEngine`)。
-创建一个编排器，负责加载、运行所有一致性检查规则，并聚合它们的分析结果，为 `stitcher-application` 提供一个统一的分析入口。
+根据 Phase 1.6+ 战略分析，我们需要升级规格层。
+核心任务是将 `stitcher-spec` 中的 `InteractionContext` 升级，使其支持 `SemanticPointer`，从而统一分析层和交互层的语言，消除“阻抗不匹配”。
 
 ### 评论
 
-这是将我们零散的规则 (`Rule`) 转化为一个 cohesive (内聚的) 分析能力的关键一步。`ConsistencyEngine` 将扮演 CPU 的角色，执行我们编写的指令（规则）。通过依赖注入的方式提供规则，我们保持了引擎的通用性，未来可以轻松地增删或替换规则集，而无需修改引擎本身。
+这是一个涉及到底层数据模型的变更。通过在 `spec` 层引入 `pyneedle`，我们确立了 SemanticPointer 作为整个系统（不仅是分析层，还包括交互层）的通用语言。这将使我们能够直接将分析层产出的 `Violation` 转化为交互层所需的上下文，而无需繁琐且易碎的枚举映射。
 
 ### 目标
 
-1.  创建 `stitcher.analysis.engines.consistency` 模块。
-2.  实现 `ConsistencyEngine` 类，其核心职责是接收 `AnalysisSubject`，遍历运行一组 `AnalysisRule`，并返回一个聚合了所有 `Violation` 的 `FileCheckResult`。
-3.  提供一个 `create_consistency_engine` 工厂函数，用于方便地创建带有默认规则集的引擎实例。
-4.  为 `ConsistencyEngine` 编写单元测试，验证其编排和聚合逻辑的正确性。
+1.  更新 `stitcher-spec/pyproject.toml`，添加 `pyneedle-pointer` 依赖。
+2.  修改 `stitcher.spec.interaction.InteractionContext`：
+    *   引入 `violation_type: SemanticPointer`。
+    *   为了保持过渡期的兼容性（HFEA原则建议不做破坏性变更除非必要，但在内部重构中，彻底清理更优），我们计划**移除**旧的 `conflict_type: ConflictType` 字段，强制上层代码进行适配，从而暴露所有潜在的不兼容点。
 
 ### 基本原理
 
-`ConsistencyEngine` 的设计遵循了“组合优于继承”和“依赖注入”的原则。它本身不包含任何具体的检查逻辑，而是通过其构造函数接收一个规则列表。它的 `analyze` 方法是整个分析流程的核心，它确保了每个规则都被执行，并且所有结果都被统一收集。工厂函数的引入进一步解耦了引擎的使用者（如 `CheckRunner`）与引擎的具体配置细节。
+如果不升级 Spec，上层 Runner 就必须在 Analysis 的 Pointer 和 Resolver 的 Enum 之间做翻译。这不仅增加了复杂性，还限制了未来的扩展性（每次加新规则都要改 Enum）。直接在 Spec 层支持 Pointer 是最干净的架构路径。
 
 ### 标签
 
-#intent/build #flow/ready #priority/high #comp/logic #scope/core #ai/instruct #task/domain/architecture #task/object/analysis-engine #task/action/implement-engine #task/state/continue
+#intent/refine #intent/architect #flow/ready #priority/high #comp/interfaces #scope/core #ai/instruct #task/domain/architecture #task/object/spec #task/action/upgrade-interaction-context #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 创建引擎目录结构
+#### Acts 1: 添加依赖
 
-首先，为我们的引擎和相关测试创建目录。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-mkdir -p packages/stitcher-analysis/src/stitcher/analysis/engines/consistency
-mkdir -p packages/stitcher-analysis/tests/unit/engines
-touch packages/stitcher-analysis/src/stitcher/analysis/engines/__init__.py
-touch packages/stitcher-analysis/src/stitcher/analysis/engines/consistency/__init__.py
-~~~~~
-
-#### Acts 2: 实现 `ConsistencyEngine` 及其工厂函数
-
-这是分析引擎的核心实现。
+让 `stitcher-spec` 能够使用 `SemanticPointer`。
 
 ~~~~~act
-write_file
-packages/stitcher-analysis/src/stitcher/analysis/engines/consistency/engine.py
+patch_file
+packages/stitcher-spec/pyproject.toml
 ~~~~~
-~~~~~python
-from typing import List
+~~~~~toml.old
+description = "Intermediate Representation (IR) models for Stitcher."
+requires-python = ">=3.10"
+dependencies = []
 
-from stitcher.app.services import Differ
-from stitcher.spec import DifferProtocol
-from stitcher.analysis.protocols import AnalysisSubject
-from stitcher.analysis.schema import FileCheckResult
-from stitcher.analysis.rules.protocols import AnalysisRule
-from stitcher.analysis.rules.consistency.content import ContentRule
-from stitcher.analysis.rules.consistency.existence import ExistenceRule
-from stitcher.analysis.rules.consistency.signature import SignatureRule
-from stitcher.analysis.rules.consistency.untracked import UntrackedRule
+[tool.hatch.build.targets.wheel]
+~~~~~
+~~~~~toml.new
+description = "Intermediate Representation (IR) models for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "pyneedle-pointer",
+]
 
-
-class ConsistencyEngine:
-    """
-    Orchestrates the execution of a set of analysis rules against a subject.
-    """
-
-    def __init__(self, rules: List[AnalysisRule]):
-        self._rules = rules
-
-    def analyze(self, subject: AnalysisSubject) -> FileCheckResult:
-        """
-        Runs all configured rules against the subject and aggregates the results.
-        """
-        all_violations = []
-        for rule in self._rules:
-            violations = rule.check(subject)
-            all_violations.extend(violations)
-
-        return FileCheckResult(path=subject.file_path, violations=all_violations)
-
-
-def create_consistency_engine(
-    differ: DifferProtocol | None = None,
-) -> ConsistencyEngine:
-    """
-    Factory function to create a ConsistencyEngine with a default set of rules.
-    """
-    # If no differ is provided, create a default one.
-    # This allows consumers to inject a mock or custom differ if needed.
-    effective_differ = differ or Differ()
-
-    default_rules = [
-        SignatureRule(differ=effective_differ),
-        ContentRule(differ=effective_differ),
-        ExistenceRule(),
-        UntrackedRule(),
-    ]
-    return ConsistencyEngine(rules=default_rules)
+[tool.hatch.build.targets.wheel]
 ~~~~~
 
-#### Acts 3: 暴露引擎
+~~~~~act
+patch_file
+packages/stitcher-spec/pyproject.toml
+~~~~~
+~~~~~toml.old
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+~~~~~
+~~~~~toml.new
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
 
-通过 `__init__.py` 文件暴露 `ConsistencyEngine` 和工厂函数。
+[tool.uv.sources]
+pyneedle-pointer = { workspace = true }
+~~~~~
+
+#### Acts 2: 升级 `InteractionContext`
+
+将 `ConflictType` 替换为 `SemanticPointer`。
 
 ~~~~~act
 write_file
-packages/stitcher-analysis/src/stitcher/analysis/engines/consistency/__init__.py
+packages/stitcher-spec/src/stitcher/spec/interaction.py
 ~~~~~
 ~~~~~python
-from .engine import ConsistencyEngine, create_consistency_engine
+from typing import Protocol, List, Optional
+from dataclasses import dataclass
 
-__all__ = ["ConsistencyEngine", "create_consistency_engine"]
-~~~~~
+from needle.pointer import SemanticPointer
 
-~~~~~act
-write_file
-packages/stitcher-analysis/src/stitcher/analysis/engines/__init__.py
-~~~~~
-~~~~~python
-from .consistency import ConsistencyEngine, create_consistency_engine
-
-__all__ = ["ConsistencyEngine", "create_consistency_engine"]
-~~~~~
-
-#### Acts 4: 编写 `ConsistencyEngine` 的单元测试
-
-验证引擎的编排和结果聚合逻辑是否正确。
-
-~~~~~act
-write_file
-packages/stitcher-analysis/tests/unit/engines/test_consistency_engine.py
-~~~~~
-~~~~~python
-from unittest.mock import Mock
-from needle.pointer import L
-
-from stitcher.analysis.schema import Violation
-from stitcher.analysis.engines.consistency import ConsistencyEngine
+from stitcher.spec import ResolutionAction, ConflictType
 
 
-def test_consistency_engine_aggregates_violations_from_all_rules():
-    # 1. Setup
-    mock_subject = Mock()
-    mock_subject.file_path = "path/to/file.py"
-
-    violation1 = Violation(kind=L.rule1.error, fqn="func1")
-    violation2 = Violation(kind=L.rule2.warning, fqn="func2")
-    violation3 = Violation(kind=L.rule2.info, fqn="class1")
-
-    mock_rule1 = Mock()
-    mock_rule1.check.return_value = [violation1]
-
-    mock_rule2 = Mock()
-    mock_rule2.check.return_value = [violation2, violation3]
+@dataclass
+class InteractionContext:
+    file_path: str
+    fqn: str
     
-    mock_rule3 = Mock()
-    mock_rule3.check.return_value = [] # A rule that finds nothing
+    # Replaced ConflictType Enum with SemanticPointer for extensibility
+    violation_type: SemanticPointer
+    
+    signature_diff: Optional[str] = None
+    doc_diff: Optional[str] = None
+    
+    # Deprecated: kept temporarily if strictly needed, but design goal is to remove it.
+    # conflict_type: ConflictType 
 
-    # 2. Execute
-    engine = ConsistencyEngine(rules=[mock_rule1, mock_rule2, mock_rule3])
-    result = engine.analyze(mock_subject)
 
-    # 3. Assert
-    # All rules should have been called once with the subject
-    mock_rule1.check.assert_called_once_with(mock_subject)
-    mock_rule2.check.assert_called_once_with(mock_subject)
-    mock_rule3.check.assert_called_once_with(mock_subject)
-
-    # The result should contain all violations from all rules
-    assert result.path == "path/to/file.py"
-    assert len(result.violations) == 3
-    assert violation1 in result.violations
-    assert violation2 in result.violations
-    assert violation3 in result.violations
+class InteractionHandler(Protocol):
+    def process_interactive_session(
+        self, contexts: List[InteractionContext]
+    ) -> List[ResolutionAction]: ...
 ~~~~~
+
+#### Acts 3: 标记 `ConflictType` 为过时 (可选但建议)
+
+虽然我们保留了 `ConflictType` 的定义（在 `models.py` 中），但它现在在交互上下文中已经不再作为核心类型使用了。为了代码清晰，我们暂时不删除 `models.py` 中的 Enum 定义，以免破坏 `pump` 模块中可能残留的引用，但在 `InteractionContext` 中我们已经切换了类型。
 
 ### 下一步建议
 
-我们已经成功构建了分析引擎。现在，`stitcher-analysis` 包已经具备了完整的、独立的“一致性检查”能力。
+Spec 层已升级。这破坏了 `stitcher-application` 中 `CheckResolver` 和 `PumpRunner` 的现有代码，因为它们还在使用旧的 `ConflictType`。这正是我们想要的——通过编译器错误来驱动重构。
 
-接下来的 **Phase 1.6: 集成与替换** 是整个重构工作的收官阶段。我们需要修改 `stitcher-application` 中的 `CheckRunner`，让它放弃旧的 `CheckAnalyzer`，转而调用我们新创建的 `ConsistencyEngine`。
+接下来的步骤是 **Phase 1.6.2: 应用层适配器升级 (Adapter Upgrade)**。
+我们需要修改 `stitcher-application`，使其 `SubjectAdapter` 能够产出符合 `stitcher-analysis` 契约的数据，并开始着手修复因 Spec 变更导致的类型错误。
 
-这将会是激动人心的一步，因为它将正式启用我们的新架构。如果你准备好了，我将生成执行此集成步骤的计划。
+建议先从 `stitcher.app.runners.check.subject.py` 开始，让适配器实现新的 `AnalysisSubject` 协议。
