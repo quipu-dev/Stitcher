@@ -31,6 +31,7 @@ from .protocols import (
     DifferProtocol,
     DocstringMergerProtocol,
 )
+from .storage import IndexStoreProtocol
 
 __all__ = [
     "DocstringIR",
@@ -48,6 +49,7 @@ __all__ = [
     "SignatureManagerProtocol",
     "DifferProtocol",
     "DocstringMergerProtocol",
+    "IndexStoreProtocol",
     "Fingerprint",
     "InvalidFingerprintKeyError",
     "Argument",

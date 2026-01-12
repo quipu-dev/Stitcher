@@ -18,12 +18,12 @@ from stitcher.spec import (
     SignatureManagerProtocol,
     DifferProtocol,
     DocstringMergerProtocol,
+    IndexStoreProtocol,
 )
 from stitcher.config import StitcherConfig
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import PumpResult
-from stitcher.index.store import IndexStore
 
 
 from stitcher.common.transaction import TransactionManager
@@ -40,7 +40,7 @@ class PumpRunner:
         merger: DocstringMergerProtocol,
         interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
-        index_store: IndexStore,
+        index_store: IndexStoreProtocol,
     ):
         self.root_path = root_path
         self.doc_manager = doc_manager

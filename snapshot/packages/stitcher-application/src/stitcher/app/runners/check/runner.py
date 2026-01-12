@@ -9,10 +9,10 @@ from stitcher.spec import (
     DocumentManagerProtocol,
     SignatureManagerProtocol,
     DifferProtocol,
+    IndexStoreProtocol,
 )
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.types import FileCheckResult
-from stitcher.index.store import IndexStore
 
 from .analyzer import CheckAnalyzer
 from .resolver import CheckResolver
@@ -32,7 +32,7 @@ class CheckRunner:
         differ: DifferProtocol,
         interaction_handler: InteractionHandler | None,
         fingerprint_strategy: FingerprintStrategyProtocol,
-        index_store: IndexStore,
+        index_store: IndexStoreProtocol,
     ):
         # Keep services needed by both adapter and resolver
         self.root_path = root_path

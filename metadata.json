@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(app): 核心服务协议化并更新各 Runner 依赖", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768196151.3894515, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(spec): 定义 IndexStoreProtocol 并更新 Runner 依赖", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768196348.9327013, "duration_ms": 0}}

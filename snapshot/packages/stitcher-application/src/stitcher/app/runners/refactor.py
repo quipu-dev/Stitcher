@@ -4,7 +4,7 @@ from stitcher.config import StitcherConfig
 
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.index.store import IndexStore
+from stitcher.spec import IndexStoreProtocol
 from stitcher.index.indexer import FileIndexer
 from stitcher.refactor.engine import (
     SemanticGraph,
@@ -22,7 +22,7 @@ class RefactorRunner:
     def __init__(
         self,
         root_path: Path,
-        index_store: IndexStore,
+        index_store: IndexStoreProtocol,
         file_indexer: FileIndexer,
     ):
         self.root_path = root_path

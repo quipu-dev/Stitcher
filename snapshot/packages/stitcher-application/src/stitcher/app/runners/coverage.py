@@ -3,9 +3,8 @@ from typing import List
 import typer
 
 
-from stitcher.spec import DocumentManagerProtocol
+from stitcher.spec import DocumentManagerProtocol, IndexStoreProtocol
 from stitcher.app.types import CoverageResult
-from stitcher.index.store import IndexStore
 
 
 class CoverageRunner:
@@ -13,7 +12,7 @@ class CoverageRunner:
         self,
         root_path: Path,
         doc_manager: DocumentManagerProtocol,
-        index_store: IndexStore,
+        index_store: IndexStoreProtocol,
     ):
         self.root_path = root_path
         self.doc_manager = doc_manager
