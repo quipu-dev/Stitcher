@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test(application): 为 CheckRunner 和 CheckAnalyzer 添加单元测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768200585.8209577, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 我将生成补丁来修复这些问题。", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768200688.3873327, "duration_ms": 0}}

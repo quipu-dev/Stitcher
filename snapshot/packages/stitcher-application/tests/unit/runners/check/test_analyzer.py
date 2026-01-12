@@ -29,7 +29,8 @@ class FakeCheckSubject(CheckSubject):
 
 @pytest.fixture
 def mock_differ() -> DifferProtocol:
-    return create_autospec(DifferProtocol)
+    # Use create_autospec for strict protocol adherence.
+    return create_autospec(DifferProtocol, instance=True)
 
 
 @pytest.fixture
@@ -37,8 +38,11 @@ def analyzer(mock_differ: DifferProtocol) -> CheckAnalyzer:
     return CheckAnalyzer(root_path=Path("/test-project"), differ=mock_differ)
 
 
-def test_analyzer_synchronized_state(analyzer: CheckAnalyzer):
+def test_analyzer_synchronized_state(analyzer: CheckAnalyzer, monkeypatch):
     """Verify clean state when code, yaml, and baseline are synced."""
+    # Mock filesystem to simulate a tracked file
+    monkeypatch.setattr(Path, "exists", lambda self: True)
+
     state = SymbolState(
         fqn="func",
         is_public=True,
@@ -61,8 +65,10 @@ def test_analyzer_synchronized_state(analyzer: CheckAnalyzer):
     assert not conflicts
 
 
-def test_analyzer_missing_doc_warning(analyzer: CheckAnalyzer):
+def test_analyzer_missing_doc_warning(analyzer: CheckAnalyzer, monkeypatch):
     """Verify warning for public symbol in code but not in YAML."""
+    monkeypatch.setattr(Path, "exists", lambda self: True)
+
     state = SymbolState(
         fqn="func",
         is_public=True,
@@ -187,3 +193,32 @@ def test_analyzer_dangling_doc(analyzer: CheckAnalyzer):
     assert len(conflicts) == 1
     assert conflicts[0].fqn == "dangling_func"
     assert conflicts[0].conflict_type == ConflictType.DANGLING_DOC
+
+
+def test_analyzer_untracked_file_warning(analyzer: CheckAnalyzer, monkeypatch):
+    """Verify warning for a documentable but untracked file."""
+    # Mock filesystem to simulate an untracked file
+    monkeypatch.setattr(Path, "exists", lambda self: False)
+
+    state = SymbolState(
+        fqn="func",
+        is_public=True,
+        exists_in_code=True,
+        exists_in_yaml=False,
+        source_doc_content=None,
+        signature_hash=None,
+        baseline_signature_hash=None,
+        yaml_content_hash=None,
+        baseline_yaml_content_hash=None,
+        signature_text=None,
+        yaml_doc_ir=None,
+        baseline_signature_text=None,
+    )
+    subject = FakeCheckSubject("src/main.py", {"func": state}, is_doc=True)
+
+    result, conflicts = analyzer.analyze_subject(subject)
+
+    assert result.warning_count == 2  # missing and untracked
+    assert "missing" in result.warnings
+    assert result.warnings["untracked"] == ["all"]
+    assert not conflicts

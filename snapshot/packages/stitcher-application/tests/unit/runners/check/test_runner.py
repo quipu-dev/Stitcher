@@ -19,18 +19,20 @@ from stitcher.spec.interaction import InteractionContext
 def test_check_runner_orchestrates_analysis_and_resolution():
     """
     Verifies that CheckRunner correctly calls its dependencies in order:
-    1. Analyzer
+    1. Analyzer (via analyze_batch)
     2. Resolver (auto_reconcile, then resolve_conflicts)
     3. Reporter
     """
     # 1. Arrange: Create autospec'd mocks for all dependencies
-    mock_doc_manager = create_autospec(DocumentManagerProtocol)
-    mock_sig_manager = create_autospec(SignatureManagerProtocol)
-    mock_fingerprint_strategy = create_autospec(FingerprintStrategyProtocol)
-    mock_index_store = create_autospec(IndexStoreProtocol)
-    mock_analyzer = create_autospec(CheckAnalyzerProtocol)
-    mock_resolver = create_autospec(CheckResolverProtocol)
-    mock_reporter = create_autospec(CheckReporterProtocol)
+    mock_doc_manager = create_autospec(DocumentManagerProtocol, instance=True)
+    mock_sig_manager = create_autospec(SignatureManagerProtocol, instance=True)
+    mock_fingerprint_strategy = create_autospec(
+        FingerprintStrategyProtocol, instance=True
+    )
+    mock_index_store = create_autospec(IndexStoreProtocol, instance=True)
+    mock_analyzer = create_autospec(CheckAnalyzerProtocol, instance=True)
+    mock_resolver = create_autospec(CheckResolverProtocol, instance=True)
+    mock_reporter = create_autospec(CheckReporterProtocol, instance=True)
 
     # Configure mock return values
     mock_modules = [ModuleDef(file_path="src/main.py")]
@@ -38,7 +40,8 @@ def test_check_runner_orchestrates_analysis_and_resolution():
     mock_conflicts = [
         InteractionContext(file_path="src/main.py", fqn="func", conflict_type="TEST")
     ]
-    mock_analyzer.analyze_batch.return_value = (mock_results, mock_conflicts)
+    # IMPORTANT: The runner calls analyze_subject internally. We mock that.
+    mock_analyzer.analyze_subject.return_value = (mock_results[0], mock_conflicts)
     mock_resolver.resolve_conflicts.return_value = True
     mock_reporter.report.return_value = True
 
@@ -53,14 +56,15 @@ def test_check_runner_orchestrates_analysis_and_resolution():
         reporter=mock_reporter,
     )
 
-    # We test `analyze_batch` as a representative method.
+    # The public API of the runner is `analyze_batch`.
     results, conflicts = runner.analyze_batch(mock_modules)
     runner.auto_reconcile_docs(results, mock_modules)
     resolution_success = runner.resolve_conflicts(results, conflicts)
     report_success = runner.report(results)
 
     # 3. Assert: Verify the interaction with mocks
-    mock_analyzer.analyze_batch.assert_called_once_with(mock_modules)
+    # The runner's `analyze_batch` should have called the analyzer's `analyze_subject`
+    mock_analyzer.analyze_subject.assert_called_once()
     mock_resolver.auto_reconcile_docs.assert_called_once_with(
         mock_results, mock_modules
     )
