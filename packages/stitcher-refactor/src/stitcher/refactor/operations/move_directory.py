@@ -53,6 +53,10 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             relative_path = src_item.relative_to(src_dir)
             dest_item = dest_dir / relative_path
 
+            # Prepare path strings for SURI updates
+            rel_src_path = src_item.relative_to(ctx.workspace.root_path).as_posix()
+            rel_dest_path = dest_item.relative_to(ctx.workspace.root_path).as_posix()
+
             # Declare file move
             intents.append(MoveFileIntent(src_item, dest_item))
 
@@ -64,7 +68,9 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
                 processed_files.add(doc_path)
                 intents.append(
                     SidecarUpdateIntent(
-                        doc_path, item_module_fqn, old_prefix, new_prefix
+                        doc_path, item_module_fqn, old_prefix, new_prefix,
+                        old_file_path=rel_src_path,
+                        new_file_path=rel_dest_path,
                     )
                 )
                 intents.append(
@@ -78,7 +84,9 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
                 processed_files.add(sig_path)
                 intents.append(
                     SidecarUpdateIntent(
-                        sig_path, item_module_fqn, old_prefix, new_prefix
+                        sig_path, item_module_fqn, old_prefix, new_prefix,
+                        old_file_path=rel_src_path,
+                        new_file_path=rel_dest_path,
                     )
                 )
                 intents.append(

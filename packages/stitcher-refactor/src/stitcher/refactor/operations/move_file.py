@@ -20,12 +20,16 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
     def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
         intents: List[RefactorIntent] = []
 
-        # Resolve paths against the project root to handle relative paths from user scripts.
+        # Resolve paths against the project root
         src_path = ctx.workspace.root_path.joinpath(self.src_path)
         dest_path = ctx.workspace.root_path.joinpath(self.dest_path)
 
         old_module_fqn = self._path_to_fqn(src_path, ctx.graph.search_paths)
         new_module_fqn = self._path_to_fqn(dest_path, ctx.graph.search_paths)
+
+        # Prepare path strings for SURI updates
+        rel_src_path = src_path.relative_to(ctx.workspace.root_path).as_posix()
+        rel_dest_path = dest_path.relative_to(ctx.workspace.root_path).as_posix()
 
         # 1. Declare symbol rename intents if the module's FQN changes.
         if (
@@ -55,6 +59,8 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
                         module_fqn=old_module_fqn,
                         old_fqn=old_module_fqn,
                         new_fqn=new_module_fqn,
+                        old_file_path=rel_src_path,
+                        new_file_path=rel_dest_path,
                     )
                 )
 
@@ -66,6 +72,8 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
                         module_fqn=old_module_fqn,
                         old_fqn=old_module_fqn,
                         new_fqn=new_module_fqn,
+                        old_file_path=rel_src_path,
+                        new_file_path=rel_dest_path,
                     )
                 )
 
@@ -97,12 +105,10 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
         active_root = None
         for sp in search_paths:
             try:
-                # Use is_relative_to for robust check in Python 3.9+
                 if parent.is_relative_to(sp):
                     if active_root is None or len(sp.parts) > len(active_root.parts):
                         active_root = sp
             except AttributeError:
-                # Fallback for older Python versions if necessary, though project is 3.10+
                 try:
                     parent.relative_to(sp)
                     if active_root is None or len(sp.parts) > len(active_root.parts):
@@ -115,7 +121,6 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
 
         while parent != active_root:
             try:
-                # Check if parent is still within the active_root
                 parent.relative_to(active_root)
             except ValueError:
                 break

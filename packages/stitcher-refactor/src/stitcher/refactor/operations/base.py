@@ -30,11 +30,33 @@ class SidecarUpdateMixin:
         module_fqn: Optional[str],
         old_fqn: str,
         new_fqn: str,
+        old_file_path: Optional[str] = None,
+        new_file_path: Optional[str] = None,
     ) -> Dict[str, Any]:
         new_data = {}
         modified = False
 
         for key, value in data.items():
+            # --- Case 1: SURI Update (py://path/to/file.py#symbol) ---
+            if key.startswith("py://") and old_file_path and new_file_path:
+                # Format: py://<path>#<fragment>
+                # We check if the path component matches our old file path.
+                prefix = f"py://{old_file_path}#"
+                if key.startswith(prefix):
+                    fragment = key[len(prefix) :]
+                    # Reconstruct with new path
+                    new_key = f"py://{new_file_path}#{fragment}"
+                    new_data[new_key] = value
+                    modified = True
+                    continue
+                # If path matches exactly (unlikely for symbol key but possible for file key)
+                if key == f"py://{old_file_path}":
+                    new_key = f"py://{new_file_path}"
+                    new_data[new_key] = value
+                    modified = True
+                    continue
+
+            # --- Case 2: Standard FQN Update ---
             key_fqn = key
             is_short_name = False
 

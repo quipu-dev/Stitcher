@@ -74,7 +74,12 @@ class Planner(SidecarUpdateMixin):
             # Apply all intents for this file
             for intent in intents:
                 data = self._update_sidecar_data(
-                    data, intent.module_fqn, intent.old_fqn, intent.new_fqn
+                    data,
+                    intent.module_fqn,
+                    intent.old_fqn,
+                    intent.new_fqn,
+                    old_file_path=intent.old_file_path,
+                    new_file_path=intent.new_file_path,
                 )
 
             # Dump the final state
