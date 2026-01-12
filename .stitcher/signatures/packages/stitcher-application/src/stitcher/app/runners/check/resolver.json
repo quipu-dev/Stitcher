@@ -8,8 +8,8 @@
     "baseline_code_structure_hash": "253b172a52371a0c0cb524ae481670e03cf9ae5dd2a146263f5b1a199ae051a9"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._apply_resolutions": {
-    "baseline_code_signature_text": "def _apply_resolutions(self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]):",
-    "baseline_code_structure_hash": "5a10cfb2b48149d205274fbe089baca395860335fc1e68ed6b71989b33d6a8d5"
+    "baseline_code_signature_text": "def _apply_resolutions(self, resolutions: dict[str, list[tuple[InteractionContext, ResolutionAction]]]):",
+    "baseline_code_structure_hash": "8fa1e984418772a9390fc2dc4ce3ede528e4ab3cb75f6f07be74ce226ed4c2b5"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._compute_fingerprints": {
     "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
@@ -28,8 +28,8 @@
     "baseline_code_structure_hash": "c561d28845f95abd80a480e5fb5dabe7aca335bac81b0e313963da98c2c0843d"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._update_results": {
-    "baseline_code_signature_text": "def _update_results(self, results: List[FileCheckResult], reconciled_data: dict):",
-    "baseline_code_structure_hash": "99f614a9b470351f157adb4745f95e55c352843034d2e0790eb74a96f0614a3a"
+    "baseline_code_signature_text": "def _update_results(self, results: List[FileCheckResult], resolutions: Dict[str, List[tuple[InteractionContext, ResolutionAction]]]):",
+    "baseline_code_structure_hash": "fdeb285fd2173090f82389156eb945580af39170d09c59146645ecc73813cc8e"
   },
   "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.auto_reconcile_docs": {
     "baseline_code_signature_text": "def auto_reconcile_docs(self, results: List[FileCheckResult], modules: List[ModuleDef]):",

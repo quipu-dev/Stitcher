@@ -1,7 +1,9 @@
 from pathlib import Path
-from unittest.mock import create_autospec, MagicMock
+from unittest.mock import MagicMock
 
 from stitcher.app.runners.check.runner import CheckRunner
+from stitcher.app.runners.check.resolver import CheckResolver
+from stitcher.app.runners.check.reporter import CheckReporter
 from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
 from stitcher.spec import (
     FingerprintStrategyProtocol,
@@ -9,42 +11,33 @@ from stitcher.spec import (
     ModuleDef,
     DifferProtocol,
 )
-from stitcher.app.runners.check.protocols import (
-    CheckResolverProtocol,
-    CheckReporterProtocol,
-)
-from stitcher.app.types import FileCheckResult
 from stitcher.spec.interaction import InteractionContext
 from stitcher.analysis.schema import FileCheckResult as AnalysisResult, Violation
 from needle.pointer import L
 
 
-def test_check_runner_orchestrates_analysis_and_resolution():
+def test_check_runner_orchestrates_analysis_and_resolution(mocker):
     """
-    Verifies that CheckRunner correctly calls its dependencies in order:
-    1. Engine (via analyze_batch)
-    2. Resolver (auto_reconcile, then resolve_conflicts)
+    验证 CheckRunner 正确地按顺序调用其依赖项：
+    1. Engine (通过 analyze_batch)
+    2. Resolver (auto_reconcile, 然后 resolve_conflicts)
     3. Reporter
     """
-    # 1. Arrange: Create autospec'd mocks for all dependencies
-    mock_doc_manager = create_autospec(DocumentManagerProtocol, instance=True)
-    mock_sig_manager = create_autospec(SignatureManagerProtocol, instance=True)
-    mock_fingerprint_strategy = create_autospec(
+    # 1. Arrange: 为所有依赖项创建 mock
+    mock_doc_manager = mocker.create_autospec(DocumentManagerProtocol, instance=True)
+    mock_sig_manager = mocker.create_autospec(SignatureManagerProtocol, instance=True)
+    mock_fingerprint_strategy = mocker.create_autospec(
         FingerprintStrategyProtocol, instance=True
     )
-    mock_index_store = create_autospec(IndexStoreProtocol, instance=True)
-    mock_differ = create_autospec(DifferProtocol, instance=True)
-    mock_resolver = create_autospec(CheckResolverProtocol, instance=True)
-    mock_reporter = create_autospec(CheckReporterProtocol, instance=True)
+    mock_index_store = mocker.create_autospec(IndexStoreProtocol, instance=True)
+    mock_differ = mocker.create_autospec(DifferProtocol, instance=True)
+    mock_resolver = mocker.create_autospec(CheckResolver, instance=True)
+    mock_reporter = mocker.create_autospec(CheckReporter, instance=True)
 
-    # Configure mock return values
+    # 配置 mock 模块
     mock_modules = [ModuleDef(file_path="src/main.py")]
 
-    # Mock Engine behavior: The engine is created internally, so we mock the analyze method
-    # indirectly or via mocking the engine attribute after creation if we can't inject it easily.
-    # However, create_consistency_engine creates a concrete class.
-    # For unit testing the Runner logic *around* the engine, we can mock the engine instance on the runner.
-
+    # Mock Engine 行为
     mock_engine = MagicMock()
     mock_analysis_result = AnalysisResult(
         path="src/main.py",
@@ -57,7 +50,7 @@ def test_check_runner_orchestrates_analysis_and_resolution():
     mock_resolver.resolve_conflicts.return_value = True
     mock_reporter.report.return_value = True
 
-    # 2. Act: Instantiate the runner
+    # 2. Act: 实例化 runner 并注入 mock engine
     runner = CheckRunner(
         doc_manager=mock_doc_manager,
         sig_manager=mock_sig_manager,
@@ -68,27 +61,30 @@ def test_check_runner_orchestrates_analysis_and_resolution():
         reporter=mock_reporter,
         root_path=Path("/tmp"),
     )
-    # Inject mock engine
     runner.engine = mock_engine
 
-    # The public API of the runner is `analyze_batch`.
+    # 执行分析
     results, conflicts = runner.analyze_batch(mock_modules)
 
-    # Verify translation results
+    # 3. Assert: 验证结果
     assert len(results) == 1
     assert results[0].path == "src/main.py"
-    # ARCHITECTURE CHANGE: Interactive violations are now deferred to the resolver phase.
-    # They should NOT appear in errors immediately after analysis.
-    assert "func" not in results[0].errors["signature_drift"]
+
+    # 验证违反项是否正确识别
+    assert len(results[0].violations) == 1
+    assert results[0].violations[0].kind == L.check.state.signature_drift
+    assert results[0].error_count == 1  # signature_drift 默认是 error
+
+    # 验证交互冲突是否正确提取
     assert len(conflicts) == 1
     assert conflicts[0].violation_type == L.check.state.signature_drift
 
-    # Continue workflow
+    # 继续执行工作流
     runner.auto_reconcile_docs(results, mock_modules)
     resolution_success = runner.resolve_conflicts(results, conflicts)
     report_success = runner.report(results)
 
-    # 3. Assert: Verify the interaction with mocks
+    # 验证与 mock 的交互
     mock_engine.analyze.assert_called_once()
     mock_resolver.auto_reconcile_docs.assert_called_once_with(results, mock_modules)
     mock_resolver.resolve_conflicts.assert_called_once_with(
@@ -100,24 +96,26 @@ def test_check_runner_orchestrates_analysis_and_resolution():
     assert report_success is True
 
 
-def test_check_runner_passes_relink_and_reconcile_flags_to_resolver():
+def test_check_runner_passes_relink_and_reconcile_flags_to_resolver(mocker):
     """
-    Ensures that boolean flags from the runner's public API are correctly
-    passed down to the resolver component.
+    确保来自 Runner 公共 API 的布尔标志被正确传递给解析器组件。
     """
     # Arrange
-    mock_resolver = create_autospec(CheckResolverProtocol)
+    mock_resolver = mocker.create_autospec(CheckResolver, instance=True)
     runner = CheckRunner(
-        doc_manager=create_autospec(DocumentManagerProtocol),
-        sig_manager=create_autospec(SignatureManagerProtocol),
-        fingerprint_strategy=create_autospec(FingerprintStrategyProtocol),
-        index_store=create_autospec(IndexStoreProtocol),
-        differ=create_autospec(DifferProtocol),
+        doc_manager=mocker.create_autospec(DocumentManagerProtocol, instance=True),
+        sig_manager=mocker.create_autospec(SignatureManagerProtocol, instance=True),
+        fingerprint_strategy=mocker.create_autospec(
+            FingerprintStrategyProtocol, instance=True
+        ),
+        index_store=mocker.create_autospec(IndexStoreProtocol, instance=True),
+        differ=mocker.create_autospec(DifferProtocol, instance=True),
         resolver=mock_resolver,
-        reporter=create_autospec(CheckReporterProtocol),
+        reporter=mocker.create_autospec(CheckReporter, instance=True),
         root_path=Path("/tmp"),
     )
-    mock_results = [FileCheckResult(path="src/main.py")]
+    # 使用新的 AnalysisResult
+    mock_results = [AnalysisResult(path="src/main.py")]
     mock_conflicts = [
         InteractionContext(
             file_path="src/main.py",

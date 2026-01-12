@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import List, Dict
 
 from stitcher.common import bus
-from needle.pointer import L
+from needle.pointer import L, SemanticPointer
 from stitcher.spec import (
     ModuleDef,
     ResolutionAction,
@@ -15,7 +15,7 @@ from stitcher.spec import (
 from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
-from stitcher.app.types import FileCheckResult
+from stitcher.analysis.schema import FileCheckResult
 
 
 class CheckResolver:
@@ -51,33 +51,32 @@ class CheckResolver:
         self, results: List[FileCheckResult], modules: List[ModuleDef]
     ):
         for res in results:
-            if res.infos["doc_improvement"]:
-                module_def = next((m for m in modules if m.file_path == res.path), None)
-                if not module_def:
-                    continue
+            # Find all "doc_updated" violations and update baselines
+            doc_update_violations = [
+                v for v in res.info_violations if v.kind == L.check.state.doc_updated
+            ]
+            if not doc_update_violations:
+                continue
 
-                stored_hashes = self.sig_manager.load_composite_hashes(
-                    module_def.file_path
-                )
-                new_hashes = copy.deepcopy(stored_hashes)
-                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
-                    module_def
-                )
+            module_def = next((m for m in modules if m.file_path == res.path), None)
+            if not module_def:
+                continue
 
-                for fqn in res.infos["doc_improvement"]:
-                    if fqn in new_hashes:
-                        new_yaml_hash = current_yaml_map.get(fqn)
-                        if new_yaml_hash is not None:
-                            new_hashes[fqn]["baseline_yaml_content_hash"] = (
-                                new_yaml_hash
-                            )
-                        elif "baseline_yaml_content_hash" in new_hashes[fqn]:
-                            del new_hashes[fqn]["baseline_yaml_content_hash"]
+            stored_hashes = self.sig_manager.load_composite_hashes(module_def.file_path)
+            new_hashes = copy.deepcopy(stored_hashes)
+            current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module_def)
 
-                if new_hashes != stored_hashes:
-                    self.sig_manager.save_composite_hashes(
-                        module_def.file_path, new_hashes
-                    )
+            for violation in doc_update_violations:
+                fqn = violation.fqn
+                if fqn in new_hashes:
+                    new_yaml_hash = current_yaml_map.get(fqn)
+                    if new_yaml_hash is not None:
+                        new_hashes[fqn]["baseline_yaml_content_hash"] = new_yaml_hash
+                    elif "baseline_yaml_content_hash" in new_hashes[fqn]:
+                        del new_hashes[fqn]["baseline_yaml_content_hash"]
+
+            if new_hashes != stored_hashes:
+                self.sig_manager.save_composite_hashes(module_def.file_path, new_hashes)
 
     def resolve_conflicts(
         self,
@@ -97,40 +96,32 @@ class CheckResolver:
     def _resolve_interactive(
         self, results: List[FileCheckResult], conflicts: List[InteractionContext]
     ) -> bool:
-        # Should be safe since check logic guarantees interaction_handler is not None here
         assert self.interaction_handler is not None
 
         chosen_actions = self.interaction_handler.process_interactive_session(conflicts)
         resolutions_by_file = defaultdict(list)
-        reconciled_results = defaultdict(lambda: defaultdict(list))
+        unresolved_contexts: List[InteractionContext] = []
 
         for i, context in enumerate(conflicts):
             action = chosen_actions[i]
-            if action == ResolutionAction.RELINK:
-                resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path]["force_relink"].append(
-                    context.fqn
-                )
-            elif action == ResolutionAction.RECONCILE:
-                resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path]["reconcile"].append(context.fqn)
-            elif action in (
+            if action in (
+                ResolutionAction.RELINK,
+                ResolutionAction.RECONCILE,
                 ResolutionAction.HYDRATE_OVERWRITE,
                 ResolutionAction.HYDRATE_KEEP_EXISTING,
+                ResolutionAction.PURGE_DOC,
             ):
-                resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path]["reconcile"].append(context.fqn)
-            elif action == ResolutionAction.PURGE_DOC:
-                resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path]["purged"].append(context.fqn)
+                resolutions_by_file[context.file_path].append((context, action))
             elif action == ResolutionAction.SKIP:
-                self._mark_result_error(results, context)
+                unresolved_contexts.append(context)
             elif action == ResolutionAction.ABORT:
                 bus.warning(L.strip.run.aborted)
                 return False
 
         self._apply_resolutions(dict(resolutions_by_file))
-        self._update_results(results, reconciled_results)
+        self._update_results(results, dict(resolutions_by_file))
+
+        # Unresolved conflicts are kept in the violations list, so no action needed.
         return True
 
     def _resolve_noop(
@@ -143,85 +134,57 @@ class CheckResolver:
         handler = NoOpInteractionHandler(force_relink, reconcile)
         chosen_actions = handler.process_interactive_session(conflicts)
         resolutions_by_file = defaultdict(list)
-        reconciled_results = defaultdict(lambda: defaultdict(list))
 
         for i, context in enumerate(conflicts):
             action = chosen_actions[i]
             if action != ResolutionAction.SKIP:
-                key = (
-                    "force_relink" if action == ResolutionAction.RELINK else "reconcile"
-                )
-                resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path][key].append(context.fqn)
-            else:
-                self._mark_result_error(results, context)
+                resolutions_by_file[context.file_path].append((context, action))
 
         self._apply_resolutions(dict(resolutions_by_file))
-        self._update_results(results, reconciled_results)
+        self._update_results(results, dict(resolutions_by_file))
         return True
 
-    def _mark_result_error(
-        self, results: List[FileCheckResult], context: InteractionContext
+    def _update_results(
+        self,
+        results: List[FileCheckResult],
+        resolutions: Dict[str, List[tuple[InteractionContext, ResolutionAction]]],
     ):
         for res in results:
-            if res.path == context.file_path:
-                error_key_map = {
-                    L.check.state.signature_drift: "signature_drift",
-                    L.check.state.co_evolution: "co_evolution",
-                    L.check.issue.extra: "extra",
-                    L.check.issue.conflict: "conflict",
-                }
-                error_key = error_key_map.get(context.violation_type, "unknown")
-                res.errors[error_key].append(context.fqn)
-                break
+            if res.path not in resolutions:
+                continue
 
-    def _update_results(self, results: List[FileCheckResult], reconciled_data: dict):
-        for res in results:
-            if res.path in reconciled_data:
-                file_data = reconciled_data[res.path]
+            resolved_fqns_by_kind: Dict[SemanticPointer, set] = defaultdict(set)
+            for context, _ in resolutions[res.path]:
+                resolved_fqns_by_kind[context.violation_type].add(context.fqn)
 
-                # Update reconciled info (for reporting success)
-                res.reconciled["force_relink"] = file_data["force_relink"]
-                res.reconciled["reconcile"] = file_data["reconcile"]
-                res.reconciled["purged"] = file_data.get("purged", [])
-
-                # Clear resolved errors so the result becomes clean
-                # 1. Force Relink -> Fixes Signature Drift
-                for fqn in file_data["force_relink"]:
-                    if fqn in res.errors["signature_drift"]:
-                        res.errors["signature_drift"].remove(fqn)
-
-                # 2. Reconcile / Hydrate -> Fixes Co-Evolution AND Conflict
-                for fqn in file_data["reconcile"]:
-                    if fqn in res.errors["co_evolution"]:
-                        res.errors["co_evolution"].remove(fqn)
-                    if fqn in res.errors["conflict"]:
-                        res.errors["conflict"].remove(fqn)
-
-                # 3. Purge -> Fixes Extra
-                for fqn in file_data.get("purged", []):
-                    if fqn in res.errors["extra"]:
-                        res.errors["extra"].remove(fqn)
+            # Filter out violations that have been resolved and move them to reconciled
+            remaining_violations = []
+            for violation in res.violations:
+                resolved_fqns = resolved_fqns_by_kind.get(violation.kind, set())
+                if violation.fqn in resolved_fqns:
+                    res.reconciled.append(violation)
+                else:
+                    remaining_violations.append(violation)
+            res.violations = remaining_violations
 
     def _apply_resolutions(
-        self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]
+        self, resolutions: dict[str, list[tuple[InteractionContext, ResolutionAction]]]
     ):
         sig_updates_by_file = defaultdict(list)
         purges_by_file = defaultdict(list)
 
-        for file_path, fqn_actions in resolutions.items():
-            for fqn, action in fqn_actions:
+        for file_path, context_actions in resolutions.items():
+            for context, action in context_actions:
                 if action in [ResolutionAction.RELINK, ResolutionAction.RECONCILE]:
-                    sig_updates_by_file[file_path].append((fqn, action))
+                    sig_updates_by_file[file_path].append((context.fqn, action))
                 elif action == ResolutionAction.PURGE_DOC:
-                    purges_by_file[file_path].append(fqn)
+                    purges_by_file[file_path].append(context.fqn)
 
         # Apply signature updates
         for file_path, fqn_actions in sig_updates_by_file.items():
             stored_hashes = self.sig_manager.load_composite_hashes(file_path)
             new_hashes = copy.deepcopy(stored_hashes)
 
-            # NOTE: We are re-parsing here. This is one of the things we want to optimize later.
             full_module_def = self.parser.parse(
                 (self.root_path / file_path).read_text("utf-8"), file_path
             )

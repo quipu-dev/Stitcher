@@ -34,7 +34,8 @@ from .runners.pump.executor import PumpExecutor
 from stitcher.analysis.engines import create_pump_engine
 from stitcher.common.transaction import TransactionManager
 from typing import Callable
-from .types import PumpResult, FileCheckResult, CoverageResult
+from stitcher.analysis.schema import FileCheckResult
+from .types import PumpResult, CoverageResult
 from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
 from stitcher.index.indexer import FileIndexer

@@ -4,10 +4,17 @@
     "baseline_code_structure_hash": "940b2e27886084680096f4401391b1f5783b784152f324908c17a72a57b587ee",
     "baseline_yaml_content_hash": "600e68b81deadd713cbd75f1c45bc10280476b648f77a57943ca3adab303ec08"
   },
+  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult._ERROR_KINDS": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult._WARNING_KINDS": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.error_count": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.error_violations": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.info_violations": {},
   "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.is_clean": {
     "baseline_yaml_content_hash": "6492e0467f79e45c2e5099db6b6f0747ab233646cea25d717535da09cc1fa17a"
   },
   "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.path": {},
   "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.reconciled": {},
-  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.violations": {}
+  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.violations": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.warning_count": {},
+  "py://packages/stitcher-analysis/src/stitcher/analysis/schema/results.py#FileCheckResult.warning_violations": {}
 }

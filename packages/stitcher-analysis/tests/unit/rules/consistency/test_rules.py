@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import Mock
+from typing import Optional
 from needle.pointer import L
 from stitcher.spec import DocstringIR
 
@@ -30,8 +31,8 @@ def create_state(
     is_public=True,
     exists_in_code=True,
     exists_in_yaml=True,
-    source_doc="summary",
-    yaml_doc="summary",
+    source_doc: Optional[str] = "summary",
+    yaml_doc: Optional[str] = "summary",
     sig_hash="abc",
     base_sig_hash="abc",
     yaml_hash="123",
