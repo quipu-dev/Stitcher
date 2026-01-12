@@ -1,66 +1,86 @@
-太棒了。既然测试已经通过，这标志着该重构引擎的关键 DX（开发者体验）缺陷已得到修复。现在我们将这些更改作为一个完整的逻辑单元提交到代码库。
+由于我最近在修复路径处理逻辑时，在 `MoveFileOperation` 和 `MoveDirectoryOperation` 中引入了对 `ctx.workspace.root_path` 的显式访问，而现有的单元测试 Fixture `mock_context` 并没有模拟 `workspace` 属性，导致了 `AttributeError`。
 
-## [COMMIT] fix(refactor): Resolve relative paths in migration scripts
+我将生成一个计划来更新测试 Fixture，以匹配最新的 `RefactorContext` 契约。
+
+## [WIP] test: Fix mock context in refactor unit tests
 
 ### 错误分析
 
-在 `MoveFileOperation` 和 `MoveDirectoryOperation` 中，用户通过迁移脚本提供的路径被直接存储并使用。由于用户倾向于提供相对于项目根目录的路径（例如 `packages/...`），而重构引擎内部某些环节依赖绝对路径进行拓扑分析或调用 `pathlib.Path.relative_to()`，导致了路径不匹配的 `ValueError`。
+测试 `test_planner_handles_move_and_rename_on_same_file` 失败的原因是 `mock_context` Fixture 在创建 `RefactorContext` 的 Mock 对象时，没有提供 `workspace` 属性。由于 `RefactorContext` 现在是一个包含 `workspace` 的数据类，且我们在代码中通过 `ctx.workspace.root_path` 访问路径，缺少该属性会导致 Mock 对象抛出 `AttributeError`。
 
 ### 用户需求
 
-用户希望在编写重构脚本时能够使用直观的相对路径，而无需关心系统内部的路径解析逻辑。
+修复单元测试，确保测试环境与最新的代码逻辑契约一致。
 
 ### 评论
 
-这是一个非常及时的修复。随着项目向 Monorepo 演进，跨包的移动操作将变得非常频繁。支持相对路径不仅提升了脚本的编写效率，也使得迁移脚本在不同环境下的移植性更强。
+这是一个典型的由于代码重构导致的测试套件“陈旧”问题。在修改核心逻辑（如路径解析）时，必须同步更新受影响的 Mock 对象。
 
 ### 目标
 
-1.  将已修改的 `move_file.py` 和 `move_directory.py` 添加到 Git 暂存区。
-2.  创建一个清晰、详细的提交记录，描述修复的内容和原因。
+更新 `packages/stitcher-refactor/tests/unit/engine/test_planner_merging.py` 中的 `mock_context` Fixture，为其添加 `workspace` 模拟。
 
 ### 基本原理
 
-遵循 `[COMMIT]` 流程，我们将通过 Git 操作持久化这些通过验证的更改。这确保了重构引擎的基础设施现在可以稳定地处理用户输入的相对路径。
+在 `mock_context` 中创建一个 `MagicMock` 来模拟 `Workspace` 对象，并将其 `root_path` 属性指向测试用的 `tmp_path`。然后将这个 mock 赋值给 `ctx.workspace`。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/refactor #concept/paths #scope/dx #ai/instruct #task/domain/refactor #task/object/path-handling #task/action/bug-fix #task/state/end
+#intent/fix #flow/ready #priority/high #comp/tests #concept/mocking #scope/dx #ai/instruct #task/domain/testing #task/object/refactor-unit-tests #task/action/fixture-update #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 提交重构引擎的路径修复
+#### Acts 1: 更新 `test_planner_merging.py` 中的 Fixture
 
-我们将暂存相关文件并生成正式的提交记录。
-
-~~~~~act
-git_add
-packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py
-packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py
-~~~~~
+我将通过 `patch_file` 修正 `mock_context` 的定义。
 
 ~~~~~act
-git_commit
+patch_file
+packages/stitcher-refactor/tests/unit/engine/test_planner_merging.py
 ~~~~~
-~~~~~text
-fix(refactor): resolve relative paths in migration scripts
+~~~~~python.old
+@pytest.fixture
+def mock_context(tmp_path: Path) -> RefactorContext:
+    """Creates a mock RefactorContext with a mock graph."""
+    mock_index = Mock(spec=IndexStore)
+    mock_graph = MagicMock(spec=SemanticGraph)
+    mock_graph.root_path = tmp_path
+    mock_graph.search_paths = [tmp_path]
 
-Ensures that paths provided in 'Move' and 'MoveDir' operations within
-refactor migration scripts are automatically resolved to absolute paths
-relative to the project root.
+    ctx = Mock(spec=RefactorContext)
+    ctx.graph = mock_graph
+    ctx.index_store = mock_index
 
-Previously, providing a relative path (e.g., "packages/...") would cause
-a ValueError during the planning phase because the engine attempted to
-calculate relative relationships between absolute and relative Path objects.
-This fix resolves user-provided paths at the start of the 'collect_intents' 
-phase using the workspace root path.
+    # Mock SidecarManager to avoid AttributeError
+~~~~~
+~~~~~python.new
+@pytest.fixture
+def mock_context(tmp_path: Path) -> RefactorContext:
+    """Creates a mock RefactorContext with a mock graph."""
+    mock_index = Mock(spec=IndexStore)
+    mock_graph = MagicMock(spec=SemanticGraph)
+    mock_graph.root_path = tmp_path
+    mock_graph.search_paths = [tmp_path]
+
+    mock_workspace = MagicMock()
+    mock_workspace.root_path = tmp_path
+
+    ctx = Mock(spec=RefactorContext)
+    ctx.graph = mock_graph
+    ctx.index_store = mock_index
+    ctx.workspace = mock_workspace
+
+    # Mock SidecarManager to avoid AttributeError
 ~~~~~
 
 ### 下一步建议
 
-既然路径解析问题已经解决，你现在可以放心地执行你的架构重构计划了：
+修复 Fixture 后，请重新运行该测试模块以验证修复效果：
 
-1.  **执行重构**: 运行 `stitcher refactor apply migrations/001_phase_1_sinking.py` 来完成协议的下沉。
-2.  **验证一致性**: 重构完成后，建议运行 `stitcher check` 以确保所有代码、文档和签名在新的 FQN 体系下依然保持完美一致。
+```bash
+pytest packages/stitcher-refactor/tests/unit/engine/test_planner_merging.py
+```
+
+如果测试通过，我们可以继续进行其他的重构工作。此外，我建议检查其他包（如 `stitcher-application`）中是否存在类似的 `RefactorContext` Mock 逻辑，并进行同步更新。

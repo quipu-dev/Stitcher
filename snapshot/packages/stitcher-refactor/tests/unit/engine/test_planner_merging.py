@@ -21,9 +21,13 @@ def mock_context(tmp_path: Path) -> RefactorContext:
     mock_graph.root_path = tmp_path
     mock_graph.search_paths = [tmp_path]
 
+    mock_workspace = MagicMock()
+    mock_workspace.root_path = tmp_path
+
     ctx = Mock(spec=RefactorContext)
     ctx.graph = mock_graph
     ctx.index_store = mock_index
+    ctx.workspace = mock_workspace
 
     # Mock SidecarManager to avoid AttributeError
     mock_sidecar = Mock()
