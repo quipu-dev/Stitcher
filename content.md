@@ -1,184 +1,134 @@
-这是由于我们在之前的 Act 中对 `CheckRunner` 及其数据模型进行了激进的重构，但测试用例仍然停留在旧的“字典模式”导致的。
+好的，我们立即执行清理工作。
 
-根据 **ADAP v1.0** 协议，我们现在是在执行“彻底消除兼容层”的过程，测试用例必须同步升级到新的 `Violation` 对象模型。
+根据你的指示，我们将采用“受控拆除”策略：通过直接删除遗留代码来强制暴露测试套件和其他隐藏的依赖项。这是一个激进但必要的步骤，旨在彻底清除架构中的兼容性债务。
 
-## [WIP] test(app): 升级 CheckRunner 单元测试以适配新的 Violation 模型
-
-### 错误分析
-
-测试 `test_check_runner.py` 失败的根本原因是：测试代码在 Arrange 阶段混合使用了 `stitcher.app.types.FileCheckResult`（旧字典模型）和 `stitcher.analysis.schema.FileCheckResult`（新对象模型）。在 Assert 阶段，测试代码尝试访问 `.errors` 属性，而这个属性在重构后的 `CheckRunner` 返回的对象中已经不复存在。
+## [WIP] refactor(app): 移除 check 命令遗留的数据模型和协议
 
 ### 用户需求
 
-更新 `packages/stitcher-application/tests/unit/runners/check/test_check_runner.py`，移除对旧 `FileCheckResult` 的引用，并根据新的 `Violation` 列表逻辑重写断言。
+系统在 `stitcher-application` 包内维护了多个与 `check` 功能相关的遗留数据模型和协议（`app.types.FileCheckResult`, `app.runners.check.protocols.py`）。这些定义是 `stitcher-analysis` 中现代数据模型的冗余副本，构成了必须被移除的技术债务。
+
+本次任务的目标是物理删除这些遗留文件和类定义，以暴露并强制更新所有仍然依赖于它们的组件，特别是测试套件。
 
 ### 评论
 
-这是一个必要的“测试回归”，确保我们的测试套件与最新的架构契约保持一致。在这次更新中，我们将完全转向基于 `SemanticPointer` 的断言。
+这是一个典型的“架构债偿还”操作。我们正在故意破坏向后兼容性，以达成更高级别的架构纯净度。删除这些冗余的定义将：
+1.  **暴露隐藏的依赖**: 测试用例是这些旧契约的最后“堡垒”。删除它们将立即导致测试失败，从而为我们提供一个清晰的、必须修复的“待办事项列表”。
+2.  **强制架构统一**: 迫使所有代码（包括测试代码）都转向使用 `stitcher-analysis` 提供的单一、权威的数据模型。
+3.  **遵循 HFEA 原则**: 严格遵守“真理单一来源 (SSoT)”原则，消除任何形式的冗余信息维持。我们是在拆除脚手架，以展现建筑的真实结构。
 
 ### 目标
 
-1.  从测试文件中移除对 `stitcher.app.types.FileCheckResult` 的导入和使用。
-2.  将所有 mock 的结果对象统一为 `stitcher.analysis.schema.FileCheckResult` (别名为 `AnalysisResult`)。
-3.  更新断言，通过检查 `violations` 列表或 `error_count` 属性来验证分析结果，而不是访问已删除的 `errors` 字典。
+1.  从 `stitcher.app.types` 中删除遗留的、基于字典的 `FileCheckResult` 类。
+2.  删除整个 `stitcher.app.runners.check.protocols.py` 文件，该文件包含了 `SymbolState` 的影子副本以及基于旧数据模型的协议。
+3.  为下一阶段的“测试修复”工作奠定基础。
+
+### 基本原理
+
+根据“回归驱动开发”和“激进重演逻辑”的原则，当底层架构发生重大演进时，测试套件必须随之演进。通过删除旧的实现，我们利用了编译器和测试运行器作为静态和动态的分析工具，来精确地定位所有需要更新的代码点。这是一个比手动搜索和替换更高效、更彻底的策略，确保了没有任何角落被遗漏。
 
 ### 标签
 
-#intent/tooling #flow/ready #priority/high #comp/tests #concept/state #scope/dx #ai/instruct #task/domain/testing #task/object/test-check-runner #task/action/fix #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/app #comp/tests #scope/dx #ai/instruct #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `test_check_runner.py`
+#### Acts 1: 移除遗留的数据模型
 
-我们将重构测试用例，使其完全适配新的 `Violation` 驱动的架构。
+我们将首先从 `types.py` 中删除旧的 `FileCheckResult` 定义。接着，我们将删除整个 `protocols.py` 文件，因为它完全由过时的定义构成。
 
 ~~~~~act
-write_file
-packages/stitcher-application/tests/unit/runners/check/test_check_runner.py
+patch_file
+packages/stitcher-application/src/stitcher/app/types.py
 ~~~~~
-~~~~~python
+~~~~~python.old
+from dataclasses import dataclass, field
+from typing import Dict, List
 from pathlib import Path
-from unittest.mock import create_autospec, MagicMock
-
-from stitcher.app.runners.check.runner import CheckRunner
-from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
-from stitcher.spec import (
-    FingerprintStrategyProtocol,
-    IndexStoreProtocol,
-    ModuleDef,
-    DifferProtocol,
-)
-from stitcher.app.runners.check.protocols import (
-    CheckResolverProtocol,
-    CheckReporterProtocol,
-)
-from stitcher.spec.interaction import InteractionContext
-from stitcher.analysis.schema import FileCheckResult as AnalysisResult, Violation
-from needle.pointer import L
+from collections import defaultdict
 
 
-def test_check_runner_orchestrates_analysis_and_resolution():
-    """
-    验证 CheckRunner 正确地按顺序调用其依赖项：
-    1. Engine (通过 analyze_batch)
-    2. Resolver (auto_reconcile, 然后 resolve_conflicts)
-    3. Reporter
-    """
-    # 1. Arrange: 为所有依赖项创建 mock
-    mock_doc_manager = create_autospec(DocumentManagerProtocol, instance=True)
-    mock_sig_manager = create_autospec(SignatureManagerProtocol, instance=True)
-    mock_fingerprint_strategy = create_autospec(
-        FingerprintStrategyProtocol, instance=True
-    )
-    mock_index_store = create_autospec(IndexStoreProtocol, instance=True)
-    mock_differ = create_autospec(DifferProtocol, instance=True)
-    mock_resolver = create_autospec(CheckResolverProtocol, instance=True)
-    mock_reporter = create_autospec(CheckReporterProtocol, instance=True)
+@dataclass
+class FileCheckResult:
+    path: str
+    errors: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
+    warnings: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
+    infos: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
+    reconciled: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
+    auto_reconciled_count: int = 0
 
-    # 配置 mock 模块
-    mock_modules = [ModuleDef(file_path="src/main.py")]
+    @property
+    def error_count(self) -> int:
+        return sum(len(keys) for keys in self.errors.values())
 
-    # Mock Engine 行为
-    mock_engine = MagicMock()
-    mock_analysis_result = AnalysisResult(
-        path="src/main.py",
-        violations=[
-            Violation(kind=L.check.state.signature_drift, fqn="func", context={})
-        ],
-    )
-    mock_engine.analyze.return_value = mock_analysis_result
+    @property
+    def warning_count(self) -> int:
+        return sum(len(keys) for keys in self.warnings.values())
 
-    mock_resolver.resolve_conflicts.return_value = True
-    mock_reporter.report.return_value = True
+    @property
+    def reconciled_count(self) -> int:
+        return sum(len(keys) for keys in self.reconciled.values())
 
-    # 2. Act: 实例化 runner 并注入 mock engine
-    runner = CheckRunner(
-        doc_manager=mock_doc_manager,
-        sig_manager=mock_sig_manager,
-        fingerprint_strategy=mock_fingerprint_strategy,
-        index_store=mock_index_store,
-        differ=mock_differ,
-        resolver=mock_resolver,
-        reporter=mock_reporter,
-        root_path=Path("/tmp"),
-    )
-    runner.engine = mock_engine
-
-    # 执行分析
-    results, conflicts = runner.analyze_batch(mock_modules)
-
-    # 3. Assert: 验证结果
-    assert len(results) == 1
-    assert results[0].path == "src/main.py"
-    
-    # 验证违反项是否正确识别
-    assert len(results[0].violations) == 1
-    assert results[0].violations[0].kind == L.check.state.signature_drift
-    assert results[0].error_count == 1 # signature_drift 默认是 error
-    
-    # 验证交互冲突是否正确提取
-    assert len(conflicts) == 1
-    assert conflicts[0].violation_type == L.check.state.signature_drift
-
-    # 继续执行工作流
-    runner.auto_reconcile_docs(results, mock_modules)
-    resolution_success = runner.resolve_conflicts(results, conflicts)
-    report_success = runner.report(results)
-
-    # 验证与 mock 的交互
-    mock_engine.analyze.assert_called_once()
-    mock_resolver.auto_reconcile_docs.assert_called_once_with(results, mock_modules)
-    mock_resolver.resolve_conflicts.assert_called_once_with(
-        results, conflicts, force_relink=False, reconcile=False
-    )
-    mock_reporter.report.assert_called_once_with(results)
-
-    assert resolution_success is True
-    assert report_success is True
-
-
-def test_check_runner_passes_relink_and_reconcile_flags_to_resolver():
-    """
-    确保来自 Runner 公共 API 的布尔标志被正确传递给解析器组件。
-    """
-    # Arrange
-    mock_resolver = create_autospec(CheckResolverProtocol)
-    runner = CheckRunner(
-        doc_manager=create_autospec(DocumentManagerProtocol),
-        sig_manager=create_autospec(SignatureManagerProtocol),
-        fingerprint_strategy=create_autospec(FingerprintStrategyProtocol),
-        index_store=create_autospec(IndexStoreProtocol),
-        differ=create_autospec(DifferProtocol),
-        resolver=mock_resolver,
-        reporter=create_autospec(CheckReporterProtocol),
-        root_path=Path("/tmp"),
-    )
-    # 使用新的 AnalysisResult
-    mock_results = [AnalysisResult(path="src/main.py")]
-    mock_conflicts = [
-        InteractionContext(
-            file_path="src/main.py",
-            fqn="func",
-            violation_type=L.check.state.signature_drift,
+    @property
+    def is_clean(self) -> bool:
+        return (
+            self.error_count == 0
+            and self.warning_count == 0
+            and self.reconciled_count == 0
+            # Auto-reconciled (infos) do not affect cleanliness
         )
-    ]
 
-    # Act
-    runner.resolve_conflicts(
-        mock_results, mock_conflicts, force_relink=True, reconcile=True
-    )
 
-    # Assert
-    mock_resolver.resolve_conflicts.assert_called_once_with(
-        mock_results, mock_conflicts, force_relink=True, reconcile=True
-    )
+@dataclass
+class PumpResult:
+    success: bool
+    redundant_files: List[Path] = field(default_factory=list)
+
+
+@dataclass
+class CoverageResult:
+    path: str
+    total_symbols: int
+    documented_symbols: int
+    missing_symbols: int
+    coverage: float
+~~~~~
+~~~~~python.new
+from dataclasses import dataclass, field
+from typing import List
+from pathlib import Path
+
+
+@dataclass
+class PumpResult:
+    success: bool
+    redundant_files: List[Path] = field(default_factory=list)
+
+
+@dataclass
+class CoverageResult:
+    path: str
+    total_symbols: int
+    documented_symbols: int
+    missing_symbols: int
+    coverage: float
+~~~~~
+
+~~~~~act
+delete_file
+packages/stitcher-application/src/stitcher/app/runners/check/protocols.py
 ~~~~~
 
 ### 下一步建议
 
-测试用例更新后，你应该再次运行测试以确认修复。如果通过，接下来的工作是：
+代码清理已完成。
 
-1.  **清理遗留包引用**: 检查 `packages/stitcher-application/src/stitcher/app/types.py`，如果 `FileCheckResult` 已经不再被任何生产代码使用，应该将其删除，以彻底清除架构中旧时代的痕迹。
-2.  **协议同步**: 移除 `packages/stitcher-application/src/stitcher/app/runners/check/protocols.py` 中重复的 `CheckSubject` 协议定义，改为引用 `stitcher.analysis.protocols.AnalysisSubject`。
+正如预期的那样，此操作将导致现有测试套件出现大量 `ImportError` 和 `AttributeError`。**这是计划内且期望的结果**。
+
+**我建议立即运行 `pytest`**。
+
+这将生成一份完整的失败报告，精确地告诉我们哪些测试用例还在依赖被删除的旧模型。
+
+在你确认后，我将基于这份失败报告，生成一个专门用于修复测试的新计划。我们将逐一更新这些测试，使其导入并断言 `stitcher.analysis.schema` 中的新数据结构，从而完成本次重构的闭环。

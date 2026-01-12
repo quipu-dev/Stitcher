@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test(app): 升级 CheckRunner 单元测试以适配新的 Violation 模型", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768215984.6543493, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(app): 移除 check 命令遗留的数据模型和协议", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768216208.229953, "duration_ms": 0}}
