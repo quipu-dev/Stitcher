@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 stitcher-application 中的 Pyright 类型错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768200169.9312916, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix(testing): Fix Pyright type errors in stitcher-application tests", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768200264.5851042, "duration_ms": 0}}
