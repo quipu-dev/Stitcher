@@ -1,5 +1,5 @@
 import pytest
-from stitcher.python.analysis.utils import path_to_logical_fqn
+from stitcher.lang.python.analysis.utils import path_to_logical_fqn
 
 
 @pytest.mark.parametrize(

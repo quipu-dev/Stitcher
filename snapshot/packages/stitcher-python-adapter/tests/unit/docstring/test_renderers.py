@@ -1,7 +1,7 @@
 import pytest
 from textwrap import dedent
 
-from stitcher.adapter.python.docstring.renderers import (
+from stitcher.lang.python.docstring.renderers import (
     GoogleDocstringRenderer,
     NumpyDocstringRenderer,
 )

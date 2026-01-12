@@ -1,4 +1,4 @@
-from stitcher.adapter.python.index_adapter import PythonAdapter
+from stitcher.lang.python.adapter import PythonAdapter
 
 
 def test_python_adapter_symbol_extraction(tmp_path):

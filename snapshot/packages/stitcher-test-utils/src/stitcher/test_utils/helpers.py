@@ -9,11 +9,11 @@ from stitcher.adapter.python import (
 )
 from stitcher.workspace import Workspace
 
-from stitcher.adapter.python.griffe_parser import GriffePythonParser
+from stitcher.lang.python.parser.griffe import GriffePythonParser
 from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
 from stitcher.index.indexer import FileIndexer
-from stitcher.adapter.python.index_adapter import PythonAdapter
+from stitcher.lang.python.adapter import PythonAdapter
 from stitcher.app.services import SignatureManager
 
 

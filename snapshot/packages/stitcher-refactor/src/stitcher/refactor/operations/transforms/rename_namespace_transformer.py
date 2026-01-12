@@ -1,4 +1,4 @@
-from stitcher.python.analysis.cst.rename_transformers import (
+from stitcher.lang.python.transform.rename import (
     NamespaceRenamerTransformer,
 )
 

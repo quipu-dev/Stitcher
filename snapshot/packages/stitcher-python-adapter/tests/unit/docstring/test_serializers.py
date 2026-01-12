@@ -5,7 +5,7 @@ from stitcher.spec import (
     DocstringSection,
     SectionKind,
 )
-from stitcher.adapter.python.docstring.serializers import (
+from stitcher.lang.python.docstring.serializers import (
     RawSerializer,
     GoogleSerializer,
     NumpySerializer,

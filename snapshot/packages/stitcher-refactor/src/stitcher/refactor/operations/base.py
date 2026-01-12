@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
-from stitcher.python.analysis.utils import path_to_logical_fqn
+from stitcher.lang.python.analysis.utils import path_to_logical_fqn
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.intent import RefactorIntent
 

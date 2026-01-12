@@ -8,7 +8,7 @@ from .base import AbstractOperation
 from .transforms.rename_namespace_transformer import NamespaceRenamerTransformer
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.common.transaction import FileOp, WriteFileOp
-from stitcher.python.analysis.models import UsageLocation, ReferenceType
+from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
 
 
 class RenameNamespaceOperation(AbstractOperation):

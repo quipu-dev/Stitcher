@@ -1,0 +1,70 @@
+{
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageRegistry": {
+    "baseline_code_signature_text": "class UsageRegistry:",
+    "baseline_code_structure_hash": "967c896897154b5dae54e74f3892ab42d8088198a58ae52225e85f7f60321d33",
+    "baseline_yaml_content_hash": "484aa8dc6c520a7af91e59d8c888028d4ae0ed452b7263e1224bdd97221391c5"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageRegistry.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
+    "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageRegistry._index": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageRegistry.get_all_usages": {
+    "baseline_code_signature_text": "def get_all_usages(self) -> Dict[str, List[UsageLocation]]:",
+    "baseline_code_structure_hash": "b7203e521df0bc35e23335da0e29437750a078f365b8d3d7db370c048229df5f"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageRegistry.get_usages": {
+    "baseline_code_signature_text": "def get_usages(self, target_fqn: str) -> List[UsageLocation]:",
+    "baseline_code_structure_hash": "8d9cf5121b7f7836d779ac0f49bea25a8bd7e38d8ad447861c8d0f9686b140e8"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageRegistry.register": {
+    "baseline_code_signature_text": "def register(self, target_fqn: str, location: UsageLocation):",
+    "baseline_code_structure_hash": "205b208dafd47aeb0946fd69a75d55b5e752676fdcd5d104eeff837e807159a5"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor": {
+    "baseline_code_signature_text": "class UsageScanVisitor(cst.CSTVisitor):",
+    "baseline_code_structure_hash": "6545ac9f1e8e6748c06fffa4c31ff1dc7877f52d32c3668877dd7cb86de09c50",
+    "baseline_yaml_content_hash": "c4eb2da8387332274d2623b10594f6c47069aba9833c48a131d6aed7807ef093"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.METADATA_DEPENDENCIES": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.__init__": {
+    "baseline_code_signature_text": "def __init__(self, file_path: Path, local_symbols: Dict[str, str], registry: UsageRegistry, current_module_fqn: Optional[str] = None, is_init_file: bool = False):",
+    "baseline_code_structure_hash": "923f1c13ae3ab20397a85e214952791123c28dd11b6793c30fd71acd9f332637"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor._register_node": {
+    "baseline_code_signature_text": "def _register_node(self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType):",
+    "baseline_code_structure_hash": "abf738b190d9ece13c1b60031acf1cf961a182f223400f30ef8767d05aa9e362",
+    "baseline_yaml_content_hash": "f306310008e15395c4cac50dedd8777fa6b6696bc20acd9c3befbf22499e39cf"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.active_symbols": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.current_module_fqn": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.current_package": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.file_path": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.is_init_file": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.local_symbols": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.registry": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.visit_Attribute": {
+    "baseline_code_signature_text": "def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:",
+    "baseline_code_structure_hash": "aefe42bae1b746e3a301105d2b20996b76525735046545bb7d54932158adf30a"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.visit_ClassDef": {
+    "baseline_code_signature_text": "def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:",
+    "baseline_code_structure_hash": "a8d85b41a8f83b14052de020444d04ee5c339ce4e565465d97b9a494c1e61cd8"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.visit_FunctionDef": {
+    "baseline_code_signature_text": "def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:",
+    "baseline_code_structure_hash": "228968f6587b436c7b0f5d338ef420bd2a0181aa51a282b48c30ae9d5367b2fc"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.visit_Import": {
+    "baseline_code_signature_text": "def visit_Import(self, node: cst.Import) -> Optional[bool]:",
+    "baseline_code_structure_hash": "2d7553aab8fd612b88dc9a8261b87debab996129ec0c68f7cb3a1c36a6a6ccc2"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.visit_ImportFrom": {
+    "baseline_code_signature_text": "def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:",
+    "baseline_code_structure_hash": "6411074316b481b3fc483e65c19181a4bc33ff0d73c600e6cab13dbac84c74eb"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.visit_Name": {
+    "baseline_code_signature_text": "def visit_Name(self, node: cst.Name):",
+    "baseline_code_structure_hash": "cd22b676f96a3ec757b09d2c11277d6b56e755f04646f134ed579260699b2a96"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/docstring/parsers.py#GriffeDocstringParser": {
+    "baseline_code_signature_text": "class GriffeDocstringParser(DocstringParserProtocol):",
+    "baseline_code_structure_hash": "c84b38419dc3ddfc13074ec45e9a116ff64c2300c79160d6394a6d5bffb6112d",
+    "baseline_yaml_content_hash": "569a5709448b4cd5200d52ed2498f0de9e0466391b9eb8de6d93bdbcc6d0f557"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/docstring/parsers.py#GriffeDocstringParser.__init__": {
+    "baseline_code_signature_text": "def __init__(self, style: str = 'google'):",
+    "baseline_code_structure_hash": "ec921023a48cc1d624e1ef9743308bbfed5895816a6a1a6297b5225e6d242af8"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/docstring/parsers.py#GriffeDocstringParser._map_section": {
+    "baseline_code_signature_text": "def _map_section(self, section: GriffeSection) -> Union[DocstringSection, None]:",
+    "baseline_code_structure_hash": "712c0b7002d98f734abdd03a953db615872dd046db19bbe8ea2f44dd5f64f3fd"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/docstring/parsers.py#GriffeDocstringParser.parse": {
+    "baseline_code_signature_text": "def parse(self, docstring_text: str) -> DocstringIR:",
+    "baseline_code_structure_hash": "aa78df2873a9da3428776ed13d1c38d4a292b62b7107d0560002ff94181e5170"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/docstring/parsers.py#GriffeDocstringParser.style": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/docstring/parsers.py#RawDocstringParser": {
+    "baseline_code_signature_text": "class RawDocstringParser(DocstringParserProtocol):",
+    "baseline_code_structure_hash": "2c70e325044b86eafc9530efc5fd07faf8656d41d618e6c4a708d7f3c418e923",
+    "baseline_yaml_content_hash": "5922122cccf14467e0934dd9547315cb778235d0a04be4d7da717da318741a1b"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/docstring/parsers.py#RawDocstringParser.parse": {
+    "baseline_code_signature_text": "def parse(self, docstring_text: str) -> DocstringIR:",
+    "baseline_code_structure_hash": "aa78df2873a9da3428776ed13d1c38d4a292b62b7107d0560002ff94181e5170"
+  }
+}

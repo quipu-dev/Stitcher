@@ -1,0 +1,68 @@
+{
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#DocstringHasher": {
+    "baseline_code_signature_text": "class DocstringHasher:",
+    "baseline_code_structure_hash": "5f2b407d55d9dd2c5e1ba031b6a3b3d5c1ea1c95c6d9016bd6217e3e9b34289c"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#DocstringHasher.update": {
+    "baseline_code_signature_text": "def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:",
+    "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#EntityHasher": {
+    "baseline_code_signature_text": "class EntityHasher(Protocol):",
+    "baseline_code_structure_hash": "ea8b252002771f086ba389bdf38f37101b81d600ff4788b38fbfa887fe0cd7d0",
+    "baseline_yaml_content_hash": "a594e3e6e3cf1eeed5456fba28c82afd8c9490a8a6cf08ebec403e96decfe062"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#EntityHasher.update": {
+    "baseline_code_signature_text": "def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:",
+    "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713",
+    "baseline_yaml_content_hash": "3474205bfcc1930346b0c5175cbb1149dfc61510cce5330bc71f2eb976092d5d"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#PythonFingerprintStrategy": {
+    "baseline_code_signature_text": "class PythonFingerprintStrategy:",
+    "baseline_code_structure_hash": "5374fb7826744ee0423e0e7c1e8637e627aa2ef04807cdc4fda1113040737b8d",
+    "baseline_yaml_content_hash": "5510039501752c6a8ad7042442829ee0031f807b324bf3287f5fd3f76f438bd3"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#PythonFingerprintStrategy.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
+    "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#PythonFingerprintStrategy.compute": {
+    "baseline_code_signature_text": "def compute(self, entity: Union[FunctionDef, ClassDef]) -> Fingerprint:",
+    "baseline_code_structure_hash": "256ccdba13895196e98d14eb59d4f59ed77c7cbf590278e1bd62205ac6786445"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#PythonFingerprintStrategy.hashers": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#SignatureTextHasher": {
+    "baseline_code_signature_text": "class SignatureTextHasher:",
+    "baseline_code_structure_hash": "3869a991816993c23b5fc262b8fa7b78c1982ba24860c183149388004bc9b61d",
+    "baseline_yaml_content_hash": "309556f7a93d8e45b00c7c405749c6e48a4ef59035d7cb6e2cb7673095624fbd"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#SignatureTextHasher._get_class_signature_string": {
+    "baseline_code_signature_text": "def _get_class_signature_string(self, cls: ClassDef) -> str:",
+    "baseline_code_structure_hash": "7de2fc692cbaa3a8900bb0d35e3418b114223e5e03a70f04dd63c36501afeca3"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#SignatureTextHasher._get_func_signature_string": {
+    "baseline_code_signature_text": "def _get_func_signature_string(self, func: FunctionDef) -> str:",
+    "baseline_code_structure_hash": "305313668ec7dcd32290f724a170f651b9f7bc2185b8d6dbc84cbbd8fe7aa2c0"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#SignatureTextHasher.update": {
+    "baseline_code_signature_text": "def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:",
+    "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#StructureHasher": {
+    "baseline_code_signature_text": "class StructureHasher:",
+    "baseline_code_structure_hash": "a80097642f487ac37c3b6d12115c31e797bf980755a14fd94f7134b4b6553363",
+    "baseline_yaml_content_hash": "049b866c0b46b7bc0f07d2916faea80627b94f0e6f0aa6ce2e5e323702265921"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#StructureHasher._compute_class_hash": {
+    "baseline_code_signature_text": "def _compute_class_hash(self, cls: ClassDef) -> str:",
+    "baseline_code_structure_hash": "94ca9810b0cc52e982df8b98aa7ba9bf48353d750e252de8d1e3ae250a40a391"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#StructureHasher._compute_func_hash": {
+    "baseline_code_signature_text": "def _compute_func_hash(self, func: FunctionDef) -> str:",
+    "baseline_code_structure_hash": "4af5a2512691a1559ef332e6bd5cb3e4ccb9b0fea485cccd1d915e46ca50e177"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/fingerprint.py#StructureHasher.update": {
+    "baseline_code_signature_text": "def update(self, entity: Union[FunctionDef, ClassDef], fingerprint: Fingerprint) -> None:",
+    "baseline_code_structure_hash": "a5c31c63dc63c6586bf54973fbee0ad91bd9bbaa11922c8b00200a8206073713"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer": {
+    "baseline_code_signature_text": "class NamespaceRenamerTransformer(cst.CSTTransformer):",
+    "baseline_code_structure_hash": "e373a02c58b486663e5afdb16e9102c3439638ec57105e23bc9c7a9b4d74e161",
+    "baseline_yaml_content_hash": "561fe244b21a6bd27862288b50bc1906470c61b7473b0bd457f1992e8775d1d7"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer.METADATA_DEPENDENCIES": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer.__init__": {
+    "baseline_code_signature_text": "def __init__(self, old_prefix: str, new_prefix: str, locations: Dict[Tuple[int, int], UsageLocation]):",
+    "baseline_code_structure_hash": "11acfbb3705f94e997f724481e78a2f0e26b13c058002402da465d6415b630d6"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer._create_node_from_fqn": {
+    "baseline_code_signature_text": "def _create_node_from_fqn(self, fqn: str) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "201e0533220c702d4063c62258bfb4dbdd80bc5ff8e5781c16c91c331f05c9a7"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer._get_import_path_fqn": {
+    "baseline_code_signature_text": "def _get_import_path_fqn(self, node: cst.CSTNode) -> Optional[str]:",
+    "baseline_code_structure_hash": "d04bc664a7a0634c3774608301cc55489e4d0532c62a05fcd18b6b5a2dae1f46"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer.leave_Attribute": {
+    "baseline_code_signature_text": "def leave_Attribute(self, original_node: cst.Attribute, updated_node: cst.Attribute) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "a0c35a5060a2bf8004956dcf0f382747c7f681a914d629ea45eea47ef6c4f004"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer.leave_Name": {
+    "baseline_code_signature_text": "def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "359a7b7d03fd4c22322b79587ce2f48c68c764ee80795ad2766698ab49ff3fef"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer.locations": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer.new_prefix": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#NamespaceRenamerTransformer.old_prefix": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer": {
+    "baseline_code_signature_text": "class SymbolRenamerTransformer(cst.CSTTransformer):",
+    "baseline_code_structure_hash": "b57fcdc4a2955361e44dfe84e497575eee0b5aaa73ec0ab9ab9cfec9f66df939",
+    "baseline_yaml_content_hash": "9a252f0d96c5665d3c35dfe215b2fcf80a1661ce5f6a0926b0d6ab2a40ef5c72"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer.METADATA_DEPENDENCIES": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer.__init__": {
+    "baseline_code_signature_text": "def __init__(self, rename_map: Dict[str, str], target_locations: List[UsageLocation]):",
+    "baseline_code_structure_hash": "ac3897ded3e867d897289545f326634f49d628f843e9b7079eced3089cb32ce5"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer._build_location_index": {
+    "baseline_code_signature_text": "def _build_location_index(self, locations: List[UsageLocation]) -> Dict[Tuple[int, int], UsageLocation]:",
+    "baseline_code_structure_hash": "04031f1bf0a3a5ad19d4d3b03c8a6b20fb05f9400065e9bf1bbc139271ec186a"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer._create_node_from_fqn": {
+    "baseline_code_signature_text": "def _create_node_from_fqn(self, fqn: str) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "201e0533220c702d4063c62258bfb4dbdd80bc5ff8e5781c16c91c331f05c9a7"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer._get_rename_for_node": {
+    "baseline_code_signature_text": "def _get_rename_for_node(self, node: cst.CSTNode) -> Optional[Tuple[str, str]]:",
+    "baseline_code_structure_hash": "098def532368c1d3e89f0bfc2553abca5dab1491d11aa5f0d935e984abc56297"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer._location_index": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer.leave_Attribute": {
+    "baseline_code_signature_text": "def leave_Attribute(self, original_node: cst.Attribute, updated_node: cst.Attribute) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "a0c35a5060a2bf8004956dcf0f382747c7f681a914d629ea45eea47ef6c4f004"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer.leave_ImportFrom": {
+    "baseline_code_signature_text": "def leave_ImportFrom(self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom) -> cst.ImportFrom:",
+    "baseline_code_structure_hash": "aa72b85332da1038283ec667850760ea1cce64741a496bf847436e72463be2fb"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer.leave_Name": {
+    "baseline_code_signature_text": "def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.BaseExpression:",
+    "baseline_code_structure_hash": "359a7b7d03fd4c22322b79587ce2f48c68c764ee80795ad2766698ab49ff3fef"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/transform/rename.py#SymbolRenamerTransformer.rename_map": {}
+}

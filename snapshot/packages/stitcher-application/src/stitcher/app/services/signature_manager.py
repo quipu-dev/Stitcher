@@ -8,7 +8,7 @@ from stitcher.spec import (
     InvalidFingerprintKeyError,
 )
 from stitcher.common.services import AssetPathResolver
-from stitcher.adapter.python.uri import SURIGenerator
+from stitcher.lang.python.uri import SURIGenerator
 
 
 class SignatureManager:

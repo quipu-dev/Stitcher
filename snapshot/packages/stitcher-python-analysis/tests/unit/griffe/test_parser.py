@@ -1,5 +1,5 @@
 import pytest
-from stitcher.adapter.python.griffe_parser import GriffePythonParser
+from stitcher.lang.python.parser.griffe import GriffePythonParser
 from stitcher.spec import ArgumentKind
 
 

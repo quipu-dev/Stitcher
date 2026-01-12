@@ -1,6 +1,6 @@
 import libcst as cst
 from pathlib import Path
-from stitcher.python.analysis.models import UsageLocation, ReferenceType
+from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
 from stitcher.refactor.operations.transforms.rename_transformer import (
     SymbolRenamerTransformer,
 )

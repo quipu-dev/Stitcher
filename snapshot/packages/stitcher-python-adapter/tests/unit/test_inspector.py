@@ -1,5 +1,5 @@
 import pytest
-from stitcher.adapter.python.inspector import parse_plugin_entry, InspectionError
+from stitcher.lang.python.inspector import parse_plugin_entry, InspectionError
 
 # Mock module for testing
 import sys

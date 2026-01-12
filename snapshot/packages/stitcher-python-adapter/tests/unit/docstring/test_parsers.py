@@ -1,4 +1,4 @@
-from stitcher.adapter.python.docstring.parsers import GriffeDocstringParser
+from stitcher.lang.python.docstring.parsers import GriffeDocstringParser
 
 
 class TestGriffeDocstringParser:

@@ -5,7 +5,7 @@ import logging
 import griffe
 from stitcher.workspace import Workspace
 from stitcher.index.store import IndexStore
-from stitcher.python.analysis.models import UsageLocation, ReferenceType
+from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
 
 log = logging.getLogger(__name__)
 

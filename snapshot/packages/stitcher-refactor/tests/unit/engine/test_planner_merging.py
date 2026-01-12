@@ -5,7 +5,7 @@ import pytest
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.engine.graph import SemanticGraph
 from stitcher.index.store import IndexStore
-from stitcher.python.analysis.models import UsageLocation, ReferenceType
+from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.operations.move_file import MoveFileOperation
 from stitcher.refactor.migration import MigrationSpec

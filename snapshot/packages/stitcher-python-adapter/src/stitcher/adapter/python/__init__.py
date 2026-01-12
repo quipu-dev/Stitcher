@@ -1,4 +1,4 @@
-from .docstring import (
+from stitcher.lang.python.docstring import (
     GriffeDocstringParser,
     GoogleDocstringRenderer,
     GoogleSerializer,
@@ -9,11 +9,11 @@ from .docstring import (
     get_docstring_codec,
     get_docstring_serializer,
 )
-from .fingerprint import PythonFingerprintStrategy
-from .griffe_parser import GriffePythonParser
-from .inspector import InspectionError, parse_plugin_entry
-from .parser import PythonParser
-from .transformer import PythonTransformer
+from stitcher.lang.python.fingerprint import PythonFingerprintStrategy
+from stitcher.lang.python.parser.griffe import GriffePythonParser
+from stitcher.lang.python.inspector import InspectionError, parse_plugin_entry
+from stitcher.lang.python.parser.cst import PythonParser
+from stitcher.lang.python.transform.facade import PythonTransformer
 
 __all__ = [
     # Core Python Adapter Components
@@ -36,4 +36,4 @@ __all__ = [
     "PythonAdapter",
 ]
 
-from .index_adapter import PythonAdapter
+from stitcher.lang.python.adapter import PythonAdapter

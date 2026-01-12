@@ -6,7 +6,7 @@ from stitcher.refactor.engine.graph import (
     SymbolNode,
 )
 from stitcher.index.store import IndexStore
-from stitcher.python.analysis.models import UsageLocation, ReferenceType
+from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.common.transaction import WriteFileOp
 from stitcher.refactor.sidecar.manager import SidecarManager

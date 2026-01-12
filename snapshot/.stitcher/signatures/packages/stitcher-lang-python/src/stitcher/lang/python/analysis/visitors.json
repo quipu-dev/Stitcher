@@ -1,0 +1,77 @@
+{
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor": {
+    "baseline_code_signature_text": "class IRBuildingVisitor(cst.CSTVisitor):",
+    "baseline_code_structure_hash": "bb8e5f0b2e62c317ab049d7708691b5aa2c6b61b36770c435b8fc8586fec9e0a",
+    "baseline_yaml_content_hash": "291e393707efa7e2ef1f5bf5d6ee642a0c50179602804c332eaa3bdb23f32ef2"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.METADATA_DEPENDENCIES": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.__init__": {
+    "baseline_code_signature_text": "def __init__(self):",
+    "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor._add_attribute": {
+    "baseline_code_signature_text": "def _add_attribute(self, attr: Attribute):",
+    "baseline_code_structure_hash": "2ace60f8a2762e8e7a9f0a16b79051b99610b5bb3f7681d5231e8a0c140989a6"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor._class_stack": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor._dummy_module": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor._extract_location": {
+    "baseline_code_signature_text": "def _extract_location(self, node: cst.CSTNode) -> SourceLocation:",
+    "baseline_code_structure_hash": "3143a3afcc13a90c7906fa127e1d1385d25bf671e43fcce3f1affb0e986d6d48"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor._parse_parameters": {
+    "baseline_code_signature_text": "def _parse_parameters(self, params: cst.Parameters) -> List[Argument]:",
+    "baseline_code_structure_hash": "2415da40a88d45a1444e8fd1f8bfaf557ad5e0ad3b2f2b29235dc418cd9ff2fb"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.attributes": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.classes": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.dunder_all": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.functions": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.imports": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.leave_ClassDef": {
+    "baseline_code_signature_text": "def leave_ClassDef(self, original_node: cst.ClassDef) -> None:",
+    "baseline_code_structure_hash": "457d0e7430bc2ee0976698958677fb0ed42502b985f9aa1ecf005c8fb87944d4"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.visit_AnnAssign": {
+    "baseline_code_signature_text": "def visit_AnnAssign(self, node: cst.AnnAssign) -> Optional[bool]:",
+    "baseline_code_structure_hash": "3382ee66992ef89c00e498e05c4f3e66c6539dfadf7d3a57c57f0587cc50a270"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.visit_Assign": {
+    "baseline_code_signature_text": "def visit_Assign(self, node: cst.Assign) -> Optional[bool]:",
+    "baseline_code_structure_hash": "a2bf7f85999855880d171c4dfb37974c0179c44041b9dd7f3869a505f979175b"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.visit_ClassDef": {
+    "baseline_code_signature_text": "def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:",
+    "baseline_code_structure_hash": "a8d85b41a8f83b14052de020444d04ee5c339ce4e565465d97b9a494c1e61cd8"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.visit_FunctionDef": {
+    "baseline_code_signature_text": "def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:",
+    "baseline_code_structure_hash": "228968f6587b436c7b0f5d338ef420bd2a0181aa51a282b48c30ae9d5367b2fc"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.visit_Import": {
+    "baseline_code_signature_text": "def visit_Import(self, node: cst.Import) -> Optional[bool]:",
+    "baseline_code_structure_hash": "2d7553aab8fd612b88dc9a8261b87debab996129ec0c68f7cb3a1c36a6a6ccc2"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#IRBuildingVisitor.visit_ImportFrom": {
+    "baseline_code_signature_text": "def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:",
+    "baseline_code_structure_hash": "6411074316b481b3fc483e65c19181a4bc33ff0d73c600e6cab13dbac84c74eb"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#_collect_annotations": {
+    "baseline_code_signature_text": "def _collect_annotations(module: ModuleDef) -> Set[str]:",
+    "baseline_code_structure_hash": "6a020cc106f92b3d660e77707f34b6eed4be7ea09a678fb7a77c6ddea8989b72"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#_enrich_typing_imports": {
+    "baseline_code_signature_text": "def _enrich_typing_imports(module: ModuleDef):",
+    "baseline_code_structure_hash": "188b1cfbb2fd8126b0eef17a30839ca23bb6973e7009e6898d7e71b518cee85c",
+    "baseline_yaml_content_hash": "d96914efb4299b654953e30fde915e63ff5ea6274c50965b1174c117a1c1b5ec"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#_has_unannotated_attributes": {
+    "baseline_code_signature_text": "def _has_unannotated_attributes(module: ModuleDef) -> bool:",
+    "baseline_code_structure_hash": "7786ac0ddc22193ab9b3362b82d5ea8f16d372ad2444fb4a7310f4d540b068f4"
+  },
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/visitors.py#parse_source_code": {
+    "baseline_code_signature_text": "def parse_source_code(source_code: str, file_path: str = '') -> ModuleDef:",
+    "baseline_code_structure_hash": "544ac99af006a7e824ae83739504de3c292c175aa7ae4c4a451318eab218386d",
+    "baseline_yaml_content_hash": "a276d79063578564dd45c0578064ff727e32761f55f367542e01ffb9bc39ef27"
+  }
+}

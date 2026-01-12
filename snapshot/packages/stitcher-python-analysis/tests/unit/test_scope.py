@@ -1,5 +1,5 @@
 from stitcher.spec import ModuleDef, Attribute, FunctionDef, ClassDef
-from stitcher.python.analysis.scope import ScopeAnalyzer
+from stitcher.lang.python.analysis.scope import ScopeAnalyzer
 
 
 def test_scope_analyzer_from_ir():

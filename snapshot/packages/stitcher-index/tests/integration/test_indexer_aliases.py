@@ -1,6 +1,6 @@
 from textwrap import dedent
 from stitcher.index.indexer import FileIndexer
-from stitcher.adapter.python.index_adapter import PythonAdapter
+from stitcher.lang.python.adapter import PythonAdapter
 from stitcher.test_utils.workspace import WorkspaceFactory
 from stitcher.workspace import Workspace
 

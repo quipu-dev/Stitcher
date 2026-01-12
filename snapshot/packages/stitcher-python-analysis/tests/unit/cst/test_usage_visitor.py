@@ -1,6 +1,6 @@
 import libcst as cst
 from pathlib import Path
-from stitcher.python.analysis.cst.usage_visitor import UsageScanVisitor, UsageRegistry
+from stitcher.lang.python.analysis.usage_visitor import UsageScanVisitor, UsageRegistry
 
 
 def parse_and_visit(code: str, module_fqn: str = "mypkg.mod"):

@@ -1,3 +1,3 @@
-from stitcher.python.analysis.cst.rename_transformers import SymbolRenamerTransformer
+from stitcher.lang.python.transform.rename import SymbolRenamerTransformer
 
 __all__ = ["SymbolRenamerTransformer"]

@@ -3,7 +3,7 @@ import time
 import argparse
 from pathlib import Path
 from stitcher.app import StitcherApp
-from stitcher.adapter.python.griffe_parser import GriffePythonParser
+from stitcher.lang.python.parser.griffe import GriffePythonParser
 from stitcher.adapter.python import PythonTransformer, PythonFingerprintStrategy
 
 # --- 1. 自动路径注入 (Automation of sys.path) ---
