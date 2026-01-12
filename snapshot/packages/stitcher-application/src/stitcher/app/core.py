@@ -28,7 +28,7 @@ from .runners import (
     RefactorRunner,
     IndexRunner,
 )
-from .runners.check.analyzer import CheckAnalyzer
+from stitcher.analysis.engines import create_consistency_engine
 from .runners.check.resolver import CheckResolver
 from .runners.check.reporter import CheckReporter
 from .runners.pump.analyzer import PumpAnalyzer
@@ -83,7 +83,9 @@ class StitcherApp:
         )
 
         # 3. Runners (Command Handlers)
-        check_analyzer = CheckAnalyzer(root_path, self.differ)
+        # Use Factory to create engine (Analysis Layer)
+        consistency_engine = create_consistency_engine(differ=self.differ)
+        
         check_resolver = CheckResolver(
             root_path,
             parser,
@@ -94,11 +96,12 @@ class StitcherApp:
         )
         check_reporter = CheckReporter()
         self.check_runner = CheckRunner(
-            self.doc_manager,
-            self.sig_manager,
-            self.fingerprint_strategy,
-            self.index_store,
-            analyzer=check_analyzer,
+            root_path=root_path,
+            doc_manager=self.doc_manager,
+            sig_manager=self.sig_manager,
+            fingerprint_strategy=self.fingerprint_strategy,
+            index_store=self.index_store,
+            engine=consistency_engine,
             resolver=check_resolver,
             reporter=check_reporter,
         )

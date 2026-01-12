@@ -16,6 +16,7 @@ dependencies = [
     "stitcher-workspace",
     "stitcher-index",
     "pyneedle",
+    "stitcher-analysis",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -30,3 +31,4 @@ stitcher-stubgen = { workspace = true }
 stitcher-workspace = { workspace = true }
 stitcher-index = { workspace = true }
 pyneedle = { workspace = true }
+stitcher-analysis = { workspace = true }

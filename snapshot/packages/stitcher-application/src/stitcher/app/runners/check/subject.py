@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+from pathlib import Path
 from stitcher.spec import (
     ModuleDef,
     Fingerprint,
@@ -7,25 +8,33 @@ from stitcher.spec import (
 )
 from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
 from stitcher.spec.index import SymbolRecord
-from .protocols import SymbolState, CheckSubject
+from stitcher.analysis.schema import SymbolState
+from stitcher.analysis.protocols import AnalysisSubject
 
 
-class IndexCheckSubjectAdapter(CheckSubject):
+class IndexCheckSubjectAdapter(AnalysisSubject):
     def __init__(
         self,
         file_path: str,
         index_store: IndexStoreProtocol,
         doc_manager: DocumentManagerProtocol,
         sig_manager: SignatureManagerProtocol,
+        root_path: Path,
     ):
         self._file_path = file_path
         self._index_store = index_store
         self._doc_manager = doc_manager
         self._sig_manager = sig_manager
+        self._root_path = root_path
 
     @property
     def file_path(self) -> str:
         return self._file_path
+
+    @property
+    def is_tracked(self) -> bool:
+        # Check if .stitcher.yaml exists for this file
+        return (self._root_path / self._file_path).with_suffix(".stitcher.yaml").exists()
 
     def _is_public(self, fqn: str) -> bool:
         # Replicate public visibility logic from AST-based approach
@@ -105,22 +114,28 @@ class IndexCheckSubjectAdapter(CheckSubject):
         return states
 
 
-class ASTCheckSubjectAdapter(CheckSubject):
+class ASTCheckSubjectAdapter(AnalysisSubject):
     def __init__(
         self,
         module_def: ModuleDef,
         doc_manager: DocumentManagerProtocol,
         sig_manager: SignatureManagerProtocol,
         fingerprint_strategy: FingerprintStrategyProtocol,
+        root_path: Path,
     ):
         self._module = module_def
         self._doc_manager = doc_manager
         self._sig_manager = sig_manager
         self._fingerprint_strategy = fingerprint_strategy
+        self._root_path = root_path
 
     @property
     def file_path(self) -> str:
         return self._module.file_path
+
+    @property
+    def is_tracked(self) -> bool:
+        return (self._root_path / self.file_path).with_suffix(".stitcher.yaml").exists()
 
     def _compute_fingerprints(self) -> Dict[str, Fingerprint]:
         fingerprints: Dict[str, Fingerprint] = {}

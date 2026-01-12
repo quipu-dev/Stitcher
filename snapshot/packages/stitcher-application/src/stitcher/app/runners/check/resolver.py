@@ -16,7 +16,7 @@ from stitcher.spec import (
 from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
-from stitcher.app.types import FileCheckResult
+from stitcher.analysis.schema import FileCheckResult, Violation
 
 
 class CheckResolver:
@@ -37,8 +37,6 @@ class CheckResolver:
         self.fingerprint_strategy = fingerprint_strategy
 
     def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
-        # Helper duplicated here for simplicity in applying updates,
-        # ideally this logic belongs to a shared utility or service.
         fingerprints: Dict[str, Fingerprint] = {}
         for func in module.functions:
             fingerprints[func.name] = self.fingerprint_strategy.compute(func)
@@ -52,7 +50,10 @@ class CheckResolver:
         self, results: List[FileCheckResult], modules: List[ModuleDef]
     ):
         for res in results:
-            if res.infos["doc_improvement"]:
+            # Look for doc_updated violations
+            doc_updates = [v.fqn for v in res.violations if v.kind == L.check.state.doc_updated]
+            
+            if doc_updates:
                 module_def = next((m for m in modules if m.file_path == res.path), None)
                 if not module_def:
                     continue
@@ -65,7 +66,7 @@ class CheckResolver:
                     module_def
                 )
 
-                for fqn in res.infos["doc_improvement"]:
+                for fqn in doc_updates:
                     if fqn in new_hashes:
                         new_yaml_hash = current_yaml_map.get(fqn)
                         if new_yaml_hash is not None:
@@ -98,34 +99,39 @@ class CheckResolver:
     def _resolve_interactive(
         self, results: List[FileCheckResult], conflicts: List[InteractionContext]
     ) -> bool:
-        # Should be safe since check logic guarantees interaction_handler is not None here
         assert self.interaction_handler is not None
 
         chosen_actions = self.interaction_handler.process_interactive_session(conflicts)
         resolutions_by_file = defaultdict(list)
-        reconciled_results = defaultdict(lambda: defaultdict(list))
+        
+        # We will track resolved violations to move them from 'violations' to 'reconciled'
+        resolved_context_map = {}
 
         for i, context in enumerate(conflicts):
             action = chosen_actions[i]
+            
+            # Map action to a SemanticPointer for reporting success
+            result_kind = None
             if action == ResolutionAction.RELINK:
-                resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path]["force_relink"].append(
-                    context.fqn
-                )
+                result_kind = L.check.state.relinked
             elif action == ResolutionAction.RECONCILE:
-                resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path]["reconcile"].append(context.fqn)
+                result_kind = L.check.state.reconciled
             elif action == ResolutionAction.PURGE_DOC:
+                result_kind = L.check.state.purged
+            
+            if result_kind:
                 resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path]["purged"].append(context.fqn)
+                resolved_context_map[(context.file_path, context.fqn)] = result_kind
+            
             elif action == ResolutionAction.SKIP:
-                self._mark_result_error(results, context)
+                # Do nothing, violation remains in result
+                pass
             elif action == ResolutionAction.ABORT:
                 bus.warning(L.strip.run.aborted)
                 return False
 
         self._apply_resolutions(dict(resolutions_by_file))
-        self._update_results(results, reconciled_results)
+        self._update_results(results, resolved_context_map)
         return True
 
     def _resolve_noop(
@@ -138,44 +144,43 @@ class CheckResolver:
         handler = NoOpInteractionHandler(force_relink, reconcile)
         chosen_actions = handler.process_interactive_session(conflicts)
         resolutions_by_file = defaultdict(list)
-        reconciled_results = defaultdict(lambda: defaultdict(list))
+        resolved_context_map = {}
 
         for i, context in enumerate(conflicts):
             action = chosen_actions[i]
             if action != ResolutionAction.SKIP:
-                key = (
-                    "force_relink" if action == ResolutionAction.RELINK else "reconcile"
-                )
-                resolutions_by_file[context.file_path].append((context.fqn, action))
-                reconciled_results[context.file_path][key].append(context.fqn)
-            else:
-                self._mark_result_error(results, context)
+                 # Logic for NOOP is similar, map action to kind
+                result_kind = None
+                if action == ResolutionAction.RELINK:
+                    result_kind = L.check.state.relinked
+                elif action == ResolutionAction.RECONCILE:
+                    result_kind = L.check.state.reconciled
+                elif action == ResolutionAction.PURGE_DOC:
+                    result_kind = L.check.state.purged
+                
+                if result_kind:
+                    resolutions_by_file[context.file_path].append((context.fqn, action))
+                    resolved_context_map[(context.file_path, context.fqn)] = result_kind
+            # else SKIP, do nothing
 
         self._apply_resolutions(dict(resolutions_by_file))
-        self._update_results(results, reconciled_results)
+        self._update_results(results, resolved_context_map)
         return True
 
-    def _mark_result_error(
-        self, results: List[FileCheckResult], context: InteractionContext
-    ):
+    def _update_results(self, results: List[FileCheckResult], resolved_map: Dict[tuple, Any]):
+        # Move resolved violations from .violations to .reconciled
+        # and update their kind to the success kind (e.g. relinked)
         for res in results:
-            if res.path == context.file_path:
-                error_key = {
-                    ConflictType.SIGNATURE_DRIFT: "signature_drift",
-                    ConflictType.CO_EVOLUTION: "co_evolution",
-                    ConflictType.DANGLING_DOC: "extra",
-                }.get(context.conflict_type, "unknown")
-                res.errors[error_key].append(context.fqn)
-                break
-
-    def _update_results(self, results: List[FileCheckResult], reconciled_data: dict):
-        for res in results:
-            if res.path in reconciled_data:
-                res.reconciled["force_relink"] = reconciled_data[res.path][
-                    "force_relink"
-                ]
-                res.reconciled["reconcile"] = reconciled_data[res.path]["reconcile"]
-                res.reconciled["purged"] = reconciled_data[res.path].get("purged", [])
+            active_violations = []
+            for v in res.violations:
+                key = (res.path, v.fqn)
+                if key in resolved_map:
+                    # It was resolved. Create a new Violation record for the reconciliation
+                    success_kind = resolved_map[key]
+                    res.reconciled.append(Violation(kind=success_kind, fqn=v.fqn))
+                else:
+                    active_violations.append(v)
+            res.violations = active_violations
 
     def _apply_resolutions(
         self, resolutions: dict[str, list[tuple[str, ResolutionAction]]]
@@ -195,7 +200,6 @@ class CheckResolver:
             stored_hashes = self.sig_manager.load_composite_hashes(file_path)
             new_hashes = copy.deepcopy(stored_hashes)
 
-            # NOTE: We are re-parsing here. This is one of the things we want to optimize later.
             full_module_def = self.parser.parse(
                 (self.root_path / file_path).read_text("utf-8"), file_path
             )

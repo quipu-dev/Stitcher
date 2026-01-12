@@ -1,7 +1,7 @@
 from typing import List
 from stitcher.common import bus
 from needle.pointer import L
-from stitcher.app.types import FileCheckResult
+from stitcher.analysis.schema import FileCheckResult
 
 
 class CheckReporter:
@@ -10,29 +10,64 @@ class CheckReporter:
         global_warnings_files = 0
 
         for res in results:
-            # 1. Info / Success Messages
-            for key in sorted(res.infos["doc_improvement"]):
-                bus.info(L.check.state.doc_updated, key=key)
+            # 1. Info / Success Messages (Auto-reconciled)
+            # Filter for doc_updated violations
+            doc_updated = [v for v in res.violations if v.kind == L.check.state.doc_updated]
+            for v in sorted(doc_updated, key=lambda x: x.fqn):
+                bus.info(v.kind, key=v.fqn)
 
             if res.is_clean:
                 continue
 
             # 2. Reconciled Actions
             if res.reconciled_count > 0:
-                for key in res.reconciled.get("force_relink", []):
-                    bus.success(L.check.state.relinked, key=key, path=res.path)
-                for key in res.reconciled.get("reconcile", []):
-                    bus.success(L.check.state.reconciled, key=key, path=res.path)
-                for key in res.reconciled.get("purged", []):
-                    bus.success(L.check.state.purged, key=key, path=res.path)
+                for v in res.reconciled:
+                     # Reconciled violations usually carry success status
+                     # We can map original kind to success message if needed, or Violation should carry result kind?
+                     # For now, let's assume reconciled items map to:
+                     # force_relink -> L.check.state.relinked
+                     # reconcile -> L.check.state.reconciled
+                     # purged -> L.check.state.purged
+                     # The violation itself is the original issue. We need the resolution action.
+                     # But wait, CheckResolver._update_results puts data into reconciled.
+                     # We need to see how we update CheckResolver to put Violations into reconciled.
+                     # Let's assume CheckResolver puts ResolvedViolation(kind=L.check.state.reconciled...)
+                     bus.success(v.kind, key=v.fqn, path=res.path)
 
             # 3. File Level Status
-            if res.error_count > 0:
+            # We need to distinguish errors from warnings.
+            # In new system, error/warning is implicit in the Pointer path or config.
+            # For simplicity, let's assume all Violations are 'issues' unless they are 'infos'.
+            # Or we can classify based on L path.
+            # L.check.issue.* -> Warning/Error?
+            # L.check.state.* -> Error (drift/co-evolution)
+            # L.check.file.* -> Warning (untracked)
+            
+            # Simple heuristic matching legacy logic:
+            errors = [v for v in res.violations if v.kind in [
+                L.check.state.signature_drift, 
+                L.check.state.co_evolution, 
+                L.check.issue.conflict, 
+                L.check.issue.extra,
+                L.check.issue.pending
+            ]]
+            warnings = [v for v in res.violations if v.kind in [
+                L.check.issue.missing, 
+                L.check.issue.redundant,
+                L.check.state.untracked_code, # Not used in new rules yet?
+                L.check.file.untracked,
+                L.check.file.untracked_with_details
+            ]]
+            
+            error_count = len(errors)
+            warning_count = len(warnings)
+
+            if error_count > 0:
                 global_failed_files += 1
-                bus.error(L.check.file.fail, path=res.path, count=res.error_count)
-            elif res.warning_count > 0:
+                bus.error(L.check.file.fail, path=res.path, count=error_count)
+            elif warning_count > 0:
                 global_warnings_files += 1
-                bus.warning(L.check.file.warn, path=res.path, count=res.warning_count)
+                bus.warning(L.check.file.warn, path=res.path, count=warning_count)
 
             # 4. Detailed Issues
             self._report_issues(res)
@@ -48,32 +83,30 @@ class CheckReporter:
         return True
 
     def _report_issues(self, res: FileCheckResult) -> None:
-        # Errors
-        for key in sorted(res.errors["extra"]):
-            bus.error(L.check.issue.extra, key=key)
-        for key in sorted(res.errors["signature_drift"]):
-            bus.error(L.check.state.signature_drift, key=key)
-        for key in sorted(res.errors["co_evolution"]):
-            bus.error(L.check.state.co_evolution, key=key)
-        for key in sorted(res.errors["conflict"]):
-            bus.error(L.check.issue.conflict, key=key)
-        for key in sorted(res.errors["pending"]):
-            bus.error(L.check.issue.pending, key=key)
-
-        # Warnings
-        for key in sorted(res.warnings["missing"]):
-            bus.warning(L.check.issue.missing, key=key)
-        for key in sorted(res.warnings["redundant"]):
-            bus.warning(L.check.issue.redundant, key=key)
-        for key in sorted(res.warnings["untracked_key"]):
-            bus.warning(L.check.state.untracked_code, key=key)
-
-        if "untracked_detailed" in res.warnings:
-            keys = res.warnings["untracked_detailed"]
-            bus.warning(
-                L.check.file.untracked_with_details, path=res.path, count=len(keys)
-            )
-            for key in sorted(keys):
-                bus.warning(L.check.issue.untracked_missing_key, key=key)
-        elif "untracked" in res.warnings:
-            bus.warning(L.check.file.untracked, path=res.path)
+        # We just iterate all active violations and print them.
+        # Filter out info/doc_updated which are handled above.
+        
+        # Sort by FQN for deterministic output
+        sorted_violations = sorted(res.violations, key=lambda v: v.fqn)
+        
+        for v in sorted_violations:
+            if v.kind == L.check.state.doc_updated:
+                continue
+            
+            # Determine log level
+            # Using the same heuristic
+            is_error = v.kind in [
+                L.check.state.signature_drift, 
+                L.check.state.co_evolution, 
+                L.check.issue.conflict, 
+                L.check.issue.extra,
+                L.check.issue.pending
+            ]
+            
+            # Pass context to bus (e.g. for untracked_with_details count)
+            kwargs = {"key": v.fqn, **v.context}
+            
+            if is_error:
+                bus.error(v.kind, **kwargs)
+            else:
+                bus.warning(v.kind, **kwargs)
