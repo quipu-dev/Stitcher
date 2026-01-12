@@ -1,4 +1,4 @@
-from stitcher.analysis.semantic.graph import SemanticGraph
+from stitcher.analysis.semantic import SemanticGraph
 from stitcher.workspace import Workspace
 from stitcher.test_utils import create_populated_index
 
