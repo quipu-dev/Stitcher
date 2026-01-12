@@ -124,7 +124,7 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
                 parent.relative_to(active_root)
             except ValueError:
                 break
-                
+
             init_file = parent / "__init__.py"
             if not init_file.exists():
                 intents.append(ScaffoldIntent(path=init_file, content=""))

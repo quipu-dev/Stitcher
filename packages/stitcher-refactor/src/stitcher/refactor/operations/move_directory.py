@@ -68,7 +68,10 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
                 processed_files.add(doc_path)
                 intents.append(
                     SidecarUpdateIntent(
-                        doc_path, item_module_fqn, old_prefix, new_prefix,
+                        doc_path,
+                        item_module_fqn,
+                        old_prefix,
+                        new_prefix,
                         old_file_path=rel_src_path,
                         new_file_path=rel_dest_path,
                     )
@@ -84,7 +87,10 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
                 processed_files.add(sig_path)
                 intents.append(
                     SidecarUpdateIntent(
-                        sig_path, item_module_fqn, old_prefix, new_prefix,
+                        sig_path,
+                        item_module_fqn,
+                        old_prefix,
+                        new_prefix,
                         old_file_path=rel_src_path,
                         new_file_path=rel_dest_path,
                     )
@@ -141,7 +147,7 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
                 current.relative_to(active_root)
             except ValueError:
                 break
-                
+
             init_file = current / "__init__.py"
             if not init_file.exists():
                 intents.append(ScaffoldIntent(path=init_file, content=""))

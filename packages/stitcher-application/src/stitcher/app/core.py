@@ -253,7 +253,9 @@ class StitcherApp:
                 # 6. Reformat FIRST to stabilize file hashes before reconciliation.
                 # Optimization: Only reformat files that were actually modified in this cycle.
                 hot_modules = [
-                    m for m in batch_modules if m.file_path in modified_paths or not m.file_path
+                    m
+                    for m in batch_modules
+                    if m.file_path in modified_paths or not m.file_path
                 ]
                 if hot_modules:
                     self.check_runner.reformat_all(hot_modules)

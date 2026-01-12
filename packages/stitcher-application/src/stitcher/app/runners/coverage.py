@@ -2,13 +2,9 @@ from pathlib import Path
 from typing import List
 import typer
 
-from pathlib import Path
-from typing import List
-import typer
 
 from stitcher.app.services import DocumentManager
 from stitcher.app.types import CoverageResult
-from stitcher.spec import ModuleDef
 from stitcher.index.store import IndexStore
 
 

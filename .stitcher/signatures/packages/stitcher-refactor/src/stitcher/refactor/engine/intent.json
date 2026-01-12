@@ -48,7 +48,9 @@
     "baseline_yaml_content_hash": "5cbefd318e81276a14386ec3ae582cf50c815b5d990e1fd3312a837c980193b1"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.module_fqn": {},
+  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.new_file_path": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.new_fqn": {},
+  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.old_file_path": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.old_fqn": {},
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/intent.py#SidecarUpdateIntent.sidecar_path": {}
 }

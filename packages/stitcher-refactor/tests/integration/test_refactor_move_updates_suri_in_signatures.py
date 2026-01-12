@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 from stitcher.test_utils import WorkspaceFactory, create_test_app
-from stitcher.refactor.migration import MigrationSpec, Move
 
 
 def test_move_file_operation_updates_suri_in_signatures(tmp_path: Path):
@@ -10,16 +9,18 @@ def test_move_file_operation_updates_suri_in_signatures(tmp_path: Path):
     """
     # --- Arrange ---
     workspace_factory = WorkspaceFactory(root_path=tmp_path)
-    workspace_root = workspace_factory.with_config({
-        "scan_paths": ["src"]
-    }).with_source(
-        "src/my_app/logic.py",
-        """
+    workspace_root = (
+        workspace_factory.with_config({"scan_paths": ["src"]})
+        .with_source(
+            "src/my_app/logic.py",
+            """
         def do_something():
             \"\"\"This is a docstring.\"\"\"
             pass
-        """
-    ).build()
+        """,
+        )
+        .build()
+    )
 
     app = create_test_app(workspace_root)
 
@@ -63,7 +64,9 @@ def upgrade(spec: MigrationSpec):
 
     # This is the failing assertion. The key should now be the NEW suri.
     assert old_suri not in final_data, "The old SURI key should not be present"
-    assert new_suri in final_data, "The SURI key should have been updated to the new path"
+    assert new_suri in final_data, (
+        "The SURI key should have been updated to the new path"
+    )
 
     # Also verify the fingerprint data was preserved
     assert "baseline_code_structure_hash" in final_data[new_suri]

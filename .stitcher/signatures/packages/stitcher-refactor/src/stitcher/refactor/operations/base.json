@@ -17,7 +17,7 @@
     "baseline_code_structure_hash": "9d8e022c26c3b25ea32b82b16b0cf737974daed449b0ad2bee3dcdcedc3c9988"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/base.py#SidecarUpdateMixin._update_sidecar_data": {
-    "baseline_code_signature_text": "def _update_sidecar_data(self, data: Dict[str, Any], module_fqn: Optional[str], old_fqn: str, new_fqn: str) -> Dict[str, Any]:",
-    "baseline_code_structure_hash": "90293dbce85734f0498d51c275c62bb7abf8e87a6a147f2ec982ec19bc50bda7"
+    "baseline_code_signature_text": "def _update_sidecar_data(self, data: Dict[str, Any], module_fqn: Optional[str], old_fqn: str, new_fqn: str, old_file_path: Optional[str] = None, new_file_path: Optional[str] = None) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "fcc0b3f4e823edae95d66d312cb310d8fe36cf0c8a95df302ecf3075f061c3b4"
   }
 }
