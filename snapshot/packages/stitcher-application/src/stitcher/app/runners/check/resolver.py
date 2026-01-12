@@ -14,7 +14,7 @@ from stitcher.spec import (
     FingerprintStrategyProtocol,
 )
 from stitcher.app.services import DocumentManager, SignatureManager
-from stitcher.app.protocols import InteractionHandler, InteractionContext
+from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import FileCheckResult
 

@@ -1,6 +1,6 @@
 from typing import List
 from stitcher.test_utils import create_test_app
-from stitcher.app.protocols import InteractionHandler, InteractionContext
+from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.spec import ResolutionAction, ConflictType
 from stitcher.test_utils import WorkspaceFactory, SpyBus
 

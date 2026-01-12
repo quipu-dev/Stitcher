@@ -18,7 +18,7 @@ from stitcher.app.services import (
     Differ,
     DocstringMerger,
 )
-from .protocols import InteractionHandler
+from stitcher.spec.interaction import InteractionHandler
 from .runners import (
     CheckRunner,
     InitRunner,
@@ -40,7 +40,7 @@ from stitcher.adapter.python.docstring import (
     get_docstring_codec,
     get_docstring_serializer,
 )
-from stitcher.app.protocols import InteractionContext
+from stitcher.spec.interaction import InteractionContext
 
 
 class StitcherApp:

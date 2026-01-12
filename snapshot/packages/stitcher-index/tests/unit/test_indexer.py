@@ -1,6 +1,6 @@
 import time
 from stitcher.index.indexer import FileIndexer
-from stitcher.index.types import SymbolRecord
+from stitcher.spec.index import SymbolRecord
 from stitcher.test_utils.workspace import WorkspaceFactory
 from stitcher.workspace import Workspace
 

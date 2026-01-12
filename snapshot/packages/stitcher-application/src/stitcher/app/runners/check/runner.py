@@ -12,7 +12,7 @@ from stitcher.app.services import (
     SignatureManager,
     Differ,
 )
-from stitcher.app.protocols import InteractionHandler, InteractionContext
+from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.types import FileCheckResult
 from stitcher.index.store import IndexStore
 

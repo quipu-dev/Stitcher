@@ -22,7 +22,7 @@ from stitcher.app.services import (
     Differ,
     DocstringMerger,
 )
-from stitcher.app.protocols import InteractionHandler, InteractionContext
+from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import PumpResult
 from stitcher.index.store import IndexStore

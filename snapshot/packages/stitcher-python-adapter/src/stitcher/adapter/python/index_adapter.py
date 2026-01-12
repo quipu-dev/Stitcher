@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import List, Tuple, Optional
 
 from stitcher.spec import ModuleDef
-from stitcher.index.protocols import LanguageAdapter
-from stitcher.index.types import SymbolRecord, ReferenceRecord
+from stitcher.spec.registry import LanguageAdapter
+from stitcher.spec.index import SymbolRecord, ReferenceRecord
 
 import libcst as cst
 from stitcher.adapter.python.griffe_parser import GriffePythonParser

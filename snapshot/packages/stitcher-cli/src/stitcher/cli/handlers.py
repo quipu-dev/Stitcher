@@ -1,7 +1,7 @@
 import sys
 from typing import List, Optional
 from needle.pointer import L
-from stitcher.app.protocols import InteractionHandler, InteractionContext
+from stitcher.spec.interaction import InteractionHandler, InteractionContext
 from stitcher.spec import ResolutionAction, ConflictType
 from .interactive import TyperInteractiveRenderer, SemanticMenuOption
 

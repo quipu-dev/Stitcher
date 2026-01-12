@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from stitcher.spec import ConflictType
 from stitcher.app.services import Differ
-from stitcher.app.protocols import InteractionContext
+from stitcher.spec.interaction import InteractionContext
 from stitcher.app.types import FileCheckResult
 from .protocols import CheckSubject
 

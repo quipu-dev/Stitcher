@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List, Any, Union
 from needle.pointer import SemanticPointer, L
 from stitcher.spec import ResolutionAction, ConflictType
-from stitcher.app.protocols import InteractionContext
+from stitcher.spec.interaction import InteractionContext
 import typer
 import click
 

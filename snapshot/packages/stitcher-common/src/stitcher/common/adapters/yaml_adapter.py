@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, Any
 import yaml
 
-from stitcher.common.interfaces import DocumentAdapter
+from stitcher.spec.persistence import DocumentAdapter
 
 
 class YamlAdapter(DocumentAdapter):
