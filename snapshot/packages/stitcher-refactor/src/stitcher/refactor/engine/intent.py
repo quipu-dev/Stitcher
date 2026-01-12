@@ -51,12 +51,5 @@ class ScaffoldIntent(FileSystemIntent):
 # --- Sidecar-level Intents ---
 
 
-@dataclass(frozen=True)
-class SidecarUpdateIntent(RefactorIntent):
-    sidecar_path: Path
-    module_fqn: Optional[str]
-    old_fqn: str
-    new_fqn: str
-    # New fields for SURI updates
-    old_file_path: Optional[str] = None
-    new_file_path: Optional[str] = None
+# This is no longer needed, sidecar updates will be handled by the generic
+# rename mechanism via the sidecar language adapter.

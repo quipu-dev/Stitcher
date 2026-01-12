@@ -15,7 +15,9 @@ from stitcher.refactor.engine import (
 from stitcher.refactor.migration import MigrationLoader, MigrationError
 from stitcher.workspace import Workspace
 from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.lang.python import PythonAdapter
+from stitcher.lang.python import PythonAdapter, PythonRefactoringStrategy
+# Placeholder for the sidecar strategy we will create next
+# from stitcher.lang.sidecar import SidecarRefactoringStrategy
 
 
 class RefactorRunner:
@@ -68,11 +70,18 @@ class RefactorRunner:
 
             graph.load_from_workspace()
 
+            # Create and configure the strategy registry
+            strategy_registry = {
+                ".py": PythonRefactoringStrategy(),
+                # ".yaml": SidecarRefactoringStrategy(), # Will be added next
+            }
+
             ctx = RefactorContext(
                 workspace=workspace,
                 graph=graph,
                 sidecar_manager=sidecar_manager,
                 index_store=self.index_store,
+                strategy_registry=strategy_registry,
             )
 
             # 2. Load and plan the migration

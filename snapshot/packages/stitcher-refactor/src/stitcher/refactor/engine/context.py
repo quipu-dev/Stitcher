@@ -1,8 +1,9 @@
 from dataclasses import dataclass
+from typing import Dict
 
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.workspace import Workspace
-from stitcher.spec import IndexStoreProtocol
+from stitcher.spec import IndexStoreProtocol, RefactoringStrategyProtocol
 from .graph import SemanticGraph
 
 
@@ -12,3 +13,4 @@ class RefactorContext:
     graph: SemanticGraph
     sidecar_manager: SidecarManager
     index_store: IndexStoreProtocol
+    strategy_registry: Dict[str, RefactoringStrategyProtocol]

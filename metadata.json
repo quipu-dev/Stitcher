@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现 Python 重构策略并修正协议", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768199643.659835, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: Generalize refactor engine and remove sidecar coupling", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768199838.3824534, "duration_ms": 0}}
