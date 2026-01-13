@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M test_rename_suri_update.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768299640.5189378, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 确保在移动文件时正确更新 lockfile 中的 SURI", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768299818.3582742, "duration_ms": 0}}

@@ -120,7 +120,9 @@ class Planner:
                 dest_data = get_lock_data(dest_pkg_root) if src_pkg_root != dest_pkg_root else src_data
                 
                 uris_to_move = {}
-                for suri, fp in src_data.items():
+                # Create a list from items() to iterate over a stable snapshot,
+                # preventing issues if the underlying dict is modified elsewhere.
+                for suri, fp in list(src_data.items()):
                     path, fragment = PythonURIGenerator.parse(suri)
                     if path == intent.old_path_prefix or path.startswith(intent.old_path_prefix + "/"):
                         new_path = path.replace(intent.old_path_prefix, intent.new_path_prefix, 1)
