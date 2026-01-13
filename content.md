@@ -1,218 +1,182 @@
-Of course. We have the graph and the algorithms; it's time to build the rules that use them to find architectural flaws.
+Of course. We have the rules, and now we need the orchestrator.
 
-This plan establishes the foundation for all future architectural rules by defining a new `ArchitectureRule` protocol. It then provides the first concrete implementation, `CircularDependencyRule`, which leverages our previously created `detect_circular_dependencies` algorithm. Crucially, this plan also updates the system's violation schema to recognize and correctly classify this new type of project-wide error.
+This plan constructs the `ArchitectureEngine`, the component responsible for driving the entire project-wide analysis process. It will tie together the `GraphBuilder` and the `ArchitectureRule`s into a cohesive unit. Following our established pattern, we will also create a factory function for easy instantiation and a thorough unit test to validate the engine's orchestration logic.
 
-## [WIP] feat: Implement architecture rules for project-wide analysis
+## [WIP] feat: Build the ArchitectureEngine to orchestrate graph analysis
 
 ### 用户需求
 
-Following the roadmap, we must now implement the architectural rule layer. This involves creating a new rule protocol, implementing a `CircularDependencyRule` that detects import cycles, and ensuring this new type of violation is recognized by the system. Unit tests are required to validate the rule's logic.
+As per the roadmap, we need to build the `ArchitectureEngine`. This engine will be responsible for using the `GraphBuilder` to create an in-memory graph from the `IndexStore`, running all registered `ArchitectureRule`s against that graph, and collecting the results.
 
 ### 评论
 
-This is a significant step forward. We are moving beyond single-file consistency checks and into the realm of holistic, project-wide architectural validation. By defining a clear `ArchitectureRule` protocol, we create an extensible system for adding more complex checks in the future (e.g., layer violations, dependency constraints). The `CircularDependencyRule` provides immediate, high-value feedback to developers, preventing a common source of code brittleness and complexity. Integrating its violation type into the core schema ensures it will be treated as a first-class error throughout the application.
+The `ArchitectureEngine` acts as the central nervous system for our new global analysis capabilities. It cleanly separates the *how* (building graphs, running rules) from the *what* (the specific rules themselves). By following the factory pattern established by the `ConsistencyEngine`, we create a consistent and easy-to-use interface for the application layer. The unit test is critical here, as it won't test the rules or the builder, but rather the engine's core responsibility: ensuring that the components are called in the correct order with the correct data.
 
 ### 目标
 
-1.  Create the directory structure for architecture rules: `stitcher/analysis/rules/architecture/`.
-2.  Define a new `ArchitectureRule` protocol in `.../architecture/protocols.py`.
-3.  Implement `CircularDependencyRule` in `.../architecture/circular_dependency.py`.
-4.  Update `FileCheckResult` in `stitcher.analysis.schema.results` to classify circular dependency violations as errors.
-5.  Create a unit test, `test_circular_dependency_rule.py`, to verify the rule's behavior.
+1.  Create the directory `stitcher/analysis/engines/architecture/`.
+2.  Implement the `ArchitectureEngine` class and a `create_architecture_engine` factory function in `engine.py`.
+3.  The engine's `analyze` method will take an `IndexStoreProtocol` and return a list of all `Violation`s found by the rules.
+4.  Export the new engine and factory from the parent `engines` package.
+5.  Create a unit test `test_engine.py` to verify that the engine correctly orchestrates the builder and the rules using mocks.
 
 ### 基本原理
 
-1.  **Directory and Protocol**: We will use `run_command` and `write_file` to create the new directories and the `protocols.py` file. This establishes a clean, extensible pattern for new rules.
-2.  **Rule Implementation**: The `CircularDependencyRule` will implement the new protocol. Its `check` method will take a `DiGraph`, call `detect_circular_dependencies`, and transform each found cycle into a `Violation` object. The violation's context will contain a human-readable string representing the cycle path.
-3.  **Schema Update**: A `patch_file` operation will be used to add the new semantic pointer (`L.check.architecture.circular_dependency`) to the `_ERROR_KINDS` set within the `FileCheckResult` dataclass. This ensures these violations are correctly counted and reported as errors.
-4.  **Testing**: A new test file will be created. It will instantiate the `CircularDependencyRule` and test it against manually constructed `DiGraph` objects—one with a cycle and one without—to assert that violations are generated correctly and only when a cycle exists.
+1.  **Implementation (`engine.py`)**: The `ArchitectureEngine` will be designed to receive its dependencies (the `GraphBuilder` and a list of `ArchitectureRule`s) via its constructor, which is a best practice for testability. The `create_architecture_engine` factory will handle the production setup, instantiating the engine with the concrete `GraphBuilder` and all default rules (currently just `CircularDependencyRule`).
+2.  **Exports (`__init__.py`)**: We'll update the `__init__.py` files at both the `architecture` and `engines` levels to ensure the new components are easily importable by the rest of the application.
+3.  **Testing (`test_engine.py`)**: The unit test will instantiate `ArchitectureEngine` directly, injecting mocked versions of the `GraphBuilder` and an `ArchitectureRule`. We will configure the mock builder to return a specific graph and the mock rule to return a specific violation. By calling the engine's `analyze` method, we can then assert that the engine correctly calls its dependencies and returns the expected violation, thus proving its orchestration logic is sound without relying on the actual implementations of its dependencies.
 
 ### 标签
 
-#intent/build #intent/tooling #flow/ready #priority/high #comp/analysis #comp/tests #concept/graph #concept/rules #scope/core #ai/instruct #task/domain/analysis #task/object/architecture-rules #task/action/implementation #task/state/continue
+#intent/build #intent/tooling #flow/ready #priority/high #comp/analysis #comp/tests #concept/graph #concept/engine #scope/core #ai/instruct #task/domain/analysis #task/object/architecture-engine #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: Create Directory Structures
+#### Acts 1: Create Directory Structure for the Engine
 
-First, we create the necessary directories for the new rule and its test.
+First, we'll create the necessary directory for the new engine and its test.
 
 ~~~~~act
 run_command
 ~~~~~
 ~~~~~bash
-mkdir -p packages/stitcher-analysis/src/stitcher/analysis/rules/architecture
-mkdir -p packages/stitcher-analysis/tests/unit/rules/architecture
+mkdir -p packages/stitcher-analysis/src/stitcher/analysis/engines/architecture
+mkdir -p packages/stitcher-analysis/tests/unit/engines/architecture
 ~~~~~
 
-#### Acts 2: Define `ArchitectureRule` Protocol
+#### Acts 2: Implement the `ArchitectureEngine`
 
-We define the contract for all architecture rules in a new `protocols.py` file.
+Next, we create the engine itself, along with its factory function.
 
 ~~~~~act
 write_file
-packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/protocols.py
-~~~~~
-~~~~~python
-from typing import Protocol, List
-import networkx as nx
-
-from stitcher.analysis.schema import Violation
-
-
-class ArchitectureRule(Protocol):
-    def check(self, graph: nx.DiGraph) -> List[Violation]: ...
-~~~~~
-
-#### Acts 3: Implement `CircularDependencyRule`
-
-Now, we implement the first architecture rule for detecting circular dependencies.
-
-~~~~~act
-write_file
-packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/circular_dependency.py
+packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/engine.py
 ~~~~~
 ~~~~~python
 from typing import List
-import networkx as nx
-from dataclasses import dataclass
 
-from needle.pointer import L
+from stitcher.spec import IndexStoreProtocol
 from stitcher.analysis.schema import Violation
-from stitcher.analysis.graph.algorithms import detect_circular_dependencies
-from .protocols import ArchitectureRule
+from stitcher.analysis.graph.builder import GraphBuilder
+from stitcher.analysis.rules.architecture import (
+    ArchitectureRule,
+    CircularDependencyRule,
+)
 
 
-@dataclass
-class CircularDependencyRule(ArchitectureRule):
-    def check(self, graph: nx.DiGraph) -> List[Violation]:
-        violations: List[Violation] = []
-        cycles = detect_circular_dependencies(graph)
+class ArchitectureEngine:
+    def __init__(self, builder: GraphBuilder, rules: List[ArchitectureRule]):
+        self._builder = builder
+        self._rules = rules
 
-        for cycle in cycles:
-            # Create a human-readable representation of the cycle
-            cycle_path = " -> ".join(cycle) + f" -> {cycle[0]}"
+    def analyze(self, store: IndexStoreProtocol) -> List[Violation]:
+        all_violations: List[Violation] = []
+        graph = self._builder.build_dependency_graph(store)
 
-            # An architecture violation applies to the whole project, but we use
-            # the first file in the cycle as the primary "location" for reporting.
-            violations.append(
-                Violation(
-                    kind=L.check.architecture.circular_dependency,
-                    fqn=cycle[0],
-                    context={"cycle": cycle_path},
-                )
-            )
-        return violations
+        for rule in self._rules:
+            violations = rule.check(graph)
+            all_violations.extend(violations)
+
+        return all_violations
+
+
+def create_architecture_engine() -> ArchitectureEngine:
+    default_rules: List[ArchitectureRule] = [CircularDependencyRule()]
+    builder = GraphBuilder()
+    return ArchitectureEngine(builder=builder, rules=default_rules)
 ~~~~~
+
+#### Acts 3: Export the New Engine and Factory
+
+We make the new engine accessible to the rest of the application.
 
 ~~~~~act
 write_file
-packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/__init__.py
+packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/__init__.py
 ~~~~~
 ~~~~~python
-from .circular_dependency import CircularDependencyRule
-from .protocols import ArchitectureRule
+from .engine import ArchitectureEngine, create_architecture_engine
 
-__all__ = ["CircularDependencyRule", "ArchitectureRule"]
+__all__ = ["ArchitectureEngine", "create_architecture_engine"]
 ~~~~~
-
-#### Acts 4: Register New Violation as an Error
-
-We update `FileCheckResult` to ensure our new violation is treated as a critical error.
 
 ~~~~~act
 patch_file
-packages/stitcher-analysis/src/stitcher/analysis/schema/results.py
+packages/stitcher-analysis/src/stitcher/analysis/engines/__init__.py
 ~~~~~
 ~~~~~python.old
-    _ERROR_KINDS: Set[SemanticPointer] = field(
-        default_factory=lambda: {
-            L.check.issue.conflict,
-            L.check.state.signature_drift,
-            L.check.state.co_evolution,
-            L.check.issue.extra,
-            L.check.issue.pending,
-        },
-        init=False,
-        repr=False,
-    )
+from .consistency import ConsistencyEngine, create_consistency_engine
+from .pump import PumpEngine, create_pump_engine
+
+__all__ = [
+    "ConsistencyEngine",
+    "create_consistency_engine",
+    "PumpEngine",
+    "create_pump_engine",
+]
 ~~~~~
 ~~~~~python.new
-    _ERROR_KINDS: Set[SemanticPointer] = field(
-        default_factory=lambda: {
-            # Consistency Errors
-            L.check.issue.conflict,
-            L.check.state.signature_drift,
-            L.check.state.co_evolution,
-            L.check.issue.extra,
-            L.check.issue.pending,
-            # Architecture Errors
-            L.check.architecture.circular_dependency,
-        },
-        init=False,
-        repr=False,
-    )
+from .consistency import ConsistencyEngine, create_consistency_engine
+from .pump import PumpEngine, create_pump_engine
+from .architecture import ArchitectureEngine, create_architecture_engine
+
+__all__ = [
+    "ConsistencyEngine",
+    "create_consistency_engine",
+    "PumpEngine",
+    "create_pump_engine",
+    "ArchitectureEngine",
+    "create_architecture_engine",
+]
 ~~~~~
 
-#### Acts 5: Implement Unit Test for `CircularDependencyRule`
+#### Acts 4: Implement the Unit Test for the Engine
 
-Finally, we create a test to verify the rule's logic.
+Finally, we create the test to ensure the engine's orchestration logic is correct.
 
 ~~~~~act
 write_file
-packages/stitcher-analysis/tests/unit/rules/architecture/test_circular_dependency_rule.py
+packages/stitcher-analysis/tests/unit/engines/architecture/test_engine.py
 ~~~~~
 ~~~~~python
+from unittest.mock import MagicMock
 import networkx as nx
 
 from needle.pointer import L
-from stitcher.analysis.rules.architecture import CircularDependencyRule
+from stitcher.analysis.schema import Violation
+from stitcher.analysis.engines.architecture import ArchitectureEngine
 
 
-def test_circular_dependency_rule_with_cycle():
+def test_architecture_engine_analyze_flow():
     # 1. Arrange
-    graph = nx.DiGraph()
-    graph.add_edges_from([
-        ("a.py", "b.py"),
-        ("b.py", "c.py"),
-        ("c.py", "a.py"),
-    ])
-    rule = CircularDependencyRule()
+    mock_store = MagicMock()
+    mock_builder = MagicMock()
+    mock_rule = MagicMock()
+
+    # Configure mocks
+    mock_graph = nx.DiGraph()
+    mock_builder.build_dependency_graph.return_value = mock_graph
+
+    mock_violation = Violation(kind=L.check.architecture.circular_dependency, fqn="a.py")
+    mock_rule.check.return_value = [mock_violation]
 
     # 2. Act
-    violations = rule.check(graph)
+    engine = ArchitectureEngine(builder=mock_builder, rules=[mock_rule])
+    results = engine.analyze(mock_store)
 
     # 3. Assert
-    assert len(violations) == 1
-    violation = violations[0]
-    assert violation.kind == L.check.architecture.circular_dependency
-    assert violation.fqn in {"a.py", "b.py", "c.py"}  # Start node is arbitrary
-    assert "cycle" in violation.context
-    assert "a.py ->" in violation.context["cycle"]
-    assert "b.py ->" in violation.context["cycle"]
-    assert "c.py ->" in violation.context["cycle"]
+    # Assert that the engine returns the violations from the rule
+    assert results == [mock_violation]
 
-
-def test_circular_dependency_rule_without_cycle():
-    # 1. Arrange
-    graph = nx.DiGraph()
-    graph.add_edges_from([
-        ("a.py", "b.py"),
-        ("b.py", "c.py"),
-    ])
-    rule = CircularDependencyRule()
-
-    # 2. Act
-    violations = rule.check(graph)
-
-    # 3. Assert
-    assert len(violations) == 0
+    # Assert that the engine correctly orchestrated its dependencies
+    mock_builder.build_dependency_graph.assert_called_once_with(mock_store)
+    mock_rule.check.assert_called_once_with(mock_graph)
 ~~~~~
 
 ### 下一步建议
 
-我们已经成功地将图分析能力转化为一个具体的、可执行的架构规则。
+我们已经成功构建并测试了 `ArchitectureEngine`。现在，所有的分析组件（Builder, Algorithms, Rules, Engine）都已就绪。
 
-现在，我们需要一个引擎来协调这一切。下一步是 **第 6 步：构建架构引擎 (Build Architecture Engine)**。我将创建一个 `ArchitectureEngine`，它会负责调用 `GraphBuilder` 来构建图，然后将图传递给我们刚刚创建的所有 `ArchitectureRule` 进行检查。如果你同意，我将开始制定此计划。
+最后一步是将这个新引擎集成到应用程序的顶层运行器中。下一步是 **第 7 步：集成到 CheckRunner (Integration)**。我将修改 `CheckRunner`，在其现有的一致性检查之后，增加一个新的阶段来运行我们的 `ArchitectureEngine`，并将两者的结果合并，以提供一个完整的项目健康报告。如果你同意，我将开始制定这个最终的集成计划。
