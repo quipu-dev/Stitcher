@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 移除 move_file.py 中关于跨包迁移的过时 TODO", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768306326.7118967, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(refactor): 移除过时的 TODO 并添加跨包迁移回归测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768306366.4708328, "duration_ms": 0}}

@@ -1,72 +1,62 @@
-好的。既然分析和测试证明 `Planner` 已经正确处理了跨包迁移，那行过时的 `TODO` 和相关的犹豫性注释确实应当移除。
+好的。我已经完成了代码清理和集成测试的编写。现在我们将这些变更作为一个完整的逻辑单元提交到 Git 仓库。
 
-我将生成一个计划来清理 `move_file.py` 中的这些注释，并将其替换为对当前正确机制的简要说明。
+我将生成一个 `[COMMIT]` 计划，将相关文件添加到暂存区并创建提交。
 
-## [WIP] refactor: 移除 move_file.py 中关于跨包迁移的过时 TODO
+## [COMMIT] refactor(refactor): 移除过时的 TODO 并添加跨包迁移回归测试
 
 ### 用户需求
 
-删除 `packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py` 中关于跨包 lock 文件迁移的冗余和误导性注释及 `TODO`。
+提交之前完成的代码清理和新增的集成测试。
 
 ### 评论
 
-这些注释是在开发早期对 `Planner` 的处理能力不确定时留下的。经过验证，`Planner` 已经能够通过独立解析路径所属包的方式，优雅地处理跨包的指纹数据迁移。移除这些陈旧信息不仅能使代码库更整洁，还能避免其他开发者在阅读代码时产生不必要的疑虑。
+这次提交巩固了我们对重构引擎在跨包移动场景下表现的信心。通过移除陈旧的 `TODO` 注释，我们不仅使代码库更加整洁，也让系统的真实架构设计更加透明。新增的 E2E 测试将作为持久的守护，确保 `Planner` 的迁移逻辑在未来的迭代中保持稳定。
 
 ### 目标
 
-1.  定位到 `packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py` 中的相关注释块。
-2.  移除包含 `TODO: Handle Cross-Package Lock Migration.` 的整个说明段落。
-3.  替换为一行简洁的说明，确认 `Planner` 负责处理跨包迁移。
+1.  将 `packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py` 添加到暂存区。
+2.  将 `packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py` 添加到暂存区。
+3.  创建一个描述详尽的 Git 提交。
 
 ### 基本原理
 
-根据 **高保真工程公理 (HFEA)** 中的“架构不可腐蚀性”原则，任何形式的误导性信息或已经解决但仍然存在的“虚假”缺陷都被视为架构异味。及时铲除这些异味是维护系统“本体论正确性”的必要步骤。
+遵循“原子化提交”原则。这次变更涉及的是同一个逻辑主题：对跨包文件移动重构逻辑的确认与清理。将代码说明的更新与验证该说明的测试用例放在同一个提交中，符合工程最佳实践。
 
 ### 标签
 
-#intent/refine #flow/ready #priority/low #comp/refactor #concept/state #scope/dx #ai/instruct #task/domain/refactor #task/object/move-file-op #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/medium #comp/refactor #comp/tests #scope/dx #ai/instruct #task/domain/refactor #task/object/refactor-engine #task/action/commit #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 清理 `move_file.py` 中的冗余注释
+#### Acts 1: 提交代码清理与新增测试
 
-我们将移除 `move_file.py` 中关于跨包迁移的过时说明，因为它描述的限制早已被 `Planner` 解决。
+我们将暂存并提交修改后的 `move_file.py` 和新创建的 E2E 测试文件。
 
 ~~~~~act
-patch_file
+git_add
 packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py
+packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py
 ~~~~~
-~~~~~python.old
-        # 3. Declare Lock Update Intent (Mass update SURIs)
-        # Note: We need to update SURIs in the OLD package's lock file.
-        # If the file moves across packages, we technically need to move entries from one lock to another.
-        # LockPathUpdateIntent handles updating the path prefix.
-        # But if package_root changes, we need to handle migration?
-        # For simplicity in this phase, we assume LockPathUpdateIntent updates paths within the same lock context
-        # OR Planner is smart enough to handle cross-package moves if we provide enough info.
-        # Current simplified strategy: Update SURIs in the source package's lock.
-        # If it moves to a new package, the entries in the old lock will point to a path outside the old package root.
-        # This is valid for SURI (workspace relative), but 'stitcher.lock' usually scopes to the package.
-        # TODO: Handle Cross-Package Lock Migration.
-        # For now, we just emit the intent on the source package.
 
-        owning_package = ctx.workspace.find_owning_package(src_path)
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python.new
-        # 3. Declare Lock Update Intent (Mass update SURIs)
-        # Planner is responsible for detecting cross-package moves and migrating
-        # fingerprints between stitcher.lock files if necessary.
+~~~~~text
+refactor(refactor): remove stale TODO and add cross-package migration E2E test
 
-        owning_package = ctx.workspace.find_owning_package(src_path)
+- Removed an outdated TODO and misleading comments in 'MoveFileOperation' regarding cross-package lock file migration.
+- Verified that the 'Planner' already correctly handles cross-package moves by independently resolving package roots for source and destination paths.
+- Added a new integration test 'test_move_file_across_packages_migrates_lock_entry' to serve as a regression test for this functionality.
+
+This cleanup aligns the code documentation with the actual, more capable implementation in the 'Planner' class.
 ~~~~~
 
 ### 下一步建议
 
-清理工作已完成。目前我们已经：
-1.  完成了核心组件的依赖注入。
-2.  增强了 Workspace 根目录判定的确定性。
-3.  通过新的集成测试验证了跨包重构的健壮性。
+本阶段的架构巩固工作已顺利完成。接下来的重点建议转向 **“3. 强化 CST Visitor”**。
 
-建议下一步回顾 **“3. 强化 CST Visitor”**。目前的 CST 访问器对于 Python 的赋值语句解析依然非常原始（仅支持单变量赋值），这限制了索引器处理解包赋值（Unpacking Assignment）的能力。我们可以先为该功能编写一个失败的测试用例。
+目前的 `IRBuildingVisitor` 对 Python 赋值语句的解析还处于初级阶段，仅能识别 `x = 1` 这样的单变量赋值，而无法处理类似 `x, y = get_coords()` 这样的解构赋值（Unpacking/Tuple Assignment）。这会导致这些被定义的公共符号无法被正确索引。
+
+我建议下一轮任务的目标定为：**“支持 CST 访问器解析元组/列表解包赋值”**。我们可以从编写一个失败的测试用例开始，模拟包含解包赋值的代码解析。
