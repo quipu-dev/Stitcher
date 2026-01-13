@@ -1,8 +1,9 @@
 import typer
 from pathlib import Path
-from stitcher.common import stitcher_operator as nexus
+from stitcher.common import bus, stitcher_operator as nexus
 from needle.pointer import L
 from stitcher.cli.factories import make_app
+from stitcher.workspace import WorkspaceNotFoundError
 
 
 def refactor_command(
@@ -26,7 +27,11 @@ def refactor_command(
         help=nexus(L.cli.option.refactor_yes.help),
     ),
 ):
-    app_instance = make_app()
+    try:
+        app_instance = make_app()
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
 
     def confirm_callback(count: int) -> bool:
         if yes:

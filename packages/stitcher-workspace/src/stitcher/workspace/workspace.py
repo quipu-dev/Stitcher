@@ -11,6 +11,7 @@ except ImportError:
     import tomli as tomllib  # type: ignore
 
 from stitcher.config import StitcherConfig
+from .exceptions import WorkspaceNotFoundError
 
 log = logging.getLogger(__name__)
 
@@ -43,8 +44,8 @@ def find_workspace_root(start_path: Path) -> Path:
             except Exception:
                 pass
 
-    # Fallback: if nothing found, return the start path (or raise error? For now, start path)
-    return start_path
+    # No root found in the entire hierarchy
+    raise WorkspaceNotFoundError(str(start_path))
 
 
 class Workspace:

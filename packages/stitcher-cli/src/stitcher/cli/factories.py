@@ -10,13 +10,10 @@ from stitcher.lang.python import (
     PythonTransformer,
     PythonFingerprintStrategy,
 )
+from stitcher.workspace.workspace import find_workspace_root
 
 from .handlers import TyperInteractionHandler
 from .interactive import TyperInteractiveRenderer
-
-
-def get_project_root() -> Path:
-    return Path.cwd()
 
 
 def make_interaction_handler(
@@ -33,14 +30,19 @@ def make_app(
     handler: Optional[InteractionHandler] = None,
 ) -> StitcherApp:
     # Composition Root: Assemble the dependencies
-    # UNIFIED: Always use Griffe for analysis
+
+    # 1. Determine the true workspace root. This may raise WorkspaceNotFoundError,
+    # which is caught by the command functions.
+    project_root = find_workspace_root(Path.cwd())
+
+    # 2. UNIFIED: Always use Griffe for analysis
     parser = GriffePythonParser()
 
     transformer = PythonTransformer()
     strategy = PythonFingerprintStrategy()
 
     return StitcherApp(
-        root_path=get_project_root(),
+        root_path=project_root,
         parser=parser,
         transformer=transformer,
         fingerprint_strategy=strategy,
