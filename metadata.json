@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M index.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768307335.2541184, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: Extend index protocol for bulk graph data retrieval", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768307340.1064694, "duration_ms": 0}}

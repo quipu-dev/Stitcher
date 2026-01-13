@@ -1,7 +1,7 @@
 from typing import Optional, List, Tuple
 from .db import DatabaseManager
 from .linker import Linker
-from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord
+from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord, DependencyEdge
 
 
 class IndexStore:
@@ -168,12 +168,28 @@ class IndexStore:
             ).fetchall()
             return [ReferenceRecord(**dict(row)) for row in rows]
 
-    def get_all_files_metadata(self) -> List[FileRecord]:
+    def get_all_files(self) -> List[FileRecord]:
         with self.db.get_connection() as conn:
             rows = conn.execute(
                 "SELECT id, path, content_hash, last_mtime, last_size, indexing_status FROM files"
             ).fetchall()
             return [FileRecord(**dict(row)) for row in rows]
+
+    def get_all_dependency_edges(self) -> List[DependencyEdge]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT
+                    source_file.path AS source_path,
+                    r.target_fqn,
+                    r.kind,
+                    r.lineno
+                FROM "references" r
+                JOIN files source_file ON r.source_file_id = source_file.id
+                WHERE r.target_fqn IS NOT NULL
+                """
+            ).fetchall()
+            return [DependencyEdge(**dict(row)) for row in rows]
 
     def delete_file(self, file_id: int) -> None:
         with self.db.get_connection() as conn:

@@ -46,3 +46,11 @@ class ReferenceRecord:
     target_id: Optional[str] = None
     source_file_id: Optional[int] = None
     id: Optional[int] = None
+
+
+@dataclass
+class DependencyEdge:
+    source_path: str
+    target_fqn: str
+    kind: str
+    lineno: int
