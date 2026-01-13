@@ -40,9 +40,6 @@ class ReferenceRecord:
     end_lineno: int
     end_col_offset: int
     target_fqn: Optional[str] = None
-    target_id: Optional[str] = None
-    source_file_id: Optional[int] = None
-    id: Optional[int] = None
     col_offset: int
     end_lineno: int
     end_col_offset: int

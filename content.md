@@ -4,6 +4,6 @@
 
 ### 📝 变更文件摘要:
 ```
-uv.lock | 34 ++++++++++++++++++++++++++++++++--
- 1 file changed, 32 insertions(+), 2 deletions(-)
+packages/stitcher-spec/src/stitcher/spec/index.py | 3 ---
+ 1 file changed, 3 deletions(-)
 ```
