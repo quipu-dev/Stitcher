@@ -104,11 +104,10 @@ def test_check_passes_when_synced(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
 
-def test_check_command_detects_circular_dependency(monkeypatch):
+def test_check_command_detects_circular_dependency(tmp_path, monkeypatch):
     # 1. Arrange
-    # Note: Using tmp_path from pytest fixture would be better, but sticking to cwd
-    # to minimize changes from the original intent. Let's create a unique dir.
-    project_dir = Path.cwd() / "test_project_circ"
+    # Corrected: Using tmp_path to ensure isolation and prevent root pollution
+    project_dir = tmp_path / "test_project_circ"
     factory = WorkspaceFactory(project_dir)
     factory.with_pyproject("packages/pkg-a")
     factory.with_config(
