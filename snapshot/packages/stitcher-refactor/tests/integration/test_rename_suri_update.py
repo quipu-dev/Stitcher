@@ -44,11 +44,13 @@ def test_rename_symbol_updates_suri_fragment_in_signatures(tmp_path):
     graph.load("mypkg")
 
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
 
     # 执行重命名

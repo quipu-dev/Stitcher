@@ -60,11 +60,13 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     graph.load("cascade")
     graph.load("app")
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
 
     from stitcher.refactor.migration import MigrationSpec

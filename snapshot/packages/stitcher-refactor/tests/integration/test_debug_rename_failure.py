@@ -148,11 +148,13 @@ def test_debug_rename_failure_analysis(tmp_path):
 
     # 3. EXECUTE REFACTOR
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner

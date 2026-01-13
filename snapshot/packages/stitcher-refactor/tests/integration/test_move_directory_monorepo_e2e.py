@@ -71,11 +71,13 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
     # from the search paths provided by the Workspace.
     graph.load("cascade")
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
 
     from stitcher.refactor.migration import MigrationSpec

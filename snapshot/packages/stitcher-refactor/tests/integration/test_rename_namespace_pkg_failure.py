@@ -61,11 +61,13 @@ def test_rename_symbol_in_namespace_package_structure(tmp_path):
     graph.load("stitcher")
 
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
 
     # Rename MessageBus -> FeedbackBus

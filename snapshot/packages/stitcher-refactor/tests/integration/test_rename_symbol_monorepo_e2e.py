@@ -72,11 +72,13 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     graph.load("test_core")
     graph.load("integration")
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
 
     from stitcher.refactor.migration import MigrationSpec

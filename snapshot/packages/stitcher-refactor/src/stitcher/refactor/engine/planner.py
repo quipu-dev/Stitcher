@@ -119,118 +119,51 @@ class Planner:
                 lock_updates[intent.package_root].append(intent)
 
         for pkg_root, intents in lock_updates.items():
-            # Load existing lock data
-            # Dict[suri, Fingerprint]
             lock_data = ctx.lock_manager.load(pkg_root)
             modified = False
-
-            # We need to process path updates (Mass moves) first, then symbol updates
-            # Sort intents: LockPathUpdateIntent first
-            intents.sort(key=lambda x: 0 if isinstance(x, LockPathUpdateIntent) else 1)
-            
-            # Since we are iterating over the dict we are modifying, we collect updates first
-            # Or use a new dict. Rebuilding is safer.
-            # But wait, we have mixed intents.
-            # Let's do in-place updates carefully or build a transition map.
-            
-            # Strategy: Apply intents sequentially to the in-memory state
             current_data = lock_data.copy()
 
+            # Sort intents to process mass path updates before individual symbol renames
+            intents.sort(key=lambda x: 0 if isinstance(x, LockPathUpdateIntent) else 1)
+
             for intent in intents:
-                next_data = {}
-                
                 if isinstance(intent, LockPathUpdateIntent):
-                    # Mass update based on path prefix
-                    # SURI format: py://<path>#<fragment>
-                    prefix = f"py://{intent.old_path_prefix}"
-                    new_prefix_str = f"py://{intent.new_path_prefix}"
-                    
-                    for suri, fp in current_data.items():
-                        # We match exact file path OR directory prefix
-                        # Exact file match: py://path/to/file.py#...
-                        # Dir match: py://path/to/dir/...
-                        
+                    updates_to_make = {}  # old_suri -> new_suri
+                    for suri in current_data.keys():
                         path, fragment = PythonURIGenerator.parse(suri)
-                        
-                        # Check if 'path' matches 'intent.old_path_prefix'
-                        # Logic: 
-                        # 1. path == old_prefix (File move)
-                        # 2. path.startswith(old_prefix + "/") (Directory move)
-                        
-                        is_match = False
-                        new_path = path
-                        
+                        new_path = None
                         if path == intent.old_path_prefix:
-                            is_match = True
                             new_path = intent.new_path_prefix
                         elif path.startswith(intent.old_path_prefix + "/"):
-                            is_match = True
-                            suffix = path[len(intent.old_path_prefix):]
+                            suffix = path[len(intent.old_path_prefix) :]
                             new_path = intent.new_path_prefix + suffix
-                            
-                        if is_match:
+
+                        if new_path:
                             modified = True
-                            # Reconstruct SURI
-                            # TODO: Phase 3 inject generator
                             uri_gen = PythonURIGenerator()
-                            new_suri = uri_gen.generate_symbol_uri(new_path, fragment) if fragment else uri_gen.generate_file_uri(new_path)
-                            next_data[new_suri] = fp
-                        else:
-                            # Keep as is
-                            next_data[suri] = fp
-                            
-                    current_data = next_data
+                            new_suri = (
+                                uri_gen.generate_symbol_uri(new_path, fragment)
+                                if fragment
+                                else uri_gen.generate_file_uri(new_path)
+                            )
+                            updates_to_make[suri] = new_suri
+
+                    for old_suri, new_suri in updates_to_make.items():
+                        if old_suri in current_data:
+                            current_data[new_suri] = current_data.pop(old_suri)
 
                 elif isinstance(intent, LockSymbolUpdateIntent):
-                    # Single symbol rename
-                    # Note: old_suri might have been changed by a previous LockPathUpdateIntent!
-                    # This logic is complex if we mix moves and renames in one transaction.
-                    # But typically Refactor operations are atomic or sequential.
-                    # If we move file AND rename symbol in one go, we need to trace the identity.
-                    # Current implementation assumes old_suri in intent is valid for the current state.
-                    # But if we moved the file first, the SURI in 'current_data' has already changed.
-                    # The intent.old_suri was calculated based on the INITIAL state.
-                    
-                    # This implies we need to transform the intent's old_suri if it was affected by previous moves?
-                    # Or rely on the fact that RenameSymbolOperation calculates SURI based on definition node location?
-                    # If we move the file, the definition node location (path) changes.
-                    # Planner executes:
-                    # 1. Renamer (modifies source code)
-                    # 2. Sidecar Transformer (modifies sidecars)
-                    # 3. Lock Updates
-                    
-                    # If we have MoveFile(A->B) AND Rename(A.C->A.D), 
-                    # intents are generated from INITIAL state.
-                    # MoveFile generates LockPathUpdate(A->B).
-                    # Rename generates LockSymbolUpdate(A.C -> A.D) (Note: path is A).
-                    
-                    # If we apply PathUpdate first: A.C becomes B.C in `current_data`.
-                    # Then we try to apply SymbolUpdate(A.C->A.D).
-                    # A.C is no longer in `current_data`!
-                    
-                    # Solution: We need to check if intent.old_suri exists.
-                    # If not, check if it was moved? That's hard.
-                    
-                    # BETTER APPROACH:
-                    # RenameSymbolOperation updates the FRAGMENT.
-                    # MoveFileOperation updates the PATH.
-                    # SURIs are independent? No, SURI = Path + Fragment.
-                    
-                    # If we can't robustly compose them, we might assume user does one type of refactor at a time,
-                    # OR we implement a robust SURI tracking mechanism.
-                    # For now, let's implement basic handling and assume sequential consistency or disjoint operations.
-                    
-                    # For Rename, we just look for key.
                     if intent.old_suri in current_data:
-                        fp = current_data.pop(intent.old_suri)
-                        current_data[intent.new_suri] = fp
+                        current_data[intent.new_suri] = current_data.pop(
+                            intent.old_suri
+                        )
                         modified = True
-                    # Fallback: maybe it was moved? 
-                    # We skip complex resolution for MVP.
 
             if modified:
                 content = ctx.lock_manager.serialize(current_data)
-                rel_lock_path = (pkg_root / "stitcher.lock").relative_to(ctx.graph.root_path)
+                rel_lock_path = (pkg_root / "stitcher.lock").relative_to(
+                    ctx.graph.root_path
+                )
                 all_ops.append(WriteFileOp(rel_lock_path, content))
 
         # Process simple filesystem intents

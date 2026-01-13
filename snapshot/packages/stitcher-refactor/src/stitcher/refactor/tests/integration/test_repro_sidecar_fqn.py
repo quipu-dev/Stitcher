@@ -40,11 +40,13 @@ def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_p
     graph.load("mypkg")
 
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
 
     from stitcher.refactor.migration import MigrationSpec

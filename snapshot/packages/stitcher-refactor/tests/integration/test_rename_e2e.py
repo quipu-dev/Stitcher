@@ -74,11 +74,13 @@ def test_rename_symbol_end_to_end(tmp_path):
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
 
     # 3. Planning Phase

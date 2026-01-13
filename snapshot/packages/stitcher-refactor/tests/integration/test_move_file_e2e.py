@@ -59,11 +59,13 @@ def test_move_file_flat_layout(tmp_path):
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner

@@ -43,6 +43,12 @@ def mock_context(tmp_path: Path) -> Mock:
     mock_lock = Mock(spec=LockManagerProtocol)
     mock_lock.load.return_value = {}
     ctx.lock_manager = mock_lock
+    
+    # Mock find_symbol to prevent startswith TypeError
+    from stitcher.analysis.semantic import SymbolNode
+    mock_node = Mock(spec=SymbolNode)
+    mock_node.path = tmp_path / "app.py"  # a valid path
+    mock_graph.find_symbol.return_value = mock_node
 
     return ctx
 

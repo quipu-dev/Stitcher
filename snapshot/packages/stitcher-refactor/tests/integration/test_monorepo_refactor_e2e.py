@@ -72,11 +72,13 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     graph.load("pkga_lib")
     graph.load("pkgb_app")
     sidecar_manager = SidecarManager(root_path=project_root)
+    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
         sidecar_manager=sidecar_manager,
         index_store=index_store,
+        lock_manager=lock_manager,
     )
 
     from stitcher.refactor.migration import MigrationSpec
