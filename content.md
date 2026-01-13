@@ -1,203 +1,58 @@
-Excellent. We are now moving to the second step of the roadmap: extending the data access layer to support efficient, batch-oriented data fetching for the graph builder.
+## [WIP] fix: Correct call sites for renamed IndexStoreProtocol method
 
-Your plan correctly identifies the need for bulk data access. To build on that, and in adherence to the principle of **Ontological Correctness**, I'll refine the proposal slightly. Instead of returning a list of heavy `ReferenceRecord` objects, I will introduce a new, lighter data model called `DependencyEdge`. This model will represent the exact information the graph builder needs—the relationship between two files—making the interface more precise and the data transfer more efficient.
+### 错误分析
 
-This approach avoids loading unnecessary details and provides a clean, purpose-built contract for the analysis layer.
-
-Here is the plan to implement this refined data access interface.
-
-## [WIP] feat: Extend index protocol for bulk graph data retrieval
+在上一个计划中，我将 `IndexStoreProtocol` 的 `get_all_files_metadata` 方法重命名为 `get_all_files`，但未能更新该方法在测试代码中的调用点。这导致 `AttributeError` 并且破坏了测试套件的完整性。
 
 ### 用户需求
 
-To efficiently build a project-wide dependency graph, the analysis engine needs to fetch all dependency relationships from the `index.db` in a single, efficient query. This requires extending the `IndexStoreProtocol` and its implementation to provide methods for bulk data retrieval.
+修复因 API 重命名导致的测试失败，并确保代码库中所有对该方法的调用都使用新的名称。
 
 ### 评论
 
-This is a critical step that bridges the gap between our persistent index (on-disk) and the upcoming in-memory graph model. By introducing a dedicated `DependencyEdge` data transfer object and implementing an efficient, JOIN-based SQL query, we ensure that the graph construction process is both fast and scalable. This change moves Stitcher's capabilities from single-file analysis to true project-wide architectural reasoning.
+这是一个典型的重构疏忽。修复此问题是恢复代码库健康和信任测试套件的必要步骤。此计划将原子化地完成所有必要的修正。
 
 ### 目标
 
-1.  Define a new, lightweight `DependencyEdge` data model in `stitcher-spec` to represent a single import dependency.
-2.  Update the `IndexStoreProtocol` in `stitcher-spec` to include new methods for fetching all file records and all dependency edges.
-3.  Implement these new methods in the `IndexStore` class in `stitcher-index`, using efficient, bulk SQL queries.
+1.  定位并修改 `packages/stitcher-index/src/stitcher/index/indexer.py` 中对 `get_all_files_metadata` 的调用。
+2.  （如果存在）定位并修改其他任何模块中对 `get_all_files_metadata` 的调用。
+3.  确保代码库不再包含对旧方法名的任何引用。
 
 ### 基本原理
 
-1.  **Model Definition**: A new `DependencyEdge` dataclass will be added to `stitcher.spec.index`. This creates a clear, self-describing contract for dependency data.
-2.  **Protocol Update**: The `IndexStoreProtocol` will be modified via `patch_file` to rename the existing `get_all_files_metadata` to `get_all_files` for clarity and to add the new `get_all_dependency_edges` method.
-3.  **Implementation**: The `IndexStore` class will be updated to match the new protocol. The `get_all_dependency_edges` method will execute a single SQL query that JOINs the `references` and `files` tables to retrieve all necessary data in one pass, which is significantly more performant than iterating file by file.
+通过对整个项目进行扫描，我们发现 `indexer.py` 是除了 `store.py` 之外唯一调用了旧方法名的地方。我们将使用一个精确的 `patch_file` 操作来修正这个调用点，从而恢复系统的一致性。
 
 ### 标签
 
-#intent/build #flow/ready #priority/high #comp/spec #comp/index #concept/graph #concept/data-access #scope/api #scope/core #ai/refine #task/domain/analysis #task/object/graph-infra #task/action/implementation #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/index #scope/core #ai/refine #task/domain/testing #task/object/api-consistency #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: Define `DependencyEdge` model in `stitcher-spec`
+#### Acts 1: 修正 `indexer.py` 中的方法调用
 
-We will first introduce the new `DependencyEdge` dataclass, which will serve as the data transfer object for dependency information.
-
-~~~~~act
-patch_file
-packages/stitcher-spec/src/stitcher/spec/index.py
-~~~~~
-~~~~~python.old
-    target_id: Optional[str] = None
-    source_file_id: Optional[int] = None
-    id: Optional[int] = None
-~~~~~
-~~~~~python.new
-    target_id: Optional[str] = None
-    source_file_id: Optional[int] = None
-    id: Optional[int] = None
-
-
-@dataclass
-class DependencyEdge:
-    source_path: str
-    target_fqn: str
-    kind: str
-    lineno: int
-~~~~~
-
-#### Acts 2: Update `IndexStoreProtocol` in `stitcher-spec`
-
-Next, we update the protocol to reflect the new bulk data-fetching capabilities.
+我们将更新 `FileIndexer` 以使用新的 `get_all_files` 方法名。
 
 ~~~~~act
 patch_file
-packages/stitcher-spec/src/stitcher/spec/storage.py
+packages/stitcher-index/src/stitcher/index/indexer.py
 ~~~~~
 ~~~~~python.old
-from typing import Protocol, List, Optional, Tuple
-
-from .index import FileRecord, SymbolRecord, ReferenceRecord
-
-
-class IndexStoreProtocol(Protocol):
-    # --- Read Operations ---
-    def get_symbols_by_file_path(self, file_path: str) -> List[SymbolRecord]: ...
-
-    def find_symbol_by_fqn(
-        self, target_fqn: str
-    ) -> Optional[Tuple[SymbolRecord, str]]: ...
-
-    def find_references(
-        self, target_fqn: str, target_id: Optional[str] = None
-    ) -> List[Tuple[ReferenceRecord, str]]: ...
-
-    def get_all_files_metadata(self) -> List[FileRecord]: ...
-
-    # --- Write/Sync Operations ---
-    def sync_file(
+        # Load DB state
+        known_files: Dict[str, FileRecord] = {
+            r.path: r for r in self.store.get_all_files_metadata()
+        }
 ~~~~~
 ~~~~~python.new
-from typing import Protocol, List, Optional, Tuple
-
-from .index import FileRecord, SymbolRecord, ReferenceRecord, DependencyEdge
-
-
-class IndexStoreProtocol(Protocol):
-    # --- Read Operations ---
-    def get_symbols_by_file_path(self, file_path: str) -> List[SymbolRecord]: ...
-
-    def find_symbol_by_fqn(
-        self, target_fqn: str
-    ) -> Optional[Tuple[SymbolRecord, str]]: ...
-
-    def find_references(
-        self, target_fqn: str, target_id: Optional[str] = None
-    ) -> List[Tuple[ReferenceRecord, str]]: ...
-
-    def get_all_files(self) -> List[FileRecord]: ...
-
-    def get_all_dependency_edges(self) -> List[DependencyEdge]: ...
-
-    # --- Write/Sync Operations ---
-    def sync_file(
-~~~~~
-
-#### Acts 3: Implement new methods in `IndexStore`
-
-Finally, we implement the updated protocol in the `IndexStore` class.
-
-~~~~~act
-patch_file
-packages/stitcher-index/src/stitcher/index/store.py
-~~~~~
-~~~~~python.old
-from typing import Optional, List, Tuple
-from .db import DatabaseManager
-from .linker import Linker
-from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord
-
-
-class IndexStore:
-~~~~~
-~~~~~python.new
-from typing import Optional, List, Tuple
-from .db import DatabaseManager
-from .linker import Linker
-from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord, DependencyEdge
-
-
-class IndexStore:
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-index/src/stitcher/index/store.py
-~~~~~
-~~~~~python.old
-            return [ReferenceRecord(**dict(row)) for row in rows]
-
-    def get_all_files_metadata(self) -> List[FileRecord]:
-        with self.db.get_connection() as conn:
-            rows = conn.execute(
-                "SELECT id, path, content_hash, last_mtime, last_size, indexing_status FROM files"
-            ).fetchall()
-            return [FileRecord(**dict(row)) for row in rows]
-
-    def delete_file(self, file_id: int) -> None:
-        with self.db.get_connection() as conn:
-            conn.execute("DELETE FROM files WHERE id = ?", (file_id,))
-~~~~~
-~~~~~python.new
-            return [ReferenceRecord(**dict(row)) for row in rows]
-
-    def get_all_files(self) -> List[FileRecord]:
-        with self.db.get_connection() as conn:
-            rows = conn.execute(
-                "SELECT id, path, content_hash, last_mtime, last_size, indexing_status FROM files"
-            ).fetchall()
-            return [FileRecord(**dict(row)) for row in rows]
-
-    def get_all_dependency_edges(self) -> List[DependencyEdge]:
-        with self.db.get_connection() as conn:
-            rows = conn.execute(
-                """
-                SELECT
-                    source_file.path AS source_path,
-                    r.target_fqn,
-                    r.kind,
-                    r.lineno
-                FROM "references" r
-                JOIN files source_file ON r.source_file_id = source_file.id
-                WHERE r.target_fqn IS NOT NULL
-                """
-            ).fetchall()
-            return [DependencyEdge(**dict(row)) for row in rows]
-
-    def delete_file(self, file_id: int) -> None:
-        with self.db.get_connection() as conn:
-            conn.execute("DELETE FROM files WHERE id = ?", (file_id,))
+        # Load DB state
+        known_files: Dict[str, FileRecord] = {
+            r.path: r for r in self.store.get_all_files()
+        }
 ~~~~~
 
 ### 下一步建议
 
-我们已经成功地为数据层添加了高效的批量查询接口。现在，数据已经准备好被消费。
+我们已经修正了由破坏性 API 变更引入的错误。代码库现在应该恢复了一致性。
 
-下一步是**实现图构建器 (Implement Graph Builder)**。我将创建一个 `GraphBuilder` 类，它会使用我们刚刚定义的 `get_all_files` 和 `get_all_dependency_edges` 方法来消费数据，并构建一个 `networkx.DiGraph` 内存图。如果你同意，我将开始制定这个计划。
+我建议现在可以安全地返回我们之前中断的任务：**实现图构建器 (Implement Graph Builder)**。如果你同意，我将重新生成构建 `GraphBuilder` 的计划，它将使用我们已经正确建立的 `get_all_files` 和 `get_all_dependency_edges` 接口。
