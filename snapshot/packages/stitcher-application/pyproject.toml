@@ -12,6 +12,7 @@ dependencies = [
     "stitcher-common",
     "stitcher-config",
     "stitcher-lang-python",
+    "stitcher-lang-sidecar",
     "stitcher-stubgen",
     "stitcher-workspace",
     "stitcher-index",
