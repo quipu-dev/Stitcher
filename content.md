@@ -1,90 +1,58 @@
-收到。分析显示，我之前的补丁漏掉了这些文件中部分测试函数的 `WorkspaceFactory` 初始化调用。由于我们强化了工作区发现规则，每一个涉及 CLI 执行的集成测试都必须具备合法的 Git 根目录标识。
+好的，集成测试的修复已经完成。现在我们将这些变更作为一个逻辑单元提交，以恢复测试套件的完整性。
 
-我将补全这些缺失的 `.init_git()` 调用。
+## [COMMIT] test(cli): 修复集成测试中的工作区发现问题
 
-## [WIP] fix(tests): 补全集成测试中的 Git 工作区初始化
+### 用户需求
+修复因强化“确定性工作区”发现规则而导致失败的集成测试。
 
-### 错误分析
-测试失败的根本原因仍然是 `StitcherApp` 无法在临时目录中找到工作区根目录（`.git`）。虽然之前已经修复了部分函数，但每个独立的测试函数如果重新创建了 `factory`，都必须显式调用 `.init_git()`。
+### 评论
+这是一个必要的维护步骤。随着系统安全性和确定性的提升，我们的测试基础设施也必须同步演进，以模拟真实的、受版本控制的开发环境。
 
 ### 目标
-1.  修复 `test_fidelity_principles.py` 中的 `test_check_does_not_reformat_file_on_success`。
-2.  修复 `test_pump_strip_interaction.py` 中的 `test_pump_with_strip_flag_executes_strip`。
-3.  修复 `test_refactor_command.py` 中的 `test_refactor_apply_dry_run`。
+1.  将修复后的三个集成测试文件提交至仓库。
+2.  恢复测试套件的“全绿”状态。
+
+### 基本原理
+由于 `StitcherApp` 现在强制要求在包含 `.git` 或特定 `pyproject.toml` 的工作区根目录下运行，我们必须通过 `WorkspaceFactory.init_git()` 为每个集成测试创建符合条件的模拟环境。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/tests #comp/workspace #scope/core #ai/refine #task/domain/testing #task/object/integration-tests #task/action/fix #task/state/continue
+#intent/tooling #flow/ready #priority/critical #comp/tests #comp/workspace #scope/core #ai/instruct #task/domain/testing #task/object/integration-tests #task/action/fix #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `test_fidelity_principles.py`
+#### Acts 1: 提交测试修复
+
+我们将受影响的测试文件添加到暂存区并创建提交。
 
 ~~~~~act
-patch_file
+git_add
 packages/stitcher-cli/tests/integration/test_fidelity_principles.py
-~~~~~
-~~~~~python.old
-    # 1. ARRANGE
-    # Create a workspace, run `init`, and then `strip` to get a truly
-    # clean state (docs only in YAML).
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-~~~~~
-~~~~~python.new
-    # 1. ARRANGE
-    # Create a workspace, run `init`, and then `strip` to get a truly
-    # clean state (docs only in YAML).
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.init_git()
-        .with_config({"scan_paths": ["src"]})
-~~~~~
-
-#### Acts 2: 修复 `test_pump_strip_interaction.py`
-
-~~~~~act
-patch_file
 packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py
-~~~~~
-~~~~~python.old
-    # 1. Arrange
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-~~~~~
-~~~~~python.new
-    # 1. Arrange
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.init_git()
-        .with_config({"scan_paths": ["src"]})
-~~~~~
-
-#### Acts 3: 修复 `test_refactor_command.py`
-
-~~~~~act
-patch_file
 packages/stitcher-cli/tests/integration/test_refactor_command.py
 ~~~~~
-~~~~~python.old
-def test_refactor_apply_dry_run(tmp_path, monkeypatch):
-    # 1. Arrange
-    factory = WorkspaceFactory(tmp_path)
-    (
-        factory.with_project_name("mypkg")
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python.new
-def test_refactor_apply_dry_run(tmp_path, monkeypatch):
-    # 1. Arrange
-    factory = WorkspaceFactory(tmp_path)
-    (
-        factory.init_git()
-        .with_project_name("mypkg")
+~~~~~text
+test(cli): fix workspace discovery in integration tests
+
+This commit fixes several integration tests that were failing due to the recently
+enforced deterministic workspace discovery rules.
+
+The `StitcherApp` now requires a valid workspace root (identified by a `.git`
+directory or specific `pyproject.toml` settings) to function. Existing tests
+using `WorkspaceFactory` lacked these identifiers, causing CLI commands to fail
+with `WorkspaceNotFoundError`.
+
+Updated the following test files to include `.init_git()` in their setup phase:
+- test_fidelity_principles.py
+- test_pump_strip_interaction.py
+- test_refactor_command.py
 ~~~~~
 
 ### 下一步建议
-1.  **运行全量测试**: 执行 `pytest packages/stitcher-cli/tests/integration` 以确保所有集成测试全部转绿。
-2.  **代码审查**: 检查 `WorkspaceFactory` 是否可以默认执行 `init_git()`，以减少未来测试编写时的心智负担（除非某些测试需要显式验证“非 Git 环境”的行为）。
+- **CI 验证**: 建议在 CI 环境中运行全量测试，确保环境差异不会再次触发此类问题。
+- **重构 Factory**: 考虑将 `init_git()` 设为 `WorkspaceFactory.build()` 的默认行为或可选的全局配置，以简化未来测试的编写。
