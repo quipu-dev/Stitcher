@@ -5,6 +5,8 @@
     "baseline_yaml_content_hash": "474a7ec56be34fa9fbe376ebdaf17cbd2f5068ad65950caa29b884e39c436410"
   },
   "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/models.py#ReferenceType.IMPORT_PATH": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/models.py#ReferenceType.SIDECAR_DOC_ID": {},
+  "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/models.py#ReferenceType.SIDECAR_ID": {},
   "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/models.py#ReferenceType.SYMBOL": {},
   "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/models.py#UsageLocation": {
     "baseline_code_signature_text": "class UsageLocation:",

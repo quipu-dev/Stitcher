@@ -47,11 +47,11 @@ def parse_signature_references(content: str) -> List[Tuple[str, int, int]]:
     we use regex scanning for performance and simplicity to extract keys and line numbers.
     """
     references = []
-    
+
     # Matches keys that look like SURIs at the start of a line (standard formatting)
     # e.g. "py://path/to/file.py#symbol":
     pattern = re.compile(r'^\s*"(py://[^"]+)":')
-    
+
     lines = content.splitlines()
     for i, line in enumerate(lines):
         match = pattern.search(line)
@@ -59,8 +59,8 @@ def parse_signature_references(content: str) -> List[Tuple[str, int, int]]:
             suri = match.group(1)
             # Find the actual start column of the key quote
             col = line.find('"' + suri + '"')
-            if col == -1: 
+            if col == -1:
                 col = 0
             references.append((suri, i + 1, col))
-            
+
     return references

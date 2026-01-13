@@ -15,8 +15,8 @@
     "baseline_yaml_content_hash": "c6d49d54bb6554bdda464262744e015ea0e8156cc74f1a718ba85d789ccf567f"
   },
   "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.find_references": {
-    "baseline_code_signature_text": "def find_references(self, target_fqn: str) -> List[Tuple[ReferenceRecord, str]]:",
-    "baseline_code_structure_hash": "0c714e55926f221d8ab74900b300266f02cee921eedeb6f8e9a19c457c259759",
+    "baseline_code_signature_text": "def find_references(self, target_fqn: str, target_id: Optional[str] = None) -> List[Tuple[ReferenceRecord, str]]:",
+    "baseline_code_structure_hash": "d657929aaa1c94b045f7f22516b7fb9525012e807319f6e95ac3ba1e95ab0569",
     "baseline_yaml_content_hash": "7da29b80bb00efeda7e628034cb3954323ce63ff6ecc2212d03b576f011e5993"
   },
   "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.find_symbol_by_fqn": {
