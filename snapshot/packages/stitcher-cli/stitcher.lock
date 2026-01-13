@@ -127,8 +127,8 @@
     },
     "py://packages/stitcher-cli/src/stitcher/cli/main.py#index_app": {},
     "py://packages/stitcher-cli/src/stitcher/cli/main.py#main": {
-      "baseline_code_signature_text": "def main(verbose: bool = typer.Option(False, '--verbose', '-v', help=(nexus(L.cli.option.verbose.help)))):",
-      "baseline_code_structure_hash": "b54e6946d1e3eabe4c4c863c67f99c02a20bd188f33a528ffd4a523d7a1bdc75",
+      "baseline_code_signature_text": "def main(loglevel: LogLevel = typer.Option(LogLevel.INFO, '--loglevel', help=(nexus(L.cli.option.loglevel.help)), case_sensitive=False)):",
+      "baseline_code_structure_hash": "56922e8d16047fc9df6a3003e66450c1d1a9e2cd6eb5f34cb57dc3f634421744",
       "baseline_yaml_content_hash": "00b4b655f6abbcb58feab8172c3942e14703213c3b57aa70cb8074b7d47eacce"
     },
     "py://packages/stitcher-cli/src/stitcher/cli/main.py#refactor_app": {},
@@ -138,9 +138,10 @@
       "baseline_yaml_content_hash": "54b7bdf55e905bd398adf80ea94f70461407205d7d5f254ac8970e55d653b8bf"
     },
     "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#CliRenderer.__init__": {
-      "baseline_code_signature_text": "def __init__(self, verbose: bool = False):",
-      "baseline_code_structure_hash": "3b8f7a5f62dbccd080baeada9303403add57d045a16ce4d769ed6cbdf3d16659"
+      "baseline_code_signature_text": "def __init__(self, loglevel: LogLevel = LogLevel.INFO):",
+      "baseline_code_structure_hash": "a60fac60b8dd110de50af46063c53edeac7600983ac62c2abe47cbb66ce7dece"
     },
+    "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#CliRenderer.loglevel_value": {},
     "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#CliRenderer.render": {
       "baseline_code_signature_text": "def render(self, message: str, level: str):",
       "baseline_code_structure_hash": "92afbd272a6d674fca2cfa99e3548adaa018e08a00636d1c63b6e112eba21442",
@@ -148,7 +149,17 @@
     },
     "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#CliRenderer.verbose": {
       "baseline_yaml_content_hash": "336ebcdcedb0fe0d1aab3d423edfa41d1678808c65335e3556d7d0bc4fb0487e"
-    }
+    },
+    "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#LEVEL_MAP": {},
+    "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#LogLevel": {
+      "baseline_code_signature_text": "class LogLevel(str, Enum):",
+      "baseline_code_structure_hash": "5d2326330cb0bd802863b2eef1662346057ffa078a704457e5e400c9d848d1a7"
+    },
+    "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#LogLevel.DEBUG": {},
+    "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#LogLevel.ERROR": {},
+    "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#LogLevel.INFO": {},
+    "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#LogLevel.SUCCESS": {},
+    "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#LogLevel.WARNING": {}
   },
   "version": "1.0"
 }
