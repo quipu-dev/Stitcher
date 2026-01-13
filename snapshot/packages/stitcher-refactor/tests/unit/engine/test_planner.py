@@ -5,6 +5,8 @@ from stitcher.refactor.migration import MigrationSpec
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.operations.base import AbstractOperation
 from stitcher.refactor.engine.intent import RefactorIntent
+from stitcher.workspace import Workspace
+from pathlib import Path
 
 
 from stitcher.index.store import IndexStore
@@ -13,8 +15,12 @@ from stitcher.index.store import IndexStore
 def test_planner_collects_intents_from_operations():
     # 1. Arrange
     mock_index = Mock(spec=IndexStore)
+    mock_workspace = Mock(spec=Workspace)
+    mock_workspace.root_path = Path("/fake/project")
     mock_ctx = Mock(spec=RefactorContext)
     mock_ctx.index_store = mock_index
+    mock_ctx.workspace = mock_workspace
+
     mock_spec = Mock(spec=MigrationSpec)
 
     # Mock operations and their collect_intents results

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from stitcher.app.services import DocumentManager
 from stitcher.lang.sidecar import SidecarAdapter
-from stitcher.lang.python.docstring import RawSerializer
+from stitcher.lang.python.docstring import RawSerializer, RawDocstringParser
 from stitcher.spec import ModuleDef, FunctionDef, DocstringIR
 
 
@@ -27,7 +27,7 @@ def test_apply_docs_overlay(tmp_path: Path):
     # 3. Apply
     manager = DocumentManager(root_path=tmp_path)
     # The manager needs the correct serializer strategy to parse the file.
-    manager.set_strategy(serializer.parser, serializer)
+    manager.set_strategy(RawDocstringParser(), serializer)
     manager.apply_docs_to_module(module)
 
     # 4. Assert IR is updated
@@ -52,7 +52,7 @@ def test_apply_docs_partial_overlay(tmp_path: Path):
     adapter.save_doc_irs(doc_file, external_irs, serializer)
 
     manager = DocumentManager(root_path=tmp_path)
-    manager.set_strategy(serializer.parser, serializer)
+    manager.set_strategy(RawDocstringParser(), serializer)
     manager.apply_docs_to_module(module)
 
     assert module.functions[0].docstring == "YAML 1"
