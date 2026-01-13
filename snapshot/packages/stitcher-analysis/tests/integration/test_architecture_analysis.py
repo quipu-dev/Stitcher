@@ -60,13 +60,10 @@ def test_barrel_export_does_not_cause_false_circular_dependency(tmp_path):
     violations = engine.analyze(app.index_store)
 
     # 3. Assert: Verify that NO circular dependency is found.
-    #    (Initially, this test will fail, proving the bug exists)
     circular_violations = [
         v for v in violations if v.kind == L.check.architecture.circular_dependency
     ]
 
-    # TODO: This assertion will fail until GraphBuilder is fixed.
-    # The goal is to make this test pass.
     assert (
         not circular_violations
     ), f"Expected no circular dependencies, but found {len(circular_violations)}: {circular_violations}"
