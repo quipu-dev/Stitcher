@@ -1,7 +1,12 @@
 from typing import Optional, List, Tuple
 from .db import DatabaseManager
 from .linker import Linker
-from stitcher.spec.index import FileRecord, SymbolRecord, ReferenceRecord, DependencyEdge
+from stitcher.spec.index import (
+    FileRecord,
+    SymbolRecord,
+    ReferenceRecord,
+    DependencyEdge,
+)
 
 
 class IndexStore:

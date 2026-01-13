@@ -1,4 +1,3 @@
-from pathlib import Path
 from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
@@ -147,9 +146,7 @@ def test_check_command_detects_circular_dependency(tmp_path, monkeypatch):
     # 3. Assert
     assert not success
     spy_bus.assert_id_called(L.check.run.fail, level="error")
-    spy_bus.assert_id_called(
-        L.check.architecture.circular_dependency, level="error"
-    )
+    spy_bus.assert_id_called(L.check.architecture.circular_dependency, level="error")
 
     # Check the message context
     messages = spy_bus.get_messages()

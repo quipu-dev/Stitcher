@@ -45,20 +45,25 @@ class CircularDependencyRule(ArchitectureRule):
                             lines = source_path.read_text(encoding="utf-8").splitlines()
                             start = max(0, line_number - 3)
                             end = min(len(lines), line_number + 2)
-                            
+
                             snippet_lines = []
-                            for idx, line_content in enumerate(lines[start:end], start=start + 1):
+                            for idx, line_content in enumerate(
+                                lines[start:end], start=start + 1
+                            ):
                                 prefix = "> " if idx == line_number else "  "
-                                snippet_lines.append(f"    {idx:4d} | {prefix}{line_content}")
+                                snippet_lines.append(
+                                    f"    {idx:4d} | {prefix}{line_content}"
+                                )
                             snippet = "\n".join(snippet_lines)
                     except Exception:
                         snippet = "    <Could not read source file>"
 
                 details.append(f"\n  - In `{u}`:")
-                details.append(f"    - Causes dependency on `{v}` via import of `{first_reason}`")
+                details.append(
+                    f"    - Causes dependency on `{v}` via import of `{first_reason}`"
+                )
                 if snippet:
                     details.append(f"\n{snippet}")
-
 
             cycle_path = "".join(details)
 

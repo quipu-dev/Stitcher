@@ -7,11 +7,13 @@ from stitcher.analysis.rules.architecture import CircularDependencyRule
 def test_circular_dependency_rule_with_cycle():
     # 1. Arrange
     graph = nx.DiGraph()
-    graph.add_edges_from([
-        ("a.py", "b.py"),
-        ("b.py", "c.py"),
-        ("c.py", "a.py"),
-    ])
+    graph.add_edges_from(
+        [
+            ("a.py", "b.py"),
+            ("b.py", "c.py"),
+            ("c.py", "a.py"),
+        ]
+    )
     rule = CircularDependencyRule()
 
     # 2. Act
@@ -31,10 +33,12 @@ def test_circular_dependency_rule_with_cycle():
 def test_circular_dependency_rule_without_cycle():
     # 1. Arrange
     graph = nx.DiGraph()
-    graph.add_edges_from([
-        ("a.py", "b.py"),
-        ("b.py", "c.py"),
-    ])
+    graph.add_edges_from(
+        [
+            ("a.py", "b.py"),
+            ("b.py", "c.py"),
+        ]
+    )
     rule = CircularDependencyRule()
 
     # 2. Act

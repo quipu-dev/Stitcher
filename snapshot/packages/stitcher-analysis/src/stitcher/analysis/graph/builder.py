@@ -27,28 +27,31 @@ class GraphBuilder:
             target_fqn = edge.target_fqn
 
             # Skip if we've already processed this FQN and found it unresolvable
-            if target_fqn in fqn_to_path_cache and fqn_to_path_cache[target_fqn] is None:
+            if (
+                target_fqn in fqn_to_path_cache
+                and fqn_to_path_cache[target_fqn] is None
+            ):
                 continue
 
             # Resolve FQN to a file path, following aliases to find the canonical definition
             if target_fqn not in fqn_to_path_cache:
                 resolved_path = None
                 current_fqn = target_fqn
-                
+
                 # Limit iterations to prevent infinite loops in case of malformed alias cycles
-                for _ in range(10): 
+                for _ in range(10):
                     symbol_result = store.find_symbol_by_fqn(current_fqn)
                     if not symbol_result:
                         break  # Unresolvable (external or non-existent)
-                    
+
                     symbol, path = symbol_result
                     if symbol.kind != "alias" or not symbol.alias_target_fqn:
                         resolved_path = path
-                        break # Found the canonical definition
-                    
+                        break  # Found the canonical definition
+
                     # It's an alias, continue resolving
                     current_fqn = symbol.alias_target_fqn
-                
+
                 fqn_to_path_cache[target_fqn] = resolved_path
 
             target_path = fqn_to_path_cache.get(target_fqn)

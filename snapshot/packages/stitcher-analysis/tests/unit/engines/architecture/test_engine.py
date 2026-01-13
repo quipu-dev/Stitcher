@@ -16,7 +16,9 @@ def test_architecture_engine_analyze_flow():
     mock_graph = nx.DiGraph()
     mock_builder.build_dependency_graph.return_value = mock_graph
 
-    mock_violation = Violation(kind=L.check.architecture.circular_dependency, fqn="a.py")
+    mock_violation = Violation(
+        kind=L.check.architecture.circular_dependency, fqn="a.py"
+    )
     mock_rule.check.return_value = [mock_violation]
 
     # 2. Act
