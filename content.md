@@ -1,106 +1,67 @@
-非常敏锐！这确实是最后一块拼图。
+好的，我们已经成功消除了系统中最后一处“MVP 痕迹”，完成了 `URIGeneratorProtocol` 在 Sidecar 层和重构引擎中的彻底注入，并修复了所有相关的单元测试。
 
-在 `RefactorContext` 增加了 `uri_generator` 字段后，所有基于其 `spec` 创建的 Mock 对象都必须能够响应对该属性的访问。由于 `SidecarAdapter` 现在在构造函数中显式使用了 `ctx.uri_generator`，测试中未配置的 Mock 会直接抛出 `AttributeError`。
+现在，我将把这些收尾工作作为一个完整的逻辑单元进行提交。
 
-我将立即生成修复这最后一个测试点的计划。
-
-## [WIP] fix(tests): 补全 Planner 单元测试中的 Mock 依赖
-
-### 错误分析
-
-在 `test_planner.py` 中，`mock_ctx` 是通过 `Mock(spec=RefactorContext)` 创建的。
-
-虽然 `RefactorContext` 的定义已经更新，但在测试代码中：
-1.  没有为 `mock_ctx.uri_generator` 赋予任何值。
-2.  在 `Planner.plan` 的实现中，代码尝试访问 `ctx.uri_generator` 并将其传递给 `SidecarAdapter`。
-
-这导致了 `AttributeError: Mock object has no attribute 'uri_generator'`。
+## [COMMIT] refactor(sidecar): 完成全系统的 SURI 依赖注入
 
 ### 用户需求
-
-修复 `stitcher-refactor` 包中剩余的最后一个单元测试失败，确保 `Planner` 的 Mock 上下文符合最新的接口定义。
+彻底消除 `stitcher-lang-sidecar` 和 `DocumentManager` 中硬编码的 `PythonURIGenerator` 实例化逻辑，确保 Sidecar 文件的处理逻辑完全基于协议（Protocol）而非具体实现。
 
 ### 评论
-
-这是典型的单元测试“易碎性”表现，当被 Mock 的对象结构发生变化时，Mock 配置必须同步更新。修复它之后，我们的 P0 任务（依赖注入）将实现真正意义上的 100% 测试通过率。
+这是一次关键的“架构补丁”。通过将 `SidecarAdapter` 和 `SidecarTransformer` 纳入 DI 体系，我们解除了 Sidecar 层对 Python 语言实现的隐式依赖。这不仅使代码更符合依赖倒置原则，也为未来支持多语言项目（如同时包含 Python 和 TypeScript 的仓库）铺平了道路。
 
 ### 目标
-
-1.  修改 `packages/stitcher-refactor/tests/unit/engine/test_planner.py`。
-2.  导入 `PythonURIGenerator`。
-3.  为 `mock_ctx.uri_generator` 赋予一个 `PythonURIGenerator` 实例（或其 Mock）。
+1.  提交 `SidecarAdapter` 和 `SidecarTransformer` 的 DI 改造。
+2.  提交 `DocumentManager` 接收并传递 `uri_generator` 的变更。
+3.  提交 `StitcherApp` 中更新后的组件组装逻辑。
+4.  提交对 `packages/stitcher-refactor/tests/unit/engine/test_planner.py` 的关键修复，确保 Mock 环境符合新的接口定义。
+5.  移除全系统中所有关于 `Phase 3 DI` 的 TODO 注释。
 
 ### 基本原理
-
-由于这是一个验证 `Planner` 是否正确调用 `collect_intents` 的单元测试，我们只需要确保 `mock_ctx` 能够顺利通过 `SidecarAdapter` 的实例化过程即可。直接赋予一个真实的 `PythonURIGenerator()` 是最简单且有效的方案，因为该类是无状态的。
+我们将依赖的“水管”延伸到了系统的最末端。通过构造函数注入，底层组件（如 `SidecarAdapter`）现在不再主动寻找生成器，而是被动接收。这种“控制反转”确保了逻辑定位模型在整个系统中的高度统一和可测试性。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/tests #comp/refactor #concept/dependency-injection #ai/instruct #task/domain/architecture #task/object/dependency-injection #task/action/implementation #task/state/continue
+#intent/refine #flow/ready #priority/high #scope/core #comp/lang-sidecar #comp/application #comp/refactor #comp/tests #concept/dependency-injection #ai/instruct #task/domain/architecture #task/object/dependency-injection #task/action/implementation #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `test_planner.py` 中的 Mock 配置
+#### Acts 1: 提交 Sidecar 层的 DI 改造
 
-我们将补全 `mock_ctx` 所需的 `uri_generator`。
+我们将所有受影响的物理文件添加到暂存区。
 
 ~~~~~act
-patch_file
-packages/stitcher-refactor/tests/unit/engine/test_planner.py
+git_add
 ~~~~~
-~~~~~python.old
-from stitcher.refactor.operations.base import AbstractOperation
-from stitcher.refactor.engine.intent import RefactorIntent
-from stitcher.workspace import Workspace
-from pathlib import Path
 
-
-from stitcher.index.store import IndexStore
-
-
-def test_planner_collects_intents_from_operations():
-    # 1. Arrange
-    mock_index = Mock(spec=IndexStore)
-    mock_workspace = Mock(spec=Workspace)
-    mock_workspace.root_path = Path("/fake/project")
-    mock_ctx = Mock(spec=RefactorContext)
-    mock_ctx.index_store = mock_index
-    mock_ctx.workspace = mock_workspace
-
-    mock_spec = Mock(spec=MigrationSpec)
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python.new
-from stitcher.refactor.operations.base import AbstractOperation
-from stitcher.refactor.engine.intent import RefactorIntent
-from stitcher.workspace import Workspace
-from pathlib import Path
+~~~~~text
+refactor(sidecar): complete URIGenerator dependency injection
 
-from stitcher.index.store import IndexStore
-from stitcher.lang.python.uri import PythonURIGenerator
+This commit finalizes the Phase 3 DI refactoring by injecting URIGeneratorProtocol 
+into the sidecar handling layer and the refactoring planner.
 
+Key changes:
+- Refactored `SidecarAdapter` and `SidecarTransformer` to receive `uri_generator` via constructor.
+- Updated `DocumentManager` to orchestrate the dependency flow to the adapter.
+- Fixed a remaining unit test failure in `test_planner.py` by providing the missing `uri_generator` to the mock RefactorContext.
+- Removed all obsolete "TODO: Phase 3" comments related to temporary generator instantiation.
 
-def test_planner_collects_intents_from_operations():
-    # 1. Arrange
-    mock_index = Mock(spec=IndexStore)
-    mock_workspace = Mock(spec=Workspace)
-    mock_workspace.root_path = Path("/fake/project")
-    mock_ctx = Mock(spec=RefactorContext)
-    mock_ctx.index_store = mock_index
-    mock_ctx.workspace = mock_workspace
-    mock_ctx.uri_generator = PythonURIGenerator()
-
-    mock_spec = Mock(spec=MigrationSpec)
+With this change, the Resource Addressing Model (SURI) is now consistently 
+injected across all layers, from language adapters to sidecar persistence 
+and high-level refactoring operations.
 ~~~~~
 
 ### 下一步建议
 
-随着这最后一个测试点的修复，全系统的 SURI 依赖注入改造已彻底宣告完成。
+我们已经夯实了依赖注入的基础。基于之前的架构分析，建议立即转向解决系统稳定性的下一个核心隐患：
 
-现在的代码库已经消除了所有 `TODO: Phase 3` 关于 DI 的注释，且逻辑寻址模型（SURI）已经完全协议化并能够安全地穿透各个分层（从 Lang 层到 App 层，再到 Refactor 层）。
+*   **增强 Workspace 确定性 (P1)**: 
+    *   **文件**: `packages/stitcher-workspace/src/stitcher/workspace/workspace.py`
+    *   **行动**: 修改 `find_workspace_root`。目前它在找不到根目录时会静默回退到当前目录（`start_path`），这会导致不稳定的 SURI 生成（因为基准点变了）。
+    *   **目标**: 强制要求必须在有效的 Workspace（包含 `.git` 或特定的 `pyproject.toml`）中运行。如果找不到，抛出 `WorkspaceNotFoundError`。
 
-建议下一步行动：
-*   **增强 Workspace 确定性 (P1)**: 修改 `packages/stitcher-workspace/src/stitcher/workspace/workspace.py`。移除 `find_workspace_root` 在找不到根目录时的静默回退逻辑。
-    *   **理由**: 既然我们现在极度依赖 SURI（它是相对于 Workspace Root 的），那么如果 Root 判定不一致，所有的 SURI 都会失效。强制要求显式的 Workspace Root 是系统鲁棒性的核心保障。
-
-如果你准备好进行下一步，请告诉我。
+如果你准备好进行下一步，请告诉我，我将为你生成实施计划。
