@@ -1,4 +1,5 @@
 import pytest
+from stitcher.lang.python.uri import PythonURIGenerator
 from ruamel.yaml import YAML
 from stitcher.spec import ModuleDef, FunctionDef, ClassDef, Attribute
 from stitcher.app.services import DocumentManager
@@ -22,7 +23,7 @@ def sample_module_ir():
 
 
 def test_flatten_module_docs(tmp_path, sample_module_ir):
-    manager = DocumentManager(root_path=tmp_path)
+    manager = DocumentManager(root_path=tmp_path, uri_generator=PythonURIGenerator())
     docs = manager.flatten_module_docs(sample_module_ir)
 
     assert docs["__doc__"].summary == "Module doc"
@@ -33,7 +34,7 @@ def test_flatten_module_docs(tmp_path, sample_module_ir):
 
 
 def test_save_docs_for_module(tmp_path, sample_module_ir):
-    manager = DocumentManager(root_path=tmp_path)
+    manager = DocumentManager(root_path=tmp_path, uri_generator=PythonURIGenerator())
 
     output_path = manager.save_docs_for_module(sample_module_ir)
 

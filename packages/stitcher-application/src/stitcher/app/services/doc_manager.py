@@ -13,6 +13,7 @@ from stitcher.spec import (
     DocstringIR,
     DocstringParserProtocol,
     DocstringSerializerProtocol,
+    URIGeneratorProtocol,
 )
 from stitcher.lang.python.docstring import RawDocstringParser, RawSerializer
 from stitcher.common.services import AssetPathResolver
@@ -20,10 +21,10 @@ from stitcher.lang.sidecar import SidecarAdapter
 
 
 class DocumentManager:
-    def __init__(self, root_path: Path):
+    def __init__(self, root_path: Path, uri_generator: URIGeneratorProtocol):
         self.root_path = root_path
         self.resolver = AssetPathResolver(root_path)
-        self._sidecar_adapter = SidecarAdapter(root_path)
+        self._sidecar_adapter = SidecarAdapter(root_path, uri_generator)
         # Defaults to Raw mode for backward compatibility
         self.parser: DocstringParserProtocol = RawDocstringParser()
         self.serializer: DocstringSerializerProtocol = RawSerializer()

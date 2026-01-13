@@ -435,8 +435,8 @@
       "baseline_yaml_content_hash": "5ad8f647cc1d900dfd03553f9f9136ddb6cc0ecf43ee8bbc1db947814211e271"
     },
     "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.__init__": {
-      "baseline_code_signature_text": "def __init__(self, root_path: Path):",
-      "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, uri_generator: URIGeneratorProtocol):",
+      "baseline_code_structure_hash": "bcb757ce493c747aef253d40923389c8f495d7e6dbd828c3f48b47efa0eb6c3c"
     },
     "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._apply_to_class": {
       "baseline_code_signature_text": "def _apply_to_class(self, cls: ClassDef, docs: Dict[str, DocstringIR], prefix: str = ''):",

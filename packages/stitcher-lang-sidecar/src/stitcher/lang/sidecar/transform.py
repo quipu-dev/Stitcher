@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from stitcher.lang.python.uri import PythonURIGenerator
+from stitcher.spec import URIGeneratorProtocol
 
 
 @dataclass
@@ -30,8 +31,10 @@ class SidecarTransformer:
     """
     Encapsulates the logic for transforming the content of sidecar files (.yaml, .json)
     in response to refactoring operations like symbol renames or file moves.
-    This class is stateless and operates on data dictionaries, decoupling it from I/O.
     """
+
+    def __init__(self, uri_generator: URIGeneratorProtocol):
+        self.uri_generator = uri_generator
 
     def transform(
         self,
@@ -128,12 +131,10 @@ class SidecarTransformer:
                     fragment_changed = True
 
             if path_changed or fragment_changed:
-                # TODO: Replace temporary instantiation with dependency injection in Phase 3
-                uri_gen = PythonURIGenerator()
                 new_key = (
-                    uri_gen.generate_symbol_uri(path, fragment)
+                    self.uri_generator.generate_symbol_uri(path, fragment)
                     if fragment
-                    else uri_gen.generate_file_uri(path)
+                    else self.uri_generator.generate_file_uri(path)
                 )
                 new_data[new_key] = value
                 modified = True

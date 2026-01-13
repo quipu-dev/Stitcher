@@ -1,4 +1,5 @@
 import pytest
+from stitcher.lang.python.uri import PythonURIGenerator
 from stitcher.app.services import DocumentManager
 from stitcher.spec import (
     DocstringIR,
@@ -34,7 +35,7 @@ class TestDocumentManagerStrategies:
         """A DocumentManager instance for the test class."""
         # tmp_path is not strictly needed here but good practice for services
         root = tmp_path_factory.mktemp("doc-manager-strat-tests")
-        return DocumentManager(root)
+        return DocumentManager(root, uri_generator=PythonURIGenerator())
 
     @pytest.mark.parametrize(
         "style, expected_params_key",

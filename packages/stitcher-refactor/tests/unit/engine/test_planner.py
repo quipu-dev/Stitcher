@@ -8,8 +8,8 @@ from stitcher.refactor.engine.intent import RefactorIntent
 from stitcher.workspace import Workspace
 from pathlib import Path
 
-
 from stitcher.index.store import IndexStore
+from stitcher.lang.python.uri import PythonURIGenerator
 
 
 def test_planner_collects_intents_from_operations():
@@ -20,6 +20,7 @@ def test_planner_collects_intents_from_operations():
     mock_ctx = Mock(spec=RefactorContext)
     mock_ctx.index_store = mock_index
     mock_ctx.workspace = mock_workspace
+    mock_ctx.uri_generator = PythonURIGenerator()
 
     mock_spec = Mock(spec=MigrationSpec)
 

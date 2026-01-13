@@ -5,7 +5,7 @@ from typing import List, Tuple, Dict, Union, Any
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString
 
-from stitcher.spec import DocstringIR
+from stitcher.spec import DocstringIR, URIGeneratorProtocol
 from stitcher.spec.protocols import DocstringSerializerProtocol
 from stitcher.spec.registry import LanguageAdapter
 from stitcher.spec.index import SymbolRecord, ReferenceRecord
@@ -14,7 +14,6 @@ from stitcher.lang.sidecar.parser import (
     parse_signature_references,
 )
 from stitcher.common.services import AssetPathResolver
-from stitcher.lang.python.uri import PythonURIGenerator
 from stitcher.lang.python.analysis.models import ReferenceType
 
 
@@ -22,8 +21,10 @@ class SidecarAdapter(LanguageAdapter):
     def __init__(
         self,
         root_path: Path,
+        uri_generator: URIGeneratorProtocol,
     ):
         self.root_path = root_path
+        self.uri_generator = uri_generator
         self.resolver = AssetPathResolver(root_path)
         self._yaml = YAML()
         self._yaml.indent(mapping=2, sequence=4, offset=2)
@@ -78,10 +79,7 @@ class SidecarAdapter(LanguageAdapter):
 
                 refs = parse_doc_references(content)
                 for fragment, line, col in refs:
-                    # TODO: Replace temporary instantiation with dependency injection in Phase 3
-                    suri = PythonURIGenerator().generate_symbol_uri(
-                        rel_py_path, fragment
-                    )
+                    suri = self.uri_generator.generate_symbol_uri(rel_py_path, fragment)
                     references.append(
                         ReferenceRecord(
                             target_id=suri,

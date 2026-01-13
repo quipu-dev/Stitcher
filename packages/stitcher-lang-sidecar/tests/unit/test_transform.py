@@ -1,11 +1,12 @@
 import pytest
+from stitcher.lang.python.uri import PythonURIGenerator
 from pathlib import Path
 from stitcher.lang.sidecar import SidecarTransformer, SidecarTransformContext
 
 
 @pytest.fixture
 def transformer():
-    return SidecarTransformer()
+    return SidecarTransformer(uri_generator=PythonURIGenerator())
 
 
 class TestJsonSuriUpdates:

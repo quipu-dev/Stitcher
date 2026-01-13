@@ -1,4 +1,5 @@
 from pathlib import Path
+from stitcher.lang.python.uri import PythonURIGenerator
 from textwrap import dedent
 
 from stitcher.lang.sidecar.adapter import SidecarAdapter
@@ -29,7 +30,7 @@ def test_parse_signature_references():
 
 
 def test_adapter_json_dispatch(tmp_path: Path):
-    adapter = SidecarAdapter(root_path=tmp_path)
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
     path = tmp_path / "test.json"
     content = dedent("""
     {
@@ -65,7 +66,7 @@ def test_adapter_yaml_suri_computation(tmp_path: Path):
     yaml_file.write_text(yaml_content)
 
     # 2. ACT
-    adapter = SidecarAdapter(root_path=tmp_path)
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
     symbols, refs = adapter.parse(yaml_file, yaml_content)
 
     # 3. ASSERT
@@ -97,7 +98,7 @@ def test_save_doc_irs_create_path_sorts_and_formats(tmp_path: Path):
     and uses the standard block scalar format.
     """
     # ARRANGE
-    adapter = SidecarAdapter(root_path=tmp_path)
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
     serializer = RawSerializer()
     doc_path = tmp_path / "new_module.stitcher.yaml"
 
@@ -133,7 +134,7 @@ def test_save_doc_irs_update_path_preserves_order_and_comments(tmp_path: Path):
     original key order and comments, and appends new keys.
     """
     # ARRANGE
-    adapter = SidecarAdapter(root_path=tmp_path)
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
     serializer = RawSerializer()
     doc_path = tmp_path / "existing_module.stitcher.yaml"
 

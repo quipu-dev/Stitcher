@@ -1,4 +1,5 @@
 import pytest
+from stitcher.lang.python.uri import PythonURIGenerator
 from unittest.mock import MagicMock
 from stitcher.app.runners.pump.executor import PumpExecutor
 from stitcher.app.services import DocumentManager, DocstringMerger
@@ -30,7 +31,9 @@ def executor(tmp_path, mocker) -> PumpExecutor:
     return PumpExecutor(
         root_path=tmp_path,
         workspace=mocker.create_autospec(Workspace, instance=True),
-        doc_manager=DocumentManager(root_path=tmp_path),
+        doc_manager=DocumentManager(
+            root_path=tmp_path, uri_generator=PythonURIGenerator()
+        ),
         lock_manager=mocker.create_autospec(LockManagerProtocol, instance=True),
         uri_generator=mocker.create_autospec(URIGeneratorProtocol, instance=True),
         transformer=MagicMock(),
