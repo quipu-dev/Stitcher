@@ -49,24 +49,25 @@ def test_rename_symbol_end_to_end(tmp_path):
                 "old_func": "This is an old function.",
             },
         )
-        .with_raw_file(
-            ".stitcher/signatures/mypkg/core.json",
-            # Keys are SURIs
-            json.dumps(
-                {
-                    old_helper_suri: {"baseline_code_structure_hash": "hash1"},
-                    old_func_suri: {"baseline_code_structure_hash": "hash2"},
-                }
-            ),
         )
         .build()
     )
 
+    # Manually create lock file
+    lock_file = project_root / "stitcher.lock"
+    lock_data = {
+        "version": "1.0",
+        "fingerprints": {
+            old_helper_suri: {"baseline_code_structure_hash": "hash1"},
+            old_func_suri: {"baseline_code_structure_hash": "hash2"},
+        }
+    }
+    lock_file.write_text(json.dumps(lock_data))
+
     core_path = project_root / "mypkg/core.py"
     app_path = project_root / "mypkg/app.py"
     doc_path = project_root / "mypkg/core.stitcher.yaml"
-    sig_path = project_root / ".stitcher/signatures/mypkg/core.json"
-
+    
     # 2. Analysis Phase
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
@@ -118,7 +119,8 @@ def test_rename_symbol_end_to_end(tmp_path):
     assert "OldHelper" not in modified_doc_data
     assert modified_doc_data["NewHelper"] == "This is the old helper."
 
-    modified_sig_data = json.loads(sig_path.read_text("utf-8"))
+    from stitcher.test_utils import get_stored_hashes
+    modified_sig_data = get_stored_hashes(project_root, py_rel_path)
     assert new_helper_suri in modified_sig_data
     assert old_helper_suri not in modified_sig_data
     assert modified_sig_data[new_helper_suri]["baseline_code_structure_hash"] == "hash1"

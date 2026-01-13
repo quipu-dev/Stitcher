@@ -284,6 +284,10 @@ class StitcherApp:
 
         # 9. Final Report
         report_success = self.check_runner.report(all_results)
+
+        # 10. Persist any signature changes from auto-reconciliation or interactive fixes
+        self.sig_manager.flush()
+
         return report_success and not self.scanner.had_errors
 
     def run_pump(
@@ -403,9 +407,12 @@ class StitcherApp:
         config_to_use = configs[0]
 
         with self.db_manager.session():
-            return self.refactor_runner.run_apply(
+            success = self.refactor_runner.run_apply(
                 migration_script, config_to_use, dry_run, confirm_callback
             )
+            if success and not dry_run:
+                self.sig_manager.flush()
+            return success
 
     def run_index_build(self) -> bool:
         stats = self.index_runner.run_build(self.workspace)

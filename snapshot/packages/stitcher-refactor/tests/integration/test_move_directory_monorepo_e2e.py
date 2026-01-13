@@ -39,10 +39,6 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
             # Key is Fragment
             {"EngineLogic": "Core engine logic."},
         )
-        .with_raw_file(
-            ".stitcher/signatures/cascade-engine/src/cascade/engine/core/logic.json",
-            # Key is SURI
-            json.dumps({old_suri: {"hash": "abc"}}),
         )
         # --- cascade-runtime package ---
         .with_pyproject("cascade-runtime")
@@ -66,6 +62,15 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
+    # Manually create lock file for cascade-engine
+    pkg_root = project_root / "cascade-engine"
+    lock_file = pkg_root / "stitcher.lock"
+    lock_data = {
+        "version": "1.0",
+        "fingerprints": { old_suri: {"hash": "abc"} }
+    }
+    lock_file.write_text(json.dumps(lock_data))
+
     # Load the top-level namespace package. Griffe will discover all its parts
     # from the search paths provided by the Workspace.
     graph.load("cascade")
@@ -101,14 +106,15 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
     assert dest_dir.exists()
     new_py_file = dest_dir / "logic.py"
     new_yaml_file = new_py_file.with_suffix(".stitcher.yaml")
-    new_sig_file_path = (
-        project_root
-        / ".stitcher/signatures/cascade-runtime/src/cascade/runtime/core/logic.json"
-    )
-
+    
+    # The signature should now be in cascade-runtime's lock file
+    runtime_lock = project_root / "cascade-runtime/stitcher.lock"
+    engine_lock = project_root / "cascade-engine/stitcher.lock"
+    
     assert new_py_file.exists()
     assert new_yaml_file.exists()
-    assert new_sig_file_path.exists()
+    assert runtime_lock.exists()
+    assert not engine_lock.exists() # Should be empty and thus deleted
 
     # B. Cross-package import verification
     updated_consumer_code = consumer_path.read_text()
@@ -122,8 +128,9 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
     assert new_yaml_data["EngineLogic"] == "Core engine logic."
 
     # JSON uses SURIs
+    from stitcher.test_utils import get_stored_hashes
     new_py_rel_path = "cascade-runtime/src/cascade/runtime/core/logic.py"
     expected_suri = f"py://{new_py_rel_path}#EngineLogic"
-    new_sig_data = json.loads(new_sig_file_path.read_text())
+    new_sig_data = get_stored_hashes(project_root, new_py_rel_path)
     assert expected_suri in new_sig_data
     assert new_sig_data[expected_suri] == {"hash": "abc"}

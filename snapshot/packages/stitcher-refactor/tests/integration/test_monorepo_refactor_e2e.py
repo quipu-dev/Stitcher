@@ -40,10 +40,6 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
             # Key is now Fragment
             {"SharedClass": "A shared class."},
         )
-        .with_raw_file(
-            ".stitcher/signatures/packages/pkg_a/src/pkga_lib/core.json",
-            # Key is now SURI
-            json.dumps({old_suri: {"hash": "abc"}}),
         )
         .with_pyproject("packages/pkg_b")
         .with_source("packages/pkg_b/src/pkgb_app/__init__.py", "")
@@ -81,6 +77,15 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner
 
+    # Manually create the lock file for pkg_a
+    pkg_a_root = project_root / "packages/pkg_a"
+    lock_file = pkg_a_root / "stitcher.lock"
+    lock_data = {
+        "version": "1.0",
+        "fingerprints": { old_suri: {"hash": "abc"} }
+    }
+    lock_file.write_text(json.dumps(lock_data))
+
     op = MoveFileOperation(src_path, dest_path)
     spec = MigrationSpec().add(op)
     planner = Planner()
@@ -100,11 +105,11 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     assert dest_path.exists()
     dest_yaml = dest_path.with_suffix(".stitcher.yaml")
     assert dest_yaml.exists()
-    dest_sig_path = (
-        project_root
-        / ".stitcher/signatures/packages/pkg_a/src/pkga_lib/utils/tools.json"
-    )
-    assert dest_sig_path.exists()
+    
+    # Lock file should be at the package root
+    pkg_a_root = project_root / "packages/pkg_a"
+    lock_file = pkg_a_root / "stitcher.lock"
+    assert lock_file.exists()
 
     # B. Cross-package import verification
     updated_consumer_code = consumer_path.read_text()
@@ -117,9 +122,11 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     assert "SharedClass" in new_yaml_data
     assert new_yaml_data["SharedClass"] == "A shared class."
 
-    # JSON uses SURIs
+    # JSON uses SURIs - check via helper
+    from stitcher.test_utils import get_stored_hashes
     new_py_rel_path = "packages/pkg_a/src/pkga_lib/utils/tools.py"
     expected_suri = f"py://{new_py_rel_path}#SharedClass"
-    new_sig_data = json.loads(dest_sig_path.read_text())
+    
+    new_sig_data = get_stored_hashes(project_root, new_py_rel_path)
     assert expected_suri in new_sig_data
     assert new_sig_data[expected_suri] == {"hash": "abc"}

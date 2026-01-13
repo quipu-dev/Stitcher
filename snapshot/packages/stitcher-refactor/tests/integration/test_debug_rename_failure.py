@@ -122,23 +122,26 @@ def test_debug_rename_failure_analysis(tmp_path):
                 "MessageBus.info": "Docs for info method.",
             },
         )
-        .with_raw_file(
-            ".stitcher/signatures/packages/stitcher-common/src/stitcher/common/messaging/bus.json",
-            # Key is now a SURI
-            json.dumps({old_suri: {"hash": "abc"}}),
-        )
         .build()
     )
+    
+    # Manually create the stitcher.lock file as the factory doesn't support it yet
+    pkg_root = project_root / "packages/stitcher-common"
+    lock_file = pkg_root / "stitcher.lock"
+    lock_data = {
+        "version": "1.0",
+        "fingerprints": {
+            old_suri: {"hash": "abc"}
+        }
+    }
+    lock_file.write_text(json.dumps(lock_data))
+
 
     bus_path = (
         project_root / "packages/stitcher-common/src/stitcher/common/messaging/bus.py"
     )
     bus_yaml_path = bus_path.with_suffix(".stitcher.yaml")
-    bus_sig_path = (
-        project_root
-        / ".stitcher/signatures/packages/stitcher-common/src/stitcher/common/messaging/bus.json"
-    )
-
+    
     # 2. LOAD GRAPH
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
@@ -182,8 +185,9 @@ def test_debug_rename_failure_analysis(tmp_path):
         "BUG: YAML doc method key was not renamed."
     )
 
-    # Assert Signature sidecar content (SURI)
-    updated_sig_data = json.loads(bus_sig_path.read_text())
+    # Assert Signature sidecar content (SURI) in stitcher.lock
+    from stitcher.test_utils import get_stored_hashes
+    updated_sig_data = get_stored_hashes(project_root, py_rel_path)
     assert new_suri in updated_sig_data, "BUG: Signature JSON SURI key was not renamed."
     assert old_suri not in updated_sig_data
     assert updated_sig_data[new_suri] == {"hash": "abc"}

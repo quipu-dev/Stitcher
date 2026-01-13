@@ -27,10 +27,6 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
             # Key is Fragment
             {"OldNameClass": "Docs for the old class."},
         )
-        .with_raw_file(
-            ".stitcher/signatures/packages/pkg_a/src/pkga_lib/core.json",
-            # Key is SURI
-            json.dumps({old_suri: {"hash": "abc"}}),
         )
         .with_source(
             "packages/pkg_a/tests/test_core.py",
@@ -58,9 +54,15 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     pkg_b_main_path = project_root / "packages/pkg_b/src/pkgb_app/main.py"
     top_level_test_path = project_root / "tests/integration/test_system.py"
     doc_path = definition_path.with_suffix(".stitcher.yaml")
-    sig_path = (
-        project_root / ".stitcher/signatures/packages/pkg_a/src/pkga_lib/core.json"
-    )
+
+    # Manually create lock file
+    pkg_a_root = project_root / "packages/pkg_a"
+    lock_file = pkg_a_root / "stitcher.lock"
+    lock_data = {
+        "version": "1.0",
+        "fingerprints": { old_suri: {"hash": "abc"} }
+    }
+    lock_file.write_text(json.dumps(lock_data))
 
     # 2. ACT
     index_store = create_populated_index(project_root)
@@ -110,7 +112,8 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     assert doc_data["NewNameClass"] == "Docs for the old class."
 
     # JSON Signature file (key is SURI)
-    sig_data = json.loads(sig_path.read_text())
+    from stitcher.test_utils import get_stored_hashes
+    sig_data = get_stored_hashes(project_root, py_rel_path)
     assert new_suri in sig_data
     assert old_suri not in sig_data
     assert sig_data[new_suri] == {"hash": "abc"}

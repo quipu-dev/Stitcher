@@ -111,27 +111,31 @@ class SidecarTransformer:
                 new_data[key] = value
                 continue
 
-            path_changed = False
-            fragment_changed = False
+            original_path, original_fragment = path, fragment
+            current_path, current_fragment = path, fragment
 
-            if old_file_path and new_file_path and path == old_file_path:
-                path = new_file_path
-                path_changed = True
+            if old_file_path and new_file_path and current_path == old_file_path:
+                current_path = new_file_path
 
-            if old_fragment is not None and new_fragment is not None and fragment:
-                if fragment == old_fragment:
-                    fragment = new_fragment
-                    fragment_changed = True
-                elif fragment.startswith(old_fragment + "."):
-                    suffix = fragment[len(old_fragment) :]
-                    fragment = new_fragment + suffix
-                    fragment_changed = True
+            if (
+                old_fragment is not None
+                and new_fragment is not None
+                and current_fragment is not None
+            ):
+                if current_fragment == old_fragment:
+                    current_fragment = new_fragment
+                elif current_fragment.startswith(old_fragment + "."):
+                    suffix = current_fragment[len(old_fragment) :]
+                    current_fragment = new_fragment + suffix
 
-            if path_changed or fragment_changed:
+            if (
+                current_path != original_path
+                or current_fragment != original_fragment
+            ):
                 new_key = (
-                    SURIGenerator.for_symbol(path, fragment)
-                    if fragment
-                    else SURIGenerator.for_file(path)
+                    SURIGenerator.for_symbol(current_path, current_fragment)
+                    if current_fragment
+                    else SURIGenerator.for_file(current_path)
                 )
                 new_data[new_key] = value
                 modified = True

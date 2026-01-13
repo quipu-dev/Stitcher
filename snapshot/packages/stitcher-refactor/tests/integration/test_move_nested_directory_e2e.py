@@ -34,10 +34,6 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
             # Key is Fragment
             {"InMemoryCache": "Doc for Cache"},
         )
-        .with_raw_file(
-            ".stitcher/signatures/src/cascade/core/adapters/cache/in_memory.json",
-            # Key is SURI
-            json.dumps({old_suri: {"h": "123"}}),
         )
         .with_source(
             "src/app.py",
@@ -50,6 +46,12 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     src_dir_to_move = project_root / "src/cascade/core/adapters"
     dest_dir = project_root / "src/cascade/runtime/adapters"
     app_py_path = project_root / "src/app.py"
+
+    # Manually create lock file
+    lock_file = project_root / "stitcher.lock"
+    lock_file.write_text(json.dumps({
+        "version": "1.0", "fingerprints": { old_suri: {"h": "123"} }
+    }))
 
     # 2. ACT
     index_store = create_populated_index(project_root)
@@ -90,14 +92,11 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     assert dest_dir.exists()
     new_py_file = dest_dir / "cache/in_memory.py"
     new_yaml_file = new_py_file.with_suffix(".stitcher.yaml")
-    new_sig_file_path = (
-        project_root
-        / ".stitcher/signatures/src/cascade/runtime/adapters/cache/in_memory.json"
-    )
+    lock_file = project_root / "stitcher.lock"
 
     assert new_py_file.exists()
     assert new_yaml_file.exists()
-    assert new_sig_file_path.exists()
+    assert lock_file.exists()
 
     # B. Verify content of external references
     updated_app_code = app_py_path.read_text()
@@ -113,8 +112,9 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     assert new_yaml_data["InMemoryCache"] == "Doc for Cache"
 
     # JSON key is SURI
+    from stitcher.test_utils import get_stored_hashes
     new_py_rel_path = "src/cascade/runtime/adapters/cache/in_memory.py"
     expected_suri = f"py://{new_py_rel_path}#InMemoryCache"
-    new_sig_data = json.loads(new_sig_file_path.read_text())
+    new_sig_data = get_stored_hashes(project_root, new_py_rel_path)
     assert expected_suri in new_sig_data
     assert new_sig_data[expected_suri] == {"h": "123"}

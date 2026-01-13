@@ -97,7 +97,9 @@ def func_b(x: str): # int -> str
     suri_b = "py://src/app.py#func_b"
 
     # func_a should have updated yaml hash
-    expected_doc_a_hash = app.doc_manager.compute_yaml_content_hash("New Doc A.")
+    from stitcher.spec import DocstringIR
+    ir = DocstringIR(summary="New Doc A.")
+    expected_doc_a_hash = app.doc_manager.compute_ir_hash(ir)
     assert final_hashes[suri_a]["baseline_yaml_content_hash"] == expected_doc_a_hash
 
     # func_b should have updated code hash due to RELINK

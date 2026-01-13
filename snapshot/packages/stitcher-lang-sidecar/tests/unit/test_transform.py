@@ -23,6 +23,8 @@ class TestJsonSuriUpdates:
         )
         updated = transformer.transform(Path("src/app.json"), data, context)
         assert updated == {new_suri: {"hash": "1"}}
+        updated = transformer.transform(Path("src/app.json"), data, context)
+        assert updated == {new_suri: {"hash": "1"}}
 
     def test_updates_suri_on_nested_symbol_rename(self, transformer):
         old_suri = "py://src/app.py#MyClass.old_method"

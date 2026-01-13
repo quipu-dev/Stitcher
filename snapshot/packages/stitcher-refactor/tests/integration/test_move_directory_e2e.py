@@ -40,19 +40,23 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
             # Key is Fragment
             {"Helper": "Doc for Helper"},
         )
-        .with_raw_file(
-            ".stitcher/signatures/mypkg/core/utils.json",
-            # Key is SURI
-            json.dumps({old_suri: {"hash": "123"}}),
         )
         .build()
     )
 
+    # Manually create lock file
+    pkg_root = project_root
+    lock_file = pkg_root / "stitcher.lock"
+    lock_data = {
+        "version": "1.0",
+        "fingerprints": { old_suri: {"hash": "123"} }
+    }
+    lock_file.write_text(json.dumps(lock_data))
+
     core_dir = project_root / "mypkg/core"
     services_dir = project_root / "mypkg/services"
     app_py = project_root / "app.py"
-    sig_root = project_root / ".stitcher/signatures"
-
+    
     # 2. ANALYSIS
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
@@ -93,17 +97,19 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
     assert (services_dir / "config.txt").read_text() == "setting=value"
 
     assert (services_dir / "utils.stitcher.yaml").exists()
-    new_sig_path = sig_root / "mypkg/services/utils.json"
-    assert new_sig_path.exists()
+    # The lock file should be at the package root, which is the project root here
+    lock_file = project_root / "stitcher.lock"
+    assert lock_file.exists()
 
     # YAML key is Fragment
     new_yaml_data = yaml.safe_load((services_dir / "utils.stitcher.yaml").read_text())
     assert "Helper" in new_yaml_data
 
     # JSON key is SURI
+    from stitcher.test_utils import get_stored_hashes
     new_py_rel_path = "mypkg/services/utils.py"
     expected_suri = f"py://{new_py_rel_path}#Helper"
-    new_sig_data = json.loads(new_sig_path.read_text())
+    new_sig_data = get_stored_hashes(project_root, new_py_rel_path)
     assert expected_suri in new_sig_data
 
     updated_app_code = app_py.read_text(encoding="utf-8")

@@ -26,15 +26,17 @@ def test_rename_symbol_updates_suri_fragment_in_signatures(tmp_path):
         factory.with_pyproject(".")
         .with_source("src/mypkg/__init__.py", "")
         .with_source(rel_py_path, "class MyClass:\n    pass\n")
-        # 模拟对应的 Signature 文件
-        .with_raw_file(
-            ".stitcher/signatures/src/mypkg/core.json",
-            json.dumps({old_suri: {"baseline_code_structure_hash": "original_hash"}}),
         )
         .build()
     )
-
-    sig_path = project_root / ".stitcher/signatures/src/mypkg/core.json"
+    
+    # Manually create lock file
+    lock_file = project_root / "stitcher.lock"
+    lock_data = {
+        "version": "1.0",
+        "fingerprints": { old_suri: {"baseline_code_structure_hash": "original_hash"} }
+    }
+    lock_file.write_text(json.dumps(lock_data))
 
     # 2. ACT
     index_store = create_populated_index(project_root)
@@ -69,9 +71,8 @@ def test_rename_symbol_updates_suri_fragment_in_signatures(tmp_path):
     tm.commit()
 
     # 3. ASSERT
-    assert sig_path.exists(), "Signature 文件不应丢失"
-
-    updated_data = json.loads(sig_path.read_text(encoding="utf-8"))
+    from stitcher.test_utils import get_stored_hashes
+    updated_data = get_stored_hashes(project_root, rel_py_path)
 
     # 验证旧 SURI 已消失
     assert old_suri not in updated_data, f"旧 SURI Key 未被移除: {old_suri}"
@@ -106,15 +107,18 @@ class MyClass:
         pass
 """,
         )
-        .with_raw_file(
-            ".stitcher/signatures/src/mypkg/logic.json",
-            json.dumps({old_suri: {"hash": "123"}}),
         )
         .build()
     )
 
-    sig_path = project_root / ".stitcher/signatures/src/mypkg/logic.json"
-
+    # Manually create lock file
+    lock_file = project_root / "stitcher.lock"
+    lock_data = {
+        "version": "1.0",
+        "fingerprints": { old_suri: {"hash": "123"} }
+    }
+    lock_file.write_text(json.dumps(lock_data))
+    
     # 2. ACT
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
@@ -147,7 +151,8 @@ class MyClass:
     tm.commit()
 
     # 3. ASSERT
-    updated_data = json.loads(sig_path.read_text())
+    from stitcher.test_utils import get_stored_hashes
+    updated_data = get_stored_hashes(project_root, rel_py_path)
     assert old_suri not in updated_data
     assert new_suri in updated_data
     assert updated_data[new_suri]["hash"] == "123"
