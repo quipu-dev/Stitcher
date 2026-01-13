@@ -15,9 +15,78 @@ from stitcher.config import StitcherConfig
 log = logging.getLogger(__name__)
 
 
+def find_workspace_root(start_dir: Optional[Path] = None) -> Path:
+    """
+    Finds the project's workspace root directory.
+
+    The workspace root is defined as the first parent directory containing:
+    1. A `.git` directory.
+    2. A `pyproject.toml` file with a `[tool.uv.workspace]` section.
+
+    Args:
+        start_dir: The directory to start searching from. Defaults to CWD.
+
+    Returns:
+        The absolute path to the workspace root.
+
+    Raises:
+        FileNotFoundError: If no workspace root can be determined.
+    """
+    current_dir = (start_dir or Path.cwd()).resolve()
+    while current_dir.parent != current_dir:  # Stop at filesystem root
+        if (current_dir / ".git").is_dir():
+            return current_dir
+
+        pyproject_path = current_dir / "pyproject.toml"
+        if pyproject_path.is_file():
+            try:
+                with pyproject_path.open("rb") as f:
+                    data = tomllib.load(f)
+                if (
+                    "tool" in data
+                    and "uv" in data["tool"]
+                    and "workspace" in data["tool"]["uv"]
+                ):
+                    return current_dir
+            except (tomllib.TOMLDecodeError, OSError):
+                # Ignore invalid TOML files during search
+                pass
+
+        current_dir = current_dir.parent
+
+    raise FileNotFoundError(
+        "Could not determine workspace root. "
+        "Looked for a .git directory or a pyproject.toml with [tool.uv.workspace]."
+    )
+
+
+def find_package_root(file_path: Path) -> Optional[Path]:
+    """
+    Finds the root directory of the package containing the given file.
+
+    The package root is defined as the closest parent directory containing
+    a `pyproject.toml` file.
+
+    Args:
+        file_path: The path to a file within the package.
+
+    Returns:
+        The absolute path to the package root, or None if not found.
+    """
+    current_dir = file_path.resolve().parent
+    # Stop at filesystem root
+    while current_dir.parent != current_dir:
+        if (current_dir / "pyproject.toml").is_file():
+            return current_dir
+        current_dir = current_dir.parent
+    return None
+
+
 class Workspace:
-    def __init__(self, root_path: Path, config: Optional[StitcherConfig] = None):
-        self.root_path = root_path
+    def __init__(
+        self, root_path: Optional[Path] = None, config: Optional[StitcherConfig] = None
+    ):
+        self.root_path = root_path or find_workspace_root()
         self.config = config
         # 'cascade' -> {'/path/to/cascade-application/src', '/path/to/cascade-engine/src'}
         self.import_to_source_dirs: Dict[str, Set[Path]] = defaultdict(set)
@@ -27,6 +96,18 @@ class Workspace:
             self._build_from_config()
         else:
             self._discover_packages()
+
+    def get_suri_path(self, file_path: Path) -> str:
+        """
+        Calculates the workspace-relative path for a SURI.
+
+        Args:
+            file_path: The path to the file.
+
+        Returns:
+            A POSIX-formatted, workspace-relative path string.
+        """
+        return file_path.resolve().relative_to(self.root_path).as_posix()
 
     def _build_from_config(self) -> None:
         if not self.config:
