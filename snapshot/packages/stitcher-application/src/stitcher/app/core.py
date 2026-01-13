@@ -62,8 +62,9 @@ class StitcherApp:
         self.root_path = root_path
         self.workspace = Workspace(root_path)
         self.fingerprint_strategy = fingerprint_strategy
+        self.uri_generator: URIGeneratorProtocol = PythonURIGenerator()
         # 1. Core Services
-        self.doc_manager = DocumentManager(root_path)
+        self.doc_manager = DocumentManager(root_path, self.uri_generator)
         self.lock_manager = LockFileManager()
         self.uri_generator: URIGeneratorProtocol = PythonURIGenerator()
         self.scanner = ScannerService(root_path, parser)

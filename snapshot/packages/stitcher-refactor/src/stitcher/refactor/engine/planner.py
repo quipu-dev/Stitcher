@@ -71,8 +71,8 @@ class Planner:
             if isinstance(intent, SidecarUpdateIntent):
                 sidecar_updates[intent.sidecar_path].append(intent)
 
-        sidecar_adapter = SidecarAdapter(ctx.workspace.root_path)
-        sidecar_transformer = SidecarTransformer()
+        sidecar_adapter = SidecarAdapter(ctx.workspace.root_path, ctx.uri_generator)
+        sidecar_transformer = SidecarTransformer(ctx.uri_generator)
 
         for path, intents in sidecar_updates.items():
             if path.suffix not in [".yaml", ".yml"]:
@@ -129,6 +129,7 @@ class Planner:
 
                 uris_to_move = {}
                 for suri, fp in src_data.items():
+                    # We still use the static parse method for now as it's a utility
                     path, fragment = PythonURIGenerator.parse(suri)
                     if path == intent.old_path_prefix or path.startswith(
                         intent.old_path_prefix + "/"
@@ -136,12 +137,10 @@ class Planner:
                         new_path = path.replace(
                             intent.old_path_prefix, intent.new_path_prefix, 1
                         )
-                        # TODO: Phase 3 Inject URIGenerator
-                        uri_gen = PythonURIGenerator()
                         new_suri = (
-                            uri_gen.generate_symbol_uri(new_path, fragment)
+                            ctx.uri_generator.generate_symbol_uri(new_path, fragment)
                             if fragment
-                            else uri_gen.generate_file_uri(new_path)
+                            else ctx.uri_generator.generate_file_uri(new_path)
                         )
                         uris_to_move[suri] = (new_suri, fp)
 
