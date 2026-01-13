@@ -1,54 +1,3 @@
-好的，我们遵循测试驱动开发（TDD）流程，首先创建一个专门用于验证跨包移动时 `stitcher.lock` 条目迁移问题的测试用例。这个测试用例在当前的实现下预期会失败，从而为我们后续的修复提供明确的目标。
-
-我将生成一个计划来创建这个新的集成测试文件。
-
-我将创建 `packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py` 文件，其中包含一个测试，模拟将一个文件从 `pkg-a` 移动到 `pkg-b`，并断言 `stitcher.lock` 中的指纹条目也相应地从 `pkg-a` 的锁文件迁移到了 `pkg-b` 的锁文件中。
-
-## [WIP] test: 添加跨包移动时 lock 文件迁移的 E2E 测试
-
-### 用户需求
-
-为重构引擎添加一个端到端测试，专门验证当一个源文件从一个包（`pkg-a`）移动到另一个包（`pkg-b`）时，其在 `stitcher.lock` 文件中的指纹（fingerprint）条目是否能被正确地从 `pkg-a/stitcher.lock` 迁移到 `pkg-b/stitcher.lock`。
-
-### 评论
-
-这是一个关键的集成测试，它直接暴露了当前重构引擎在处理 Monorepo 跨包操作时的架构缺陷。当前的 `LockPathUpdateIntent` 和 `Planner` 实现很可能没有考虑到 `package_root` 发生变化的情况，导致锁文件中的历史指纹信息丢失或错位。
-
-这个测试将作为我们修复此问题的“黄金标准”，确保最终的解决方案是健壮和正确的。
-
-### 目标
-
-1.  创建一个新的测试文件 `packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py`。
-2.  在该文件中实现一个名为 `test_move_file_across_packages_migrates_lock_entry` 的测试函数。
-3.  测试场景将构建一个包含 `pkg-a` 和 `pkg-b` 的 Monorepo 结构。
-4.  `pkg-a` 将包含一个源文件和一个预置了指纹条目的 `stitcher.lock`。
-5.  执行一个 `MoveFileOperation` 将源文件从 `pkg-a` 移动到 `pkg-b`。
-6.  断言（Assert）：
-    *   旧的指纹条目已从 `pkg-a/stitcher.lock` 中移除。
-    *   新的 `pkg-b/stitcher.lock` 文件被创建。
-    *   更新了 SURI 路径的新指纹条目已存在于 `pkg-b/stitcher.lock` 中。
-
-### 基本原理
-
-通过 TDD 方法，我们首先定义失败的场景。这个测试用例精确地模拟了跨包文件移动的边界情况。当这个测试用例通过时，就证明我们的 `Planner` 和 `LockPathUpdateIntent` 逻辑已经足够智能，能够处理因文件移动导致的 `package_root` 变更，并正确地维护了 `stitcher.lock` 文件的状态一致性，保留了宝贵的历史指纹信息。
-
-### 标签
-
-#intent/tooling #flow/ready #priority/high #comp/tests #comp/refactor #concept/state #scope/dx #ai/instruct #task/domain/testing #task/object/refactor-engine #task/action/test-creation #task/state/begin
-
----
-
-### Script
-
-#### Acts 1: 创建跨包移动重构测试文件
-
-创建新的集成测试文件，用于验证在 Monorepo 场景下，文件在不同包之间移动时，其 `stitcher.lock` 条目是否能被正确迁移。
-
-~~~~~act
-write_file
-packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py
-~~~~~
-~~~~~python
 import json
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.analysis.semantic import SemanticGraph
@@ -150,8 +99,3 @@ def test_move_file_across_packages_migrates_lock_entry(tmp_path):
     assert dest_lock_data[expected_new_suri] == {
         "baseline_code_structure_hash": "abc"
     }, "Fingerprint data should be preserved"
-~~~~~
-
-### 下一步建议
-
-现在，请执行这个计划。新创建的测试用例在运行时应该会失败。一旦我们确认了失败，我将开始分析 `Planner` 和 `LockPathUpdateIntent` 的实现，并制定一个修复计划来解决这个问题。

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "style: ruff and stitcher Capture: M visitors.py, M test_visitors.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768305849.5225277, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 添加跨包移动时 lock 文件迁移的 E2E 测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768306099.3201342, "duration_ms": 0}}
