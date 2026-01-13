@@ -70,7 +70,7 @@ def test_rename_nested_method_updates_suri_fragment(tmp_path):
     new_suri = f"py://{rel_py_path}#MyClass.new_method"
     
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"hash": "123"})}
+    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "123"})}
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (

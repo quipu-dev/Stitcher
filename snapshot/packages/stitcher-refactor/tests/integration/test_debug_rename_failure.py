@@ -160,4 +160,4 @@ def test_rename_class_updates_code_yaml_and_lock_file(tmp_path):
     updated_lock_data = json.loads(bus_lock_path.read_text())["fingerprints"]
     assert new_suri in updated_lock_data
     assert old_suri not in updated_lock_data
-    assert updated_lock_data[new_suri] == {"hash": "abc"}
+    assert updated_lock_data[new_suri] == {"baseline_code_structure_hash": "abc"}

@@ -75,13 +75,10 @@ class Planner:
         sidecar_transformer = SidecarTransformer()
         
         for path, intents in sidecar_updates.items():
-            # Strict rule: Only process YAML sidecars using the adapter.
-            # JSON signatures have been moved to stitcher.lock.
             if path.suffix not in [".yaml", ".yml"]:
                 continue
 
             data = sidecar_adapter.load_raw_data(path)
-
             for intent in intents:
                 old_module_fqn = intent.module_fqn
                 new_module_fqn = (
@@ -110,51 +107,32 @@ class Planner:
                 lock_states[pkg_root] = ctx.lock_manager.load(pkg_root)
             return lock_states[pkg_root]
 
-        sorted_lock_intents = sorted(
-            [i for i in all_intents if isinstance(i, (LockSymbolUpdateIntent, LockPathUpdateIntent))],
-            key=lambda x: 0 if isinstance(x, LockPathUpdateIntent) else 1,
-        )
-
-        for intent in sorted_lock_intents:
+        lock_intents = [i for i in all_intents if isinstance(i, (LockSymbolUpdateIntent, LockPathUpdateIntent))]
+        
+        for intent in lock_intents:
             if isinstance(intent, LockPathUpdateIntent):
-                # We need to find the owning package for both old and new paths to determine
-                # which lock file(s) to touch.
-                # Note: old_path_prefix and new_path_prefix are relative to workspace root.
-                
                 old_abs_path = ctx.workspace.root_path / intent.old_path_prefix
                 new_abs_path = ctx.workspace.root_path / intent.new_path_prefix
+                src_pkg_root = ctx.workspace.find_owning_package(old_abs_path)
+                dest_pkg_root = ctx.workspace.find_owning_package(new_abs_path)
                 
-                src_pkg = ctx.workspace.find_owning_package(old_abs_path)
-                dest_pkg = ctx.workspace.find_owning_package(new_abs_path)
+                src_data = get_lock_data(src_pkg_root)
+                dest_data = get_lock_data(dest_pkg_root) if src_pkg_root != dest_pkg_root else src_data
                 
-                src_data = get_lock_data(src_pkg)
-
-                suris_to_move = {}
-                for suri in list(src_data.keys()):
+                uris_to_move = {}
+                for suri, fp in src_data.items():
                     path, fragment = PythonURIGenerator.parse(suri)
-                    new_path = None
-                    if path == intent.old_path_prefix:
-                        new_path = intent.new_path_prefix
-                    elif path.startswith(intent.old_path_prefix + "/"):
-                        suffix = path[len(intent.old_path_prefix) :]
-                        new_path = intent.new_path_prefix + suffix
-
-                    if new_path:
+                    if path == intent.old_path_prefix or path.startswith(intent.old_path_prefix + "/"):
+                        new_path = path.replace(intent.old_path_prefix, intent.new_path_prefix, 1)
                         # TODO: Phase 3 Inject URIGenerator
                         uri_gen = PythonURIGenerator()
                         new_suri = uri_gen.generate_symbol_uri(new_path, fragment) if fragment else uri_gen.generate_file_uri(new_path)
-                        suris_to_move[suri] = new_suri
+                        uris_to_move[suri] = (new_suri, fp)
 
-                if src_pkg == dest_pkg:
-                    for old, new in suris_to_move.items():
-                        if old in src_data:
-                            src_data[new] = src_data.pop(old)
-                else:
-                    dest_data = get_lock_data(dest_pkg)
-                    for old, new in suris_to_move.items():
-                        if old in src_data:
-                            dest_data[new] = src_data.pop(old)
-
+                for old_suri, (new_suri, fp) in uris_to_move.items():
+                    del src_data[old_suri]
+                    dest_data[new_suri] = fp
+            
             elif isinstance(intent, LockSymbolUpdateIntent):
                 data = get_lock_data(intent.package_root)
                 if intent.old_suri in data:

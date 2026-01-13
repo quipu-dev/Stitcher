@@ -95,8 +95,8 @@ def test_planner_merges_rename_operations_for_same_file(mock_context: Mock):
 
 def test_planner_handles_move_and_rename_on_same_file(mock_context: Mock):
     """
-    Verifies that a file move and symbol renames within that file are planned correctly,
-    resulting in a MoveOp and a single WriteOp with merged content.
+    Verifies a file move and symbol rename are planned correctly, resulting
+    in a MoveOp, a WriteOp for the code, and a WriteOp for the lock file.
     """
     # 1. ARRANGE
     src_path_rel = Path("app.py")
@@ -104,41 +104,35 @@ def test_planner_handles_move_and_rename_on_same_file(mock_context: Mock):
     src_path_abs = mock_context.graph.root_path / src_path_rel
     original_content = "class OldClass: pass"
 
-    # Define operations
-    move_op = MoveFileOperation(
-        src_path_abs, mock_context.graph.root_path / dest_path_rel
-    )
+    move_op = MoveFileOperation(src_path_abs, mock_context.graph.root_path / dest_path_rel)
     rename_op = RenameSymbolOperation("app.OldClass", "new_app.NewClass")
     spec = MigrationSpec().add(move_op).add(rename_op)
 
-    # Mock find_usages
     mock_context.graph.find_usages.return_value = [
         UsageLocation(src_path_abs, 1, 6, 1, 14, ReferenceType.SYMBOL, "app.OldClass")
     ]
 
     from unittest.mock import patch
-
     with patch.object(Path, "read_text", return_value=original_content):
         # 2. ACT
         planner = Planner()
         file_ops = planner.plan(spec, mock_context)
 
     # 3. ASSERT
-    # We expect two ops: one MoveFileOp and one WriteFileOp
-    assert len(file_ops) == 2
+    # Expect 3 ops: MoveOp (code), WriteOp (code), WriteOp (lock)
+    assert len(file_ops) == 3
 
     move_ops = [op for op in file_ops if isinstance(op, MoveFileOp)]
-    write_ops = [op for op in file_ops if isinstance(op, WriteFileOp)]
+    write_ops = {op.path.name: op for op in file_ops if isinstance(op, WriteFileOp)}
 
     assert len(move_ops) == 1
-    assert len(write_ops) == 1
+    assert len(write_ops) == 2
+    assert "app.py" in write_ops
+    assert "stitcher.lock" in write_ops
 
-    # Verify the MoveOp
     assert move_ops[0].path == src_path_rel
     assert move_ops[0].dest == dest_path_rel
 
-    # Verify the WriteOp
-    # The planner generates the write for the ORIGINAL path. The TransactionManager
-    # is responsible for rebasing it to the new path.
-    assert write_ops[0].path == src_path_rel
-    assert "class NewClass: pass" in write_ops[0].content
+    # The write op for code should target the original path.
+    # The TransactionManager will rebase this write if needed.
+    assert "class NewClass: pass" in write_ops["app.py"].content
