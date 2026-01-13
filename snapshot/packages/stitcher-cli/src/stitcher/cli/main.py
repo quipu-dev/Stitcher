@@ -2,7 +2,7 @@ import typer
 
 from stitcher.common import bus, stitcher_operator as nexus
 from needle.pointer import L
-from .rendering import CliRenderer
+from .rendering import CliRenderer, LogLevel
 
 # Import commands
 from .commands.check import check_command
@@ -26,13 +26,16 @@ app = typer.Typer(
 
 @app.callback()
 def main(
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help=nexus(L.cli.option.verbose.help)
+    loglevel: LogLevel = typer.Option(
+        LogLevel.INFO,
+        "--loglevel",
+        help="Set the output verbosity.",
+        case_sensitive=False,
     ),
 ):
     # The CLI is the composition root. It decides *which* renderer to use.
-    # We configure it here to capture the global verbose flag.
-    cli_renderer = CliRenderer(verbose=verbose)
+    # We configure it here to capture the global loglevel flag.
+    cli_renderer = CliRenderer(loglevel=loglevel)
     bus.set_renderer(cli_renderer)
 
 

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M test_architecture_analysis.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768312208.3299792, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(cli): 添加全局 --loglevel 选项以控制输出粒度", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768312209.6542156, "duration_ms": 0}}
