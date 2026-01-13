@@ -45,6 +45,7 @@ from stitcher.lang.python.docstring import (
     get_docstring_serializer,
 )
 from stitcher.spec.interaction import InteractionContext
+from stitcher.spec.protocols import URIGeneratorProtocol
 from stitcher.lang.sidecar import LockFileManager
 from stitcher.lang.python import PythonURIGenerator
 
