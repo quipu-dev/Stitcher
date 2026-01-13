@@ -25,13 +25,12 @@ from stitcher.refactor.engine.intent import (
     DeleteDirectoryIntent,
 )
 from stitcher.refactor.engine.renamer import GlobalBatchRenamer
-from stitcher.refactor.operations.base import SidecarUpdateMixin
+from stitcher.lang.sidecar import SidecarTransformer, SidecarTransformContext
+from .utils import path_to_fqn
 
 
-class Planner(SidecarUpdateMixin):
+class Planner:
     def plan(self, spec: "MigrationSpec", ctx: RefactorContext) -> List[FileOp]:
-        # Local import to break circular dependency
-
         all_ops: List[FileOp] = []
 
         # --- 1. Intent Collection ---
@@ -57,10 +56,8 @@ class Planner(SidecarUpdateMixin):
         module_rename_map: Dict[str, str] = {}
         for intent in all_intents:
             if isinstance(intent, MoveFileIntent):
-                old_mod_fqn = self._path_to_fqn(intent.src_path, ctx.graph.search_paths)
-                new_mod_fqn = self._path_to_fqn(
-                    intent.dest_path, ctx.graph.search_paths
-                )
+                old_mod_fqn = path_to_fqn(intent.src_path, ctx.graph.search_paths)
+                new_mod_fqn = path_to_fqn(intent.dest_path, ctx.graph.search_paths)
                 if old_mod_fqn and new_mod_fqn:
                     module_rename_map[old_mod_fqn] = new_mod_fqn
 
@@ -74,6 +71,7 @@ class Planner(SidecarUpdateMixin):
 
         # TODO: Inject real adapters instead of instantiating them here.
         yaml_adapter = YamlAdapter()
+        sidecar_transformer = SidecarTransformer()
         for path, intents in sidecar_updates.items():
             # Load the sidecar file only once
             is_yaml = path.suffix == ".yaml"
@@ -86,20 +84,17 @@ class Planner(SidecarUpdateMixin):
             # Apply all intents for this file
             for intent in intents:
                 old_module_fqn = intent.module_fqn
-                # For a given symbol, its new module FQN is either determined by a file move
-                # or it remains the same as the old one (in a pure rename scenario).
                 new_module_fqn = module_rename_map.get(old_module_fqn, old_module_fqn)
 
-                data = self._update_sidecar_data(
-                    data,
-                    intent.sidecar_path,
-                    old_module_fqn,
-                    new_module_fqn,
-                    intent.old_fqn,
-                    intent.new_fqn,
+                transform_ctx = SidecarTransformContext(
+                    old_module_fqn=old_module_fqn,
+                    new_module_fqn=new_module_fqn,
+                    old_fqn=intent.old_fqn,
+                    new_fqn=intent.new_fqn,
                     old_file_path=intent.old_file_path,
                     new_file_path=intent.new_file_path,
                 )
+                data = sidecar_transformer.transform(path, data, transform_ctx)
 
             # Dump the final state
             content = (
