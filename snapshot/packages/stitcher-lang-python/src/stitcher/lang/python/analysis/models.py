@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 
 
 class ReferenceType(Enum):

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: Resolve type errors and imports after Mixin removal", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768277256.2410498, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M models.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768277462.2540126, "duration_ms": 0}}
