@@ -1,10 +1,11 @@
 from stitcher.app.services import DocumentManager
+from stitcher.lang.python.uri import PythonURIGenerator
 from stitcher.spec import DocstringIR
 
 
 def test_hybrid_mode_serialization(tmp_path):
     """Verify that addons trigger dictionary format serialization."""
-    manager = DocumentManager(tmp_path)
+    manager = DocumentManager(tmp_path, uri_generator=PythonURIGenerator())
 
     # Case 1: Simple IR (summary only) -> String
     ir_simple = DocstringIR(summary="Simple doc.")
@@ -21,7 +22,7 @@ def test_hybrid_mode_serialization(tmp_path):
 
 def test_hybrid_mode_deserialization(tmp_path):
     """Verify that dictionary format YAML is correctly parsed into IR with addons."""
-    manager = DocumentManager(tmp_path)
+    manager = DocumentManager(tmp_path, uri_generator=PythonURIGenerator())
 
     # Case 1: String -> Simple IR
     ir_simple = manager._deserialize_ir("Simple doc.")
@@ -37,7 +38,7 @@ def test_hybrid_mode_deserialization(tmp_path):
 
 def test_hash_stability(tmp_path):
     """Verify that hashing is stable regardless of dict key order."""
-    manager = DocumentManager(tmp_path)
+    manager = DocumentManager(tmp_path, uri_generator=PythonURIGenerator())
 
     data1 = {"Raw": "Doc", "Addon.A": "1", "Addon.B": "2"}
     data2 = {"Addon.B": "2", "Raw": "Doc", "Addon.A": "1"}

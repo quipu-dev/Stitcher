@@ -1,4 +1,5 @@
 from pathlib import Path
+from stitcher.lang.python.uri import PythonURIGenerator
 
 from stitcher.app.services import DocumentManager
 from stitcher.lang.sidecar import SidecarAdapter
@@ -16,7 +17,7 @@ def test_apply_docs_overlay(tmp_path: Path):
 
     # 2. Setup External Docs using the correct SidecarAdapter
     doc_file = tmp_path / "src" / "main.stitcher.yaml"
-    adapter = SidecarAdapter(root_path=tmp_path)
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
     serializer = RawSerializer()
     external_irs = {
         "__doc__": DocstringIR(summary="YAML Module Doc"),
@@ -25,7 +26,7 @@ def test_apply_docs_overlay(tmp_path: Path):
     adapter.save_doc_irs(doc_file, external_irs, serializer)
 
     # 3. Apply
-    manager = DocumentManager(root_path=tmp_path)
+    manager = DocumentManager(root_path=tmp_path, uri_generator=PythonURIGenerator())
     # The manager needs the correct serializer strategy to parse the file.
     manager.set_strategy(RawDocstringParser(), serializer)
     manager.apply_docs_to_module(module)
@@ -45,13 +46,13 @@ def test_apply_docs_partial_overlay(tmp_path: Path):
     )
 
     doc_file = tmp_path / "src" / "main.stitcher.yaml"
-    adapter = SidecarAdapter(root_path=tmp_path)
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
     serializer = RawSerializer()
     # Only overriding func1
     external_irs = {"func1": DocstringIR(summary="YAML 1")}
     adapter.save_doc_irs(doc_file, external_irs, serializer)
 
-    manager = DocumentManager(root_path=tmp_path)
+    manager = DocumentManager(root_path=tmp_path, uri_generator=PythonURIGenerator())
     manager.set_strategy(RawDocstringParser(), serializer)
     manager.apply_docs_to_module(module)
 
