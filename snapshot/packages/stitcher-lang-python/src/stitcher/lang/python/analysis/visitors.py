@@ -85,27 +85,30 @@ class IRBuildingVisitor(cst.CSTVisitor):
         return False
 
     def visit_Assign(self, node: cst.Assign) -> Optional[bool]:
-        # Handle: x = 1
-        # Only handle simple assignment to a single name for now
+        # Handle: x = 1 or x, y = 1, 2
         if len(node.targets) != 1:
             return False
 
-        target = node.targets[0].target
-        if not isinstance(target, cst.Name):
-            return False
-
-        name = target.value
-        value = self._dummy_module.code_for_node(node.value).strip()
-
-        # Special handling for __all__
-        if name == "__all__" and not self._class_stack:
-            self.dunder_all = value
-            return False
-
+        target_node = node.targets[0].target
+        value_code = self._dummy_module.code_for_node(node.value).strip()
         loc = self._extract_location(node)
-        self._add_attribute(
-            Attribute(name=name, annotation=None, value=value, location=loc)
-        )
+
+        def process_target(target: cst.CSTNode):
+            if isinstance(target, cst.Name):
+                name = target.value
+                # Special handling for __all__
+                if name == "__all__" and not self._class_stack:
+                    self.dunder_all = value_code
+                else:
+                    self._add_attribute(
+                        Attribute(name=name, annotation=None, value=value_code, location=loc)
+                    )
+            elif isinstance(target, (cst.Tuple, cst.List)):
+                for element in target.elements:
+                    if isinstance(element, (cst.TupleElement, cst.ListElement)):
+                        process_target(element.value)
+
+        process_target(target_node)
         return False
 
     def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
