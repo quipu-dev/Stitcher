@@ -1,4 +1,3 @@
-import pytest
 from typer.testing import CliRunner
 
 from stitcher.cli.main import app
@@ -34,7 +33,11 @@ def test_command_fails_gracefully_outside_workspace(tmp_path, monkeypatch):
 
     # Verify the message contains the path from where the command was run
     error_msg = next(
-        (m for m in spy_bus.get_messages() if m["id"] == str(L.error.workspace.not_found)),
+        (
+            m
+            for m in spy_bus.get_messages()
+            if m["id"] == str(L.error.workspace.not_found)
+        ),
         None,
     )
     assert error_msg is not None

@@ -1,9 +1,8 @@
 class WorkspaceError(Exception):
-    """Stitcher 工作区相关错误的基类。"""
     pass
 
+
 class WorkspaceNotFoundError(WorkspaceError):
-    """当无法定位到合法的 Stitcher 工作区根目录时抛出。"""
     def __init__(self, start_path: str):
         self.start_path = start_path
         super().__init__(

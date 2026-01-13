@@ -30,7 +30,7 @@ def make_app(
     handler: Optional[InteractionHandler] = None,
 ) -> StitcherApp:
     # Composition Root: Assemble the dependencies
-    
+
     # 1. Determine the true workspace root. This may raise WorkspaceNotFoundError,
     # which is caught by the command functions.
     project_root = find_workspace_root(Path.cwd())
