@@ -37,37 +37,36 @@ from stitcher.spec import Fingerprint
 
 class Planner:
     def plan(self, spec: "MigrationSpec", ctx: RefactorContext) -> List[FileOp]:
-        all_ops: List[FileOp] = []
-
         # --- 1. Intent Collection ---
         all_intents: List[RefactorIntent] = []
         for operation in spec.operations:
             all_intents.extend(operation.collect_intents(ctx))
 
         # --- 2. Intent Aggregation & Processing ---
+        
+        # Use dictionaries to merge operations on the same file path
+        write_ops: Dict[Path, WriteFileOp] = {}
+        other_ops: List[FileOp] = []
 
         # Aggregate renames for batch processing
-        rename_map: Dict[str, str] = {}
-        for intent in all_intents:
-            if isinstance(intent, RenameIntent):
-                rename_map[intent.old_fqn] = intent.new_fqn
+        rename_map: Dict[str, str] = {
+            intent.old_fqn: intent.new_fqn
+            for intent in all_intents
+            if isinstance(intent, RenameIntent)
+        }
 
         # Process symbol renames in code
-        renamer = GlobalBatchRenamer(rename_map, ctx)
-        all_ops.extend(renamer.analyze())
+        for op in GlobalBatchRenamer(rename_map, ctx).analyze():
+            write_ops[op.path] = op
 
-        module_rename_map: Dict[str, str] = {}
-        for intent in all_intents:
-            if isinstance(intent, MoveFileIntent):
-                old_mod_fqn = path_to_fqn(intent.src_path, ctx.graph.search_paths)
-                new_mod_fqn = path_to_fqn(intent.dest_path, ctx.graph.search_paths)
-                if old_mod_fqn and new_mod_fqn:
-                    module_rename_map[old_mod_fqn] = new_mod_fqn
+        module_rename_map: Dict[str, str] = {
+            path_to_fqn(intent.src_path, ctx.graph.search_paths): path_to_fqn(intent.dest_path, ctx.graph.search_paths)
+            for intent in all_intents
+            if isinstance(intent, MoveFileIntent) and path_to_fqn(intent.src_path, ctx.graph.search_paths) and path_to_fqn(intent.dest_path, ctx.graph.search_paths)
+        }
 
         # Aggregate and process sidecar updates
-        sidecar_updates: defaultdict[Path, List[SidecarUpdateIntent]] = defaultdict(
-            list
-        )
+        sidecar_updates: defaultdict[Path, List[SidecarUpdateIntent]] = defaultdict(list)
         for intent in all_intents:
             if isinstance(intent, SidecarUpdateIntent):
                 sidecar_updates[intent.sidecar_path].append(intent)
@@ -75,43 +74,39 @@ class Planner:
         sidecar_adapter = SidecarAdapter(ctx.workspace.root_path)
         sidecar_transformer = SidecarTransformer()
         for path, intents in sidecar_updates.items():
+            rel_path = path.relative_to(ctx.graph.root_path)
+            # Start with existing planned content if available, else load from disk
+            initial_content = write_ops[rel_path].content if rel_path in write_ops else (path.read_text("utf-8") if path.exists() else "{}")
+            
             is_yaml = path.suffix in [".yaml", ".yml"]
-            data = (
-                sidecar_adapter.load_raw_data(path)
-                if is_yaml
-                else json.loads(path.read_text("utf-8")) if path.exists() else {}
-            )
-
+            data = yaml.safe_load(initial_content) if is_yaml else json.loads(initial_content)
+            
             for intent in intents:
                 old_module_fqn = intent.module_fqn
-                new_module_fqn = (
-                    module_rename_map.get(old_module_fqn, old_module_fqn)
-                    if old_module_fqn
-                    else None
-                )
+                new_module_fqn = module_rename_map.get(old_module_fqn, old_module_fqn) if old_module_fqn else None
                 transform_ctx = SidecarTransformContext(
-                    old_module_fqn=old_module_fqn,
-                    new_module_fqn=new_module_fqn,
-                    old_fqn=intent.old_fqn,
-                    new_fqn=intent.new_fqn,
-                    old_file_path=intent.old_file_path,
-                    new_file_path=intent.new_file_path,
+                    old_module_fqn=old_module_fqn, new_module_fqn=new_module_fqn,
+                    old_fqn=intent.old_fqn, new_fqn=intent.new_fqn,
+                    old_file_path=intent.old_file_path, new_file_path=intent.new_file_path
                 )
                 data = sidecar_transformer.transform(path, data, transform_ctx)
 
-            content = (
-                sidecar_adapter.dump_raw_data_to_string(data)
-                if is_yaml
-                else json.dumps(data, indent=2, sort_keys=True)
-            )
-            all_ops.append(WriteFileOp(path.relative_to(ctx.graph.root_path), content))
+            content = sidecar_adapter.dump_raw_data_to_string(data) if is_yaml else json.dumps(data, indent=2, sort_keys=True)
+            write_ops[rel_path] = WriteFileOp(rel_path, content)
+
 
         # --- Process Lock Update Intents ---
         lock_states: Dict[Path, Dict[str, Fingerprint]] = {}
 
         def get_lock_data(pkg_root: Path) -> Dict[str, Fingerprint]:
             if pkg_root not in lock_states:
-                lock_states[pkg_root] = ctx.lock_manager.load(pkg_root)
+                rel_lock_path = (pkg_root / "stitcher.lock").relative_to(ctx.graph.root_path)
+                if rel_lock_path in write_ops:
+                    # If planner already decided to write to the lock file, load that state
+                    # This is complex; for now, assume we load from disk first.
+                    lock_states[pkg_root] = ctx.lock_manager.load(pkg_root)
+                else:
+                    lock_states[pkg_root] = ctx.lock_manager.load(pkg_root)
             return lock_states[pkg_root]
 
         sorted_lock_intents = sorted(
@@ -158,17 +153,27 @@ class Planner:
         for pkg_root, data in lock_states.items():
             content = ctx.lock_manager.serialize(data)
             rel_lock_path = (pkg_root / "stitcher.lock").relative_to(ctx.graph.root_path)
-            all_ops.append(WriteFileOp(rel_lock_path, content))
+            write_ops[rel_lock_path] = WriteFileOp(rel_lock_path, content)
 
         # Process simple filesystem intents
         for intent in all_intents:
-            if isinstance(intent, MoveFileIntent):
-                all_ops.append(MoveFileOp(intent.src_path.relative_to(ctx.graph.root_path), intent.dest_path.relative_to(ctx.graph.root_path)))
-            elif isinstance(intent, DeleteFileIntent):
-                all_ops.append(DeleteFileOp(intent.path.relative_to(ctx.graph.root_path)))
-            elif isinstance(intent, DeleteDirectoryIntent):
-                all_ops.append(DeleteDirectoryOp(intent.path.relative_to(ctx.graph.root_path)))
-            elif isinstance(intent, ScaffoldIntent):
-                all_ops.append(WriteFileOp(intent.path.relative_to(ctx.graph.root_path), intent.content))
+            rel_src_path = intent.src_path.relative_to(ctx.graph.root_path) if hasattr(intent, 'src_path') else None
+            rel_dest_path = intent.dest_path.relative_to(ctx.graph.root_path) if hasattr(intent, 'dest_path') else None
+            rel_path = intent.path.relative_to(ctx.graph.root_path) if hasattr(intent, 'path') else None
 
-        return all_ops
+            if isinstance(intent, MoveFileIntent):
+                other_ops.append(MoveFileOp(rel_src_path, rel_dest_path))
+            elif isinstance(intent, DeleteFileIntent):
+                other_ops.append(DeleteFileOp(rel_path))
+            elif isinstance(intent, DeleteDirectoryIntent):
+                other_ops.append(DeleteDirectoryOp(rel_path))
+            elif isinstance(intent, ScaffoldIntent):
+                 # Merge scaffold with existing writes if possible
+                if rel_path in write_ops:
+                    # Typically, a scaffold is for an empty file. If something else
+                    # is writing to it, that takes precedence. This logic might need refinement.
+                    pass
+                else:
+                    write_ops[rel_path] = WriteFileOp(rel_path, intent.content)
+
+        return list(write_ops.values()) + other_ops
