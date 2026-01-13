@@ -100,7 +100,7 @@ def test_rename_class_updates_code_yaml_and_lock_file(tmp_path):
         )
         .with_source(
             "packages/stitcher-common/src/stitcher/common/messaging/bus.py",
-            BUS_PY_CONTENT.replace("class MessageBus:", "class MessageBus: pass"),
+            BUS_PY_CONTENT,
         )
         .with_docs(
             "packages/stitcher-common/src/stitcher/common/messaging/bus.stitcher.yaml",

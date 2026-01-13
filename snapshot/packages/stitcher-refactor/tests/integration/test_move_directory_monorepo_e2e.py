@@ -94,4 +94,4 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
     new_py_rel_path = "packages/cascade-runtime/src/cascade/runtime/core/logic.py"
     expected_suri = f"py://{new_py_rel_path}#EngineLogic"
     assert expected_suri in dest_lock_data
-    assert dest_lock_data[expected_suri] == {"hash": "abc"}
+    assert dest_lock_data[expected_suri] == {"baseline_code_structure_hash": "abc"}

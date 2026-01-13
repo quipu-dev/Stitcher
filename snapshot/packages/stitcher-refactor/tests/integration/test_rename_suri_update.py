@@ -60,7 +60,7 @@ def test_rename_symbol_updates_suri_in_lockfile(tmp_path):
     updated_data = json.loads(lock_path.read_text(encoding="utf-8"))["fingerprints"]
     assert old_suri not in updated_data
     assert new_suri in updated_data
-    assert updated_data[new_suri]["hash"] == "original_hash"
+    assert updated_data[new_suri]["baseline_code_structure_hash"] == "original_hash"
 
 
 def test_rename_nested_method_updates_suri_fragment(tmp_path):

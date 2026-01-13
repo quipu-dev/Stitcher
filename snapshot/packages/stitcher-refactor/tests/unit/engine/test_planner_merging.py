@@ -55,54 +55,40 @@ def mock_context(tmp_path: Path) -> Mock:
 
 def test_planner_merges_rename_operations_for_same_file(mock_context: Mock):
     """
-    CRITICAL: This test verifies that the Planner can merge multiple rename
-    operations that affect the SAME file into a SINGLE WriteFileOp.
-    This prevents the "Lost Edit" bug.
+    Verifies that the Planner merges multiple renames affecting the same source file
+    into a single WriteFileOp, and also produces a WriteFileOp for the lock file.
     """
     # 1. ARRANGE
     file_path = mock_context.graph.root_path / "app.py"
     original_content = "class OldClass: pass\ndef old_func(): pass"
 
-    # Define two rename operations
     op1 = RenameSymbolOperation("app.OldClass", "app.NewClass")
     op2 = RenameSymbolOperation("app.old_func", "app.new_func")
     spec = MigrationSpec().add(op1).add(op2)
 
-    # Mock find_usages to return locations for BOTH symbols in the same file
     def mock_find_usages(fqn):
         if fqn == "app.OldClass":
-            return [
-                UsageLocation(
-                    file_path, 1, 6, 1, 14, ReferenceType.SYMBOL, "app.OldClass"
-                )
-            ]
+            return [UsageLocation(file_path, 1, 6, 1, 14, ReferenceType.SYMBOL, "app.OldClass")]
         if fqn == "app.old_func":
-            return [
-                UsageLocation(
-                    file_path, 2, 4, 2, 12, ReferenceType.SYMBOL, "app.old_func"
-                )
-            ]
+            return [UsageLocation(file_path, 2, 4, 2, 12, ReferenceType.SYMBOL, "app.old_func")]
         return []
-
     mock_context.graph.find_usages.side_effect = mock_find_usages
 
-    # Mock file reading
     from unittest.mock import patch
-
     with patch.object(Path, "read_text", return_value=original_content):
         # 2. ACT
         planner = Planner()
         file_ops = planner.plan(spec, mock_context)
 
     # 3. ASSERT
-    # There should be exactly ONE operation: a single WriteFileOp for app.py
-    assert len(file_ops) == 1, "Planner should merge writes to the same file."
-    write_op = file_ops[0]
-    assert isinstance(write_op, WriteFileOp)
-    assert write_op.path == Path("app.py")
+    # Expect 2 ops: one for the source file, one for the lock file.
+    assert len(file_ops) == 2
+    
+    write_ops = {op.path.name: op for op in file_ops if isinstance(op, WriteFileOp)}
+    assert "app.py" in write_ops
+    assert "stitcher.lock" in write_ops
 
-    # The content of the WriteFileOp should contain BOTH changes
-    final_content = write_op.content
+    final_content = write_ops["app.py"].content
     assert "class NewClass: pass" in final_content
     assert "def new_func(): pass" in final_content
 

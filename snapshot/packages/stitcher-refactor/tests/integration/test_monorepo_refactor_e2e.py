@@ -96,4 +96,4 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     lock_data = json.loads(lock_path.read_text())["fingerprints"]
     assert expected_suri in lock_data
     assert old_suri not in lock_data
-    assert lock_data[expected_suri] == {"hash": "abc"}
+    assert lock_data[expected_suri] == {"baseline_code_structure_hash": "abc"}

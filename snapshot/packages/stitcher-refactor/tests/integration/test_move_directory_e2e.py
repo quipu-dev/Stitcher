@@ -86,7 +86,7 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
     
     lock_data = json.loads(lock_path.read_text())["fingerprints"]
     assert expected_suri in lock_data
-    assert lock_data[expected_suri] == {"hash": "123"}
+    assert lock_data[expected_suri] == {"baseline_code_structure_hash": "123"}
     
     updated_app_code = app_py.read_text(encoding="utf-8")
     assert "from mypkg.services.utils import Helper" in updated_app_code

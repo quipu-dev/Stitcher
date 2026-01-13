@@ -87,4 +87,4 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     
     lock_data = json.loads(lock_path.read_text())["fingerprints"]
     assert expected_suri in lock_data
-    assert lock_data[expected_suri] == {"h": "123"}
+    assert lock_data[expected_suri] == {"baseline_code_structure_hash": "123"}
