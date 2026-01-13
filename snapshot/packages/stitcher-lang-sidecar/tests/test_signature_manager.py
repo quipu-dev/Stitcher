@@ -16,7 +16,9 @@ def test_save_and_load_single_lock_file(tmp_path: Path):
     manager = SignatureManager(workspace)
 
     # Act
-    hashes = {"func_a": Fingerprint.from_dict({"baseline_code_structure_hash": "hash_a"})}
+    hashes = {
+        "func_a": Fingerprint.from_dict({"baseline_code_structure_hash": "hash_a"})
+    }
     manager.save_composite_hashes("packages/pkg-a/src/main.py", hashes)
     manager.flush()
 

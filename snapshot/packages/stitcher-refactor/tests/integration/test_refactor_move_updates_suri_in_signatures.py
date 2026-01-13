@@ -1,11 +1,8 @@
-import json
 from pathlib import Path
 from stitcher.test_utils import WorkspaceFactory, create_test_app
 
 
-import json
-from pathlib import Path
-from stitcher.test_utils import WorkspaceFactory, create_test_app, get_stored_hashes
+from stitcher.test_utils import get_stored_hashes
 
 
 def test_move_file_operation_updates_suri_in_signatures(tmp_path: Path):

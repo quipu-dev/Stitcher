@@ -170,9 +170,7 @@ class PumpExecutor:
                     )
 
                 if new_hashes != stored_hashes:
-                    self.sig_manager.save_composite_hashes(
-                        module.file_path, new_hashes
-                    )
+                    self.sig_manager.save_composite_hashes(module.file_path, new_hashes)
 
                 if file_has_redundancy:
                     redundant_files_list.append(self.root_path / module.file_path)

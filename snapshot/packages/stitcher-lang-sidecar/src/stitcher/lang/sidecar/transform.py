@@ -128,10 +128,7 @@ class SidecarTransformer:
                     suffix = current_fragment[len(old_fragment) :]
                     current_fragment = new_fragment + suffix
 
-            if (
-                current_path != original_path
-                or current_fragment != original_fragment
-            ):
+            if current_path != original_path or current_fragment != original_fragment:
                 new_key = (
                     SURIGenerator.for_symbol(current_path, current_fragment)
                     if current_fragment

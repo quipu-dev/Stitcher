@@ -98,6 +98,7 @@ def func_b(x: str): # int -> str
 
     # func_a should have updated yaml hash
     from stitcher.spec import DocstringIR
+
     ir = DocstringIR(summary="New Doc A.")
     expected_doc_a_hash = app.doc_manager.compute_ir_hash(ir)
     assert final_hashes[suri_a]["baseline_yaml_content_hash"] == expected_doc_a_hash

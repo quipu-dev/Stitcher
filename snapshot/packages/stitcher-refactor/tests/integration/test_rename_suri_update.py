@@ -28,12 +28,12 @@ def test_rename_symbol_updates_suri_fragment_in_signatures(tmp_path):
         .with_source(rel_py_path, "class MyClass:\n    pass\n")
         .build()
     )
-    
+
     # Manually create lock file
     lock_file = project_root / "stitcher.lock"
     lock_data = {
         "version": "1.0",
-        "fingerprints": { old_suri: {"baseline_code_structure_hash": "original_hash"} }
+        "fingerprints": {old_suri: {"baseline_code_structure_hash": "original_hash"}},
     }
     lock_file.write_text(json.dumps(lock_data))
 
@@ -71,6 +71,7 @@ def test_rename_symbol_updates_suri_fragment_in_signatures(tmp_path):
 
     # 3. ASSERT
     from stitcher.test_utils import get_stored_hashes
+
     updated_data = get_stored_hashes(project_root, rel_py_path)
 
     # 验证旧 SURI 已消失
@@ -111,12 +112,9 @@ class MyClass:
 
     # Manually create lock file
     lock_file = project_root / "stitcher.lock"
-    lock_data = {
-        "version": "1.0",
-        "fingerprints": { old_suri: {"hash": "123"} }
-    }
+    lock_data = {"version": "1.0", "fingerprints": {old_suri: {"hash": "123"}}}
     lock_file.write_text(json.dumps(lock_data))
-    
+
     # 2. ACT
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
@@ -150,6 +148,7 @@ class MyClass:
 
     # 3. ASSERT
     from stitcher.test_utils import get_stored_hashes
+
     updated_data = get_stored_hashes(project_root, rel_py_path)
     assert old_suri not in updated_data
     assert new_suri in updated_data

@@ -83,6 +83,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
     )
 
     from stitcher.spec import DocstringIR
+
     ir = DocstringIR(summary=new_doc_content)
     expected_hash = app.doc_manager.compute_ir_hash(ir)
     assert final_hashes[suri]["baseline_yaml_content_hash"] == expected_hash
@@ -230,6 +231,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
     )
 
     from stitcher.spec import DocstringIR
+
     ir = DocstringIR(summary=new_doc_content)
     expected_doc_hash = app.doc_manager.compute_ir_hash(ir)
     assert final_hashes[suri]["baseline_yaml_content_hash"] == expected_doc_hash

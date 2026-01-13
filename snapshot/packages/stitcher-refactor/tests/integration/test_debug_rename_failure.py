@@ -124,24 +124,18 @@ def test_debug_rename_failure_analysis(tmp_path):
         )
         .build()
     )
-    
+
     # Manually create the stitcher.lock file as the factory doesn't support it yet
     pkg_root = project_root / "packages/stitcher-common"
     lock_file = pkg_root / "stitcher.lock"
-    lock_data = {
-        "version": "1.0",
-        "fingerprints": {
-            old_suri: {"hash": "abc"}
-        }
-    }
+    lock_data = {"version": "1.0", "fingerprints": {old_suri: {"hash": "abc"}}}
     lock_file.write_text(json.dumps(lock_data))
-
 
     bus_path = (
         project_root / "packages/stitcher-common/src/stitcher/common/messaging/bus.py"
     )
     bus_yaml_path = bus_path.with_suffix(".stitcher.yaml")
-    
+
     # 2. LOAD GRAPH
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
@@ -187,6 +181,7 @@ def test_debug_rename_failure_analysis(tmp_path):
 
     # Assert Signature sidecar content (SURI) in stitcher.lock
     from stitcher.test_utils import get_stored_hashes
+
     updated_sig_data = get_stored_hashes(project_root, py_rel_path)
     assert new_suri in updated_sig_data, "BUG: Signature JSON SURI key was not renamed."
     assert old_suri not in updated_sig_data

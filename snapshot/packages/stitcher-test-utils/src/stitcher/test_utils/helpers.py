@@ -9,7 +9,6 @@ from stitcher.lang.python import (
     PythonFingerprintStrategy,
 )
 from stitcher.workspace import Workspace, find_package_root
-from stitcher.lang.sidecar import SignatureManager
 
 from stitcher.lang.python.parser.griffe import GriffePythonParser
 from stitcher.index.db import DatabaseManager

@@ -57,10 +57,7 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     # Manually create lock file
     pkg_a_root = project_root / "packages/pkg_a"
     lock_file = pkg_a_root / "stitcher.lock"
-    lock_data = {
-        "version": "1.0",
-        "fingerprints": { old_suri: {"hash": "abc"} }
-    }
+    lock_data = {"version": "1.0", "fingerprints": {old_suri: {"hash": "abc"}}}
     lock_file.write_text(json.dumps(lock_data))
 
     # 2. ACT
@@ -112,6 +109,7 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
 
     # JSON Signature file (key is SURI)
     from stitcher.test_utils import get_stored_hashes
+
     sig_data = get_stored_hashes(project_root, py_rel_path)
     assert new_suri in sig_data
     assert old_suri not in sig_data

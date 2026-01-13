@@ -48,9 +48,9 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
 
     # Manually create lock file
     lock_file = project_root / "stitcher.lock"
-    lock_file.write_text(json.dumps({
-        "version": "1.0", "fingerprints": { old_suri: {"h": "123"} }
-    }))
+    lock_file.write_text(
+        json.dumps({"version": "1.0", "fingerprints": {old_suri: {"h": "123"}}})
+    )
 
     # 2. ACT
     index_store = create_populated_index(project_root)
@@ -112,6 +112,7 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
 
     # JSON key is SURI
     from stitcher.test_utils import get_stored_hashes
+
     new_py_rel_path = "src/cascade/runtime/adapters/cache/in_memory.py"
     expected_suri = f"py://{new_py_rel_path}#InMemoryCache"
     new_sig_data = get_stored_hashes(project_root, new_py_rel_path)
