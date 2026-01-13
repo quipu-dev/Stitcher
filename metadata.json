@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(core): 修正 pump 与 check 以严格遵守高保真原则", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768286493.1049454, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 修复回归并移除过时的 SURI 升级测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768286664.9889925, "duration_ms": 0}}
