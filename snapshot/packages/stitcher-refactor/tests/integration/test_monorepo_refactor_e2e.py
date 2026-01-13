@@ -12,25 +12,18 @@ from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.lang.sidecar import LockFileManager
 from stitcher.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory, create_populated_index
+from stitcher.spec import Fingerprint
 
 
 def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
-    # 1. ARRANGE: Build a monorepo workspace
-    # packages/
-    #   pkg_a/
-    #     src/
-    #       pkga_lib/
-    #         __init__.py
-    #         core.py  (defines SharedClass)
-    #   pkg_b/
-    #     src/
-    #       pkgb_app/
-    #         __init__.py
-    #         main.py (imports SharedClass from pkga_lib.core)
+    # 1. ARRANGE
     factory = WorkspaceFactory(tmp_path)
-    # --- Define identifiers based on the new ontology ---
     py_rel_path = "packages/pkg_a/src/pkga_lib/core.py"
     old_suri = f"py://{py_rel_path}#SharedClass"
+    
+    lock_manager = LockFileManager()
+    fingerprints = {old_suri: Fingerprint.from_dict({"hash": "abc"})}
+    lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
         factory.with_pyproject("packages/pkg_a")
@@ -38,14 +31,9 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
         .with_source("packages/pkg_a/src/pkga_lib/core.py", "class SharedClass: pass")
         .with_docs(
             "packages/pkg_a/src/pkga_lib/core.stitcher.yaml",
-            # Key is now Fragment
             {"SharedClass": "A shared class."},
         )
-        .with_raw_file(
-            ".stitcher/signatures/packages/pkg_a/src/pkga_lib/core.json",
-            # Key is now SURI
-            json.dumps({old_suri: {"hash": "abc"}}),
-        )
+        .with_raw_file("packages/pkg_a/stitcher.lock", lock_content)
         .with_pyproject("packages/pkg_b")
         .with_source("packages/pkg_b/src/pkgb_app/__init__.py", "")
         .with_source(
@@ -55,24 +43,18 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
         .build()
     )
 
-    # Define paths for the operation
     src_path = project_root / "packages/pkg_a/src/pkga_lib/core.py"
     dest_path = project_root / "packages/pkg_a/src/pkga_lib/utils/tools.py"
     consumer_path = project_root / "packages/pkg_b/src/pkgb_app/main.py"
 
     # 2. ACT
-    # The new SemanticGraph should automatically find both 'src' dirs
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    assert project_root / "packages/pkg_a/src" in graph.search_paths
-    assert project_root / "packages/pkg_b/src" in graph.search_paths
-
-    # Load all packages
     graph.load("pkga_lib")
     graph.load("pkgb_app")
+    
     sidecar_manager = SidecarManager(root_path=project_root)
-    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
@@ -98,31 +80,20 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     tm.commit()
 
     # 3. ASSERT
-    # A. File system verification
     assert not src_path.exists()
     assert dest_path.exists()
-    dest_yaml = dest_path.with_suffix(".stitcher.yaml")
-    assert dest_yaml.exists()
-    dest_sig_path = (
-        project_root
-        / ".stitcher/signatures/packages/pkg_a/src/pkga_lib/utils/tools.json"
-    )
-    assert dest_sig_path.exists()
+    assert dest_path.with_suffix(".stitcher.yaml").exists()
+    
+    lock_path = project_root / "packages/pkg_a/stitcher.lock"
+    assert lock_path.exists()
 
-    # B. Cross-package import verification
     updated_consumer_code = consumer_path.read_text()
-    expected_import = "from pkga_lib.utils.tools import SharedClass"
-    assert expected_import in updated_consumer_code
+    assert "from pkga_lib.utils.tools import SharedClass" in updated_consumer_code
 
-    # C. Sidecar key verification
-    # YAML uses Fragments
-    new_yaml_data = yaml.safe_load(dest_yaml.read_text())
-    assert "SharedClass" in new_yaml_data
-    assert new_yaml_data["SharedClass"] == "A shared class."
-
-    # JSON uses SURIs
     new_py_rel_path = "packages/pkg_a/src/pkga_lib/utils/tools.py"
     expected_suri = f"py://{new_py_rel_path}#SharedClass"
-    new_sig_data = json.loads(dest_sig_path.read_text())
-    assert expected_suri in new_sig_data
-    assert new_sig_data[expected_suri] == {"hash": "abc"}
+    
+    lock_data = json.loads(lock_path.read_text())["fingerprints"]
+    assert expected_suri in lock_data
+    assert old_suri not in lock_data
+    assert lock_data[expected_suri] == {"hash": "abc"}

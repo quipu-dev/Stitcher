@@ -10,8 +10,9 @@ from stitcher.lang.sidecar import LockFileManager
 from stitcher.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory, create_populated_index
 from stitcher.common.transaction import WriteFileOp
+from stitcher.spec import Fingerprint
 
-# Injected real content of bus.py to match production environment exactly
+
 BUS_PY_CONTENT = """
 from typing import Any, Optional, Union, Callable
 
@@ -32,21 +33,13 @@ class MessageBus:
     ) -> None:
         if not self._renderer:
             return
-
-        # Resolve the pointer to a string template using the injected operator
         template = self._operator(msg_id)
-
-        # Handle lookup failure gracefully
         if template is None:
             template = str(msg_id)
-
-        # Format the final message
         try:
             message = template.format(**kwargs)
         except KeyError:
-            # Fallback for formatting errors
             message = f"<formatting_error for '{str(msg_id)}'>"
-
         self._renderer.render(message, level)
 
     def info(self, msg_id: Union[str, SemanticPointer], **kwargs: Any) -> None:
@@ -70,31 +63,26 @@ class MessageBus:
         template = self._operator(msg_id)
         if template is None:
             return str(msg_id)
-
         try:
             return template.format(**kwargs)
         except KeyError:
             return f"<formatting_error for '{str(msg_id)}'>"
-
-
-# The global singleton is now created in stitcher.common.__init__
 """
 
 
-def test_debug_rename_failure_analysis(tmp_path):
-    """
-    A diagnostic test to inspect why the class definition in bus.py is not being renamed,
-    AND to verify that sidecar files are also not being updated.
-    """
+def test_rename_class_updates_code_yaml_and_lock_file(tmp_path):
     # 1. ARRANGE
     factory = WorkspaceFactory(tmp_path)
     old_fqn = "stitcher.common.messaging.bus.MessageBus"
     new_fqn = "stitcher.common.messaging.bus.FeedbackBus"
 
-    # Define paths and identifiers according to the new ontology
     py_rel_path = "packages/stitcher-common/src/stitcher/common/messaging/bus.py"
     old_suri = f"py://{py_rel_path}#MessageBus"
     new_suri = f"py://{py_rel_path}#FeedbackBus"
+
+    lock_manager = LockFileManager()
+    fingerprints = {old_suri: Fingerprint.from_dict({"hash": "abc"})}
+    lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
         factory.with_pyproject(".")
@@ -112,43 +100,33 @@ def test_debug_rename_failure_analysis(tmp_path):
         )
         .with_source(
             "packages/stitcher-common/src/stitcher/common/messaging/bus.py",
-            BUS_PY_CONTENT,
+            BUS_PY_CONTENT.replace("class MessageBus:", "class MessageBus: pass"),
         )
-        # ADD SIDECAR FILES
         .with_docs(
             "packages/stitcher-common/src/stitcher/common/messaging/bus.stitcher.yaml",
             {
-                # Keys are now Fragments (short names)
                 "MessageBus": "Docs for MessageBus.",
                 "MessageBus.info": "Docs for info method.",
             },
         )
         .with_raw_file(
-            ".stitcher/signatures/packages/stitcher-common/src/stitcher/common/messaging/bus.json",
-            # Key is now a SURI
-            json.dumps({old_suri: {"hash": "abc"}}),
+            "packages/stitcher-common/stitcher.lock",
+            lock_content,
         )
         .build()
     )
 
-    bus_path = (
-        project_root / "packages/stitcher-common/src/stitcher/common/messaging/bus.py"
-    )
+    bus_path = project_root / py_rel_path
     bus_yaml_path = bus_path.with_suffix(".stitcher.yaml")
-    bus_sig_path = (
-        project_root
-        / ".stitcher/signatures/packages/stitcher-common/src/stitcher/common/messaging/bus.json"
-    )
+    bus_lock_path = project_root / "packages/stitcher-common/stitcher.lock"
 
-    # 2. LOAD GRAPH
+    # 2. ACT
     index_store = create_populated_index(project_root)
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("stitcher")
 
-    # 3. EXECUTE REFACTOR
     sidecar_manager = SidecarManager(root_path=project_root)
-    lock_manager = LockFileManager()
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
@@ -170,23 +148,16 @@ def test_debug_rename_failure_analysis(tmp_path):
             tm.add_write(fop.path, fop.content)
     tm.commit()
 
-    # 4. FINAL ASSERTION
-    # Assert Python file content
+    # 4. ASSERT
     updated_content = bus_path.read_text()
-    assert "class FeedbackBus:" in updated_content, (
-        "BUG: Python code definition was not renamed."
-    )
+    assert "class FeedbackBus:" in updated_content
 
-    # Assert YAML sidecar content (Fragments)
     updated_yaml_data = yaml.safe_load(bus_yaml_path.read_text())
-    assert "FeedbackBus" in updated_yaml_data, "BUG: YAML doc key was not renamed."
+    assert "FeedbackBus" in updated_yaml_data
     assert "MessageBus" not in updated_yaml_data
-    assert "FeedbackBus.info" in updated_yaml_data, (
-        "BUG: YAML doc method key was not renamed."
-    )
+    assert "FeedbackBus.info" in updated_yaml_data
 
-    # Assert Signature sidecar content (SURI)
-    updated_sig_data = json.loads(bus_sig_path.read_text())
-    assert new_suri in updated_sig_data, "BUG: Signature JSON SURI key was not renamed."
-    assert old_suri not in updated_sig_data
-    assert updated_sig_data[new_suri] == {"hash": "abc"}
+    updated_lock_data = json.loads(bus_lock_path.read_text())["fingerprints"]
+    assert new_suri in updated_lock_data
+    assert old_suri not in updated_lock_data
+    assert updated_lock_data[new_suri] == {"hash": "abc"}
