@@ -2,38 +2,23 @@ from unittest.mock import MagicMock
 
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
-from stitcher.analysis.semantic import SemanticGraph
-
-
 from stitcher.refactor.engine.intent import RenameIntent
 
 
-def test_collect_intents_skips_sidecars_if_symbol_not_found():
+def test_collect_intents_generates_correct_rename_intent():
     """
-    Verifies that if the target symbol definition cannot be found, the operation
-    still proceeds with a basic RenameIntent (for code renaming) but skips
-    any SidecarUpdateIntents, without raising an error.
+    Verifies that the RenameSymbolOperation correctly generates a single RenameIntent.
+    It no longer deals with sidecars directly.
     """
     # 1. Arrange
-    mock_graph = MagicMock(spec=SemanticGraph)
-    # Mock find_symbol to return None (Simulate symbol not found)
-    mock_graph.find_symbol.return_value = None
-
     mock_ctx = MagicMock(spec=RefactorContext)
-    mock_ctx.graph = mock_graph
-    mock_ctx.sidecar_manager = MagicMock()
-
-    op = RenameSymbolOperation(
-        old_fqn="non.existent.symbol", new_fqn="new.existent.symbol"
-    )
+    op = RenameSymbolOperation(old_fqn="a.b.c", new_fqn="a.b.d")
 
     # 2. Act
     intents = op.collect_intents(mock_ctx)
 
     # 3. Assert
-    # Should not raise exception.
-    # Should contain exactly one intent: RenameIntent
     assert len(intents) == 1
     assert isinstance(intents[0], RenameIntent)
-    assert intents[0].old_fqn == "non.existent.symbol"
-    assert intents[0].new_fqn == "new.existent.symbol"
+    assert intents[0].old_fqn == "a.b.c"
+    assert intents[0].new_fqn == "a.b.d"
