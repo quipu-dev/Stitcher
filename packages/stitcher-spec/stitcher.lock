@@ -107,6 +107,14 @@
       "baseline_code_signature_text": "def __init__(self, key: str):",
       "baseline_code_structure_hash": "0b79d35297e9da839f000220d4cb995e30f9d8d93a27c9fc82a10af2ac4c7c93"
     },
+    "py://packages/stitcher-spec/src/stitcher/spec/index.py#DependencyEdge": {
+      "baseline_code_signature_text": "class DependencyEdge:",
+      "baseline_code_structure_hash": "29253b522e5936f5fdd3bfbc899f1e72ee4a13c6482d7acaaa2f249bb866c866"
+    },
+    "py://packages/stitcher-spec/src/stitcher/spec/index.py#DependencyEdge.kind": {},
+    "py://packages/stitcher-spec/src/stitcher/spec/index.py#DependencyEdge.lineno": {},
+    "py://packages/stitcher-spec/src/stitcher/spec/index.py#DependencyEdge.source_path": {},
+    "py://packages/stitcher-spec/src/stitcher/spec/index.py#DependencyEdge.target_fqn": {},
     "py://packages/stitcher-spec/src/stitcher/spec/index.py#FileRecord": {
       "baseline_code_signature_text": "class FileRecord:",
       "baseline_code_structure_hash": "dfddf0c8f6f70406a4c0f5a20737392568d211dd8affe8cfbedc2fa04b78b385"
@@ -619,6 +627,14 @@
       "baseline_code_signature_text": "def find_symbol_by_fqn(self, target_fqn: str) -> Optional[Tuple[SymbolRecord, str]]:",
       "baseline_code_structure_hash": "8e05db3cfb2bf7a00728e97f7415cabf20ed9789ff860ec759080caa0bb93a8a",
       "baseline_yaml_content_hash": "653748b7da05ef210e57cf255a7ee3f025d157ccaf7c843ce8daa9e897fe75eb"
+    },
+    "py://packages/stitcher-spec/src/stitcher/spec/storage.py#IndexStoreProtocol.get_all_dependency_edges": {
+      "baseline_code_signature_text": "def get_all_dependency_edges(self) -> List[DependencyEdge]:",
+      "baseline_code_structure_hash": "fe3142cb3351f27d24564c0ecd6ee1d547671fd5de786363732c509f14845589"
+    },
+    "py://packages/stitcher-spec/src/stitcher/spec/storage.py#IndexStoreProtocol.get_all_files": {
+      "baseline_code_signature_text": "def get_all_files(self) -> List[FileRecord]:",
+      "baseline_code_structure_hash": "108b53b95a3cf6dad6de9cc4bef1d86c8c32d0c0d8a8106d77bc923885789a44"
     },
     "py://packages/stitcher-spec/src/stitcher/spec/storage.py#IndexStoreProtocol.get_all_files_metadata": {
       "baseline_code_signature_text": "def get_all_files_metadata(self) -> List[FileRecord]:",

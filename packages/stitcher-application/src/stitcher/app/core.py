@@ -30,7 +30,7 @@ from .runners import (
 from .runners.check.resolver import CheckResolver
 from .runners.check.reporter import CheckReporter
 from .runners.pump.executor import PumpExecutor
-from stitcher.analysis.engines import create_pump_engine
+from stitcher.analysis.engines import create_pump_engine, create_architecture_engine
 from stitcher.common.transaction import TransactionManager
 from typing import Callable
 from stitcher.analysis.schema import FileCheckResult
@@ -150,6 +150,7 @@ class StitcherApp:
             root_path, self.doc_manager, self.index_store
         )
         self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
+        self.architecture_engine = create_architecture_engine()
 
         # 4. Refactor Runner (depends on Indexing)
         self.refactor_runner = RefactorRunner(
@@ -294,6 +295,27 @@ class StitcherApp:
                     batch_results, batch_conflicts, force_relink, reconcile
                 ):
                     return False
+
+            # --- Phase B: Architecture Check (Global) ---
+            arch_violations = self.architecture_engine.analyze(self.index_store)
+            if arch_violations:
+                # Group violations by their primary file for reporting
+                violations_by_file = {}
+                for v in arch_violations:
+                    if v.fqn not in violations_by_file:
+                        violations_by_file[v.fqn] = []
+                    violations_by_file[v.fqn].append(v)
+
+                # Merge into existing results
+                for res in all_results:
+                    if res.path in violations_by_file:
+                        res.violations.extend(violations_by_file.pop(res.path))
+
+                # Add new results for any files not already in the list
+                for file_path, violations in violations_by_file.items():
+                    all_results.append(
+                        FileCheckResult(path=file_path, violations=violations)
+                    )
 
         # 9. Final Report
         report_success = self.check_runner.report(all_results)

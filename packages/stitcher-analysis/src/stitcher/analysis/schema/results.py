@@ -19,11 +19,14 @@ class FileCheckResult:
     # --- Severity Mapping ---
     _ERROR_KINDS: Set[SemanticPointer] = field(
         default_factory=lambda: {
+            # Consistency Errors
             L.check.issue.conflict,
             L.check.state.signature_drift,
             L.check.state.co_evolution,
             L.check.issue.extra,
             L.check.issue.pending,
+            # Architecture Errors
+            L.check.architecture.circular_dependency,
         },
         init=False,
         repr=False,

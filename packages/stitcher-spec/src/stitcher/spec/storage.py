@@ -1,6 +1,6 @@
 from typing import Protocol, List, Optional, Tuple
 
-from .index import FileRecord, SymbolRecord, ReferenceRecord
+from .index import FileRecord, SymbolRecord, ReferenceRecord, DependencyEdge
 
 
 class IndexStoreProtocol(Protocol):
@@ -15,7 +15,9 @@ class IndexStoreProtocol(Protocol):
         self, target_fqn: str, target_id: Optional[str] = None
     ) -> List[Tuple[ReferenceRecord, str]]: ...
 
-    def get_all_files_metadata(self) -> List[FileRecord]: ...
+    def get_all_files(self) -> List[FileRecord]: ...
+
+    def get_all_dependency_edges(self) -> List[DependencyEdge]: ...
 
     # --- Write/Sync Operations ---
     def sync_file(

@@ -20,6 +20,7 @@
       "baseline_code_signature_text": "def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:",
       "baseline_code_structure_hash": "1504c712d9dbd4a7f3d6bc63ff1de5504012b399a8ce872360f93682cfca6508"
     },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.architecture_engine": {},
     "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.check_runner": {},
     "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.coverage_runner": {},
     "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.db_manager": {},

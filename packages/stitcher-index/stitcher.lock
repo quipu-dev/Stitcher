@@ -95,6 +95,14 @@
       "baseline_code_structure_hash": "8e05db3cfb2bf7a00728e97f7415cabf20ed9789ff860ec759080caa0bb93a8a",
       "baseline_yaml_content_hash": "eee54d66b720f70649f6945900dcdadb2850a189c6cf0de15aff336e87780da4"
     },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_all_dependency_edges": {
+      "baseline_code_signature_text": "def get_all_dependency_edges(self) -> List[DependencyEdge]:",
+      "baseline_code_structure_hash": "fe3142cb3351f27d24564c0ecd6ee1d547671fd5de786363732c509f14845589"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_all_files": {
+      "baseline_code_signature_text": "def get_all_files(self) -> List[FileRecord]:",
+      "baseline_code_structure_hash": "108b53b95a3cf6dad6de9cc4bef1d86c8c32d0c0d8a8106d77bc923885789a44"
+    },
     "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_all_files_metadata": {
       "baseline_code_signature_text": "def get_all_files_metadata(self) -> List[FileRecord]:",
       "baseline_code_structure_hash": "96540def72ef665f14f1c74fd8114a7747939c4f95c26a4c90da27eb0d46d599",

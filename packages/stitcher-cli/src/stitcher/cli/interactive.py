@@ -54,6 +54,7 @@ class TyperInteractiveRenderer:
             L.check.state.co_evolution: L.interactive.reason.co_evolution,
             L.check.issue.conflict: L.interactive.reason.doc_content_conflict,
             L.check.issue.extra: L.interactive.reason.dangling_doc,
+            L.check.architecture.circular_dependency: L.interactive.reason.circular_dependency,
         }
         reason_l = reason_map.get(context.violation_type)
         if reason_l:

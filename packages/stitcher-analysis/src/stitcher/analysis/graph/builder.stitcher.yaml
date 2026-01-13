@@ -1,0 +1,1 @@
+GraphBuilder.build_dependency_graph: "Builds a file-level dependency graph from the index store.\n\nNodes: File paths (str)\nEdges: Represent an import from source file to target file."

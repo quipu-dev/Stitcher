@@ -100,8 +100,8 @@
       "baseline_code_structure_hash": "923f1c13ae3ab20397a85e214952791123c28dd11b6793c30fd71acd9f332637"
     },
     "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor._register_node": {
-      "baseline_code_signature_text": "def _register_node(self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType):",
-      "baseline_code_structure_hash": "abf738b190d9ece13c1b60031acf1cf961a182f223400f30ef8767d05aa9e362",
+      "baseline_code_signature_text": "def _register_node(self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType, expand_prefixes: bool = True):",
+      "baseline_code_structure_hash": "e42618f6865fda8357db84b2b9b90c93eaa6cf0a45c3a831acda82ba9e8d678a",
       "baseline_yaml_content_hash": "f306310008e15395c4cac50dedd8777fa6b6696bc20acd9c3befbf22499e39cf"
     },
     "py://packages/stitcher-lang-python/src/stitcher/lang/python/analysis/usage_visitor.py#UsageScanVisitor.active_symbols": {},

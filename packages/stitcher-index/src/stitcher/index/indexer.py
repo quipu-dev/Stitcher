@@ -32,7 +32,7 @@ class FileIndexer:
 
         # Load DB state
         known_files: Dict[str, FileRecord] = {
-            r.path: r for r in self.store.get_all_files_metadata()
+            r.path: r for r in self.store.get_all_files()
         }
 
         # --- Handle Deletions ---

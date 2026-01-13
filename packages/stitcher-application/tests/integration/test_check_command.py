@@ -101,3 +101,66 @@ def test_check_passes_when_synced(tmp_path, monkeypatch):
     # 3. Assert
     assert success is True
     spy_bus.assert_id_called(L.check.run.success, level="success")
+
+
+def test_check_command_detects_circular_dependency(tmp_path, monkeypatch):
+    # 1. Arrange
+    # Corrected: Using tmp_path to ensure isolation and prevent root pollution
+    project_dir = tmp_path / "test_project_circ"
+    factory = WorkspaceFactory(project_dir)
+    factory.with_pyproject("packages/pkg-a")
+    factory.with_config(
+        {
+            "scan_paths": ["packages/pkg-a/src"],
+        }
+    )
+    factory.with_source(
+        "packages/pkg-a/src/pkg_a/mod_a.py",
+        """
+        from pkg_a.mod_b import B
+        class A: pass
+        """,
+    )
+    factory.with_source(
+        "packages/pkg-a/src/pkg_a/mod_b.py",
+        """
+        from pkg_a.mod_c import C
+        class B: pass
+        """,
+    )
+    factory.with_source(
+        "packages/pkg-a/src/pkg_a/mod_c.py",
+        """
+        from pkg_a.mod_a import A
+        class C: pass
+        """,
+    )
+    project_root = factory.build()
+    app = create_test_app(project_root)
+    spy_bus = SpyBus()
+
+    # 2. Act
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
+        success = app.run_check()
+
+    # 3. Assert
+    assert not success
+    spy_bus.assert_id_called(L.check.run.fail, level="error")
+    spy_bus.assert_id_called(L.check.architecture.circular_dependency, level="error")
+
+    # Check the message context
+    messages = spy_bus.get_messages()
+    arch_msg = next(
+        (
+            m
+            for m in messages
+            if m["id"] == str(L.check.architecture.circular_dependency)
+        ),
+        None,
+    )
+    assert arch_msg is not None
+    assert "cycle" in arch_msg["params"]
+    cycle_str = arch_msg["params"]["cycle"]
+    assert "packages/pkg-a/src/pkg_a/mod_a.py" in cycle_str
+    assert "packages/pkg-a/src/pkg_a/mod_b.py" in cycle_str
+    assert "packages/pkg-a/src/pkg_a/mod_c.py" in cycle_str

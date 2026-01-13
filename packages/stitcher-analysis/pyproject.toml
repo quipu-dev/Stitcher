@@ -15,6 +15,7 @@ dependencies = [
     "stitcher-workspace",
     "pyneedle-pointer",
     "griffe",
+    "networkx",
 ]
 
 [tool.hatch.build.targets.wheel]

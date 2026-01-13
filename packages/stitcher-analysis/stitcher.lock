@@ -2,6 +2,25 @@
   "fingerprints": {
     "py://packages/stitcher-analysis/src/stitcher/__init__.py#__path__": {},
     "py://packages/stitcher-analysis/src/stitcher/analysis/engines/__init__.py#__all__": {},
+    "py://packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/__init__.py#__all__": {},
+    "py://packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/engine.py#ArchitectureEngine": {
+      "baseline_code_signature_text": "class ArchitectureEngine:",
+      "baseline_code_structure_hash": "7ac3af3148b4ee2f286e664ae6484be3f37ad7ce93aa5c71bdbc8534353c0400"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/engine.py#ArchitectureEngine.__init__": {
+      "baseline_code_signature_text": "def __init__(self, builder: GraphBuilder, rules: List[ArchitectureRule]):",
+      "baseline_code_structure_hash": "17b15693328b9fb9adfe92f2df3033813d54127c30e490cb8a76ed6b2799adf0"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/engine.py#ArchitectureEngine._builder": {},
+    "py://packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/engine.py#ArchitectureEngine._rules": {},
+    "py://packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/engine.py#ArchitectureEngine.analyze": {
+      "baseline_code_signature_text": "def analyze(self, store: IndexStoreProtocol) -> List[Violation]:",
+      "baseline_code_structure_hash": "235d93a9855fe8aa849414bb16ba29b60aafc0850a9f5c9b4a39473f7897f1ba"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/engines/architecture/engine.py#create_architecture_engine": {
+      "baseline_code_signature_text": "def create_architecture_engine() -> ArchitectureEngine:",
+      "baseline_code_structure_hash": "548db628b8c752716a14b5b4460e7bb0b4891762d652560ab786ce817810d8dc"
+    },
     "py://packages/stitcher-analysis/src/stitcher/analysis/engines/consistency/__init__.py#__all__": {},
     "py://packages/stitcher-analysis/src/stitcher/analysis/engines/consistency/engine.py#ConsistencyEngine": {
       "baseline_code_signature_text": "class ConsistencyEngine:",
@@ -38,6 +57,25 @@
       "baseline_code_signature_text": "def create_pump_engine(differ: DifferProtocol | None = None) -> PumpEngine:",
       "baseline_code_structure_hash": "74304ee5e0dd865fb5debe1fb7dc4cb1ccde40bd17257c89ed4318890f7a9fe5"
     },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/graph/algorithms.py#detect_circular_dependencies": {
+      "baseline_code_signature_text": "def detect_circular_dependencies(graph: nx.DiGraph) -> List[List[str]]:",
+      "baseline_code_structure_hash": "ba1ee5b6b8e27620960925384e91df5bbf474171b569a0d0da4d4bcd5a94876d",
+      "baseline_yaml_content_hash": "084c8e4bf5623985d8ed46feaac5fa08b35b6c555233cfd03a9b2d473896a90a"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/graph/algorithms.py#has_path": {
+      "baseline_code_signature_text": "def has_path(graph: nx.DiGraph, source: str, target: str) -> bool:",
+      "baseline_code_structure_hash": "1c0e944cbf311d22f203c57ca5c1af6dc15bb595f9fc5303008f8c011a8a9aea",
+      "baseline_yaml_content_hash": "9c534f3b465188fe340fd80759092a9180ceab36142d2a0f85eaf6832a1bac2b"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/graph/builder.py#GraphBuilder": {
+      "baseline_code_signature_text": "class GraphBuilder:",
+      "baseline_code_structure_hash": "c596998800b8d671d6f5d100e722fdcceb02e2cf0d7d3b2cda68fc23fcd77fa2"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/graph/builder.py#GraphBuilder.build_dependency_graph": {
+      "baseline_code_signature_text": "def build_dependency_graph(self, store: IndexStoreProtocol) -> nx.DiGraph:",
+      "baseline_code_structure_hash": "3edf85a84b136e1df5a34673405a9864921ebc6eec1c0d0b254ea8ee4fd1889b",
+      "baseline_yaml_content_hash": "1cf7e2b64be15df9d5c10613150de45067cd838c62a1beb04985c34d5f4f008e"
+    },
     "py://packages/stitcher-analysis/src/stitcher/analysis/protocols/__init__.py#__all__": {},
     "py://packages/stitcher-analysis/src/stitcher/analysis/protocols/subject.py#AnalysisSubject": {
       "baseline_code_signature_text": "class AnalysisSubject(Protocol):",
@@ -59,6 +97,23 @@
     },
     "py://packages/stitcher-analysis/src/stitcher/analysis/protocols/subject.py#AnalysisSubject.is_tracked": {
       "baseline_yaml_content_hash": "ffae866b5803e37f4ce377f7040fc7ff423f5cf8ea91b657b96648e6845e2af8"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/__init__.py#__all__": {},
+    "py://packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/circular_dependency.py#CircularDependencyRule": {
+      "baseline_code_signature_text": "class CircularDependencyRule(ArchitectureRule):",
+      "baseline_code_structure_hash": "8ae951c982afbbaa170bd6074540b34d294fc08bde757d24e6afc66ba7894731"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/circular_dependency.py#CircularDependencyRule.check": {
+      "baseline_code_signature_text": "def check(self, graph: nx.DiGraph) -> List[Violation]:",
+      "baseline_code_structure_hash": "8d4923e5242c83c6e4f7ed964b71d5a8e996e1537baaf724a610f09ebca1ccb9"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/protocols.py#ArchitectureRule": {
+      "baseline_code_signature_text": "class ArchitectureRule(Protocol):",
+      "baseline_code_structure_hash": "c0b44aee0a5f21dcd31bfd383ece1ae1f7da0f5e827f25467f60f13e97c0b5c0"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/protocols.py#ArchitectureRule.check": {
+      "baseline_code_signature_text": "def check(self, graph: nx.DiGraph) -> List[Violation]:",
+      "baseline_code_structure_hash": "8d4923e5242c83c6e4f7ed964b71d5a8e996e1537baaf724a610f09ebca1ccb9"
     },
     "py://packages/stitcher-analysis/src/stitcher/analysis/rules/consistency/content.py#ContentRule": {
       "baseline_code_signature_text": "class ContentRule(AnalysisRule):",

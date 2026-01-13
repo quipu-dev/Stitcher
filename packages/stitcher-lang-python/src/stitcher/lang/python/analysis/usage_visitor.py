@@ -56,7 +56,13 @@ class UsageScanVisitor(cst.CSTVisitor):
             else:
                 self.current_package = ""
 
-    def _register_node(self, node: cst.CSTNode, fqn: str, ref_type: ReferenceType):
+    def _register_node(
+        self,
+        node: cst.CSTNode,
+        fqn: str,
+        ref_type: ReferenceType,
+        expand_prefixes: bool = True,
+    ):
         pos = cast(CodeRange, self.get_metadata(PositionProvider, node))
         loc = UsageLocation(
             file_path=self.file_path,
@@ -69,7 +75,7 @@ class UsageScanVisitor(cst.CSTVisitor):
         )
         self.registry.register(fqn, loc)
         # Also register against prefixes for namespace refactoring
-        if ref_type == ReferenceType.IMPORT_PATH:
+        if ref_type == ReferenceType.IMPORT_PATH and expand_prefixes:
             parts = fqn.split(".")
             for i in range(1, len(parts)):
                 prefix_fqn = ".".join(parts[:i])
@@ -125,9 +131,15 @@ class UsageScanVisitor(cst.CSTVisitor):
             pass
 
         if absolute_module:
+            # Check if this is a relative import (node.relative is a sequence of Dots)
+            is_relative = len(node.relative) > 0
+
             if node.module:
                 self._register_node(
-                    node.module, absolute_module, ReferenceType.IMPORT_PATH
+                    node.module,
+                    absolute_module,
+                    ReferenceType.IMPORT_PATH,
+                    expand_prefixes=not is_relative,
                 )
 
             # Handle "from x import *"
