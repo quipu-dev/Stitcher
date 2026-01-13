@@ -70,6 +70,7 @@ class CheckReporter:
         # Define the order and message for reporting
         REPORTING_ORDER = [
             # Errors
+            L.check.architecture.circular_dependency,
             L.check.issue.extra,
             L.check.state.signature_drift,
             L.check.state.co_evolution,
@@ -101,4 +102,5 @@ class CheckReporter:
                 level = "error" if kind in res._ERROR_KINDS else "warning"
                 bus_func = getattr(bus, level)
                 for v in sorted(violations, key=lambda v: v.fqn):
-                    bus_func(v.kind, key=v.fqn)
+                    # Pass full context for rendering complex messages
+                    bus_func(v.kind, key=v.fqn, **v.context)
