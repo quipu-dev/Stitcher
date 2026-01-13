@@ -9,6 +9,7 @@ description = "Transactional refactoring engine for Stitcher."
 requires-python = ">=3.10"
 dependencies = [
     "stitcher-lang-python",
+    "stitcher-lang-sidecar",
     "stitcher-spec",
     "stitcher-common",
     "stitcher-workspace",
@@ -26,5 +27,6 @@ stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-index = { workspace = true }
 stitcher-lang-python = { workspace = true }
+stitcher-lang-sidecar = { workspace = true }
 stitcher-workspace = { workspace = true }
 stitcher-analysis = { workspace = true }

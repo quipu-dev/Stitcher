@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import List
 
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.operations.base import AbstractOperation, SidecarUpdateMixin
+from stitcher.refactor.operations.base import AbstractOperation
+from stitcher.refactor.engine.utils import path_to_fqn
 from stitcher.refactor.engine.intent import (
     RefactorIntent,
     RenameIntent,
@@ -12,7 +13,7 @@ from stitcher.refactor.engine.intent import (
 )
 
 
-class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
+class MoveFileOperation(AbstractOperation):
     def __init__(self, src_path: Path, dest_path: Path):
         self.src_path = src_path
         self.dest_path = dest_path
@@ -24,8 +25,8 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
         src_path = ctx.workspace.root_path.joinpath(self.src_path)
         dest_path = ctx.workspace.root_path.joinpath(self.dest_path)
 
-        old_module_fqn = self._path_to_fqn(src_path, ctx.graph.search_paths)
-        new_module_fqn = self._path_to_fqn(dest_path, ctx.graph.search_paths)
+        old_module_fqn = path_to_fqn(src_path, ctx.graph.search_paths)
+        new_module_fqn = path_to_fqn(dest_path, ctx.graph.search_paths)
 
         # Prepare path strings for SURI updates
         rel_src_path = src_path.relative_to(ctx.workspace.root_path).as_posix()

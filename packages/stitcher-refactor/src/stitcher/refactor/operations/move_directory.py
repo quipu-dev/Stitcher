@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import List
 
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.operations.base import AbstractOperation, SidecarUpdateMixin
+from stitcher.refactor.operations.base import AbstractOperation
+from stitcher.refactor.engine.utils import path_to_fqn
 from stitcher.refactor.engine.intent import (
     RefactorIntent,
     RenameIntent,
@@ -13,7 +14,7 @@ from stitcher.refactor.engine.intent import (
 )
 
 
-class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
+class MoveDirectoryOperation(AbstractOperation):
     def __init__(self, src_dir: Path, dest_dir: Path):
         # In a real app, we'd add more robust validation here.
         self.src_dir = src_dir
@@ -27,8 +28,8 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
         dest_dir = ctx.workspace.root_path.joinpath(self.dest_dir)
 
         # 1. Declare namespace rename intent
-        old_prefix = self._path_to_fqn(src_dir, ctx.graph.search_paths)
-        new_prefix = self._path_to_fqn(dest_dir, ctx.graph.search_paths)
+        old_prefix = path_to_fqn(src_dir, ctx.graph.search_paths)
+        new_prefix = path_to_fqn(dest_dir, ctx.graph.search_paths)
         if old_prefix and new_prefix and old_prefix != new_prefix:
             # We explicitly check for truthiness above, so they are str here
             intents.append(RenameIntent(old_prefix, new_prefix))
@@ -61,7 +62,7 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             intents.append(MoveFileIntent(src_item, dest_item))
 
             # Declare sidecar content update & move intents
-            item_module_fqn = self._path_to_fqn(src_item, ctx.graph.search_paths)
+            item_module_fqn = path_to_fqn(src_item, ctx.graph.search_paths)
 
             doc_path = ctx.sidecar_manager.get_doc_path(src_item)
             if doc_path.exists() and old_prefix and new_prefix:

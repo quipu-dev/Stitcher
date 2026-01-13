@@ -827,6 +827,7 @@ source = { editable = "packages/stitcher-lang-sidecar" }
 dependencies = [
     { name = "ruamel-yaml" },
     { name = "stitcher-common" },
+    { name = "stitcher-lang-python" },
     { name = "stitcher-spec" },
 ]
 
@@ -834,6 +835,7 @@ dependencies = [
 requires-dist = [
     { name = "ruamel-yaml", specifier = ">=0.17.0" },
     { name = "stitcher-common", editable = "packages/stitcher-common" },
+    { name = "stitcher-lang-python", editable = "packages/stitcher-lang-python" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
 ]
 
@@ -899,6 +901,7 @@ dependencies = [
     { name = "stitcher-common" },
     { name = "stitcher-index" },
     { name = "stitcher-lang-python" },
+    { name = "stitcher-lang-sidecar" },
     { name = "stitcher-spec" },
     { name = "stitcher-workspace" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
@@ -911,6 +914,7 @@ requires-dist = [
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-lang-python", editable = "packages/stitcher-lang-python" },
+    { name = "stitcher-lang-sidecar", editable = "packages/stitcher-lang-sidecar" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
     { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },

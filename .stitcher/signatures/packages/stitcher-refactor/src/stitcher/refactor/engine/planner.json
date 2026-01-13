@@ -1,7 +1,7 @@
 {
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#Planner": {
-    "baseline_code_signature_text": "class Planner(SidecarUpdateMixin):",
-    "baseline_code_structure_hash": "07ca38386aa86bfb756a5fe4483cf6cfd6a09acd5da6820c5710d4902e2a8489"
+    "baseline_code_signature_text": "class Planner:",
+    "baseline_code_structure_hash": "aa7c9dbe18a5b63166879ea8cb21d8a3bc492bceb507ec716b8d8dad0c4b6aca"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py#Planner.plan": {
     "baseline_code_signature_text": "def plan(self, spec: MigrationSpec, ctx: RefactorContext) -> List[FileOp]:",

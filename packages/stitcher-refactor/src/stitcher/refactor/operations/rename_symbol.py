@@ -1,6 +1,7 @@
 from typing import List, Optional
 
-from .base import AbstractOperation, SidecarUpdateMixin
+from .base import AbstractOperation
+from ..engine.utils import path_to_fqn
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.analysis.semantic import SymbolNode
 from stitcher.refactor.engine.intent import (
@@ -10,7 +11,7 @@ from stitcher.refactor.engine.intent import (
 )
 
 
-class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
+class RenameSymbolOperation(AbstractOperation):
     def __init__(self, old_fqn: str, new_fqn: str):
         self.old_fqn = old_fqn
         self.new_fqn = new_fqn
@@ -31,7 +32,7 @@ class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):
         definition_node = self._find_definition_node(ctx)
         if definition_node and definition_node.path:
             definition_file_path = definition_node.path
-            module_fqn = self._path_to_fqn(definition_file_path, ctx.graph.search_paths)
+            module_fqn = path_to_fqn(definition_file_path, ctx.graph.search_paths)
 
             # Doc file intent
             doc_path = ctx.sidecar_manager.get_doc_path(definition_file_path)
