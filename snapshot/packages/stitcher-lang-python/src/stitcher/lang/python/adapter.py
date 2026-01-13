@@ -11,7 +11,7 @@ from stitcher.lang.python.fingerprint import PythonFingerprintStrategy
 from stitcher.lang.python.analysis.usage_visitor import UsageScanVisitor, UsageRegistry
 from stitcher.lang.python.analysis.scope import ScopeAnalyzer
 from stitcher.lang.python.analysis.utils import path_to_logical_fqn
-from stitcher.lang.python.uri import SURIGenerator
+from stitcher.lang.python.uri import PythonURIGenerator
 
 
 class PythonAdapter(LanguageAdapter):
@@ -74,7 +74,9 @@ class PythonAdapter(LanguageAdapter):
         # 0. Module Symbol (The file/module itself)
         # This allows other files to import this module.
         module_name = logical_module_fqn.split(".")[-1]
-        module_suri = SURIGenerator.for_file(rel_path)
+        # TODO: Replace temporary instantiation with dependency injection in Phase 3
+        uri_gen = PythonURIGenerator()
+        module_suri = uri_gen.generate_file_uri(rel_path)
 
         symbols.append(
             SymbolRecord(
@@ -101,7 +103,7 @@ class PythonAdapter(LanguageAdapter):
             parent_fragment: str = "",
         ):
             fragment = f"{parent_fragment}.{name}" if parent_fragment else name
-            suri = SURIGenerator.for_symbol(rel_path, fragment)
+            suri = uri_gen.generate_symbol_uri(rel_path, fragment)
             canonical_fqn = f"{logical_module_fqn}.{fragment}"
 
             # Compute Hash & Metadata
