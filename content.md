@@ -1,34 +1,73 @@
-## [WIP] 统一的 Sidecar 路径解析策略
+我明白了。之前的修复是战术性的，但问题是战略性的。`AttributeError` 只是一个表象，根源在于 `AssetPathResolver` 作为一个遗留组件，与新的 `Workspace` 和 `SignatureManager` 架构产生了冲突，违反了“真理单一来源 (SSoT)”原则。
 
-检测到“确定性缺失”违例，已根据 ADAP v1.0 协议挂起所有实现活动。
+根据您“清除所有的 AssetPathResolver”的指令，以及 `HFEA` 协议中的“异味即缺陷”和“基础重构奖励”原则，我将执行一个更深层次的重构：彻底从系统中移除 `AssetPathResolver`，并将其职责整合到现代化的组件中。
 
-### 假设声明 (DECLARE ASSUMPTION)
-分析显示，为了继续执行任务，我必须做出以下未经证实的核心假设：
-*   **路径兼容性假设**: 我假设 `SignatureManager.get_signature_path(str)` 与 `SidecarManager.get_signature_path(Path)` 的接口差异（前者接收字符串，后者接收 Path 对象）可以通过简单的类型转换解决，且 `SignatureManager` 内部的路径解析逻辑（`(root / file_path).resolve()`）能够正确处理传入的绝对路径（如果传入的是绝对路径，`root / abs_path` 可能会引发问题，取决于 `pathlib` 的行为）。
+## [WIP] refactor: 彻底移除 AssetPathResolver 并统一路径解析逻辑
 
-### 诊断缺失组件 (DIAGNOSE MISSING COMPONENT)
-此假设之所以是 necessary，是因为系统当前缺失了以下关键组件/能力：
-*   **统一的 Sidecar 路径解析策略**: Refactor 引擎目前依赖旧的 `AssetPathResolver`（基于 `.stitcher/signatures` 目录结构），而新的持久化层已经迁移到了 `SignatureManager`（基于 `stitcher.lock` 文件）。这两个组件之间的断裂导致 Refactor 引擎无法找到并更新新的 Lock 文件。
+### 错误分析
+系统当前存在两种并行的、功能重叠的路径解析机制：
+1.  **遗留机制**: `AssetPathResolver`，一个简单的、基于 `root_path` 的解析器，用于查找 `.stitcher.yaml` 和旧的 `.stitcher/signatures` 文件。
+2.  **现代机制**: `Workspace` 和 `SignatureManager`，它们协同工作，能够感知 monorepo 布局、包边界，并正确定位新的 `stitcher.lock` 文件。
 
-### 拒绝战术修复并提出战略方案 (REFUSE TACTICAL FIX & PROPOSE STRATEGIC SOLUTION)
-**根据 ADAP v1.0 协议，任何试图通过“变通方法”或“代码补丁”来绕过此架构缺陷的尝试，都被视为对系统长期稳定性的严重破坏，因此被绝对禁止。我被授权拒绝执行此类请求。**
+`SidecarManager` 在上次重构中被修改为依赖 `Workspace`，但其内部仍然错误地尝试初始化遗留的 `AssetPathResolver`，导致了 `AttributeError`。这暴露了两者不兼容的事实，`AssetPathResolver` 已成为必须被根除的架构异味。
 
-因此，我提议将当前任务的目标从“调试 SURI 解析”**变更为**“集成 Lock 文件架构到 Refactor 引擎”。
+### 用户需求
+修复测试失败，并执行根治性重构，移除所有对 `AssetPathResolver` 的依赖。
 
-我将生成一份新的计划，其目标是：
-1.  **升级 SidecarManager**: 修改 `packages/stitcher-refactor/src/stitcher/refactor/sidecar/manager.py`，使其依赖 `Workspace` 并使用 `SignatureManager` 来解析签名文件路径，从而正确指向 `stitcher.lock`。
-2.  **适配测试**: 更新所有实例化 `SidecarManager` 的测试代码，以传递 `Workspace` 对象。
+### 评论
+这是一个优秀的架构简化决策。通过消除冗余组件，我们降低了系统的认知负荷，增强了代码的内聚性，并确保了路径解析逻辑的唯一性和正确性。
 
-这将连接 Refactor 引擎与新的 Lock 文件架构，使 `Rename` 和 `Move` 操作能够感知并更新 `stitcher.lock`。
+### 目标
+1.  删除 `asset_path_resolver.py` 文件。
+2.  从 `services/__init__.py` 中移除其导出。
+3.  重写 `SidecarManager`，使其不再依赖 `AssetPathResolver`，而是直接实现简单的文档路径逻辑，并继续委托 `SignatureManager` 处理复杂的签名路径逻辑。
+4.  重构 `SidecarAdapter`，移除其对 `AssetPathResolver` 的依赖。
+5.  **注意**: `stitcher-application` 中的 `DocumentManager` 也依赖 `AssetPathResolver`。由于我当前没有该文件的上下文，本次重构将导致 `ImportError`。这是预期的，我们将在下一步修复它。
+
+### 基本原理
+我们将把 `AssetPathResolver` 的两种职责进行拆分和吸收：
+-   **文档路径解析 (`get_doc_path`)**: 逻辑非常简单 (`path.with_suffix(".stitcher.yaml")`)，将直接在 `SidecarManager` 和 `SidecarAdapter` 内部实现。
+-   **签名路径解析 (`get_signature_path`)**: 其职责已被 `SignatureManager` 完全取代，因此所有调用都将直接委托给 `SignatureManager`。
 
 ### 标签
-#intent/refine #flow/ready #priority/critical #comp/refactor #concept/state #scope/core #ai/instruct #task/domain/architecture #task/object/sidecar-manager #task/action/integrate-lock-file #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/refactor #concept/architecture #scope/core #ai/instruct #task/domain/architecture #task/object/asset-path-resolver #task/action/elimination #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 升级 SidecarManager 以集成 SignatureManager
+#### Acts 1: 删除 AssetPathResolver
+
+首先，我们物理删除该遗留组件。
+
+~~~~~act
+delete_file
+packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py
+~~~~~
+
+#### Acts 2: 更新 services 包的导出
+
+从 `__init__.py` 中移除对已删除模块的引用。
+
+~~~~~act
+patch_file
+packages/stitcher-common/src/stitcher/common/services/__init__.py
+~~~~~
+~~~~~python.old
+from .asset_path_resolver import AssetPathResolver
+from .differ import Differ
+
+__all__ = ["AssetPathResolver", "Differ"]
+~~~~~
+~~~~~python.new
+from .differ import Differ
+
+__all__ = ["Differ"]
+~~~~~
+
+#### Acts 3: 重构 SidecarManager
+
+现在，我们重写 `SidecarManager`，使其完全独立于 `AssetPathResolver`。
 
 ~~~~~act
 write_file
@@ -38,7 +77,6 @@ packages/stitcher-refactor/src/stitcher/refactor/sidecar/manager.py
 from pathlib import Path
 from typing import Union
 
-from stitcher.common.services import AssetPathResolver
 from stitcher.lang.sidecar.signature_manager import SignatureManager
 from stitcher.workspace import Workspace
 
@@ -46,290 +84,85 @@ from stitcher.workspace import Workspace
 class SidecarManager:
     def __init__(self, workspace: Workspace):
         self.workspace = workspace
-        self.resolver = AssetPathResolver(workspace.root_path)
         self.signature_manager = SignatureManager(workspace)
 
     def get_doc_path(self, source_file_path: Union[str, Path]) -> Path:
         """
         Returns the path to the document sidecar (.stitcher.yaml) for a given source file.
-        Delegates to AssetPathResolver as doc files are still per-source-file.
+        This logic is simple enough to live here directly.
         """
-        return self.resolver.get_doc_path(source_file_path)
+        return Path(source_file_path).with_suffix(".stitcher.yaml")
 
     def get_signature_path(self, source_file_path: Union[str, Path]) -> Path:
         """
         Returns the path to the signature lock file (stitcher.lock) containing the given source file.
         Delegates to SignatureManager to handle package root resolution.
         """
-        # SignatureManager expects a string path relative to workspace root or absolute?
-        # Looking at SignatureManager implementation:
-        # abs_file_path = (self.workspace.root_path / file_path).resolve()
-        # If file_path is absolute, pathlib joins ignores the left side.
-        # So passing absolute path works.
-        
-        return self.signature_manager.get_signature_path(str(source_file_path))
+        # Ensure we pass an absolute path string, as expected by some internal logic flows.
+        abs_path = self.workspace.root_path / Path(source_file_path)
+        return self.signature_manager.get_signature_path(str(abs_path))
 ~~~~~
 
-#### Acts 2: 适配相关测试用例
+#### Acts 4: 重构 SidecarAdapter
 
-我们需要更新所有实例化 `SidecarManager` 的地方。
+最后，我们清理 `SidecarAdapter`。它的实现未使用 `resolver`，所以只需移除初始化代码。
 
 ~~~~~act
 patch_file
-packages/stitcher-refactor/tests/integration/test_debug_rename_failure.py
+packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py
 ~~~~~
 ~~~~~python.old
-    # 3. EXECUTE REFACTOR
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
+from ruamel.yaml.scalarstring import LiteralScalarString
+
+from stitcher.spec import DocstringIR
+from stitcher.spec.protocols import DocstringSerializerProtocol
+from stitcher.spec.registry import LanguageAdapter
+from stitcher.spec.index import SymbolRecord, ReferenceRecord
+from stitcher.lang.sidecar.parser import (
+    parse_doc_references,
+    parse_signature_references,
+)
+from stitcher.common.services import AssetPathResolver
+from stitcher.lang.python.uri import SURIGenerator
+from stitcher.lang.python.analysis.models import ReferenceType
+
+
+class SidecarAdapter(LanguageAdapter):
+    def __init__(
+        self,
+        root_path: Path,
+    ):
+        self.root_path = root_path
+        self.resolver = AssetPathResolver(root_path)
+        self._yaml = YAML()
+        self._yaml.indent(mapping=2, sequence=4, offset=2)
 ~~~~~
 ~~~~~python.new
-    # 3. EXECUTE REFACTOR
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
+from ruamel.yaml.scalarstring import LiteralScalarString
 
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_monorepo_refactor_e2e.py
-~~~~~
-~~~~~python.old
-    # Load all packages
-    graph.load("pkga_lib")
-    graph.load("pkgb_app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-~~~~~python.new
-    # Load all packages
-    graph.load("pkga_lib")
-    graph.load("pkgb_app")
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
+from stitcher.spec import DocstringIR
+from stitcher.spec.protocols import DocstringSerializerProtocol
+from stitcher.spec.registry import LanguageAdapter
+from stitcher.spec.index import SymbolRecord, ReferenceRecord
+from stitcher.lang.sidecar.parser import (
+    parse_doc_references,
+    parse_signature_references,
+)
+from stitcher.lang.python.uri import SURIGenerator
+from stitcher.lang.python.analysis.models import ReferenceType
 
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_move_directory_e2e.py
-~~~~~
-~~~~~python.old
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    graph.load("app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-~~~~~python.new
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    graph.load("app")
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
 
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_move_directory_monorepo_e2e.py
-~~~~~
-~~~~~python.old
-    # Load the top-level namespace package. Griffe will discover all its parts
-    # from the search paths provided by the Workspace.
-    graph.load("cascade")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-~~~~~python.new
-    # Load the top-level namespace package. Griffe will discover all its parts
-    # from the search paths provided by the Workspace.
-    graph.load("cascade")
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_move_nested_directory_e2e.py
-~~~~~
-~~~~~python.old
-    # We load 'cascade' and 'app' to build the full semantic picture
-    graph.load("cascade")
-    graph.load("app")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-~~~~~python.new
-    # We load 'cascade' and 'app' to build the full semantic picture
-    graph.load("cascade")
-    graph.load("app")
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_e2e.py
-~~~~~
-~~~~~python.old
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-~~~~~python.new
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_suri_update.py
-~~~~~
-~~~~~python.old
-def test_rename_symbol_updates_suri_fragment_in_signatures(tmp_path):
-    """
-    验证 RenameSymbolOperation 能够正确更新 Signature 文件中的 SURI 键。
-    场景: 重命名类 MyClass -> YourClass
-    预期: 签名文件中的键从 py://...#MyClass 变为 py://...#YourClass
-    """
-    # 1. ARRANGE
-    factory = WorkspaceFactory(tmp_path)
-
-    # 构造 SURI (注意: 路径相对于项目根目录)
-    rel_py_path = "src/mypkg/core.py"
-    old_suri = f"py://{rel_py_path}#MyClass"
-    new_suri = f"py://{rel_py_path}#YourClass"
-
-    project_root = (
-        factory.with_pyproject(".")
-        .with_source("src/mypkg/__init__.py", "")
-        .with_source(rel_py_path, "class MyClass:\n    pass\n")
-        .build()
-    )
-
-    # Manually create lock file
-    lock_file = project_root / "stitcher.lock"
-    lock_data = {
-        "version": "1.0",
-        "fingerprints": {old_suri: {"baseline_code_structure_hash": "original_hash"}},
-    }
-    lock_file.write_text(json.dumps(lock_data))
-
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-~~~~~python.new
-def test_rename_symbol_updates_suri_fragment_in_signatures(tmp_path):
-    """
-    验证 RenameSymbolOperation 能够正确更新 Signature 文件中的 SURI 键。
-    场景: 重命名类 MyClass -> YourClass
-    预期: 签名文件中的键从 py://...#MyClass 变为 py://...#YourClass
-    """
-    # 1. ARRANGE
-    factory = WorkspaceFactory(tmp_path)
-
-    # 构造 SURI (注意: 路径相对于项目根目录)
-    rel_py_path = "src/mypkg/core.py"
-    old_suri = f"py://{rel_py_path}#MyClass"
-    new_suri = f"py://{rel_py_path}#YourClass"
-
-    project_root = (
-        factory.with_pyproject(".")
-        .with_source("src/mypkg/__init__.py", "")
-        .with_source(rel_py_path, "class MyClass:\n    pass\n")
-        .build()
-    )
-
-    # Manually create lock file
-    lock_file = project_root / "stitcher.lock"
-    lock_data = {
-        "version": "1.0",
-        "fingerprints": {old_suri: {"baseline_code_structure_hash": "original_hash"}},
-    }
-    lock_file.write_text(json.dumps(lock_data))
-
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_suri_update.py
-~~~~~
-~~~~~python.old
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-~~~~~python.new
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("mypkg")
-
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/tests/integration/test_rename_symbol_monorepo_e2e.py
-~~~~~
-~~~~~python.old
-    graph.load("pkgb_app")
-    graph.load("test_core")
-    graph.load("integration")
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-~~~~~
-~~~~~python.new
-    graph.load("pkgb_app")
-    graph.load("test_core")
-    graph.load("integration")
-    sidecar_manager = SidecarManager(workspace=workspace)
-    ctx = RefactorContext(
-        workspace=workspace,
+class SidecarAdapter(LanguageAdapter):
+    def __init__(
+        self,
+        root_path: Path,
+    ):
+        self.root_path = root_path
+        self._yaml = YAML()
+        self._yaml.indent(mapping=2, sequence=4, offset=2)
 ~~~~~
 
 ### 下一步建议
+我们已经完成了核心重构。正如预期的那样，`stitcher-application` 包中的 `DocumentManager` 现在会因为 `ImportError: cannot import name 'AssetPathResolver'` 而构建失败。
 
-运行测试以验证修复：
-`pytest packages/stitcher-lang-sidecar/tests/unit/test_transform.py packages/stitcher-refactor/tests/integration/`
+请运行测试，确认 `ImportError` 的出现，然后向我提供 `packages/stitcher-application/src/stitcher/app/services/doc_manager.py` 的文件内容，我将生成计划以完成最后的清理工作。

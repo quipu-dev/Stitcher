@@ -13,7 +13,6 @@ from stitcher.lang.sidecar.parser import (
     parse_doc_references,
     parse_signature_references,
 )
-from stitcher.common.services import AssetPathResolver
 from stitcher.lang.python.uri import SURIGenerator
 from stitcher.lang.python.analysis.models import ReferenceType
 
@@ -24,7 +23,6 @@ class SidecarAdapter(LanguageAdapter):
         root_path: Path,
     ):
         self.root_path = root_path
-        self.resolver = AssetPathResolver(root_path)
         self._yaml = YAML()
         self._yaml.indent(mapping=2, sequence=4, offset=2)
         self._yaml.preserve_quotes = True

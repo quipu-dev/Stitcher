@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] 统一的 Sidecar 路径解析策略", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768292848.7607741, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 彻底移除 AssetPathResolver 并统一路径解析逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768293056.7879539, "duration_ms": 0}}
