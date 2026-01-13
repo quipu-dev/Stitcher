@@ -114,4 +114,4 @@ def test_rename_nested_method_updates_suri_fragment(tmp_path):
     updated_data = json.loads(lock_path.read_text())["fingerprints"]
     assert old_suri not in updated_data
     assert new_suri in updated_data
-    assert updated_data[new_suri]["hash"] == "123"
+    assert updated_data[new_suri]["baseline_code_structure_hash"] == "123"
