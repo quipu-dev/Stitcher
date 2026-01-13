@@ -6,6 +6,10 @@ import stitcher.common
 from stitcher.common.messaging.protocols import Renderer
 from needle.pointer import SemanticPointer
 
+# This creates a dependency, but it's a necessary and deliberate one for a test utility
+# designed to test the CLI's rendering behavior.
+from stitcher.cli.rendering import LEVEL_MAP
+
 
 class SpyRenderer(Renderer):
     def __init__(self):
@@ -25,27 +29,34 @@ class SpyBus:
 
     @contextmanager
     def patch(self, monkeypatch: Any, target: str = "stitcher.common.bus"):
-        # The singleton instance we need to mutate
         real_bus = stitcher.common.bus
 
-        # Define the interceptor hook
         def intercept_render(
             level: str, msg_id: Union[str, SemanticPointer], **kwargs: Any
         ) -> None:
-            # 1. Capture the semantic pointer
+            # This is the critical change. We now simulate the filtering logic
+            # of the CliRenderer before deciding to record the message.
+            renderer = real_bus._renderer
+            if not renderer:
+                return
+
+            # Get the loglevel value from the actual renderer instance
+            # Assumes the renderer has a 'loglevel_value' attribute.
+            loglevel_value = getattr(renderer, "loglevel_value", 0)
+
+            # Perform the filtering
+            if LEVEL_MAP.get(level, 0) < loglevel_value:
+                return
+
+            # If the message passes the filter, record it.
             if isinstance(msg_id, SemanticPointer):
                 self._spy_renderer.record(level, msg_id, kwargs)
 
-            # 2. We deliberately DO NOT call the original _render logic here
-            # because we don't want tests spamming stdout, and we don't
-            # want to rely on the real renderer (CLI) being configured.
-
-        # Apply In-Place Patches using monkeypatch (handles restoration automatically)
-        # 1. Swap the _render method to intercept calls
+        # We still patch _render, but now our patch is context-aware.
         monkeypatch.setattr(real_bus, "_render", intercept_render)
 
-        # 2. Swap the _renderer to our spy (though intercept_render mostly handles logic,
-        # setting this ensures internal checks for valid renderer pass if needed)
+        # It's good practice to also set our spy renderer, though the logic
+        # now primarily relies on intercepting _render.
         monkeypatch.setattr(real_bus, "_renderer", self._spy_renderer)
 
         yield self

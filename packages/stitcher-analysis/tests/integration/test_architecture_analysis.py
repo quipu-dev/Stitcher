@@ -64,6 +64,6 @@ def test_barrel_export_does_not_cause_false_circular_dependency(tmp_path):
         v for v in violations if v.kind == L.check.architecture.circular_dependency
     ]
 
-    assert (
-        not circular_violations
-    ), f"Expected no circular dependencies, but found {len(circular_violations)}: {circular_violations}"
+    assert not circular_violations, (
+        f"Expected no circular dependencies, but found {len(circular_violations)}: {circular_violations}"
+    )

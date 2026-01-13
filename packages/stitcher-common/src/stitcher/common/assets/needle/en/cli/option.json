@@ -5,6 +5,9 @@
   "force_relink": {
     "help": "[Non-interactive] For 'Signature Drift' errors, forces relinking."
   },
+  "loglevel": {
+    "help": "Set the output verbosity level (debug, info, success, warning, error)."
+  },
   "non_interactive": {
     "help": "Force non-interactive mode, failing on unresolved conflicts."
   },
@@ -25,8 +28,5 @@
   },
   "strip": {
     "help": "Remove docstrings from source code after pumping."
-  },
-  "verbose": {
-    "help": "Enable debug logging."
   }
 }

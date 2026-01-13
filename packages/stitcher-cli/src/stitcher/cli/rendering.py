@@ -1,13 +1,31 @@
 import typer
 from stitcher.common.messaging import protocols
+from enum import Enum
+
+
+class LogLevel(str, Enum):
+    DEBUG = "debug"
+    INFO = "info"
+    SUCCESS = "success"
+    WARNING = "warning"
+    ERROR = "error"
+
+
+LEVEL_MAP = {
+    "debug": 10,
+    "info": 20,
+    "success": 25,  # Custom level between info and warning
+    "warning": 30,
+    "error": 40,
+}
 
 
 class CliRenderer(protocols.Renderer):
-    def __init__(self, verbose: bool = False):
-        self.verbose = verbose
+    def __init__(self, loglevel: LogLevel = LogLevel.INFO):
+        self.loglevel_value = LEVEL_MAP[loglevel.value]
 
     def render(self, message: str, level: str):
-        if level == "debug" and not self.verbose:
+        if LEVEL_MAP.get(level, 0) < self.loglevel_value:
             return
 
         color = None

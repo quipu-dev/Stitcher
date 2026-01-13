@@ -2,5 +2,3 @@
   Renders messages to the command line using Typer for colored output.
 "CliRenderer.render": |-
   Renders a message to the console with level-appropriate coloring.
-"CliRenderer.verbose": |-
-  Flag to control whether debug messages are rendered.
