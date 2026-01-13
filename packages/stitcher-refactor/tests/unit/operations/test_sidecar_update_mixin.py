@@ -130,7 +130,7 @@ class TestYamlFragmentUpdates:
             old_module_fqn="old_path.app",
             new_module_fqn="new_path.app",
             old_fqn="old_path.app.MyClass",
-            new_fqn="new_path.app.MyClass", # Symbol name 'MyClass' is unchanged
+            new_fqn="new_path.app.MyClass",  # Symbol name 'MyClass' is unchanged
             old_file_path="old_path/app.py",
             new_file_path="new_path/app.py",
         )

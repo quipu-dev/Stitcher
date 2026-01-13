@@ -35,10 +35,6 @@ class SidecarUpdateMixin:
         old_fqn: str,
         new_fqn: str,
     ) -> Tuple[Optional[str], Optional[str]]:
-        """
-        Derives symbol fragments by stripping the module FQN prefix.
-        This correctly handles nested fragments like 'Class.method'.
-        """
         # --- Calculate Old Fragment ---
         old_fragment = old_fqn
         # The module_fqn is the context of the sidecar file, which relates to the OLD state.
@@ -70,9 +66,6 @@ class SidecarUpdateMixin:
         old_file_path: Optional[str] = None,
         new_file_path: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Dispatcher for sidecar updates based on file type.
-        """
         old_fragment, new_fragment = self._calculate_fragments(
             old_module_fqn, new_module_fqn, old_fqn, new_fqn
         )
@@ -94,9 +87,6 @@ class SidecarUpdateMixin:
         old_fragment: Optional[str],
         new_fragment: Optional[str],
     ) -> Dict[str, Any]:
-        """
-        Updates Signature JSON data where keys are SURIs (py://path#fragment).
-        """
         new_data = {}
         modified = False
 
@@ -146,9 +136,6 @@ class SidecarUpdateMixin:
         old_fragment: Optional[str],
         new_fragment: Optional[str],
     ) -> Dict[str, Any]:
-        """
-        Updates Doc YAML data where keys are Fragments (Short Names).
-        """
         if not old_fragment or not new_fragment or old_fragment == new_fragment:
             return data
 

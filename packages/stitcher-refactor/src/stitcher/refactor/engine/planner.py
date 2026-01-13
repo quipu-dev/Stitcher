@@ -58,7 +58,9 @@ class Planner(SidecarUpdateMixin):
         for intent in all_intents:
             if isinstance(intent, MoveFileIntent):
                 old_mod_fqn = self._path_to_fqn(intent.src_path, ctx.graph.search_paths)
-                new_mod_fqn = self._path_to_fqn(intent.dest_path, ctx.graph.search_paths)
+                new_mod_fqn = self._path_to_fqn(
+                    intent.dest_path, ctx.graph.search_paths
+                )
                 if old_mod_fqn and new_mod_fqn:
                     module_rename_map[old_mod_fqn] = new_mod_fqn
 
@@ -86,9 +88,7 @@ class Planner(SidecarUpdateMixin):
                 old_module_fqn = intent.module_fqn
                 # For a given symbol, its new module FQN is either determined by a file move
                 # or it remains the same as the old one (in a pure rename scenario).
-                new_module_fqn = module_rename_map.get(
-                    old_module_fqn, old_module_fqn
-                )
+                new_module_fqn = module_rename_map.get(old_module_fqn, old_module_fqn)
 
                 data = self._update_sidecar_data(
                     data,

@@ -86,7 +86,8 @@ class SemanticGraph:
                     end_lineno=ref.end_lineno,
                     end_col_offset=ref.end_col_offset,
                     ref_type=ref_type,
-                    target_node_fqn=ref.target_fqn or target_fqn, # Fallback if target_fqn is NULL (SURI refs)
+                    target_node_fqn=ref.target_fqn
+                    or target_fqn,  # Fallback if target_fqn is NULL (SURI refs)
                 )
             )
 

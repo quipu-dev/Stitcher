@@ -121,7 +121,4 @@ def test_rename_symbol_end_to_end(tmp_path):
     modified_sig_data = json.loads(sig_path.read_text("utf-8"))
     assert new_helper_suri in modified_sig_data
     assert old_helper_suri not in modified_sig_data
-    assert (
-        modified_sig_data[new_helper_suri]["baseline_code_structure_hash"]
-        == "hash1"
-    )
+    assert modified_sig_data[new_helper_suri]["baseline_code_structure_hash"] == "hash1"

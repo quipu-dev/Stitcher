@@ -48,13 +48,13 @@ class SidecarAdapter(LanguageAdapter):
                 # e.g. /path/to/file.stitcher.yaml -> /path/to/file.py
                 if not file_path.name.endswith(".stitcher.yaml"):
                     return symbols, references
-                
+
                 py_name = file_path.name.replace(".stitcher.yaml", ".py")
                 py_path = file_path.with_name(py_name)
 
                 if not py_path.exists():
-                     # If the corresponding .py file doesn't exist, this is a dangling sidecar.
-                     # We can't generate SURIs, so we skip it.
+                    # If the corresponding .py file doesn't exist, this is a dangling sidecar.
+                    # We can't generate SURIs, so we skip it.
                     return symbols, references
 
                 rel_py_path = py_path.relative_to(self.root_path).as_posix()

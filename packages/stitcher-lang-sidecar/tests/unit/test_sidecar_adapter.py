@@ -1,6 +1,5 @@
 from pathlib import Path
 from textwrap import dedent
-import pytest
 
 from stitcher.lang.sidecar.adapter import SidecarAdapter
 from stitcher.lang.sidecar.parser import parse_signature_references
