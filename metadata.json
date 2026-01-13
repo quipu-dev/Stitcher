@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] test(cli): 为新的 --loglevel 选项添加集成测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768312340.6965816, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 使用 SpyBus 重构日志级别测试以解耦本地化", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768312461.2266774, "duration_ms": 0}}
