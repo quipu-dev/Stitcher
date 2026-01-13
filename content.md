@@ -1,37 +1,95 @@
-## [WIP] 健壮的 SURI 处理策略
-
 检测到“确定性缺失”违例，已根据 ADAP v1.0 协议挂起所有实现活动。
+
+## [WIP] 修复系统核心的 SURI 解析逻辑并统一调用
 
 ### 假设声明 (DECLARE ASSUMPTION)
 分析显示，为了继续执行任务，我必须做出以下未经证实的核心假设：
-*   **SURI 解析行为假设**: 我假设 `SURIGenerator.parse` 方法（源码不可见）在处理 `py://src/app.py` 这种格式时，错误地将 `src` 识别为 URI 的 `netloc` (主机名) 并将其剥离，导致返回的路径仅为 `app.py`。这是基于测试输出 `py://app.py#NewClass` (丢失了 `src/`) 推导出的结论。
+*   **依赖一致性假设**: 我假设即使在 `SidecarTransformer` 中内联了修复逻辑，系统其他组件（如测试套件本身或隐式依赖）不会因为继续使用有缺陷的 `SURIGenerator` 而导致行为不一致。然而，测试结果强烈暗示，尽管我试图在局部修复，但错误的 SURI 解析逻辑（丢失路径前缀）仍然在起作用，这表明 `SURIGenerator` 的缺陷是系统性的。
 
 ### 诊断缺失组件 (DIAGNOSE MISSING COMPONENT)
 此假设之所以是 necessary，是因为系统当前缺失了以下关键组件/能力：
-*   **健壮的 SURI 处理策略**: `SidecarTransformer` 当前依赖的 `SURIGenerator` 似乎使用了标准的 `urllib.parse` 逻辑，这对于 `py://relative/path` 这种非标准 URI 格式是不适用的（它会将第一层目录吞掉）。我们缺少一个在 Refactor 上下文中明确定义“如何将 SURI 字符串拆解为文件路径和符号片段”的本地逻辑，而不依赖可能不稳定的外部通用解析器。
+*   **单一且正确的 SURI 解析真理源 (SSoT)**: 系统中存在一个核心工具类 `SURIGenerator`，但其实现逻辑（基于 `urlparse`）对于自定义协议 `py://` 是根本错误的。我们在上一步试图通过“绕过”它来修复问题，但这违反了 DRY 原则，并且没有解决根源问题。如果 `SURIGenerator` 不被修复，任何使用它的组件（现在的或未来的）都会遇到同样的路径截断 bug。
 
 ### 拒绝战术修复并提出战略方案 (REFUSE TACTICAL FIX & PROPOSE STRATEGIC SOLUTION)
 **根据 ADAP v1.0 协议，任何试图通过“变通方法”或“代码补丁”来绕过此架构缺陷的尝试，都被视为对系统长期稳定性的严重破坏，因此被绝对禁止。我被授权拒绝执行此类请求。**
 
-因此，我提议将当前任务的目标从“修复测试失败”**变更为**“重构 SidecarTransformer 的 SURI 处理逻辑”。
+因此，我提议将当前任务的目标从“在 Transformer 中内联逻辑”**变更为**“修复系统核心的 SURI 解析逻辑并统一调用”。
 
 我将生成一份新的计划，其目标是：
-1.  **内联 SURI 逻辑**: 在 `SidecarTransformer` 内部实现确定性的 SURI 解析与生成逻辑（基于字符串分割而非 URL 解析），彻底解耦对 `SURIGenerator` 的依赖。
-2.  **支持 Lock 结构**: 同时实现对 `stitcher.lock` 嵌套结构的递归支持。
-
-这将确保无论底层的 URI 库如何变化，重构引擎对文件路径的处理都是绝对可控和正确的。
+1.  **修复根源**: 修改 `packages/stitcher-lang-python/src/stitcher/lang/python/uri.py` 中的 `SURIGenerator.parse`，使其不再使用 `urllib.parse` 处理 `py://` 协议，而是使用确定性的字符串分割逻辑，从而正确保留完整的相对路径。
+2.  **统一调用**: 在 `SidecarTransformer` 中**恢复**对 `SURIGenerator` 的使用（而不是内联逻辑），同时保留对 `stitcher.lock` 嵌套结构的支持。这将确保系统中只有一种（现在是正确的）SURI 解析方式。
 
 ### 标签
-#intent/refine #flow/ready #priority/critical #comp/runtime #concept/refactor #scope/core #ai/instruct #task/domain/refactoring #task/object/sidecar-transformer #task/action/rewrite-suri-logic #task/state/begin
+#intent/refine #flow/ready #priority/critical #comp/runtime #concept/refactor #scope/core #ai/instruct #task/domain/architecture #task/object/suri-generator #task/action/fix-ssot #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 SidecarTransformer 以内联 SURI 处理逻辑
+#### Acts 1: 修复 SURIGenerator 的解析逻辑
 
-我们将修改 `packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/transform.py`。
-不再导入和使用 `SURIGenerator`，而是使用自定义的 `_parse_suri` 和 `_make_suri` 方法。
+~~~~~act
+patch_file
+packages/stitcher-lang-python/src/stitcher/lang/python/uri.py
+~~~~~
+~~~~~python.old
+    @staticmethod
+    def parse(suri: str) -> tuple[str, str]:
+        """
+        Parses a SURI into its path and fragment components.
+
+        Returns:
+            A tuple of (workspace_relative_path, fragment).
+            The fragment will be an empty string if not present.
+        """
+        parsed = urlparse(suri)
+        if parsed.scheme != "py":
+            raise ValueError(f"Invalid SURI scheme: '{parsed.scheme}'")
+
+        # The path component from urlparse includes the leading '/', which we strip.
+        # It also handles URL-encoded characters, which we decode.
+        path = unquote(parsed.path).lstrip("/")
+        fragment = unquote(parsed.fragment)
+
+        return path, fragment
+~~~~~
+~~~~~python.new
+    @staticmethod
+    def parse(suri: str) -> tuple[str, str]:
+        """
+        Parses a SURI into its path and fragment components.
+
+        Returns:
+            A tuple of (workspace_relative_path, fragment).
+            The fragment will be an empty string if not present.
+        """
+        if not suri.startswith("py://"):
+            raise ValueError(f"Invalid SURI scheme: {suri}")
+
+        # We manually parse because urllib.parse treats the first path segment
+        # after 'py://' as the netloc (host), causing it to be lost from .path.
+        # e.g. py://src/main.py -> netloc='src', path='/main.py'.
+        # By treating it as a plain string, we preserve the full relative path.
+        
+        body = suri[5:]  # Strip 'py://'
+        
+        if "#" in body:
+            path, fragment = body.split("#", 1)
+        else:
+            path = body
+            fragment = ""
+
+        # Decode percent-encoding if necessary (standard URI behavior)
+        path = unquote(path)
+        fragment = unquote(fragment)
+
+        # Ensure no leading slashes remain (SURIs are relative)
+        path = path.lstrip("/")
+
+        return path, fragment
+~~~~~
+
+#### Acts 2: 更新 SidecarTransformer 以使用修复后的 SURIGenerator 并支持 Lock 结构
 
 ~~~~~act
 write_file
@@ -41,6 +99,8 @@ packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/transform.py
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
+
+from stitcher.lang.python.uri import SURIGenerator
 
 
 @dataclass
@@ -127,32 +187,6 @@ class SidecarTransformer:
 
         return old_fragment, new_fragment
 
-    def _parse_suri(self, suri: str) -> Tuple[str, Optional[str]]:
-        """
-        Parses a SURI string into (path, fragment).
-        Format: py://<path>#<fragment> or py://<path>
-        We do NOT use standard URI parsing because it treats the first path segment
-        as the network location (host) for scheme 'py://', causing data loss.
-        """
-        if not suri.startswith("py://"):
-            raise ValueError(f"Invalid SURI scheme: {suri}")
-
-        body = suri[5:]  # Strip 'py://'
-        if "#" in body:
-            path, fragment = body.split("#", 1)
-            return path, fragment
-        else:
-            return body, None
-
-    def _make_suri(self, path: str, fragment: Optional[str]) -> str:
-        """Constructs a SURI string from path and fragment."""
-        # Ensure path is normalized (no leading slash, creating 'py:///path' triple slash)
-        # We want 'py://path/to/file'
-        clean_path = path.lstrip("/")
-        if fragment:
-            return f"py://{clean_path}#{fragment}"
-        return f"py://{clean_path}"
-
     def _transform_json_data(
         self,
         data: Dict[str, Any],
@@ -185,7 +219,8 @@ class SidecarTransformer:
                 continue
 
             try:
-                path, fragment = self._parse_suri(key)
+                # Use the centralized, fixed SURIGenerator
+                path, fragment = SURIGenerator.parse(key)
             except ValueError:
                 new_data[key] = value
                 continue
@@ -194,7 +229,6 @@ class SidecarTransformer:
             current_path, current_fragment = path, fragment
 
             # Normalize paths for comparison
-            # We assume old_file_path/new_file_path provided by context are relative/normalized.
             norm_current_path = current_path.lstrip("/")
 
             if (
@@ -216,7 +250,16 @@ class SidecarTransformer:
                     current_fragment = new_fragment + suffix
 
             if current_path != original_path or current_fragment != original_fragment:
-                new_key = self._make_suri(current_path, current_fragment)
+                # Use SURIGenerator to construct the new key
+                # We handle the 'empty fragment' case: if fragment is None/empty,
+                # for_symbol might not be right if we want file-only SURI.
+                # But here we are transforming existing SURIs which usually have fragments.
+                # If original fragment was empty, current_fragment is empty.
+                if current_fragment:
+                    new_key = SURIGenerator.for_symbol(current_path, current_fragment)
+                else:
+                    new_key = SURIGenerator.for_file(current_path)
+                
                 new_data[new_key] = value
                 modified = True
             else:
@@ -253,5 +296,5 @@ class SidecarTransformer:
 
 ### 下一步建议
 
-运行测试以验证新的 SURI 处理逻辑和 stitcher.lock 支持是否有效。
+运行测试以验证 SURI 解析逻辑的修复是否解决了所有问题：
 `pytest packages/stitcher-lang-sidecar/tests/unit/test_transform.py packages/stitcher-refactor/tests/integration/`
