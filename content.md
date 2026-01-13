@@ -1,120 +1,175 @@
-好的，我们进入路线图的第三步。这是确保我们新确立的架构原则在实践中得到严格遵守的关键环节。我将创建一套新的集成测试，专门验证 `pump` 和 `check` 命令在高保真场景下的正确行为。
+您提供的测试失败日志非常清晰，暴露了两个关键问题。我的上一个计划在理论上是正确的，但在实现细节和测试的先决条件上存在疏漏。非常感谢您的精确反馈，这能帮助我们定位并根除这些深层问题。
 
-## [WIP] test(cli): 增强测试套件以验证高保真原则
+**错误分析**:
+
+1.  **`test_pump_update_preserves_fidelity` 失败**:
+    *   **根本原因**: `PumpExecutor` 的实现存在缺陷。它没有利用我们新实现的“高保真更新”逻辑，而是从一个全新的 Python 字典中重新生成了整个 YAML 文件内容，导致原始文件中的注释和键顺序全部丢失。它破坏了我们刚刚建立的保真性原则。
+    *   **解决方案**: 我将重构 `PumpExecutor`。它将不再自行生成文件内容字符串，而是直接调用 `DocumentManager` 的方法，后者会使用 `SidecarAdapter` 的高保真“加载-修改-保存”工作流来执行文件更新。为此，我需要先为 `DocumentManager` 增加几个代理方法，以安全地暴露 `SidecarAdapter` 的高保真 I/O 能力。
+
+2.  **`test_check_does_not_reformat_file_on_success` 失败**:
+    *   **根本原因**: 两个问题并发：
+        a.  **架构缺陷**: `StitcherApp.run_check` 方法中存在一个违反我们新原则的隐式副作用——它会自动调用 `reformat_all`。这正是我们明确禁止的行为。
+        b.  **测试逻辑缺陷**: 测试未能创建一个真正“干净”的状态。`init` 之后，文档同时存在于源代码和 YAML 中，这对于 `check` 命令来说是 `redundant`（冗余）警告，因此它永远不会报告 `success`。
+    *   **解决方案**:
+        a.  我将从 `StitcherApp.run_check` 中**彻底移除**对 `reformat_all` 的调用，根除这个架构异味。
+        b.  我将修正测试逻辑，在 `init` 之后、`check` 之前，通过模拟用户输入 `y` 来调用 `strip` 命令，从而创建一个文档只存在于 YAML 中的、真正干净的状态。
+
+我将立即生成一个计划来执行这些修正。
+
+## [WIP] fix(core): 修正 pump 与 check 以严格遵守高保真原则
+
+### 错误分析
+
+如上所述，`pump` 命令的执行器 (`PumpExecutor`) 未能利用新的高保真 I/O 路径，导致用户格式丢失。同时，`check` 命令包含一个隐式的、破坏性的格式化副作用，且其相关测试未能建立正确的初始条件。
 
 ### 用户需求
 
-根据路线图第三步，我们需要更新和增强测试套件，以创建能够明确验证新架构原则的集成测试。核心是验证 `pump` 命令的“更新”操作能够保留用户格式，以及 `check` 命令不会产生隐式的格式化副作用。
+修正 `pump` 和 `check` 命令的实现及其测试，确保它们的行为严格遵守我们新确立的“保真性高于一切”和“职责分离”原则。
 
 ### 评论
 
-这是至关重要的一步。没有测试来守护我们的架构原则，这些原则就只停留在文档层面，很容易在未来的开发中被无意间破坏。这套新的测试将成为我们“保真性高于一切”共识的守护者，确保工具的行为始终符合预期，值得用户信赖。
+这次修复至关重要。它将我们的架构共识从理论转化为经过严格测试的、可靠的代码实现。这是确保工具行为可预测、不破坏用户数据的最后一道防线。
 
 ### 目标
 
-1.  创建一个新的集成测试文件，专门用于验证与文件保真性相关的原则。
-2.  **验证 UPDATE 场景**: 实现一个测试，模拟 `pump` 命令对一个已存在的、包含自定义格式（键顺序、注释）的 `.stitcher.yaml` 文件进行更新。断言用户的自定义格式被完整保留，同时新内容被成功追加。
-3.  **验证无副作用原则**: 实现一个测试，证明 `check` 命令在处理一个内容一致但键顺序非标准的 `.stitcher.yaml` 文件时，不会对其进行任何修改。
+1.  为 `DocumentManager` 增加代理方法，以暴露 `SidecarAdapter` 的高保真、原始数据 I/O 功能。
+2.  重构 `PumpExecutor`，使其使用上述新方法来执行高保真文件更新，确保注释和键序得以保留。
+3.  从 `StitcherApp.run_check` 中移除所有隐式的 `reformat_all` 调用。
+4.  修正 `test_check_does_not_reformat_file_on_success` 测试，在 `init` 后增加 `strip` 步骤，以创建正确的测试前提。
 
 ### 基本原理
 
-我们将利用 `typer.testing.CliRunner` 和 `WorkspaceFactory` 来构建端到端的测试场景。
-- 对于 `pump` 测试，我们将手动创建一个具有非标准格式的 Sidecar 文件作为“前置状态”，然后运行 `pump` 命令，并对比“后置状态”的文件内容，以验证其保真性。
-- 对于 `check` 测试，我们将首先运行 `init` 来创建一个完全一致的基线状态（包括代码、YAML文档和签名文件），然后手动修改 YAML 文件以引入非标准的键顺序。最后，运行 `check` 命令并断言该文件未被改动，从而证明 `check` 没有隐式的格式化行为。
+我们将通过在 `DocumentManager` 中添加 `load_raw_data` 和 `dump_raw_data_to_string` 方法，将 `SidecarAdapter` 的 `ruamel.yaml` 往返能力安全地传递给上层执行器。`PumpExecutor` 将利用此能力在内存中对保留了格式的 `ruamel` 对象进行修改，然后生成一个高保真的文件内容字符串，并将其放入事务。同时，通过移除 `check` 命令中的格式化调用，我们确保了其行为的纯粹性，完全符合职责分离原则。
 
 ### 标签
 
-#intent/tooling #flow/ready #priority/high #comp/cli #comp/tests #scope/core #ai/instruct #task/domain/architecture #task/object/fidelity-testing #task/action/implementation #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/cli #comp/app #comp/lang-sidecar #scope/core #ai/instruct #task/domain/architecture #task/object/fidelity-testing #task.action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建新的高保真原则测试文件
+#### Acts 1: 增强 DocumentManager 以支持高保真 I/O
 
-我将创建一个新的测试文件 `test_fidelity_principles.py`，用于存放验证我们新架构共识的集成测试。
+我将为 `DocumentManager` 添加代理方法，以暴露 `SidecarAdapter` 的能力。
 
 ~~~~~act
-write_file
+patch_file
+packages/stitcher-application/src/stitcher/app/services/doc_manager.py
+~~~~~
+~~~~~python.old
+    def dump_data(self, data: Dict[str, Any]) -> str:
+        return self._sidecar_adapter.dump_to_string(data)
+
+    def _extract_from_function(
+~~~~~
+~~~~~python.new
+    def dump_data(self, data: Dict[str, Any]) -> str:
+        return self._sidecar_adapter.dump_to_string(data)
+
+    def load_raw_data(self, file_path: str) -> Dict[str, Any]:
+        """Loads raw YAML data with high fidelity using the sidecar adapter."""
+        doc_path = self.resolver.get_doc_path(self.root_path / file_path)
+        return self._sidecar_adapter.load_raw_data(doc_path)
+
+    def dump_raw_data_to_string(self, data: Dict[str, Any]) -> str:
+        """Dumps raw YAML data with high fidelity using the sidecar adapter."""
+        return self._sidecar_adapter.dump_raw_data_to_string(data)
+
+    def _extract_from_function(
+~~~~~
+
+#### Acts 2: 重构 PumpExecutor 以执行高保真更新
+
+现在，我将重构 `PumpExecutor`，使其使用我们刚刚添加的新方法。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/pump/executor.py
+~~~~~
+~~~~~python.old
+            if not file_has_errors:
+                if file_had_updates:
+                    final_data = {
+                        k: self.doc_manager.serialize_ir(v)
+                        for k, v in new_yaml_docs.items()
+                    }
+                    doc_path = (self.root_path / module.file_path).with_suffix(
+                        ".stitcher.yaml"
+                    )
+                    yaml_content = self.doc_manager.dump_data(final_data)
+                    tm.add_write(
+                        str(doc_path.relative_to(self.root_path)), yaml_content
+                    )
+
+                if new_hashes != stored_hashes:
+~~~~~
+~~~~~python.new
+            if not file_has_errors:
+                if file_had_updates:
+                    # High-fidelity update: Load raw data, update it, then dump back.
+                    # This preserves comments, key order, and other formatting.
+                    raw_data = self.doc_manager.load_raw_data(module.file_path)
+                    for fqn, ir in new_yaml_docs.items():
+                        raw_data[fqn] = self.doc_manager.serialize_ir(ir)
+
+                    doc_path = (self.root_path / module.file_path).with_suffix(
+                        ".stitcher.yaml"
+                    )
+                    yaml_content = self.doc_manager.dump_raw_data_to_string(raw_data)
+                    tm.add_write(
+                        str(doc_path.relative_to(self.root_path)), yaml_content
+                    )
+
+                if new_hashes != stored_hashes:
+~~~~~
+
+#### Acts 3: 从 `check` 命令中移除隐式格式化
+
+我将修改 `StitcherApp.run_check`，移除对 `reformat_all` 的调用。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+                # 6. Reformat FIRST to stabilize file hashes before reconciliation.
+                # Optimization: Only reformat files that were actually modified in this cycle.
+                hot_modules = [
+                    m
+                    for m in batch_modules
+                    if m.file_path in modified_paths or not m.file_path
+                ]
+                if hot_modules:
+                    self.check_runner.reformat_all(hot_modules)
+
+                # 7. Auto-Reconcile Docs (now reads stable hashes)
+                self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
+
+                # 8. Resolve interactive/manual conflicts
+                if not self.check_runner.resolve_conflicts(
+                    batch_results, batch_conflicts, force_relink, reconcile
+                ):
+~~~~~
+~~~~~python.new
+                # 6. Auto-Reconcile Docs (e.g., when only docs are updated)
+                self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
+
+                # 7. Resolve interactive/manual conflicts
+                if not self.check_runner.resolve_conflicts(
+                    batch_results, batch_conflicts, force_relink, reconcile
+                ):
+~~~~~
+
+#### Acts 4: 修正高保真原则的集成测试
+
+最后，我将修正测试文件，确保它能正确验证我们的原则。
+
+~~~~~act
+patch_file
 packages/stitcher-cli/tests/integration/test_fidelity_principles.py
 ~~~~~
-~~~~~python
-import pytest
-from typer.testing import CliRunner
-from textwrap import dedent
-
-from stitcher.cli.main import app
-from stitcher.test_utils import WorkspaceFactory, SpyBus
-from needle.pointer import L
-
-runner = CliRunner()
-
-
-def test_pump_update_preserves_fidelity(tmp_path, monkeypatch):
-    """
-    Verifies the UPDATE path of the SidecarAdapter via `pump`.
-    Ensures that when updating an existing file, custom key order and
-    comments are preserved, and new keys are appended.
-    """
-    # 1. ARRANGE
-    # Create a workspace with an existing, custom-formatted .stitcher.yaml
-    # and a new function in the source code to be pumped.
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source(
-            "src/main.py",
-            """
-            def z_func():
-                \"\"\"Doc for Z\"\"\"
-                pass
-
-            def a_func():
-                \"\"\"Doc for A\"\"\"
-                pass
-
-            def new_func():
-                \"\"\"Doc for New\"\"\"
-                pass
-            """,
-        )
-        .with_raw_file(
-            "src/main.stitcher.yaml",
-            """
-            # My special comment, must be preserved.
-            z_func: |-
-              Doc for Z
-            a_func: |-
-              Doc for A
-            """,
-        )
-        .build()
-    )
-    monkeypatch.chdir(project_root)
-
-    # 2. ACT
-    result = runner.invoke(app, ["pump"], catch_exceptions=False)
-
-    # 3. ASSERT
-    assert result.exit_code == 0, result.stdout
-
-    content = (project_root / "src/main.stitcher.yaml").read_text()
-
-    # Assert comment is preserved
-    assert "# My special comment, must be preserved." in content
-
-    # Assert original key order is preserved and new key is appended
-    z_pos = content.find("z_func:")
-    a_pos = content.find("a_func:")
-    new_pos = content.find("new_func:")
-
-    assert z_pos != -1 and a_pos != -1 and new_pos != -1
-    assert z_pos < a_pos < new_pos, "Key order was not preserved/appended correctly."
-
-    # Assert content is correct
-    assert "Doc for New" in content
-
-
+~~~~~python.old
 def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
     """
     Verifies that a successful `check` run does NOT reformat or reorder
@@ -171,13 +226,77 @@ def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
     content_after = yaml_path.read_text()
     assert content_before == content_after, "Check command incorrectly reformatted the YAML file."
 ~~~~~
+~~~~~python.new
+def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
+    """
+    Verifies that a successful `check` run does NOT reformat or reorder
+    a .stitcher.yaml file that has custom, non-alphabetical key order.
+    """
+    # 1. ARRANGE
+    # Create a workspace, run `init`, and then `strip` to get a truly
+    # clean state (docs only in YAML).
+    factory = WorkspaceFactory(tmp_path)
+    project_root = (
+        factory.with_config({"scan_paths": ["src"]})
+        .with_source(
+            "src/main.py",
+            """
+            def z_func():
+                \"\"\"Doc for Z\"\"\"
+                pass
+            def a_func():
+                \"\"\"Doc for A\"\"\"
+                pass
+            """,
+        )
+        .build()
+    )
+    monkeypatch.chdir(project_root)
+
+    # Step 1.1: Create initial docs
+    init_result = runner.invoke(app, ["init"], catch_exceptions=False)
+    assert init_result.exit_code == 0
+
+    # Step 1.2: Strip source to avoid "redundant" warnings
+    # We pass "y\n" to auto-confirm the interactive prompt.
+    strip_result = runner.invoke(app, ["strip"], input="y\n", catch_exceptions=False)
+    assert strip_result.exit_code == 0
+
+    # Step 1.3: Now, manually reorder the generated YAML to be non-standard
+    yaml_path = project_root / "src/main.stitcher.yaml"
+    reordered_content = dedent(
+        """
+        z_func: |-
+          Doc for Z
+        a_func: |-
+          Doc for A
+        """
+    ).lstrip()
+    yaml_path.write_text(reordered_content)
+    content_before = yaml_path.read_text()
+
+    # 2. ACT
+    spy_bus = SpyBus()
+    with spy_bus.patch(monkeypatch):
+        check_result = runner.invoke(app, ["check"], catch_exceptions=False)
+
+    # 3. ASSERT
+    assert check_result.exit_code == 0, check_result.stdout
+
+    # Assert that the check reported true success (no warnings)
+    spy_bus.assert_id_called(L.check.run.success)
+
+    # The critical assertion: the file content must not have changed.
+    content_after = yaml_path.read_text()
+    assert content_before == content_after, "Check command incorrectly reformatted the YAML file."
+~~~~~
 
 ### 下一步建议
 
-我们已经成功地将新的架构原则固化为自动化测试，完成了路线图的第三步。这为项目的长期健康奠定了坚实的基础。
+我们已经完成了对核心缺陷的修复，并通过增强的测试套件为新的架构原则提供了坚实的保障。现在，我们的重构任务已接近尾声。
 
-现在，我们应该执行**第四步：为未来工作创建记录**。这确保了我们在本次重构中产生的宝贵见解（例如对显式 `format` 命令的需求）不会丢失，并能转化为未来的具体行动。
+我建议您运行完整的测试套件，以确保我们的修复没有引入任何意外的回归问题。
 
-由于我无法直接操作您的问题跟踪系统，我建议您现在手动创建一个标题为 **“实现 `stitcher format` 命令”** 的任务。
+在测试通过后，我们将可以自信地进入**第四步：为未来工作创建记录**。请您在项目的问题跟踪系统中创建“实现 `stitcher format` 命令”的任务。
 
-一旦您完成记录，我们的这次重构任务就圆满完成了。我们不仅修复了眼前的问题，更建立了一套清晰、健壮且经过测试验证的架构原则。这是一个巨大的成功。
+这将标志着我们本次深度重构的圆满成功。

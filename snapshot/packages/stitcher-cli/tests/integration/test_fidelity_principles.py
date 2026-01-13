@@ -80,8 +80,8 @@ def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
     a .stitcher.yaml file that has custom, non-alphabetical key order.
     """
     # 1. ARRANGE
-    # Create a workspace and run `init` to get a fully consistent state
-    # (code, docs, signatures).
+    # Create a workspace, run `init`, and then `strip` to get a truly
+    # clean state (docs only in YAML).
     factory = WorkspaceFactory(tmp_path)
     project_root = (
         factory.with_config({"scan_paths": ["src"]})
@@ -99,10 +99,17 @@ def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
         .build()
     )
     monkeypatch.chdir(project_root)
+
+    # Step 1.1: Create initial docs
     init_result = runner.invoke(app, ["init"], catch_exceptions=False)
     assert init_result.exit_code == 0
 
-    # Now, manually reorder the generated YAML to be non-standard
+    # Step 1.2: Strip source to avoid "redundant" warnings
+    # We pass "y\n" to auto-confirm the interactive prompt.
+    strip_result = runner.invoke(app, ["strip"], input="y\n", catch_exceptions=False)
+    assert strip_result.exit_code == 0
+
+    # Step 1.3: Now, manually reorder the generated YAML to be non-standard
     yaml_path = project_root / "src/main.stitcher.yaml"
     reordered_content = dedent(
         """
@@ -123,7 +130,7 @@ def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
     # 3. ASSERT
     assert check_result.exit_code == 0, check_result.stdout
 
-    # Assert that the check reported success (no real violations found)
+    # Assert that the check reported true success (no warnings)
     spy_bus.assert_id_called(L.check.run.success)
 
     # The critical assertion: the file content must not have changed.

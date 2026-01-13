@@ -53,6 +53,15 @@ class DocumentManager:
     def dump_data(self, data: Dict[str, Any]) -> str:
         return self._sidecar_adapter.dump_to_string(data)
 
+    def load_raw_data(self, file_path: str) -> Dict[str, Any]:
+        """Loads raw YAML data with high fidelity using the sidecar adapter."""
+        doc_path = self.resolver.get_doc_path(self.root_path / file_path)
+        return self._sidecar_adapter.load_raw_data(doc_path)
+
+    def dump_raw_data_to_string(self, data: Dict[str, Any]) -> str:
+        """Dumps raw YAML data with high fidelity using the sidecar adapter."""
+        return self._sidecar_adapter.dump_raw_data_to_string(data)
+
     def _extract_from_function(
         self, func: FunctionDef, prefix: str = ""
     ) -> Dict[str, DocstringIR]:
