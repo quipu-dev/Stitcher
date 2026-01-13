@@ -75,6 +75,7 @@ class Planner(SidecarUpdateMixin):
             for intent in intents:
                 data = self._update_sidecar_data(
                     data,
+                    intent.sidecar_path,
                     intent.module_fqn,
                     intent.old_fqn,
                     intent.new_fqn,

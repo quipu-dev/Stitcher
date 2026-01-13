@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 
 from stitcher.lang.python.analysis.utils import path_to_logical_fqn
@@ -25,119 +25,179 @@ class SidecarUpdateMixin:
         rel_path = path.relative_to(base_path)
         return path_to_logical_fqn(rel_path.as_posix())
 
+    def _calculate_fragments(
+        self, module_fqn: Optional[str], old_fqn: str, new_fqn: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Derives the symbol fragments (short names) from FQNs relative to a module.
+        If the FQN implies the module itself, the fragment is None.
+        """
+        if not module_fqn:
+            # Fallback: if we don't know the module, we assume top-level or can't determine fragment safely.
+            # However, for simple renames, old_fqn might be the full key.
+            return None, None
+
+        old_fragment = None
+        new_fragment = None
+
+        # Check if old_fqn is inside module_fqn
+        if old_fqn == module_fqn:
+            # The operation is on the module itself (e.g. file move/rename).
+            # Fragment is empty/None.
+            pass
+        elif old_fqn.startswith(module_fqn + "."):
+            old_fragment = old_fqn[len(module_fqn) + 1 :]
+
+        # Check if new_fqn is inside the *logical* new module location.
+        # Note: We rely on the caller to provide consistent FQNs.
+        # If it's a rename: module_fqn matches parent.
+        # If it's a move: new_fqn matches new path.
+        # We assume symmetry for the fragment calculation.
+        if old_fragment:
+            # Heuristic: If we extracted an old fragment, we try to extract a new one
+            # assuming the structure is preserved or it's a direct rename.
+            # If new_fqn is just a different name in same scope:
+            #   module.Old -> module.New
+            # If new_fqn is moved:
+            #   old_mod.Class -> new_mod.Class
+            # We need to act carefully.
+
+            # Simple Strategy:
+            # If it's a RenameSymbol, old_fqn and new_fqn share the parent module prefix usually.
+            # If it's a MoveFile, the fragment usually stays the same.
+
+            # Let's try to deduce the new fragment by stripping the known prefix if possible,
+            # or by taking the last part if it looks like a symbol.
+            if "." in new_fqn:
+                new_fragment = new_fqn.split(".")[-1]
+                # Consistency check: if it's a move, fragments often match
+                if "." in old_fqn and old_fqn.split(".")[-1] == new_fragment:
+                    pass
+                else:
+                    # It's a rename
+                    pass
+            else:
+                new_fragment = new_fqn
+
+        return old_fragment, new_fragment
+
     def _update_sidecar_data(
         self,
         data: Dict[str, Any],
+        sidecar_path: Path,
         module_fqn: Optional[str],
         old_fqn: str,
         new_fqn: str,
         old_file_path: Optional[str] = None,
         new_file_path: Optional[str] = None,
     ) -> Dict[str, Any]:
+        """
+        Dispatcher for sidecar updates based on file type.
+        """
+        # Calculate fragments once
+        old_fragment, new_fragment = self._calculate_fragments(
+            module_fqn, old_fqn, new_fqn
+        )
+
+        if sidecar_path.suffix == ".json":
+            return self._update_json_data(
+                data, old_file_path, new_file_path, old_fragment, new_fragment
+            )
+        elif sidecar_path.suffix in (".yaml", ".yml"):
+            return self._update_yaml_data(data, old_fragment, new_fragment)
+
+        return data
+
+    def _update_json_data(
+        self,
+        data: Dict[str, Any],
+        old_file_path: Optional[str],
+        new_file_path: Optional[str],
+        old_fragment: Optional[str],
+        new_fragment: Optional[str],
+    ) -> Dict[str, Any]:
+        """
+        Updates Signature JSON data where keys are SURIs (py://path#fragment).
+        """
         new_data = {}
         modified = False
 
-        # Calculate logical fragments if applicable (for In-File Rename)
-        old_fragment = None
-        new_fragment = None
+        for key, value in data.items():
+            if not key.startswith("py://"):
+                new_data[key] = value
+                continue
 
-        if module_fqn and old_fqn.startswith(module_fqn + "."):
-            old_fragment = old_fqn[len(module_fqn) + 1 :]
-            # We assume the module part is the same for simple symbol renames.
-            if new_fqn.startswith(module_fqn + "."):
-                new_fragment = new_fqn[len(module_fqn) + 1 :]
+            try:
+                path, fragment = SURIGenerator.parse(key)
+            except ValueError:
+                new_data[key] = value
+                continue
+
+            path_changed = False
+            fragment_changed = False
+
+            # 1. Path Update (File Move)
+            # We match strictly on the path part of the SURI.
+            if old_file_path and new_file_path and path == old_file_path:
+                path = new_file_path
+                path_changed = True
+
+            # 2. Fragment Update (Symbol Rename)
+            # We match strictly on the fragment part.
+            if old_fragment and new_fragment and fragment:
+                if fragment == old_fragment:
+                    fragment = new_fragment
+                    fragment_changed = True
+                elif fragment.startswith(old_fragment + "."):
+                    # Handle nested symbols: Class.method -> NewClass.method
+                    suffix = fragment[len(old_fragment) :]
+                    fragment = new_fragment + suffix
+                    fragment_changed = True
+
+            if path_changed or fragment_changed:
+                new_key = SURIGenerator.for_symbol(path, fragment) if fragment else SURIGenerator.for_file(path)
+                new_data[new_key] = value
+                modified = True
+            else:
+                new_data[key] = value
+
+        return new_data if modified else data
+
+    def _update_yaml_data(
+        self,
+        data: Dict[str, Any],
+        old_fragment: Optional[str],
+        new_fragment: Optional[str],
+    ) -> Dict[str, Any]:
+        """
+        Updates Doc YAML data where keys are Fragments (Short Names).
+        File moves do NOT affect these keys (as they are relative), unless the symbol itself is renamed.
+        """
+        if not old_fragment or not new_fragment or old_fragment == new_fragment:
+            # No symbol rename occurred, or we couldn't determine fragments.
+            # For pure file moves, YAML content usually stays static.
+            return data
+
+        new_data = {}
+        modified = False
 
         for key, value in data.items():
-            # --- Case 1: SURI Update (py://path/to/file.py#symbol) ---
-            if key.startswith("py://"):
-                try:
-                    path, fragment = SURIGenerator.parse(key)
-                except ValueError:
-                    new_data[key] = value
-                    continue
-
-                suri_changed = False
-
-                # 1. Update Path (File Move)
-                if old_file_path and new_file_path and path == old_file_path:
-                    path = new_file_path
-                    suri_changed = True
-
-                # 2. Update Fragment (Symbol Rename)
-                if fragment and old_fragment and new_fragment:
-                    if fragment == old_fragment:
-                        fragment = new_fragment
-                        suri_changed = True
-                    elif fragment.startswith(old_fragment + "."):
-                        # Nested symbol rename (e.g. Class.method -> NewClass.method)
-                        suffix = fragment[len(old_fragment) :]
-                        fragment = new_fragment + suffix
-                        suri_changed = True
-
-                if suri_changed:
-                    # Reconstruct SURI
-                    new_key = f"py://{path}#{fragment}" if fragment else f"py://{path}"
-                    new_data[new_key] = value
-                    modified = True
-                    continue
-                else:
-                    new_data[key] = value
-                    continue
-
-            # --- Case 2: Standard FQN Update ---
-            key_fqn = key
-            is_short_name = False
-
-            if module_fqn:
-                if key.startswith(module_fqn + "."):
-                    key_fqn = key
-                    is_short_name = False
-                else:
-                    # Heuristic: If it starts with the project's root package but not
-                    # the current module, it's likely an FQN from another module.
-                    project_prefix = module_fqn.split(".")[0] + "."
-                    if key.startswith(project_prefix):
-                        key_fqn = key
-                        is_short_name = False
-                    else:
-                        key_fqn = f"{module_fqn}.{key}"
-                        is_short_name = True
-
-            # Determine the effective module FQN for short-name restoration.
-            if module_fqn == old_fqn:
-                effective_new_module = new_fqn
-            elif module_fqn and module_fqn.startswith(old_fqn + "."):
-                # Module is inside the renamed namespace/directory
-                suffix = module_fqn[len(old_fqn) :]
-                effective_new_module = new_fqn + suffix
-            else:
-                effective_new_module = module_fqn
-
-            new_key = key
-            if key_fqn == old_fqn:
-                target_fqn = new_fqn
-                if is_short_name and effective_new_module:
-                    if target_fqn.startswith(effective_new_module + "."):
-                        new_key = target_fqn[len(effective_new_module) + 1 :]
-                    else:
-                        new_key = target_fqn
-                else:
-                    new_key = target_fqn
+            # Check for exact match (Top-level symbol rename)
+            if key == old_fragment:
+                new_data[new_fragment] = value
                 modified = True
+                continue
 
-            elif key_fqn.startswith(old_fqn + "."):
-                suffix = key_fqn[len(old_fqn) :]
-                target_fqn = new_fqn + suffix
-                if is_short_name and effective_new_module:
-                    if target_fqn.startswith(effective_new_module + "."):
-                        new_key = target_fqn[len(effective_new_module) + 1 :]
-                    else:
-                        new_key = target_fqn
-                else:
-                    new_key = target_fqn
+            # Check for nested match (Method rename via Class rename)
+            # e.g. Key="OldClass.method", Rename="OldClass"->"NewClass"
+            if key.startswith(old_fragment + "."):
+                suffix = key[len(old_fragment) :]
+                new_key = new_fragment + suffix
+                new_data[new_key] = value
                 modified = True
+                continue
 
-            new_data[new_key] = value
+            new_data[key] = value
 
         return new_data if modified else data
 
