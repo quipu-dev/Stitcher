@@ -2,6 +2,7 @@ import typer
 from needle.pointer import L
 from stitcher.common import bus, stitcher_operator as nexus
 from stitcher.cli.factories import make_app, make_interaction_handler
+from stitcher.workspace import WorkspaceNotFoundError
 
 
 def pump_command(
@@ -35,7 +36,11 @@ def pump_command(
         auto_resolve_mode=(force or reconcile),
     )
 
-    app_instance = make_app(handler)
+    try:
+        app_instance = make_app(handler)
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
 
     # 1. Run Pump
     result = app_instance.run_pump(

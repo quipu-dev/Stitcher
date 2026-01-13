@@ -1,215 +1,621 @@
-你的分析直击要害。在基于 **HFEA (高保真工程公理)** 的系统中，允许一个核心识别函数（如 `find_workspace_root`）在逻辑失败时返回一个“看起来还行”的错误路径，是典型的**启发式策略 (Heuristics)** 违例。这种行为不仅引入了不确定性，还会在后续的 SURI 生成和 Lock 文件校验中引发难以调试的连锁反应。
+好的，我们继续执行计划的下一步。将隐式失败转换为显式、可捕获的错误是增强系统鲁棒性的关键。现在，我们将确保 CLI 层能够优雅地处理 `WorkspaceNotFoundError`，并向用户提供清晰的指导。
 
-根据 **ADAP v1.0 (假设驱动分析协议)**，我们将消除“假设当前目录就是根目录”这一乐观假设，并引入形式化的错误处理。
+我将生成一个计划，在 CLI 的所有命令入口点添加错误处理，更新 i18n 资源，并创建一个集成测试来验证此行为。
 
-以下是增强工作区确定性的执行计划。
-
-## [WIP] refactor: 增强 Workspace 根目录识别的确定性
+## [WIP] fix(cli): 优雅处理工作区未找到的错误
 
 ### 用户需求
-移除 `find_workspace_root` 的静默回退逻辑。当无法通过 `.git` 或 `pyproject.toml` 确定工作区根目录时，必须抛出显式的 `WorkspaceNotFoundError`，以防止系统在错误的上下文中运行。
+在 `stitcher-cli` 的所有命令入口点，捕获 `WorkspaceNotFoundError` 异常。当异常发生时，使用 `bus.error` 向用户报告一条清晰的、国际化的错误信息，并以非零状态码退出，而不是显示原始的 Python 堆栈跟踪。
 
 ### 评论
-这是迈向“本体论正确性”的重要一步。通过将隐式失败转变为显式异常，我们强制调用方必须在一个有效的、可识别的环境中初始化 Stitcher。这对于维护 SURI（Stitcher Uniform Resource Identifier）的稳定性至关重要。
+这是一个至关重要的用户体验 (UX) 和开发者体验 (DX) 改进。它将一个内部的、技术性的错误 (`WorkspaceNotFoundError`) 转化为一个对用户有意义、可操作的反馈。这使得 CLI 工具在非预期环境中运行时，行为是可预测且友好的。
 
 ### 目标
-1.  在 `stitcher-workspace` 中定义 `WorkspaceError` 异常体系。
-2.  修改 `find_workspace_root` 逻辑，在遍历到文件系统根部仍未发现标识文件时抛出异常。
-3.  增加针对此异常场景的单元测试。
+1.  为“工作区未找到”的场景添加新的 i18n (en/zh) 错误消息。
+2.  修改所有 CLI 命令的实现，在实例化 `StitcherApp` 时包裹 `try...except` 块。
+3.  在 `except` 块中，调用 `bus.error` 并以状态码 `1` 退出。
+4.  创建一个新的集成测试，专门验证当在无效目录中运行 `stitcher` 命令时，是否会按预期失败并显示正确信息。
 
 ### 基本原理
-遵循“正规军”工程标准，系统行为必须建立在确定性的语义分析之上。如果工作区的边界无法被确定性地识别，则该环境对于 Stitcher 而言是“不存在”的。抛出异常而非返回回退路径，能够保护后续的 I/O 操作不会破坏文件系统的状态。
+CLI 层是用户与系统交互的边界。在此边界上，所有来自应用核心的特定异常都应被转换为标准化的、对用户友好的反馈。通过在每个命令的入口处进行捕获，我们确保了无论用户执行哪个子命令，都能获得一致的错误处理体验。
 
 ### 标签
-#intent/refine #flow/ready #priority/high 
-#comp/workspace #concept/navigation #scope/core 
-#ai/refine
-#task/domain/workspace #task/object/root-discovery #task/action/hardening #task/state/begin
+#intent/fix #flow/ready #priority/high 
+#comp/cli #comp/workspace #scope/ux #scope/dx 
+#ai/instruct
+#task/domain/workspace #task/object/root-discovery #task/action/hardening #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 定义异常体系
+#### Acts 1: 更新 i18n 错误消息
 
-我们首先在 `stitcher-workspace` 中建立专门的异常模块。
+为 `WorkspaceNotFoundError` 添加对应的用户友好提示。
 
 ~~~~~act
 write_file
-packages/stitcher-workspace/src/stitcher/workspace/exceptions.py
+packages/stitcher-common/src/stitcher/common/assets/needle/en/error/workspace.json
+~~~~~
+~~~~~json
+{
+  "not_found": "❌ Failed to find workspace root from '{path}'. Please run stitcher from within a project containing a .git directory or a pyproject.toml with a [tool.uv.workspace] section."
+}
+~~~~~
+
+~~~~~act
+write_file
+packages/stitcher-common/src/stitcher/common/assets/needle/zh/error/workspace.json
+~~~~~
+~~~~~json
+{
+  "not_found": "❌ 无法从路径 '{path}' 定位到工作区根目录。请在包含 .git 目录或配置了 [tool.uv.workspace] 的 pyproject.toml 的项目内运行 stitcher。"
+}
+~~~~~
+
+#### Acts 2: 在 CLI 命令中添加错误处理
+
+我们将逐一修改每个命令文件，在 `make_app()` 调用周围添加异常处理。
+
+首先是 `basics.py`：
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/basics.py
+~~~~~
+~~~~~python.old
+import typer
+from needle.pointer import L
+from stitcher.common import bus, stitcher_operator as nexus
+from stitcher.cli.factories import make_app
+
+
+def generate_command(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=nexus(L.cli.option.refactor_dry_run.help)
+    ),
+):
+    app_instance = make_app()
+    app_instance.run_from_config(dry_run=dry_run)
+
+
+def init_command():
+    app_instance = make_app()
+    app_instance.run_init()
+
+
+def strip_command(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=nexus(L.cli.option.refactor_dry_run.help)
+    ),
+):
+    if not dry_run and not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
+        bus.warning(L.strip.run.aborted)
+        raise typer.Abort()
+
+    app_instance = make_app()
+    app_instance.run_strip(dry_run=dry_run)
+
+
+def inject_command(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=nexus(L.cli.option.refactor_dry_run.help)
+    ),
+):
+    if not dry_run and not typer.confirm(bus.render_to_string(L.inject.run.confirm)):
+        bus.warning(L.inject.run.aborted)
+        raise typer.Abort()
+
+    app_instance = make_app()
+    app_instance.run_inject(dry_run=dry_run)
+~~~~~
+~~~~~python.new
+import typer
+from needle.pointer import L
+from stitcher.common import bus, stitcher_operator as nexus
+from stitcher.cli.factories import make_app
+from stitcher.workspace import WorkspaceNotFoundError
+
+
+def generate_command(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=nexus(L.cli.option.refactor_dry_run.help)
+    ),
+):
+    try:
+        app_instance = make_app()
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+    app_instance.run_from_config(dry_run=dry_run)
+
+
+def init_command():
+    try:
+        app_instance = make_app()
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+    app_instance.run_init()
+
+
+def strip_command(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=nexus(L.cli.option.refactor_dry_run.help)
+    ),
+):
+    if not dry_run and not typer.confirm(bus.render_to_string(L.strip.run.confirm)):
+        bus.warning(L.strip.run.aborted)
+        raise typer.Abort()
+
+    try:
+        app_instance = make_app()
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+    app_instance.run_strip(dry_run=dry_run)
+
+
+def inject_command(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=nexus(L.cli.option.refactor_dry_run.help)
+    ),
+):
+    if not dry_run and not typer.confirm(bus.render_to_string(L.inject.run.confirm)):
+        bus.warning(L.inject.run.aborted)
+        raise typer.Abort()
+
+    try:
+        app_instance = make_app()
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+    app_instance.run_inject(dry_run=dry_run)
+~~~~~
+
+然后是 `check.py`：
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/check.py
+~~~~~
+~~~~~python.old
+import typer
+from stitcher.common import bus, stitcher_operator as nexus
+from needle.pointer import L
+from stitcher.cli.factories import make_app, make_interaction_handler
+
+
+def check_command(
+    force_relink: bool = typer.Option(
+        False,
+        "--force-relink",
+        help=nexus(L.cli.option.force_relink.help),
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help=nexus(L.cli.option.reconcile_co_evolution.help),
+    ),
+    non_interactive: bool = typer.Option(
+        False,
+        "--non-interactive",
+        help=nexus(L.cli.option.non_interactive.help),
+    ),
+):
+    if force_relink and reconcile:
+        bus.error(
+            L.error.cli.conflicting_options, opt1="force-relink", opt2="reconcile"
+        )
+        raise typer.Exit(code=1)
+
+    # Use factory to decide if we need an interaction handler
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force_relink or reconcile),
+    )
+
+    app_instance = make_app(handler)
+    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
+    if not success:
+        raise typer.Exit(code=1)
+~~~~~
+~~~~~python.new
+import typer
+from stitcher.common import bus, stitcher_operator as nexus
+from needle.pointer import L
+from stitcher.cli.factories import make_app, make_interaction_handler
+from stitcher.workspace import WorkspaceNotFoundError
+
+
+def check_command(
+    force_relink: bool = typer.Option(
+        False,
+        "--force-relink",
+        help=nexus(L.cli.option.force_relink.help),
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help=nexus(L.cli.option.reconcile_co_evolution.help),
+    ),
+    non_interactive: bool = typer.Option(
+        False,
+        "--non-interactive",
+        help=nexus(L.cli.option.non_interactive.help),
+    ),
+):
+    if force_relink and reconcile:
+        bus.error(
+            L.error.cli.conflicting_options, opt1="force-relink", opt2="reconcile"
+        )
+        raise typer.Exit(code=1)
+
+    # Use factory to decide if we need an interaction handler
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force_relink or reconcile),
+    )
+
+    try:
+        app_instance = make_app(handler)
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+
+    success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
+    if not success:
+        raise typer.Exit(code=1)
+~~~~~
+
+`cov.py`：
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/cov.py
+~~~~~
+~~~~~python.old
+from stitcher.cli.factories import make_app
+
+
+def cov_command():
+    app_instance = make_app()
+    app_instance.run_cov()
+~~~~~
+~~~~~python.new
+import typer
+from needle.pointer import L
+from stitcher.common import bus
+from stitcher.cli.factories import make_app
+from stitcher.workspace import WorkspaceNotFoundError
+
+
+def cov_command():
+    try:
+        app_instance = make_app()
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+    app_instance.run_cov()
+~~~~~
+
+`index.py`：
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/index.py
+~~~~~
+~~~~~python.old
+from stitcher.cli.factories import make_app
+
+
+def index_build_command():
+    app_instance = make_app()
+    app_instance.run_index_build()
+~~~~~
+~~~~~python.new
+import typer
+from needle.pointer import L
+from stitcher.common import bus
+from stitcher.cli.factories import make_app
+from stitcher.workspace import WorkspaceNotFoundError
+
+
+def index_build_command():
+    try:
+        app_instance = make_app()
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+    app_instance.run_index_build()
+~~~~~
+
+`pump.py`：
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/pump.py
+~~~~~
+~~~~~python.old
+import typer
+from needle.pointer import L
+from stitcher.common import bus, stitcher_operator as nexus
+from stitcher.cli.factories import make_app, make_interaction_handler
+
+
+def pump_command(
+    strip: bool = typer.Option(False, "--strip", help=nexus(L.cli.option.strip.help)),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help=nexus(L.cli.option.force.help),
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help=nexus(L.cli.option.reconcile.help),
+    ),
+    non_interactive: bool = typer.Option(
+        False,
+        "--non-interactive",
+        help=nexus(L.cli.option.non_interactive.help),
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=nexus(L.cli.option.refactor_dry_run.help)
+    ),
+):
+    if force and reconcile:
+        bus.error(L.error.cli.conflicting_options, opt1="force", opt2="reconcile")
+        raise typer.Exit(code=1)
+
+    # Use factory logic
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force or reconcile),
+    )
+
+    app_instance = make_app(handler)
+
+    # 1. Run Pump
+    result = app_instance.run_pump(
+        strip=strip, force=force, reconcile=reconcile, dry_run=dry_run
+    )
+    if not result.success:
+        raise typer.Exit(code=1)
+
+    # 2. Interactive Strip Confirmation
+    # Check if we have a handler (implies interactive mode) and redundant files exist
+    if handler and result.redundant_files and not strip:
+        typer.echo("")
+        typer.secho(
+            f"Found {len(result.redundant_files)} file(s) with redundant docstrings in source code.",
+            fg=typer.colors.YELLOW,
+        )
+        if typer.confirm("Do you want to strip them now?", default=True):
+            app_instance.run_strip(files=result.redundant_files, dry_run=dry_run)
+~~~~~
+~~~~~python.new
+import typer
+from needle.pointer import L
+from stitcher.common import bus, stitcher_operator as nexus
+from stitcher.cli.factories import make_app, make_interaction_handler
+from stitcher.workspace import WorkspaceNotFoundError
+
+
+def pump_command(
+    strip: bool = typer.Option(False, "--strip", help=nexus(L.cli.option.strip.help)),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help=nexus(L.cli.option.force.help),
+    ),
+    reconcile: bool = typer.Option(
+        False,
+        "--reconcile",
+        help=nexus(L.cli.option.reconcile.help),
+    ),
+    non_interactive: bool = typer.Option(
+        False,
+        "--non-interactive",
+        help=nexus(L.cli.option.non_interactive.help),
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=nexus(L.cli.option.refactor_dry_run.help)
+    ),
+):
+    if force and reconcile:
+        bus.error(L.error.cli.conflicting_options, opt1="force", opt2="reconcile")
+        raise typer.Exit(code=1)
+
+    # Use factory logic
+    handler = make_interaction_handler(
+        non_interactive=non_interactive,
+        auto_resolve_mode=(force or reconcile),
+    )
+
+    try:
+        app_instance = make_app(handler)
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+
+    # 1. Run Pump
+    result = app_instance.run_pump(
+        strip=strip, force=force, reconcile=reconcile, dry_run=dry_run
+    )
+    if not result.success:
+        raise typer.Exit(code=1)
+
+    # 2. Interactive Strip Confirmation
+    # Check if we have a handler (implies interactive mode) and redundant files exist
+    if handler and result.redundant_files and not strip:
+        typer.echo("")
+        typer.secho(
+            f"Found {len(result.redundant_files)} file(s) with redundant docstrings in source code.",
+            fg=typer.colors.YELLOW,
+        )
+        if typer.confirm("Do you want to strip them now?", default=True):
+            app_instance.run_strip(files=result.redundant_files, dry_run=dry_run)
+~~~~~
+
+最后是 `refactor.py`：
+
+~~~~~act
+patch_file
+packages/stitcher-cli/src/stitcher/cli/commands/refactor.py
+~~~~~
+~~~~~python.old
+import typer
+from pathlib import Path
+from stitcher.common import stitcher_operator as nexus
+from needle.pointer import L
+from stitcher.cli.factories import make_app
+
+
+def refactor_command(
+    migration_script: Path = typer.Argument(
+        ...,
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=nexus(L.cli.option.refactor_script_path.help),
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help=nexus(L.cli.option.refactor_dry_run.help),
+    ),
+    yes: bool = typer.Option(
+        False,
+        "-y",
+        "--yes",
+        help=nexus(L.cli.option.refactor_yes.help),
+    ),
+):
+    app_instance = make_app()
+
+    def confirm_callback(count: int) -> bool:
+        if yes:
+            return True
+        return typer.confirm(nexus(L.refactor.run.confirm), default=False)
+
+    success = app_instance.run_refactor_apply(
+        migration_script,
+        dry_run=dry_run,
+        confirm_callback=confirm_callback,
+    )
+
+    if not success:
+        raise typer.Exit(code=1)
+~~~~~
+~~~~~python.new
+import typer
+from pathlib import Path
+from stitcher.common import bus, stitcher_operator as nexus
+from needle.pointer import L
+from stitcher.cli.factories import make_app
+from stitcher.workspace import WorkspaceNotFoundError
+
+
+def refactor_command(
+    migration_script: Path = typer.Argument(
+        ...,
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help=nexus(L.cli.option.refactor_script_path.help),
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help=nexus(L.cli.option.refactor_dry_run.help),
+    ),
+    yes: bool = typer.Option(
+        False,
+        "-y",
+        "--yes",
+        help=nexus(L.cli.option.refactor_yes.help),
+    ),
+):
+    try:
+        app_instance = make_app()
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+
+    def confirm_callback(count: int) -> bool:
+        if yes:
+            return True
+        return typer.confirm(nexus(L.refactor.run.confirm), default=False)
+
+    success = app_instance.run_refactor_apply(
+        migration_script,
+        dry_run=dry_run,
+        confirm_callback=confirm_callback,
+    )
+
+    if not success:
+        raise typer.Exit(code=1)
+~~~~~
+
+#### Acts 3: 创建集成测试
+
+添加一个新的测试文件来验证此错误处理流程。
+
+~~~~~act
+write_file
+packages/stitcher-cli/tests/integration/test_error_handling.py
 ~~~~~
 ~~~~~python
-class WorkspaceError(Exception):
-    """Stitcher 工作区相关错误的基类。"""
-    pass
-
-class WorkspaceNotFoundError(WorkspaceError):
-    """当无法定位到合法的 Stitcher 工作区根目录时抛出。"""
-    def __init__(self, start_path: str):
-        self.start_path = start_path
-        super().__init__(
-            f"无法从路径 '{start_path}' 向上定位到 Stitcher 工作区。 "
-            "请确保该目录或其父目录中包含 .git 或配置了 [tool.uv.workspace] 的 pyproject.toml。"
-        )
-~~~~~
-
-#### Acts 2: 导出异常
-
-更新 `__init__.py` 以导出新的异常。
-
-~~~~~act
-patch_file
-packages/stitcher-workspace/src/stitcher/workspace/__init__.py
-~~~~~
-~~~~~python.old
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
-from .workspace import Workspace
-
-__all__ = ["Workspace"]
-~~~~~
-~~~~~python.new
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
-from .workspace import Workspace
-from .exceptions import WorkspaceError, WorkspaceNotFoundError
-
-__all__ = ["Workspace", "WorkspaceError", "WorkspaceNotFoundError"]
-~~~~~
-
-#### Acts 3: 强化根目录识别逻辑
-
-修改 `workspace.py`，移除回退逻辑并注入异常。
-
-~~~~~act
-patch_file
-packages/stitcher-workspace/src/stitcher/workspace/workspace.py
-~~~~~
-~~~~~python.old
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib  # type: ignore
-
-from stitcher.config import StitcherConfig
-
-log = logging.getLogger(__name__)
-
-
-def find_workspace_root(start_path: Path) -> Path:
-    current = start_path.resolve()
-    # If start_path is a file, start from its parent
-    if current.is_file():
-        current = current.parent
-
-    # Traverse upwards
-    for parent in [current] + list(current.parents):
-        # 1. Check for .git (strongest indicator)
-        if (parent / ".git").exists():
-            return parent
-
-        # 2. Check for pyproject.toml with workspace definition
-        pyproject = parent / "pyproject.toml"
-        if pyproject.exists():
-            try:
-                with pyproject.open("rb") as f:
-                    data = tomllib.load(f)
-                # Check for uv workspace or similar tools
-                if (
-                    "tool" in data
-                    and "uv" in data["tool"]
-                    and "workspace" in data["tool"]["uv"]
-                ):
-                    return parent
-            except Exception:
-                pass
-
-    # Fallback: if nothing found, return the start path (or raise error? For now, start path)
-    return start_path
-~~~~~
-~~~~~python.new
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib  # type: ignore
-
-from stitcher.config import StitcherConfig
-from .exceptions import WorkspaceNotFoundError
-
-log = logging.getLogger(__name__)
-
-
-def find_workspace_root(start_path: Path) -> Path:
-    current = start_path.resolve()
-    # If start_path is a file, start from its parent
-    if current.is_file():
-        current = current.parent
-
-    # Traverse upwards
-    for parent in [current] + list(current.parents):
-        # 1. Check for .git (strongest indicator)
-        if (parent / ".git").exists():
-            return parent
-
-        # 2. Check for pyproject.toml with workspace definition
-        pyproject = parent / "pyproject.toml"
-        if pyproject.exists():
-            try:
-                with pyproject.open("rb") as f:
-                    data = tomllib.load(f)
-                # Check for uv workspace or similar tools
-                if (
-                    "tool" in data
-                    and "uv" in data["tool"]
-                    and "workspace" in data["tool"]["uv"]
-                ):
-                    return parent
-            except Exception:
-                pass
-
-    # No root found in the entire hierarchy
-    raise WorkspaceNotFoundError(str(start_path))
-~~~~~
-
-#### Acts 4: 增加单元测试
-
-在 `test_workspace.py` 中增加对异常情况的验证。
-
-~~~~~act
-patch_file
-packages/stitcher-workspace/tests/unit/test_workspace.py
-~~~~~
-~~~~~python.old
-from stitcher.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory
-
-
-def test_discover_files_git(tmp_path):
-~~~~~
-~~~~~python.new
 import pytest
-from pathlib import Path
-from stitcher.workspace import Workspace, WorkspaceNotFoundError
-from stitcher.workspace.workspace import find_workspace_root
-from stitcher.test_utils import WorkspaceFactory
+from typer.testing import CliRunner
+
+from stitcher.cli.main import app
+from stitcher.test_utils import SpyBus
+from needle.pointer import L
 
 
-def test_find_workspace_root_throws_on_failure(tmp_path):
-    # Arrange: 创建一个完全空目录，没有任何 .git 或 pyproject.toml
-    empty_dir = tmp_path / "abandoned_zone"
-    empty_dir.mkdir()
-    
-    # Act & Assert
-    with pytest.raises(WorkspaceNotFoundError) as excinfo:
-        find_workspace_root(empty_dir)
-    
-    assert str(empty_dir) in str(excinfo.value)
+def test_command_fails_gracefully_outside_workspace(tmp_path, monkeypatch):
+    """
+    Verifies that running a command outside a valid workspace
+    (no .git, no pyproject.toml) fails with a user-friendly error.
+    """
+    # Arrange: Create a directory that is NOT a valid workspace root.
+    invalid_workspace = tmp_path / "not_a_project"
+    subdir = invalid_workspace / "some_dir"
+    subdir.mkdir(parents=True)
 
+    # Change into the subdirectory to simulate running from a nested location
+    monkeypatch.chdir(subdir)
 
-def test_discover_files_git(tmp_path):
+    spy_bus = SpyBus()
+    runner = CliRunner()
+
+    # Act
+    with spy_bus.patch(monkeypatch):
+        result = runner.invoke(app, ["check"], catch_exceptions=False)
+
+    # Assert
+    assert result.exit_code == 1, "Command should exit with failure code"
+
+    # Assert the correct, user-friendly error message was emitted
+    spy_bus.assert_id_called(L.error.workspace.not_found, level="error")
+
+    # Verify the message contains the path from where the command was run
+    error_msg = next(
+        (m for m in spy_bus.get_messages() if m["id"] == str(L.error.workspace.not_found)),
+        None,
+    )
+    assert error_msg is not None
+    assert str(subdir) in error_msg["params"]["path"]
 ~~~~~
 
 ### 下一步建议
 
-1.  **全局错误捕获**: 既然 `WorkspaceNotFoundError` 现在会被抛出，我们需要确保 `stitcher-cli` 的入口点能够优雅地捕获此异常，并向用户输出人性化的错误信息（使用 `bus.error`），而不是原始的堆栈轨迹。
-2.  **DI 注入**: 接下来应处理 P0 任务，即在 `StitcherApp` 中实现 `URIGeneratorProtocol` 的构造函数注入，彻底消除 `lang-python` 与核心逻辑间的硬编码依赖。
+我们已经成功地将工作区发现的失败情况从一个隐式的、危险的回退行为转变为一个明确的、对用户友好的错误。这大大增强了系统的健壮性。
+
+接下来，我们将继续执行宏观计划中的 **P0 级任务**：
+
+- **完成依赖注入**: 在 `StitcherApp` 组装阶段创建 `URIGeneratorProtocol` 的单例，并将其通过构造函数注入到所有需要它的下游组件（如 `SidecarTransformer`, `Planner`, `Adapter`）中，彻底消除硬编码的 `PythonURIGenerator()` 实例化。

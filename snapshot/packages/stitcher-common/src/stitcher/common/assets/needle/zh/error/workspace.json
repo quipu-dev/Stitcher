@@ -1,0 +1,3 @@
+{
+  "not_found": "❌ 无法从路径 '{path}' 定位到工作区根目录。请在包含 .git 目录或配置了 [tool.uv.workspace] 的 pyproject.toml 的项目内运行 stitcher。"
+}

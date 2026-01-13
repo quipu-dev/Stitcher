@@ -2,6 +2,7 @@ import typer
 from stitcher.common import bus, stitcher_operator as nexus
 from needle.pointer import L
 from stitcher.cli.factories import make_app, make_interaction_handler
+from stitcher.workspace import WorkspaceNotFoundError
 
 
 def check_command(
@@ -33,7 +34,12 @@ def check_command(
         auto_resolve_mode=(force_relink or reconcile),
     )
 
-    app_instance = make_app(handler)
+    try:
+        app_instance = make_app(handler)
+    except WorkspaceNotFoundError as e:
+        bus.error(L.error.workspace.not_found, path=e.start_path)
+        raise typer.Exit(code=1)
+
     success = app_instance.run_check(force_relink=force_relink, reconcile=reconcile)
     if not success:
         raise typer.Exit(code=1)

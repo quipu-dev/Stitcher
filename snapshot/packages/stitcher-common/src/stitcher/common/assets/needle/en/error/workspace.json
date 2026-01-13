@@ -1,0 +1,3 @@
+{
+  "not_found": "❌ Failed to find workspace root from '{path}'. Please run stitcher from within a project containing a .git directory or a pyproject.toml with a [tool.uv.workspace] section."
+}
