@@ -1,0 +1,3 @@
+Workspace.find_owning_package: "Finds the nearest directory containing a pyproject.toml upwards from the file_path.\nThis determines the physical location of the stitcher.lock file.\nReturns the workspace root if no package-level pyproject.toml is found."
+Workspace.to_workspace_relative: "Converts an absolute path to a POSIX path relative to the workspace root.\nThis is the canonical format for SURI paths."
+find_workspace_root: "Finds the workspace root by looking for a .git directory or a top-level pyproject.toml\ndefining a workspace."

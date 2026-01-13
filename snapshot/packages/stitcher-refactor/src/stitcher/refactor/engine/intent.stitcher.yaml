@@ -15,3 +15,5 @@
 "SidecarUpdateIntent": |-
   Intent to update keys within a sidecar file due to a symbol rename.
   This is a high-level intent that will be processed by a dedicated aggregator.
+LockPathUpdateIntent: Represents a mass update of SURIs due to file/directory moves.
+LockSymbolUpdateIntent: Represents a renaming of a symbol within the stitcher.lock file.

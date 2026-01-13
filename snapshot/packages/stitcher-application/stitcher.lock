@@ -1,0 +1,619 @@
+{
+  "fingerprints": {
+    "py://packages/stitcher-application/src/stitcher/__init__.py#__path__": {},
+    "py://packages/stitcher-application/src/stitcher/app/__init__.py#__all__": {},
+    "py://packages/stitcher-application/src/stitcher/app/__init__.py#__path__": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp": {
+      "baseline_code_signature_text": "class StitcherApp:",
+      "baseline_code_structure_hash": "1c49ae8d2042ba1f2a332434e3a1c361d1433844f97d0b7226a4e519978c102b",
+      "baseline_yaml_content_hash": "56ba56645ae8bc442c435ee789bb3cfbddd0eaefc0e0a33b11b20ba6d391dc55"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol, transformer: LanguageTransformerProtocol, fingerprint_strategy: FingerprintStrategyProtocol, interaction_handler: Optional[InteractionHandler] = None):",
+      "baseline_code_structure_hash": "da60d66c14e54996f9d0958ad20cacd2099cc1a4c9abc786e83fe7597c7c478c"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp._configure_and_scan": {
+      "baseline_code_signature_text": "def _configure_and_scan(self, config: StitcherConfig) -> List[ModuleDef]:",
+      "baseline_code_structure_hash": "05ce23e5b7304b078490cf92c16e582ffeec64c126bbfb05fe76774a45e8b505"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp._load_configs": {
+      "baseline_code_signature_text": "def _load_configs(self) -> Tuple[List[StitcherConfig], Optional[str]]:",
+      "baseline_code_structure_hash": "1504c712d9dbd4a7f3d6bc63ff1de5504012b399a8ce872360f93682cfca6508"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.check_runner": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.coverage_runner": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.db_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.differ": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.doc_manager": {
+      "baseline_yaml_content_hash": "eedb3a2e2e4147c6e1e0ce48d713c0afe012c7d053d33c1b6ecd8aeeb3017e2d"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.ensure_index_fresh": {
+      "baseline_code_signature_text": "def ensure_index_fresh(self) -> Dict[str, Any]:",
+      "baseline_code_structure_hash": "43905f3569c7522c9315c82e7d385de36b3464c11f59faa0a2c3184fa1ff4be1"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.file_indexer": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.fingerprint_strategy": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.index_runner": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.index_store": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.init_runner": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.lock_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.merger": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.pump_runner": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.refactor_runner": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_check": {
+      "baseline_code_signature_text": "def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:",
+      "baseline_code_structure_hash": "4cfe338208fefaf498e609a386a62469c06faddfb7d8cb43fbc915fd2d672ac8",
+      "baseline_yaml_content_hash": "39108ece98b238c3d8ca1a5d9fa0f66ebf78bd720f4a21221ba7cf558b0045af"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_cov": {
+      "baseline_code_signature_text": "def run_cov(self) -> bool:",
+      "baseline_code_structure_hash": "467e61a0733f6f49800fe43d3649708031cab08812b084481a5bd06ea22de03f"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_from_config": {
+      "baseline_code_signature_text": "def run_from_config(self, dry_run: bool = False) -> List[Path]:",
+      "baseline_code_structure_hash": "528ccaeb33903a69fbd5b4d22eb6a66a25ccae68915cf10281ed89c5e7295a02",
+      "baseline_yaml_content_hash": "d3d8bfddf45bd9dc9e558765c4952f7d36f45d238030eb9a355badfdda220dcb"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_index_build": {
+      "baseline_code_signature_text": "def run_index_build(self) -> bool:",
+      "baseline_code_structure_hash": "6b3102c08488ca5697e9375a9219a3a631be642db8109629fab0ffa3ac481707"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_init": {
+      "baseline_code_signature_text": "def run_init(self) -> List[Path]:",
+      "baseline_code_structure_hash": "9988dea2f1f20b309764846bd38f982dd4c1811ba89ae9e1d1ab439a480e303f",
+      "baseline_yaml_content_hash": "013f787d7bb1c9ea65c00d15ed54e57d1117496a37a7418128fcb3b6f063a07e"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_inject": {
+      "baseline_code_signature_text": "def run_inject(self, dry_run: bool = False) -> List[Path]:",
+      "baseline_code_structure_hash": "1a75ce89196266bb6ddbc245dfa3f3dbeb3bd673b14983151479549a8b3c67d5",
+      "baseline_yaml_content_hash": "ed7ee4c7531bc1122810817a589133d29736a98713165670b405cf4ae944f287"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_pump": {
+      "baseline_code_signature_text": "def run_pump(self, strip: bool = False, force: bool = False, reconcile: bool = False, dry_run: bool = False) -> PumpResult:",
+      "baseline_code_structure_hash": "ddd6f6930b3b24564069aef55e178568b9e2cfbf571fff8e43c27dfcca2d8fa0",
+      "baseline_yaml_content_hash": "a4087469e851d91b53efc885c5003ab5a83c7e5b68582f9bf1029bce0cbb73bf"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_refactor_apply": {
+      "baseline_code_signature_text": "def run_refactor_apply(self, migration_script: Path, dry_run: bool = False, confirm_callback: Optional[Callable[[int], bool]] = None) -> bool:",
+      "baseline_code_structure_hash": "1f70a2403d1deb812868717568abd06e3bcae9a73175c3a5ce0a0ced8a49928c"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.run_strip": {
+      "baseline_code_signature_text": "def run_strip(self, files: Optional[List[Path]] = None, dry_run: bool = False) -> List[Path]:",
+      "baseline_code_structure_hash": "2dcfc6fba8d17f78f1e9e99629019c4706207f3e51273131ed43c184d98860b3",
+      "baseline_yaml_content_hash": "14c8ff8d578021db2d09829ff2f435a87bfae34896a5bb8340a117bf2baec81c"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.scanner": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.stubgen_service": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.transform_runner": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.uri_generator": {},
+    "py://packages/stitcher-application/src/stitcher/app/core.py#StitcherApp.workspace": {},
+    "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler": {
+      "baseline_code_signature_text": "class NoOpInteractionHandler(InteractionHandler):",
+      "baseline_code_structure_hash": "bb45973058b9f945b4ef436a774e1c4c49f85e7f97b7213ff9218fbad6deb7c9",
+      "baseline_yaml_content_hash": "2fcf0d0dc8c8109c0cf141e89b828b2baea39f0147893c3b0fbbcef02a40e194"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler.__init__": {
+      "baseline_code_signature_text": "def __init__(self, force_relink: bool = False, reconcile: bool = False, hydrate_force: bool = False, hydrate_reconcile: bool = False):",
+      "baseline_code_structure_hash": "09ef630b340f0ef9d6c3ae16ede2ec79737227ddbcca5e255bcf864ae5b00b59"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler._force_relink": {},
+    "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler._hydrate_force": {},
+    "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler._hydrate_reconcile": {},
+    "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler._reconcile": {},
+    "py://packages/stitcher-application/src/stitcher/app/handlers/noop_handler.py#NoOpInteractionHandler.process_interactive_session": {
+      "baseline_code_signature_text": "def process_interactive_session(self, contexts: List[InteractionContext]) -> List[ResolutionAction]:",
+      "baseline_code_structure_hash": "72ab2928cd87e4ba0ccc8358dc09f0186a38a90654abd80ff66a8358659e5a1b",
+      "baseline_yaml_content_hash": "a921cbadd752de4f916efcd51dfe01e88bdc1bfec0eb7aa575c569f7e83f9c91"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/__init__.py#__all__": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/__init__.py#__all__": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter": {
+      "baseline_code_signature_text": "class CheckReporter:",
+      "baseline_code_structure_hash": "a020121feb6c8ba194e37a02119b71a6f4b34fe3eca53cff10c476bfd864d263"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter._report_issues": {
+      "baseline_code_signature_text": "def _report_issues(self, res: FileCheckResult) -> None:",
+      "baseline_code_structure_hash": "f568e55e3ef0b1383125c2f3c51f0b8917204cf36185aa423bc17293f1c981c9"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter.report": {
+      "baseline_code_signature_text": "def report(self, results: List[FileCheckResult]) -> bool:",
+      "baseline_code_structure_hash": "3b154b57774cb70599d76bad8a376720541936fda6490637a561551c556354f4"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver": {
+      "baseline_code_signature_text": "class CheckResolver:",
+      "baseline_code_structure_hash": "c7adf3e8d5b4f65f5f2e33e1aa1667c7c6ef18330c5077d17b10f8400880b42b"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, workspace: Workspace, parser: LanguageParserProtocol, doc_manager: DocumentManagerProtocol, lock_manager: LockManagerProtocol, uri_generator: URIGeneratorProtocol, interaction_handler: InteractionHandler | None, fingerprint_strategy: FingerprintStrategyProtocol):",
+      "baseline_code_structure_hash": "033ce7ec0a4d1567be4869e15bbd2666029bb4ac3d694dc8b540b7d90d956e2e"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._apply_resolutions": {
+      "baseline_code_signature_text": "def _apply_resolutions(self, resolutions: dict[str, list[tuple[InteractionContext, ResolutionAction]]]):",
+      "baseline_code_structure_hash": "8fa1e984418772a9390fc2dc4ce3ede528e4ab3cb75f6f07be74ce226ed4c2b5"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._compute_fingerprints": {
+      "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
+      "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._resolve_interactive": {
+      "baseline_code_signature_text": "def _resolve_interactive(self, results: List[FileCheckResult], conflicts: List[InteractionContext]) -> bool:",
+      "baseline_code_structure_hash": "5f44d69735f8f17ea4d54bc46f22d82c2b2429e7a4973b83383638b2f71fdf15"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._resolve_noop": {
+      "baseline_code_signature_text": "def _resolve_noop(self, results: List[FileCheckResult], conflicts: List[InteractionContext], force_relink: bool, reconcile: bool) -> bool:",
+      "baseline_code_structure_hash": "c561d28845f95abd80a480e5fb5dabe7aca335bac81b0e313963da98c2c0843d"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver._update_results": {
+      "baseline_code_signature_text": "def _update_results(self, results: List[FileCheckResult], resolutions: Dict[str, List[tuple[InteractionContext, ResolutionAction]]]):",
+      "baseline_code_structure_hash": "fdeb285fd2173090f82389156eb945580af39170d09c59146645ecc73813cc8e"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.auto_reconcile_docs": {
+      "baseline_code_signature_text": "def auto_reconcile_docs(self, results: List[FileCheckResult], modules: List[ModuleDef]):",
+      "baseline_code_structure_hash": "b19909870f99eac4c1aecbac8e9ad003854fe8513ee72cabbe21639f31f38718"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.fingerprint_strategy": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.interaction_handler": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.lock_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.parser": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.reformat_all": {
+      "baseline_code_signature_text": "def reformat_all(self, modules: List[ModuleDef]):",
+      "baseline_code_structure_hash": "1ffd9769c49297ddeaccf6ce1061dfa70a81478a8bbd6e4d5720439f020f4f7a"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.resolve_conflicts": {
+      "baseline_code_signature_text": "def resolve_conflicts(self, results: List[FileCheckResult], conflicts: List[InteractionContext], force_relink: bool = False, reconcile: bool = False) -> bool:",
+      "baseline_code_structure_hash": "7c312fb41ba8a7400e0883713391a167220fa568d784e32a0b58963a346d7366"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.uri_generator": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver.workspace": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner": {
+      "baseline_code_signature_text": "class CheckRunner:",
+      "baseline_code_structure_hash": "51cb9a01b6a0263aeb242f78835ea5fd9cced46725a16807875266497033e248"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.__init__": {
+      "baseline_code_signature_text": "def __init__(self, doc_manager: DocumentManagerProtocol, lock_manager: LockManagerProtocol, uri_generator: URIGeneratorProtocol, fingerprint_strategy: FingerprintStrategyProtocol, index_store: IndexStoreProtocol, workspace: Workspace, differ: DifferProtocol, resolver: CheckResolver, reporter: CheckReporter, root_path: Path):",
+      "baseline_code_structure_hash": "cc38b50dca99104b8238f58ab55f8a5ef9e6c7f5f0e9adb5455bacec6f99dacd"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner._extract_conflicts": {
+      "baseline_code_signature_text": "def _extract_conflicts(self, analysis_result: AnalysisFileCheckResult) -> List[InteractionContext]:",
+      "baseline_code_structure_hash": "5830deb60e44b9fe089d9e3936118b69009143d8ea7dd8ca8b1b842fc5311ede"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.analyze_batch": {
+      "baseline_code_signature_text": "def analyze_batch(self, modules: List[ModuleDef]) -> Tuple[List[AnalysisFileCheckResult], List[InteractionContext]]:",
+      "baseline_code_structure_hash": "2c4280ce2f1a7452d83b1b06350402cfdfb205e4266bb3b7271fdc962a651a88"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.analyze_paths": {
+      "baseline_code_signature_text": "def analyze_paths(self, file_paths: List[str]) -> Tuple[List[AnalysisFileCheckResult], List[InteractionContext]]:",
+      "baseline_code_structure_hash": "779c4e435f73cd618f12ce43439bc2ecb8fad7124e15c8a37126abb76f3ea93c"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.auto_reconcile_docs": {
+      "baseline_code_signature_text": "def auto_reconcile_docs(self, results: List[AnalysisFileCheckResult], modules: List[ModuleDef]):",
+      "baseline_code_structure_hash": "85ea4d73d5eeeabb138a37d7bd20e4cff5a624933eb4ee4ef9b33210e15bb1ab"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.engine": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.fingerprint_strategy": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.index_store": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.lock_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.reformat_all": {
+      "baseline_code_signature_text": "def reformat_all(self, modules: List[ModuleDef]):",
+      "baseline_code_structure_hash": "1ffd9769c49297ddeaccf6ce1061dfa70a81478a8bbd6e4d5720439f020f4f7a"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.report": {
+      "baseline_code_signature_text": "def report(self, results: List[AnalysisFileCheckResult]) -> bool:",
+      "baseline_code_structure_hash": "3ece68e1827b99251cd5ddafbad08172af7e90e53ea01694ca7250176ac100b5"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.reporter": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.resolve_conflicts": {
+      "baseline_code_signature_text": "def resolve_conflicts(self, results: List[AnalysisFileCheckResult], conflicts: List[InteractionContext], force_relink: bool = False, reconcile: bool = False) -> bool:",
+      "baseline_code_structure_hash": "f2a9c5ad8856122e711f8f241ee443c55f811b8d5a23668b1ca98d3205b23b54"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.resolver": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.uri_generator": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.workspace": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter": {
+      "baseline_code_signature_text": "class ASTCheckSubjectAdapter(CheckSubject):",
+      "baseline_code_structure_hash": "48004a38598ca798b4c32f6be55355d88bcbec378ccbce4057501fd077340977",
+      "baseline_yaml_content_hash": "356ab574f0b4092d68d3bc296caab0ce3de8cc6ab4f1ecab682fd390d751acc9"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter.__init__": {
+      "baseline_code_signature_text": "def __init__(self, module_def: ModuleDef, doc_manager: DocumentManagerProtocol, lock_manager: LockManagerProtocol, uri_generator: URIGeneratorProtocol, workspace: Workspace, fingerprint_strategy: FingerprintStrategyProtocol, root_path: Path):",
+      "baseline_code_structure_hash": "b81cb1fc94200e0e3764dacf7b06c77a5e80c761f7b0684eea39fe00276e4ddc"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter._compute_fingerprints": {
+      "baseline_code_signature_text": "def _compute_fingerprints(self) -> Dict[str, Fingerprint]:",
+      "baseline_code_structure_hash": "afc8393ac846bb680d70d6d2bc563fd461d3fd584e9a2cc310ec8c843778d50f"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter._doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter._fingerprint_strategy": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter._lock_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter._module": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter._root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter._uri_generator": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter._workspace": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter.file_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter.get_all_symbol_states": {
+      "baseline_code_signature_text": "def get_all_symbol_states(self) -> Dict[str, SymbolState]:",
+      "baseline_code_structure_hash": "da3a7bc7fbfb113b61f4d21d4ec712fe9831709099fa568fda05d92dacac81a2"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter.is_documentable": {
+      "baseline_code_signature_text": "def is_documentable(self) -> bool:",
+      "baseline_code_structure_hash": "1a55c9ded7bf45553f63ae27c049594f5faa1245bd0c6ce98f4a0d2d7cd30db7"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#ASTCheckSubjectAdapter.is_tracked": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter": {
+      "baseline_code_signature_text": "class IndexCheckSubjectAdapter(CheckSubject):",
+      "baseline_code_structure_hash": "2d58ecb2c30492b92b72c1e76df294fc27becfd22fe1a306f752cd98d42b3f99"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter.__init__": {
+      "baseline_code_signature_text": "def __init__(self, file_path: str, index_store: IndexStoreProtocol, doc_manager: DocumentManagerProtocol, lock_manager: LockManagerProtocol, uri_generator: URIGeneratorProtocol, workspace: Workspace, root_path: Path):",
+      "baseline_code_structure_hash": "ca607966836c7bed4f9b58f72076332f444a3789791ea7c27725cf82ef90a866"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._file_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._index_store": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._is_public": {
+      "baseline_code_signature_text": "def _is_public(self, fqn: str) -> bool:",
+      "baseline_code_structure_hash": "75abdec36c85579d54f11f1663089a95af29cfc091243ded89b22c294ee56554"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._lock_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._uri_generator": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter._workspace": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter.file_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter.get_all_symbol_states": {
+      "baseline_code_signature_text": "def get_all_symbol_states(self) -> Dict[str, SymbolState]:",
+      "baseline_code_structure_hash": "da3a7bc7fbfb113b61f4d21d4ec712fe9831709099fa568fda05d92dacac81a2"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter.is_documentable": {
+      "baseline_code_signature_text": "def is_documentable(self) -> bool:",
+      "baseline_code_structure_hash": "1a55c9ded7bf45553f63ae27c049594f5faa1245bd0c6ce98f4a0d2d7cd30db7"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/subject.py#IndexCheckSubjectAdapter.is_tracked": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner": {
+      "baseline_code_signature_text": "class CoverageRunner:",
+      "baseline_code_structure_hash": "2cb38a2ee50eaf9fe54610e0cb4b1479bb0eecae8257bf4f4fdbb2c413eba011"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManagerProtocol, index_store: IndexStoreProtocol):",
+      "baseline_code_structure_hash": "4a6f530bba38b8cc0bf9acef84e8b831ff77b829a14e9932535e1da6e156ca2b"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner._analyze_path_coverage": {
+      "baseline_code_signature_text": "def _analyze_path_coverage(self, file_path: str) -> CoverageResult:",
+      "baseline_code_structure_hash": "ee243970eb2d6e5cd2d082a40859a364421b824e17c9b19202be1adfa8ad2b18"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.index_store": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.report": {
+      "baseline_code_signature_text": "def report(self, results: List[CoverageResult]):",
+      "baseline_code_structure_hash": "e53a8cddc75897a1498351447783092631925cc788a3b708e9ef928c48fb3642"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/coverage.py#CoverageRunner.run_batch": {
+      "baseline_code_signature_text": "def run_batch(self, file_paths: List[str]) -> List[CoverageResult]:",
+      "baseline_code_structure_hash": "06f64ff5f65005809b3f27845894928f8cb0a7c0d772f316a97f30a6cfa5a89d"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/index.py#IndexRunner": {
+      "baseline_code_signature_text": "class IndexRunner:",
+      "baseline_code_structure_hash": "4bd965e6da96d1aa904399590cc12cf8faa2e158d55df8cfc6fa2f2104154098"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/index.py#IndexRunner.__init__": {
+      "baseline_code_signature_text": "def __init__(self, db_manager: DatabaseManager, indexer: FileIndexer):",
+      "baseline_code_structure_hash": "e99918cc8c6395b4f362f72986e9f71a713281fbc03969e3b118748270f9c7fd"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/index.py#IndexRunner.db_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/index.py#IndexRunner.indexer": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/index.py#IndexRunner.run_build": {
+      "baseline_code_signature_text": "def run_build(self, workspace: Workspace) -> Dict[str, Any]:",
+      "baseline_code_structure_hash": "c43fcb271acb41f428ab69ed49861d2ffc9bf2b475f2ebb06084065adf503a79"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner": {
+      "baseline_code_signature_text": "class InitRunner:",
+      "baseline_code_structure_hash": "2c9d7163f28330dc5e1c14fa5300d8b3725c6d953ff8552efa180f159a6d83e6"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, workspace: Workspace, doc_manager: DocumentManagerProtocol, lock_manager: LockManagerProtocol, uri_generator: URIGeneratorProtocol, fingerprint_strategy: FingerprintStrategyProtocol):",
+      "baseline_code_structure_hash": "ee97d71eba94d373e292efb7137d2676658dd7974b589146eef50660fbced617"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner._compute_fingerprints": {
+      "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
+      "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.fingerprint_strategy": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.lock_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.run_batch": {
+      "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef]) -> List[Path]:",
+      "baseline_code_structure_hash": "c1ff6f56f7d26ae7ea8261fb6f0d4edd05d0e48fb94eca8badf0ea5eed760684"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.uri_generator": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/init.py#InitRunner.workspace": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/__init__.py#__all__": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor": {
+      "baseline_code_signature_text": "class PumpExecutor:",
+      "baseline_code_structure_hash": "3a67aa1b8e3a48f99ebfdb68cfb6b08f1724d652f711680bd7f55b23ecacfae5"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, workspace: Workspace, doc_manager: DocumentManagerProtocol, lock_manager: LockManagerProtocol, uri_generator: URIGeneratorProtocol, transformer: LanguageTransformerProtocol, merger: DocstringMergerProtocol, fingerprint_strategy: FingerprintStrategyProtocol):",
+      "baseline_code_structure_hash": "d61e74ba73c9063ae33877a429bced9041c6798086d3776355c409b643fd20f4"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor._compute_fingerprints": {
+      "baseline_code_signature_text": "def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:",
+      "baseline_code_structure_hash": "8d9c5fab3d1e0f3d5fcf40e3371f28c19d5a2eb38b8f0ff1732ca72a047aa0bd"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor._execute_strip_jobs": {
+      "baseline_code_signature_text": "def _execute_strip_jobs(self, strip_jobs: Dict[str, List[str]], tm: TransactionManager):",
+      "baseline_code_structure_hash": "db6309c332cdf2d28f7155ec5ad6f3509991b026d8eb6d094cb61ba682db22be"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor._generate_execution_plan": {
+      "baseline_code_signature_text": "def _generate_execution_plan(self, module: ModuleDef, decisions: Dict[str, ResolutionAction], strip_requested: bool, source_docs: Dict[str, DocstringIR]) -> Dict[str, FunctionExecutionPlan]:",
+      "baseline_code_structure_hash": "976221d0599447799146be2a068443dd5266368c847a1a3c085787228b7b6b03"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.execute": {
+      "baseline_code_signature_text": "def execute(self, modules: List[ModuleDef], decisions: Dict[str, ResolutionAction], tm: TransactionManager, strip: bool) -> PumpResult:",
+      "baseline_code_structure_hash": "f0206adb340b59ca612be2c381360c567888b436b5d6173a6f33ac6ce7f2444d"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.fingerprint_strategy": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.lock_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.merger": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.transformer": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.uri_generator": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/executor.py#PumpExecutor.workspace": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/protocols.py#PumpExecutorProtocol": {
+      "baseline_code_signature_text": "class PumpExecutorProtocol(Protocol):",
+      "baseline_code_structure_hash": "789a7a540ebc3300d758af5e33b22b5b14df58e382e62aa2b7586c29a1d8088c"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/protocols.py#PumpExecutorProtocol.execute": {
+      "baseline_code_signature_text": "def execute(self, modules: List[ModuleDef], decisions: Dict[str, ResolutionAction], tm: TransactionManager, strip: bool) -> PumpResult:",
+      "baseline_code_structure_hash": "f0206adb340b59ca612be2c381360c567888b436b5d6173a6f33ac6ce7f2444d"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner": {
+      "baseline_code_signature_text": "class PumpRunner:",
+      "baseline_code_structure_hash": "f32cd836f7a4265c873827c8bf5ba6e0ee9868d683bd9170faf9aa1833ba2bcb"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.__init__": {
+      "baseline_code_signature_text": "def __init__(self, pump_engine: PumpEngine, executor: PumpExecutorProtocol, interaction_handler: InteractionHandler | None, doc_manager: DocumentManagerProtocol, lock_manager: LockManagerProtocol, uri_generator: URIGeneratorProtocol, workspace: Workspace, fingerprint_strategy: FingerprintStrategyProtocol):",
+      "baseline_code_structure_hash": "f3fe575533d485b2ca3d26ab9da25595c8fa0cf17030a99ce4e10f88c0b73b40"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.executor": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.fingerprint_strategy": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.interaction_handler": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.lock_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.pump_engine": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.run_batch": {
+      "baseline_code_signature_text": "def run_batch(self, modules: List[ModuleDef], config: StitcherConfig, tm: TransactionManager, strip: bool = False, force: bool = False, reconcile: bool = False) -> PumpResult:",
+      "baseline_code_structure_hash": "10275f1445fae0ddf9d6c9a93ed190107938c114c9ec54dd8c7c7a63228b183a"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.uri_generator": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/pump/runner.py#PumpRunner.workspace": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorRunner": {
+      "baseline_code_signature_text": "class RefactorRunner:",
+      "baseline_code_structure_hash": "3fdfdc7d87145f7a37995377a7eb2abd5cceb75b9e0b8b07f4e628980020cd4b"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorRunner.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, index_store: IndexStoreProtocol, file_indexer: FileIndexer):",
+      "baseline_code_structure_hash": "29cc421141df494fb05dc052445b2117cb372d3626a3fde4ed301c50aae8693a"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorRunner.file_indexer": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorRunner.index_store": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorRunner.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/refactor.py#RefactorRunner.run_apply": {
+      "baseline_code_signature_text": "def run_apply(self, migration_script: Path, config: StitcherConfig, dry_run: bool = False, confirm_callback: Optional[Callable[[int], bool]] = None) -> bool:",
+      "baseline_code_structure_hash": "f4c8ec05521cba7b1380ddd595a6ea806690da985365733d874bae3403bccd4b"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/transform.py#TransformRunner": {
+      "baseline_code_signature_text": "class TransformRunner:",
+      "baseline_code_structure_hash": "8f26048a25c09e9b90fefe3c9c895e8713966c5018c405c95387d0bba5e62bf5"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/transform.py#TransformRunner.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, doc_manager: DocumentManagerProtocol, transformer: LanguageTransformerProtocol):",
+      "baseline_code_structure_hash": "10ba26cba314dab82fb16deb09f729b9b803c27b591171c39fed675d2365351f"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/transform.py#TransformRunner.doc_manager": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/transform.py#TransformRunner.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/runners/transform.py#TransformRunner.run_inject_batch": {
+      "baseline_code_signature_text": "def run_inject_batch(self, modules: List[ModuleDef], tm: TransactionManager) -> List[Path]:",
+      "baseline_code_structure_hash": "3e9cdf94f103f92a980983e12b6a866619bcb2f1d4603887ce664b69741e6336"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/transform.py#TransformRunner.run_strip": {
+      "baseline_code_signature_text": "def run_strip(self, files: List[Path], tm: TransactionManager) -> List[Path]:",
+      "baseline_code_structure_hash": "5b63ebec37fd4da077d5aad4504e9504798478477360c9a9a6fa64bff30303dd"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/transform.py#TransformRunner.transformer": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/__init__.py#__all__": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager": {
+      "baseline_code_signature_text": "class DocumentManager:",
+      "baseline_code_structure_hash": "6d0f45ae24fed508e17a32aa16ba0a6cc850bcf356d04fa6431eae4775d44793",
+      "baseline_yaml_content_hash": "5ad8f647cc1d900dfd03553f9f9136ddb6cc0ecf43ee8bbc1db947814211e271"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path):",
+      "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._apply_to_class": {
+      "baseline_code_signature_text": "def _apply_to_class(self, cls: ClassDef, docs: Dict[str, DocstringIR], prefix: str = ''):",
+      "baseline_code_structure_hash": "2157275cbd571a861fa9ccb640d5b4e50ae44173ec835f6ab9d8508decac76f7"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._apply_to_function": {
+      "baseline_code_signature_text": "def _apply_to_function(self, func: FunctionDef, docs: Dict[str, DocstringIR], prefix: str = ''):",
+      "baseline_code_structure_hash": "9b71aea848284900be67e2b9d58d988bf866dc92c6b6c07cbe5eb915e7683d01"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._deserialize_ir": {
+      "baseline_code_signature_text": "def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:",
+      "baseline_code_structure_hash": "d540c75ebbf8ac16bc068a35f5530518b1cea50bc05543f18f973876eeb2f3e2",
+      "baseline_yaml_content_hash": "5f0570cbe3ff447357ead84450a4f5aaf12d466b2576e6087fa4b64b3c47a98c"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._extract_from_class": {
+      "baseline_code_signature_text": "def _extract_from_class(self, cls: ClassDef, prefix: str = '') -> Dict[str, DocstringIR]:",
+      "baseline_code_structure_hash": "04658528dda48ba6f4553631c892e17ace2f350167ace9186581a222082e5397",
+      "baseline_yaml_content_hash": "a7d2e19478cc208c6ac38b9d8894e24f732ca1d6c66b27f5251160beb592b8f3"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._extract_from_function": {
+      "baseline_code_signature_text": "def _extract_from_function(self, func: FunctionDef, prefix: str = '') -> Dict[str, DocstringIR]:",
+      "baseline_code_structure_hash": "fcdf03f80b7df20eb645399a1b3970a47c6a78b3d98364ac3dbd34739f06cfd1",
+      "baseline_yaml_content_hash": "d618bc5c7f5f8567fdf81168eed319ecd3ba82b43fba4f75d7aa64fc2ed8b8e0"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._extract_keys": {
+      "baseline_code_signature_text": "def _extract_keys(self, module: ModuleDef, public_only: bool) -> set:",
+      "baseline_code_structure_hash": "7a2c8ee81bdded8693b6ab2a3034c3459b54ccda65b0a41f3c84f4f2e7ab9682",
+      "baseline_yaml_content_hash": "1ce6c578a26aaa0fbbfca857442133ee3295592534adce0009938acb12f371e3"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._serialize_ir": {
+      "baseline_code_signature_text": "def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
+      "baseline_code_structure_hash": "e56a0adff3469aa6298fdb962bf102b0ba1154d1d861c3a7668a0fffb4def6ea",
+      "baseline_yaml_content_hash": "16e102b61434fa6dd4b1ea93a3270f57784033d8b58f51aff23ac67a6630b5ce"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager._sidecar_adapter": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.apply_docs_to_module": {
+      "baseline_code_signature_text": "def apply_docs_to_module(self, module: ModuleDef) -> None:",
+      "baseline_code_structure_hash": "c6645f43c1a821f38d963df39121da79f021da316cc6ef453a74d3357a1b402d",
+      "baseline_yaml_content_hash": "4414b06edfe2e7d9ac3513b900c861a844b53ce5797973896b568f567381bbdb"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.check_consistency_with_symbols": {
+      "baseline_code_signature_text": "def check_consistency_with_symbols(self, file_path: str, actual_symbols: List[SymbolRecord]) -> Dict[str, set]:",
+      "baseline_code_structure_hash": "b130f9cbb9eff6c68af78e8771a77ea4fb3e43dab5b829632758ab276c21fe37",
+      "baseline_yaml_content_hash": "2adcc6b52c161f00afe22a611fabb92d9103fe7fd893b716fc07ed27a5f13294"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.check_module": {
+      "baseline_code_signature_text": "def check_module(self, module: ModuleDef) -> Dict[str, set]:",
+      "baseline_code_structure_hash": "f07c3476847541b2c2779bdf0f2e509ccb12c5fda9c933070d963215d24d6f9c",
+      "baseline_yaml_content_hash": "e23620966b1257a1218186cf795fa98caccde9df4fcbb53f6dcec3e7fcc066b5"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.compute_ir_hash": {
+      "baseline_code_signature_text": "def compute_ir_hash(self, ir: DocstringIR) -> str:",
+      "baseline_code_structure_hash": "1c06e4cb242c9eeb0d45807faa0e6ee871f890a7cb5d47bdb5acd5f529162032"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.compute_yaml_content_hash": {
+      "baseline_code_signature_text": "def compute_yaml_content_hash(self, content: Union[str, Dict[str, Any]]) -> str:",
+      "baseline_code_structure_hash": "9b0193fc54ae81f01144d1408e8008630f86ad52d4feca7eaea809e9ef11ae6c",
+      "baseline_yaml_content_hash": "cf76c9a02656f387dcdd2153bc83fa7fae974c30b829eba1df05dc7e592eba25"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.compute_yaml_content_hashes": {
+      "baseline_code_signature_text": "def compute_yaml_content_hashes(self, module: ModuleDef) -> Dict[str, str]:",
+      "baseline_code_structure_hash": "dfcbf92e9dc8b80168adf3b58c20280a105de891575b7ac2e92e68c31a7032bd",
+      "baseline_yaml_content_hash": "5af0e615ba0abfb5c4d821de4ea0ac9e210366143d1dfe17a892512f424afd29"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.compute_yaml_hashes_for_path": {
+      "baseline_code_signature_text": "def compute_yaml_hashes_for_path(self, file_path: str) -> Dict[str, str]:",
+      "baseline_code_structure_hash": "73078d02541efbbedf9612d07c31d585427adf83b59e8280143a51154551cc5b"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.dump_data": {
+      "baseline_code_signature_text": "def dump_data(self, data: Dict[str, Any]) -> str:",
+      "baseline_code_structure_hash": "87f7e2826b33e290acbcf8b13fbf140b1568a495c149839f651816938df73f32"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.dump_raw_data_to_string": {
+      "baseline_code_signature_text": "def dump_raw_data_to_string(self, data: Dict[str, Any]) -> str:",
+      "baseline_code_structure_hash": "a41ba7eaa06eb51f8d15d63a04dcb1f64fb61ee5ef3a562f40bbe2e2358b621f",
+      "baseline_yaml_content_hash": "007e6bf4fb5567e92960dc2adf8b27a74902c993719c357c027e8cd4601c3cb6"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.flatten_module_docs": {
+      "baseline_code_signature_text": "def flatten_module_docs(self, module: ModuleDef) -> Dict[str, DocstringIR]:",
+      "baseline_code_structure_hash": "743d7524d695e466e9bb0d5e32b9e05a599f694eb69f25a912e5f398fb2035d5",
+      "baseline_yaml_content_hash": "89f431b2c76878b80efef2a6d92fef633fab317702b4368dbf495fb0e64982d4"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.hydrate_module": {
+      "baseline_code_signature_text": "def hydrate_module(self, module: ModuleDef, force: bool = False, reconcile: bool = False, resolution_map: Optional[Dict[str, Any]] = None, dry_run: bool = False, source_docs_override: Optional[Dict[str, DocstringIR]] = None) -> Dict[str, Any]:",
+      "baseline_code_structure_hash": "34847454462aa9ad659ca6a579ac881b349c8956579d8d025f4406a9728616ec",
+      "baseline_yaml_content_hash": "a4fb37a5f60218d39cfc657bedba077ef1f7ae6229ef6f9b2d6c4d58f4d7fc52"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.load_docs_for_module": {
+      "baseline_code_signature_text": "def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:",
+      "baseline_code_structure_hash": "7470cd97a7b59b0e4d822b7c274493787c7254fb4c5aeaac42549a35b62002a0",
+      "baseline_yaml_content_hash": "a5f256c4763afa098eab47a6b83969a567577883e8db685bdb66ef3f60643c43"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.load_docs_for_path": {
+      "baseline_code_signature_text": "def load_docs_for_path(self, file_path: str) -> Dict[str, DocstringIR]:",
+      "baseline_code_structure_hash": "a36e455a746d04cd9e6395399920eaabb2ea9cc5a0e398f646502c351ae435fd"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.load_raw_data": {
+      "baseline_code_signature_text": "def load_raw_data(self, file_path: str) -> Dict[str, Any]:",
+      "baseline_code_structure_hash": "88708441449cfdec304ae1ade1b611eea13d9672cc731315de561248e2067207",
+      "baseline_yaml_content_hash": "9e7f8d506b8cd641f75028036f3f3e7942c1c90885d259513b755eb3e7de3f63"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.parser": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.reformat_docs_for_module": {
+      "baseline_code_signature_text": "def reformat_docs_for_module(self, module: ModuleDef) -> bool:",
+      "baseline_code_structure_hash": "a2f948dc6e91ac5cadfae6dd35803e41ac4599d7f1a652ab5837e4cabb34d632",
+      "baseline_yaml_content_hash": "2a5425854930cf4b2eb740e886855013dd77c75b8b4f032eb99bc5fb2d8da988"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.resolver": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.root_path": {
+      "baseline_yaml_content_hash": "ae19ba5d58eb34b77c99f67a28ec6605bbb661b4d7092fa36d9d0c9fc6eb7e9a"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.save_docs_for_module": {
+      "baseline_code_signature_text": "def save_docs_for_module(self, module: ModuleDef) -> Path:",
+      "baseline_code_structure_hash": "02e5fe452fa0690256cf2ccf7dd9bf4ee571745329485156eea4f2879692527a",
+      "baseline_yaml_content_hash": "c30f2cec878e8951aebe24bc87a7adb9fd507c0c59aafe0d2a5902e3f1b413b3"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.serialize_ir": {
+      "baseline_code_signature_text": "def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:",
+      "baseline_code_structure_hash": "e996d2c301e430e6574db44e0738e91ecac3f5c31cd175bcf5fd36a69b383c16"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.serializer": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/doc_manager.py#DocumentManager.set_strategy": {
+      "baseline_code_signature_text": "def set_strategy(self, parser: DocstringParserProtocol, serializer: DocstringSerializerProtocol):",
+      "baseline_code_structure_hash": "b9800de0282d3f7b7a216cc4fc1e457a5de9dff7c4c29bf5d4018b08cb47f2cf",
+      "baseline_yaml_content_hash": "0cff586d15ad7c0811defd1ec5212ab1c6bd75d7413abc32d53b54da34794e48"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/merger.py#DocstringMerger": {
+      "baseline_code_signature_text": "class DocstringMerger:",
+      "baseline_code_structure_hash": "a0de92b0baea2ee8146b2b336d0279c17ad352e5bfd262517b91a87b7f7bf655",
+      "baseline_yaml_content_hash": "c5541deecd6e5014edd123b9e472f2d8dbeaaaaec81ea6f9aa758d911880a638"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/merger.py#DocstringMerger.merge": {
+      "baseline_code_signature_text": "def merge(self, base: Optional[DocstringIR], incoming: DocstringIR) -> DocstringIR:",
+      "baseline_code_structure_hash": "f21bcf495ca5c34cbc4698acd7b76780a0035b754862d7d5257e2be60aa396e8",
+      "baseline_yaml_content_hash": "98e59ecb6edf9237e17f09d272bc317caa440b29c8d7dcead2fc8c0fd43d377f"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService": {
+      "baseline_code_signature_text": "class ScannerService:",
+      "baseline_code_structure_hash": "9beda3a2a9bfc873fc967152732dec7d0a63a4435327a70bd129b0bdee8322cc"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, parser: LanguageParserProtocol):",
+      "baseline_code_structure_hash": "fed09da8b7efbec03b7f522e6ddd99733a43992a11c845e7441a3e16a63ccf79"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.derive_logical_path": {
+      "baseline_code_signature_text": "def derive_logical_path(self, file_path: str) -> Path:",
+      "baseline_code_structure_hash": "70d34b2527c6981d773913b01ad8e94d7879d092c8f08092a03930124c1fc917"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.get_files_from_config": {
+      "baseline_code_signature_text": "def get_files_from_config(self, config: StitcherConfig) -> List[Path]:",
+      "baseline_code_structure_hash": "9c55b5bd2dc86c1ea413855828298e55668c59998e51fbec93a013c13b547cb1"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.had_errors": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.parser": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.process_plugins": {
+      "baseline_code_signature_text": "def process_plugins(self, plugins: Dict[str, str]) -> List[ModuleDef]:",
+      "baseline_code_structure_hash": "4a1b5f04395c3f8918bceb5be9b1595fbed8aabb7d47e1be9d24cc6fd1b9de79"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.root_path": {},
+    "py://packages/stitcher-application/src/stitcher/app/services/scanner.py#ScannerService.scan_files": {
+      "baseline_code_signature_text": "def scan_files(self, files_to_scan: List[Path]) -> List[ModuleDef]:",
+      "baseline_code_structure_hash": "9c25fa3899ba90cbf4820f04fee91733aa77fc94a5b0a72d553e3551c36b915c"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult": {
+      "baseline_code_signature_text": "class CoverageResult:",
+      "baseline_code_structure_hash": "6d0d2ab4caaf9c892009eb613a423ecd9e97edd5cb2b8837898dd630287b3740"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult.coverage": {},
+    "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult.documented_symbols": {},
+    "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult.missing_symbols": {},
+    "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult.path": {},
+    "py://packages/stitcher-application/src/stitcher/app/types.py#CoverageResult.total_symbols": {},
+    "py://packages/stitcher-application/src/stitcher/app/types.py#PumpResult": {
+      "baseline_code_signature_text": "class PumpResult:",
+      "baseline_code_structure_hash": "498bd3b553b95d825a1cee32bf6ec60588676ef7053d5adb031521f744693151"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/types.py#PumpResult.redundant_files": {},
+    "py://packages/stitcher-application/src/stitcher/app/types.py#PumpResult.success": {}
+  },
+  "version": "1.0"
+}

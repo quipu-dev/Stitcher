@@ -79,7 +79,9 @@ class SidecarAdapter(LanguageAdapter):
                 refs = parse_doc_references(content)
                 for fragment, line, col in refs:
                     # TODO: Replace temporary instantiation with dependency injection in Phase 3
-                    suri = PythonURIGenerator().generate_symbol_uri(rel_py_path, fragment)
+                    suri = PythonURIGenerator().generate_symbol_uri(
+                        rel_py_path, fragment
+                    )
                     references.append(
                         ReferenceRecord(
                             target_id=suri,

@@ -54,13 +54,6 @@ def create_test_app(
 
 
 def get_stored_hashes(project_root: Path, file_path: str) -> Dict[str, dict]:
-    """
-    Test helper to read fingerprints from the appropriate stitcher.lock file.
-    
-    This function simulates the logic of finding the owning package and reading
-    the lock file to retrieve fingerprint data, providing it in a format
-    (fragment -> dict) that is easy to assert against in tests.
-    """
     workspace = Workspace(project_root)
     lock_manager = LockFileManager()
 
@@ -75,11 +68,11 @@ def get_stored_hashes(project_root: Path, file_path: str) -> Dict[str, dict]:
     # We want to return a dict of {fragment: fingerprint_dict} for just this file.
     ws_rel_path = workspace.to_workspace_relative(abs_file_path)
     file_prefix = f"py://{ws_rel_path}#"
-    
+
     file_hashes = {}
     for suri, fp in lock_data.items():
         if suri.startswith(file_prefix):
-            fragment = suri[len(file_prefix):]
+            fragment = suri[len(file_prefix) :]
             file_hashes[fragment] = fp.to_dict()
-            
+
     return file_hashes

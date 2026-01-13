@@ -39,9 +39,7 @@ class LockFileManager(LockManagerProtocol):
         lock_path = package_root / self.LOCK_FILE_NAME
         lock_path.parent.mkdir(parents=True, exist_ok=True)
 
-        serializable_data = {
-            suri: fp.to_dict() for suri, fp in data.items()
-        }
+        serializable_data = {suri: fp.to_dict() for suri, fp in data.items()}
 
         lock_content = {
             "version": "1.0",
@@ -57,13 +55,11 @@ class LockFileManager(LockManagerProtocol):
         Serializes the fingerprint data to a formatted JSON string representing
         the stitcher.lock content.
         """
-        serializable_data = {
-            suri: fp.to_dict() for suri, fp in data.items()
-        }
+        serializable_data = {suri: fp.to_dict() for suri, fp in data.items()}
 
         lock_content = {
             "version": "1.0",
             "fingerprints": serializable_data,
         }
-        
+
         return json.dumps(lock_content, indent=2, sort_keys=True) + "\n"

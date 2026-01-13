@@ -1,5 +1,4 @@
 import json
-import yaml
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.analysis.semantic import SemanticGraph
 from stitcher.common.transaction import TransactionManager, WriteFileOp
@@ -18,7 +17,9 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     new_suri = f"py://{py_rel_path}#NewNameClass"
 
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})}
+    fingerprints = {
+        old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})
+    }
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
@@ -26,15 +27,23 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
         .with_pyproject("packages/pkg_a")
         .with_source("packages/pkg_a/src/pkga_lib/__init__.py", "")
         .with_source("packages/pkg_a/src/pkga_lib/core.py", "class OldNameClass: pass")
-        .with_docs("packages/pkg_a/src/pkga_lib/core.stitcher.yaml", {"OldNameClass": "Docs"})
+        .with_docs(
+            "packages/pkg_a/src/pkga_lib/core.stitcher.yaml", {"OldNameClass": "Docs"}
+        )
         .with_raw_file("packages/pkg_a/stitcher.lock", lock_content)
-        .with_source("packages/pkg_a/tests/test_core.py", "from pkga_lib.core import OldNameClass")
-        
+        .with_source(
+            "packages/pkg_a/tests/test_core.py",
+            "from pkga_lib.core import OldNameClass",
+        )
         .with_pyproject("packages/pkg_b")
         .with_source("packages/pkg_b/src/pkgb_app/__init__.py", "")
-        .with_source("packages/pkg_b/src/pkgb_app/main.py", "from pkga_lib.core import OldNameClass")
-        
-        .with_source("tests/integration/test_system.py", "from pkga_lib.core import OldNameClass")
+        .with_source(
+            "packages/pkg_b/src/pkgb_app/main.py",
+            "from pkga_lib.core import OldNameClass",
+        )
+        .with_source(
+            "tests/integration/test_system.py", "from pkga_lib.core import OldNameClass"
+        )
         .build()
     )
 
@@ -47,7 +56,7 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("pkga_lib")
     graph.load("pkgb_app")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace,
@@ -60,7 +69,9 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner
 
-    op = RenameSymbolOperation("pkga_lib.core.OldNameClass", "pkga_lib.core.NewNameClass")
+    op = RenameSymbolOperation(
+        "pkga_lib.core.OldNameClass", "pkga_lib.core.NewNameClass"
+    )
     spec = MigrationSpec().add(op)
     planner = Planner()
     file_ops = planner.plan(spec, ctx)

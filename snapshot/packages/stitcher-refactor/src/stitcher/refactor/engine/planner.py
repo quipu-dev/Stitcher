@@ -73,7 +73,7 @@ class Planner:
 
         sidecar_adapter = SidecarAdapter(ctx.workspace.root_path)
         sidecar_transformer = SidecarTransformer()
-        
+
         for path, intents in sidecar_updates.items():
             if path.suffix not in [".yaml", ".yml"]:
                 continue
@@ -107,32 +107,48 @@ class Planner:
                 lock_states[pkg_root] = ctx.lock_manager.load(pkg_root)
             return lock_states[pkg_root]
 
-        lock_intents = [i for i in all_intents if isinstance(i, (LockSymbolUpdateIntent, LockPathUpdateIntent))]
-        
+        lock_intents = [
+            i
+            for i in all_intents
+            if isinstance(i, (LockSymbolUpdateIntent, LockPathUpdateIntent))
+        ]
+
         for intent in lock_intents:
             if isinstance(intent, LockPathUpdateIntent):
                 old_abs_path = ctx.workspace.root_path / intent.old_path_prefix
                 new_abs_path = ctx.workspace.root_path / intent.new_path_prefix
                 src_pkg_root = ctx.workspace.find_owning_package(old_abs_path)
                 dest_pkg_root = ctx.workspace.find_owning_package(new_abs_path)
-                
+
                 src_data = get_lock_data(src_pkg_root)
-                dest_data = get_lock_data(dest_pkg_root) if src_pkg_root != dest_pkg_root else src_data
-                
+                dest_data = (
+                    get_lock_data(dest_pkg_root)
+                    if src_pkg_root != dest_pkg_root
+                    else src_data
+                )
+
                 uris_to_move = {}
                 for suri, fp in src_data.items():
                     path, fragment = PythonURIGenerator.parse(suri)
-                    if path == intent.old_path_prefix or path.startswith(intent.old_path_prefix + "/"):
-                        new_path = path.replace(intent.old_path_prefix, intent.new_path_prefix, 1)
+                    if path == intent.old_path_prefix or path.startswith(
+                        intent.old_path_prefix + "/"
+                    ):
+                        new_path = path.replace(
+                            intent.old_path_prefix, intent.new_path_prefix, 1
+                        )
                         # TODO: Phase 3 Inject URIGenerator
                         uri_gen = PythonURIGenerator()
-                        new_suri = uri_gen.generate_symbol_uri(new_path, fragment) if fragment else uri_gen.generate_file_uri(new_path)
+                        new_suri = (
+                            uri_gen.generate_symbol_uri(new_path, fragment)
+                            if fragment
+                            else uri_gen.generate_file_uri(new_path)
+                        )
                         uris_to_move[suri] = (new_suri, fp)
 
                 for old_suri, (new_suri, fp) in uris_to_move.items():
                     del src_data[old_suri]
                     dest_data[new_suri] = fp
-            
+
             elif isinstance(intent, LockSymbolUpdateIntent):
                 data = get_lock_data(intent.package_root)
                 if intent.old_suri in data:
@@ -140,18 +156,33 @@ class Planner:
 
         for pkg_root, data in lock_states.items():
             content = ctx.lock_manager.serialize(data)
-            rel_lock_path = (pkg_root / "stitcher.lock").relative_to(ctx.graph.root_path)
+            rel_lock_path = (pkg_root / "stitcher.lock").relative_to(
+                ctx.graph.root_path
+            )
             all_ops.append(WriteFileOp(rel_lock_path, content))
 
         # Process simple filesystem intents
         for intent in all_intents:
             if isinstance(intent, MoveFileIntent):
-                all_ops.append(MoveFileOp(intent.src_path.relative_to(ctx.graph.root_path), intent.dest_path.relative_to(ctx.graph.root_path)))
+                all_ops.append(
+                    MoveFileOp(
+                        intent.src_path.relative_to(ctx.graph.root_path),
+                        intent.dest_path.relative_to(ctx.graph.root_path),
+                    )
+                )
             elif isinstance(intent, DeleteFileIntent):
-                all_ops.append(DeleteFileOp(intent.path.relative_to(ctx.graph.root_path)))
+                all_ops.append(
+                    DeleteFileOp(intent.path.relative_to(ctx.graph.root_path))
+                )
             elif isinstance(intent, DeleteDirectoryIntent):
-                all_ops.append(DeleteDirectoryOp(intent.path.relative_to(ctx.graph.root_path)))
+                all_ops.append(
+                    DeleteDirectoryOp(intent.path.relative_to(ctx.graph.root_path))
+                )
             elif isinstance(intent, ScaffoldIntent):
-                all_ops.append(WriteFileOp(intent.path.relative_to(ctx.graph.root_path), intent.content))
+                all_ops.append(
+                    WriteFileOp(
+                        intent.path.relative_to(ctx.graph.root_path), intent.content
+                    )
+                )
 
         return all_ops

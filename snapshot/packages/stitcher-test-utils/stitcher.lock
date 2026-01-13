@@ -1,0 +1,185 @@
+{
+  "fingerprints": {
+    "py://packages/stitcher-test-utils/src/stitcher/__init__.py#__path__": {},
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/__init__.py#__all__": {},
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus": {
+      "baseline_code_signature_text": "class SpyBus:",
+      "baseline_code_structure_hash": "65aa0f065b138f219d3f17554fd97f1645fb398a21146dcfdc3d94042f04af67",
+      "baseline_yaml_content_hash": "224acf2bccb0081bcf7889ed8cf35ae91333493fe3d01ec3f394d13af8cd5e69"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus.__init__": {
+      "baseline_code_signature_text": "def __init__(self):",
+      "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus._spy_renderer": {},
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus.assert_id_called": {
+      "baseline_code_signature_text": "def assert_id_called(self, msg_id: SemanticPointer, level: Optional[str] = None):",
+      "baseline_code_structure_hash": "3c3f2d626f8e501cdedf3a4108e22355eccebadb272441ef6cc12e7a03711257",
+      "baseline_yaml_content_hash": "2e5582495db4e0507b548fd4f464fa37fa037d37337d00a5352660be3388627f"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus.get_messages": {
+      "baseline_code_signature_text": "def get_messages(self) -> List[Dict[str, Any]]:",
+      "baseline_code_structure_hash": "c6bdb78a3670fb620732891b9795afce15b342f1ecc2c004630615f75515394b",
+      "baseline_yaml_content_hash": "0fefee42932fc552ab1192f60e062e2ab7311b88822ecec2b4a75f8160792959"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyBus.patch": {
+      "baseline_code_signature_text": "def patch(self, monkeypatch: Any, target: str = 'stitcher.common.bus'):",
+      "baseline_code_structure_hash": "8465d9020a2f9c66dbdc4e9da0357cd816e0dd636d9419a544c4e6b6333185c0",
+      "baseline_yaml_content_hash": "70860b7c1c53aa5c5625ac96fcc9e6bc56f6b22e3af5c45f88a74719eff77950"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyRenderer": {
+      "baseline_code_signature_text": "class SpyRenderer(Renderer):",
+      "baseline_code_structure_hash": "563d75f1f1b560a8dc29abb1c0a3ff928367b4acdce131bd0ab495065de91245",
+      "baseline_yaml_content_hash": "9080916eac10c5f5a84436850d5ccf6f51a612746134c90f041cc11e89d1962b"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyRenderer.__init__": {
+      "baseline_code_signature_text": "def __init__(self):",
+      "baseline_code_structure_hash": "9bab2b1dd22fea04e58176b09f65ef4f673738c47abf25fca7e0c62af472206f"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyRenderer.messages": {
+      "baseline_yaml_content_hash": "104b9a15b29b18b8a9ee5de2d41c5a05b3a5ceca7e110f415ee9d479f12fbb7c"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyRenderer.record": {
+      "baseline_code_signature_text": "def record(self, level: str, msg_id: SemanticPointer, params: Dict[str, Any]):",
+      "baseline_code_structure_hash": "4fec4e5060de9d79a48daed1fbb73d50ebfb8827183a63897c864ffdebb4c4ec",
+      "baseline_yaml_content_hash": "eee5fd60afffaa267d49a8b79cc56c41bcb592df1f583c703085d3d2b47129ff"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/bus.py#SpyRenderer.render": {
+      "baseline_code_signature_text": "def render(self, message: str, level: str) -> None:",
+      "baseline_code_structure_hash": "5ee01c65ceae57a45c16a7c14d696ccdbefeca3e86709a97c1f828eeae4eedec",
+      "baseline_yaml_content_hash": "ac368e82bf66516dd24182300dac2becaecca2f62c2041e01596114afec6cb01"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness": {
+      "baseline_code_signature_text": "class VenvHarness:",
+      "baseline_code_structure_hash": "e5de92a72e125ac041b70b44296eb598c2f579d07f28b9a0990eaa6d5f77fae3",
+      "baseline_yaml_content_hash": "6ecfdc105ef4326c0912147edb8054a30babdca403b53a9d899520aa0a1a8f13"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root: Path):",
+      "baseline_code_structure_hash": "55ec93332edf0b471520176383fca19a9d9ed2f6300d73e3dc00f1056aef43e3",
+      "baseline_yaml_content_hash": "a05b7b55fb6fb7b1d0b54ec00733c478ccf20dbd9a479fbda836b565facedb80"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness._python_exe": {},
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.create": {
+      "baseline_code_signature_text": "def create(self) -> None:",
+      "baseline_code_structure_hash": "d0fe27733ea95064d07dd2341e14709674bd41d70a0bb9e386b0ccc11e85eb6b",
+      "baseline_yaml_content_hash": "02edd966457c5c51e79df229dbae77c8b3e38d0c432c77c5022d1e9b78a9823d"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.get_site_packages_layout": {
+      "baseline_code_signature_text": "def get_site_packages_layout(self) -> str:",
+      "baseline_code_structure_hash": "30a3a7cfdd995480964381a2407c7b81fbcbf0c4acf9766cb59affa21d636841",
+      "baseline_yaml_content_hash": "7464d85a2be71c8627fc65e4c9815796258bbcb39112d3097fec7b9a55218b87"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.get_site_packages_path": {
+      "baseline_code_signature_text": "def get_site_packages_path(self) -> Path:",
+      "baseline_code_structure_hash": "c5f90c3800b225ed2603463bf1b0f726245bde1498a0f309f77c464a8f098ef3",
+      "baseline_yaml_content_hash": "70e81bfb14d8c5d4ef65d87940aa5c0b28edb299c7ac8c6590f321c9b5f247e8"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.install": {
+      "baseline_code_signature_text": "def install(self, *packages: str = ()) -> subprocess.CompletedProcess:",
+      "baseline_code_structure_hash": "b518cfae0280c11e5b6014caeb92cc965498db3e6582591b8f92cc0724dd06a5",
+      "baseline_yaml_content_hash": "ce1e97ae972da44bdcbf475be583ede00dd96338a12e0670bf5ac1f91cb450cd"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.pip_list": {
+      "baseline_code_signature_text": "def pip_list(self) -> str:",
+      "baseline_code_structure_hash": "e2739d71709cc129969fe9e45911896569e96ed336d048b16edd4a0b30671ff2",
+      "baseline_yaml_content_hash": "ca0f4d560753cf67230bb90a7f01fce26eac39e8825323da479120f65b1197ad"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.python_exe": {
+      "baseline_yaml_content_hash": "eb7a78c57e858b60c8078741f13b4dd8f75229687139b226779a2c538090038f"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.root": {
+      "baseline_yaml_content_hash": "dd8fe5b96985f922800d38a3202deab3e65c4d90aa083d10681f3268add8c05c"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.run_pyright_check": {
+      "baseline_code_signature_text": "def run_pyright_check(self, project_path: Path, verbose: bool = False, cwd: Path | None = None) -> subprocess.CompletedProcess:",
+      "baseline_code_structure_hash": "f3484d7a3d475473047969adc7d93016df46fcb5a7c4d7c02ea19a4a4159d860",
+      "baseline_yaml_content_hash": "8982602c6f455b440c2098bef303cd04323efe9d33a32d5db820ca474ff2439d"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.run_python_command": {
+      "baseline_code_signature_text": "def run_python_command(self, command: str) -> subprocess.CompletedProcess:",
+      "baseline_code_structure_hash": "000c1cc2395f1cec03b20c6a21f045e3a7fba5e649e8501a21a74eeafc2103d2",
+      "baseline_yaml_content_hash": "a82254e6bcb22725231941b26e853061310c75c3c04534da59bb9a59a04006e4"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.run_type_check": {
+      "baseline_code_signature_text": "def run_type_check(self, script_path: Path) -> subprocess.CompletedProcess:",
+      "baseline_code_structure_hash": "9d786647d9268908773d23454afb38fccc6688b7e1b7cb56b5a75d56df409717",
+      "baseline_yaml_content_hash": "c7b196e2fcb9e8b91f0394b502ee1ebde5e49c96dcd0de794ab1bf581c599220"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/harness.py#VenvHarness.venv_dir": {
+      "baseline_yaml_content_hash": "c75f6b5bdf5d4e338f45c177f4c54f2cc18394d019ddc2b35383938791e44318"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#create_populated_index": {
+      "baseline_code_signature_text": "def create_populated_index(root_path: Path) -> IndexStore:",
+      "baseline_code_structure_hash": "b24b71a81748dd1ce36d2b0c407650da3d14aa3337a70b15ab2168cda74e2afd",
+      "baseline_yaml_content_hash": "854effb4ca1e936c45ef3af6a7fbb346f84b53b8d64bf8880eb3ba250cfe3877"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#create_test_app": {
+      "baseline_code_signature_text": "def create_test_app(root_path: Path, interaction_handler: Optional[InteractionHandler] = None) -> StitcherApp:",
+      "baseline_code_structure_hash": "8cd8c8f2073c4b229f09496035e473e7d5e14d11360eb63decf815371a63ddbd",
+      "baseline_yaml_content_hash": "c201bd914ff4ebea7c8ad66851c83ebcaede9d7d4b4b956f6fca73615e4b1359"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py#get_stored_hashes": {
+      "baseline_code_signature_text": "def get_stored_hashes(project_root: Path, file_path: str) -> Dict[str, dict]:",
+      "baseline_code_structure_hash": "be1f4b7ed1dec3718ed3a1e44b732745da1f719a1d9005c3542252a06d7c5fa3",
+      "baseline_yaml_content_hash": "6279c42b6269db2e150819cad599baf535dbe0725fc5cc17fdba10d5b1ae50e6"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory": {
+      "baseline_code_signature_text": "class WorkspaceFactory:",
+      "baseline_code_structure_hash": "a92355e853b1eb20433f50d1d1a620d0ae95f233763900cc5f2290a58c66b60d",
+      "baseline_yaml_content_hash": "822171b027459a36fd88cd48999a3fda535c18af058a7e89ba6ea0d4ccee99a3"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path):",
+      "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory._files_to_create": {},
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory._pyproject_data": {},
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.build": {
+      "baseline_code_signature_text": "def build(self) -> Path:",
+      "baseline_code_structure_hash": "a9df94cb7b5ea7954574279f0bd49648fc1c4c971164a3f9b4d556c547c8b9a3",
+      "baseline_yaml_content_hash": "abcfe71efe81cf48f05e5b67f083d78ee3298cb510ca7ecce0510e83cf910741"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.init_git": {
+      "baseline_code_signature_text": "def init_git(self) -> WorkspaceFactory:",
+      "baseline_code_structure_hash": "9a07cecae1efc96557422706879a134d623dffe647043c6c9188089ad36917e5",
+      "baseline_yaml_content_hash": "a73071c0f96aed03b2f3c1300fbea97f7358c48a1a3f891495e50ee4fff78b38"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.root_path": {},
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.with_config": {
+      "baseline_code_signature_text": "def with_config(self, stitcher_config: Dict[str, Any]) -> WorkspaceFactory:",
+      "baseline_code_structure_hash": "4dfcd1bda044801e995fc0decdacbc37847587e671d1f493e67a5d374174ae85",
+      "baseline_yaml_content_hash": "4a40831ae9bdf543b924a5f194cf70a2c371fc3d88062a4801a9b2173e2b7583"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.with_docs": {
+      "baseline_code_signature_text": "def with_docs(self, path: str, data: Dict[str, Any]) -> WorkspaceFactory:",
+      "baseline_code_structure_hash": "58c1ea56d4f43400901310f9b889ed7258cf74cc5e642750f68616553033bee7",
+      "baseline_yaml_content_hash": "27d7b33528b5b520600d417b10b0097b2d272175e7535c559fc90976f3e3dd4f"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.with_entry_points": {
+      "baseline_code_signature_text": "def with_entry_points(self, group: str, entry_points: Dict[str, str]) -> WorkspaceFactory:",
+      "baseline_code_structure_hash": "336255947c494c0df3d632565856e55bb46155863d3e8434c0317d23e0e86820",
+      "baseline_yaml_content_hash": "9cc8e16edeb7737761cbc85a9154f8f73511771e6cf4ac381caebc1bd053de57"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.with_project_name": {
+      "baseline_code_signature_text": "def with_project_name(self, name: str) -> WorkspaceFactory:",
+      "baseline_code_structure_hash": "92fba0e02d3135da5c0f12b66992e39c5dfebb23e95514c7c7092943d665da4e",
+      "baseline_yaml_content_hash": "9fa315df537d97b00b006c2bec98627e0851c3b8f4485d47caca922d8b1d07c4"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.with_pyproject": {
+      "baseline_code_signature_text": "def with_pyproject(self, path_prefix: str) -> WorkspaceFactory:",
+      "baseline_code_structure_hash": "b067ac951af61aac4bf85edd8aad5c8d2e754d288518d93d7395e1147dd8461e",
+      "baseline_yaml_content_hash": "ebe894d3a1da450d70c2253b64f20ddd79f4178aea1a68823512b92d8ce47d92"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.with_raw_file": {
+      "baseline_code_signature_text": "def with_raw_file(self, path: str, content: str) -> WorkspaceFactory:",
+      "baseline_code_structure_hash": "46b830f32b85583a3f74e61acba1d8c303ea8ab91a59194332ef791fb0b30e38"
+    },
+    "py://packages/stitcher-test-utils/src/stitcher/test_utils/workspace.py#WorkspaceFactory.with_source": {
+      "baseline_code_signature_text": "def with_source(self, path: str, content: str) -> WorkspaceFactory:",
+      "baseline_code_structure_hash": "4231b100542176367e7ccc6879eb0bbb2119ecb797141bd39a83766aedfde7b0",
+      "baseline_yaml_content_hash": "207cbff581589c62a759786a59fa2c1d43b4d125ba5716697e38c157e3065f92"
+    }
+  },
+  "version": "1.0"
+}

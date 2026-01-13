@@ -3,5 +3,8 @@
 "create_test_app": |-
   Factory to create a StitcherApp instance with Python adapters pre-configured for testing.
 "get_stored_hashes": |-
-  Test helper to load the composite hashes for a given source file from the
-  .stitcher/signatures directory.
+  Test helper to read fingerprints from the appropriate stitcher.lock file.
+
+  This function simulates the logic of finding the owning package and reading
+  the lock file to retrieve fingerprint data, providing it in a format
+  (fragment -> dict) that is easy to assert against in tests.

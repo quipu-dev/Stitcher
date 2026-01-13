@@ -81,7 +81,9 @@ def test_rename_class_updates_code_yaml_and_lock_file(tmp_path):
     new_suri = f"py://{py_rel_path}#FeedbackBus"
 
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})}
+    fingerprints = {
+        old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})
+    }
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (

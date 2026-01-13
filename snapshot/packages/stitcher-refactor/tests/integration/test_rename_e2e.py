@@ -8,7 +8,6 @@ from stitcher.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory, create_populated_index
 from stitcher.spec import Fingerprint
 
-import yaml
 import json
 
 
@@ -21,7 +20,9 @@ def test_rename_symbol_end_to_end(tmp_path):
 
     lock_manager = LockFileManager()
     fingerprints = {
-        old_helper_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "hash1"}),
+        old_helper_suri: Fingerprint.from_dict(
+            {"baseline_code_structure_hash": "hash1"}
+        ),
         old_func_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "hash2"}),
     }
     lock_content = lock_manager.serialize(fingerprints)
@@ -32,7 +33,10 @@ def test_rename_symbol_end_to_end(tmp_path):
             "mypkg/core.py",
             "class OldHelper: pass\ndef old_func(): pass",
         )
-        .with_source("mypkg/app.py", "from .core import OldHelper, old_func\nh = OldHelper()\nold_func()")
+        .with_source(
+            "mypkg/app.py",
+            "from .core import OldHelper, old_func\nh = OldHelper()\nold_func()",
+        )
         .with_source("mypkg/__init__.py", "")
         .with_docs("mypkg/core.stitcher.yaml", {"OldHelper": "doc", "old_func": "doc"})
         .with_raw_file("stitcher.lock", lock_content)
@@ -47,7 +51,7 @@ def test_rename_symbol_end_to_end(tmp_path):
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace,
@@ -56,7 +60,7 @@ def test_rename_symbol_end_to_end(tmp_path):
         index_store=index_store,
         lock_manager=lock_manager,
     )
-    
+
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner
 
@@ -72,10 +76,14 @@ def test_rename_symbol_end_to_end(tmp_path):
     tm.commit()
 
     assert "class NewHelper:" in core_path.read_text(encoding="utf-8")
-    assert "from .core import NewHelper, old_func" in app_path.read_text(encoding="utf-8")
-    
+    assert "from .core import NewHelper, old_func" in app_path.read_text(
+        encoding="utf-8"
+    )
+
     modified_lock_data = json.loads(lock_path.read_text("utf-8"))["fingerprints"]
     assert new_helper_suri in modified_lock_data
     assert old_helper_suri not in modified_lock_data
-    assert modified_lock_data[new_helper_suri]["baseline_code_structure_hash"] == "hash1"
-    assert old_func_suri in modified_lock_data # Ensure other keys are untouched
+    assert (
+        modified_lock_data[new_helper_suri]["baseline_code_structure_hash"] == "hash1"
+    )
+    assert old_func_suri in modified_lock_data  # Ensure other keys are untouched

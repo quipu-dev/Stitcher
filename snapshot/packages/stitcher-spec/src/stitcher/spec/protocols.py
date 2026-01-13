@@ -54,11 +54,6 @@ class DocstringSerializerProtocol(Protocol):
 
 
 class URIGeneratorProtocol(Protocol):
-    """
-    Protocol for generating Stitcher Uniform Resource Identifiers (SURIs).
-    SURIs must be anchored to the workspace root to ensure global uniqueness.
-    """
-
     @property
     def scheme(self) -> str: ...
 
@@ -68,11 +63,6 @@ class URIGeneratorProtocol(Protocol):
 
 
 class LockManagerProtocol(Protocol):
-    """
-    Protocol for managing the stitcher.lock file, which serves as the distributed
-    persistence layer for fingerprints.
-    """
-
     def load(self, package_root: Path) -> Dict[str, Fingerprint]: ...
 
     def save(self, package_root: Path, data: Dict[str, Fingerprint]) -> None: ...

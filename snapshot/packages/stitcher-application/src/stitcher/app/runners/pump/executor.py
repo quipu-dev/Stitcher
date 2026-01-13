@@ -120,11 +120,15 @@ class PumpExecutor:
                 current_fingerprints = self._compute_fingerprints(module)
 
                 new_yaml_docs = current_yaml_docs.copy()
-                
+
                 module_abs_path = self.root_path / module.file_path
                 module_ws_rel = self.workspace.to_workspace_relative(module_abs_path)
 
-                file_had_updates, file_has_errors, file_has_redundancy = False, False, False
+                file_had_updates, file_has_errors, file_has_redundancy = (
+                    False,
+                    False,
+                    False,
+                )
                 updated_keys_in_file, reconciled_keys_in_file = [], []
 
                 for fqn, plan in file_plan.items():
@@ -145,7 +149,7 @@ class PumpExecutor:
                     # Generate SURI for lock lookup
                     suri = self.uri_generator.generate_symbol_uri(module_ws_rel, fqn)
                     fp = new_lock_data.get(suri) or Fingerprint()
-                    
+
                     fqn_was_updated = False
                     if plan.update_code_fingerprint:
                         current_fp = current_fingerprints.get(fqn, Fingerprint())
@@ -190,7 +194,9 @@ class PumpExecutor:
                         doc_path = (self.root_path / module.file_path).with_suffix(
                             ".stitcher.yaml"
                         )
-                        yaml_content = self.doc_manager.dump_raw_data_to_string(raw_data)
+                        yaml_content = self.doc_manager.dump_raw_data_to_string(
+                            raw_data
+                        )
                         tm.add_write(
                             str(doc_path.relative_to(self.root_path)), yaml_content
                         )

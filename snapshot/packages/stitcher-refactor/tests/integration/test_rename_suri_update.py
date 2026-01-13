@@ -17,7 +17,11 @@ def test_rename_symbol_updates_suri_in_lockfile(tmp_path):
     new_suri = f"py://{rel_py_path}#YourClass"
 
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "original_hash"})}
+    fingerprints = {
+        old_suri: Fingerprint.from_dict(
+            {"baseline_code_structure_hash": "original_hash"}
+        )
+    }
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
@@ -34,7 +38,7 @@ def test_rename_symbol_updates_suri_in_lockfile(tmp_path):
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
     sidecar_manager = SidecarManager(root_path=project_root)
-    
+
     ctx = RefactorContext(
         workspace=workspace,
         graph=graph,
@@ -68,9 +72,11 @@ def test_rename_nested_method_updates_suri_fragment(tmp_path):
     rel_py_path = "src/mypkg/logic.py"
     old_suri = f"py://{rel_py_path}#MyClass.old_method"
     new_suri = f"py://{rel_py_path}#MyClass.new_method"
-    
+
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "123"})}
+    fingerprints = {
+        old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "123"})
+    }
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (

@@ -2,7 +2,6 @@ from typing import Protocol, Dict, Union, Optional, Any
 from pathlib import Path
 
 from .docstring import DocstringIR
-from .fingerprint import Fingerprint
 from .models import ModuleDef
 
 

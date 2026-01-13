@@ -53,11 +53,11 @@ class RenameSymbolOperation(AbstractOperation):
             # TODO: In Phase 3, inject URIGenerator via Context.
             uri_gen = PythonURIGenerator()
             rel_path = ctx.workspace.to_workspace_relative(definition_file_path)
-            
+
             # Extract fragments (short names)
-            old_fragment = self.old_fqn.split(".")[-1]
-            new_fragment = self.new_fqn.split(".")[-1]
-            
+            # old_fragment = self.old_fqn.split(".")[-1]
+            # new_fragment = self.new_fqn.split(".")[-1]
+
             # If the symbol is nested (e.g. Class.method), we need to be careful.
             # However, for RenameSymbol, we usually get the full FQN.
             # The fragment for SURI usually matches the logical path.
@@ -69,16 +69,16 @@ class RenameSymbolOperation(AbstractOperation):
             # Method: "Class.method"
             # So if self.old_fqn is "a.b.Class.method", how do we know "Class.method" is the fragment?
             # We rely on the module FQN.
-            
+
             if module_fqn and self.old_fqn.startswith(module_fqn + "."):
                 old_suri_fragment = self.old_fqn[len(module_fqn) + 1 :]
                 new_suri_fragment = self.new_fqn[len(module_fqn) + 1 :]
-                
+
                 old_suri = uri_gen.generate_symbol_uri(rel_path, old_suri_fragment)
                 new_suri = uri_gen.generate_symbol_uri(rel_path, new_suri_fragment)
-                
+
                 owning_package = ctx.workspace.find_owning_package(definition_file_path)
-                
+
                 intents.append(
                     LockSymbolUpdateIntent(
                         package_root=owning_package,

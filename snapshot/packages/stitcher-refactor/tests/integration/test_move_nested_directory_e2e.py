@@ -1,5 +1,4 @@
 import json
-import yaml
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.analysis.semantic import SemanticGraph
 from stitcher.common.transaction import (
@@ -20,9 +19,11 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     factory = WorkspaceFactory(tmp_path)
     py_rel_path = "src/cascade/core/adapters/cache/in_memory.py"
     old_suri = f"py://{py_rel_path}#InMemoryCache"
-    
+
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "123"})}
+    fingerprints = {
+        old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "123"})
+    }
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
@@ -31,10 +32,18 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
         .with_source("src/cascade/core/__init__.py", "")
         .with_source("src/cascade/core/adapters/__init__.py", "")
         .with_source("src/cascade/core/adapters/cache/__init__.py", "")
-        .with_source("src/cascade/core/adapters/cache/in_memory.py", "class InMemoryCache: pass")
-        .with_docs("src/cascade/core/adapters/cache/in_memory.stitcher.yaml", {"InMemoryCache": "Doc for Cache"})
+        .with_source(
+            "src/cascade/core/adapters/cache/in_memory.py", "class InMemoryCache: pass"
+        )
+        .with_docs(
+            "src/cascade/core/adapters/cache/in_memory.stitcher.yaml",
+            {"InMemoryCache": "Doc for Cache"},
+        )
         .with_raw_file("stitcher.lock", lock_content)
-        .with_source("src/app.py", "from cascade.core.adapters.cache.in_memory import InMemoryCache")
+        .with_source(
+            "src/app.py",
+            "from cascade.core.adapters.cache.in_memory import InMemoryCache",
+        )
         .build()
     )
 
@@ -48,7 +57,7 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("cascade")
     graph.load("app")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace,
@@ -78,13 +87,16 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
 
     assert not src_dir_to_move.exists()
     assert dest_dir.exists()
-    
+
     updated_app_code = app_py_path.read_text()
-    assert "from cascade.runtime.adapters.cache.in_memory import InMemoryCache" in updated_app_code
+    assert (
+        "from cascade.runtime.adapters.cache.in_memory import InMemoryCache"
+        in updated_app_code
+    )
 
     new_py_rel_path = "src/cascade/runtime/adapters/cache/in_memory.py"
     expected_suri = f"py://{new_py_rel_path}#InMemoryCache"
-    
+
     lock_data = json.loads(lock_path.read_text())["fingerprints"]
     assert expected_suri in lock_data
     assert lock_data[expected_suri] == {"baseline_code_structure_hash": "123"}

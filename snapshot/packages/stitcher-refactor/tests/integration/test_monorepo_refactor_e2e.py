@@ -1,5 +1,4 @@
 import json
-import yaml
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.analysis.semantic import SemanticGraph
 from stitcher.common.transaction import (
@@ -20,9 +19,11 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     factory = WorkspaceFactory(tmp_path)
     py_rel_path = "packages/pkg_a/src/pkga_lib/core.py"
     old_suri = f"py://{py_rel_path}#SharedClass"
-    
+
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})}
+    fingerprints = {
+        old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})
+    }
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
@@ -53,7 +54,7 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("pkga_lib")
     graph.load("pkgb_app")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace,
@@ -83,7 +84,7 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     assert not src_path.exists()
     assert dest_path.exists()
     assert dest_path.with_suffix(".stitcher.yaml").exists()
-    
+
     lock_path = project_root / "packages/pkg_a/stitcher.lock"
     assert lock_path.exists()
 
@@ -92,7 +93,7 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
 
     new_py_rel_path = "packages/pkg_a/src/pkga_lib/utils/tools.py"
     expected_suri = f"py://{new_py_rel_path}#SharedClass"
-    
+
     lock_data = json.loads(lock_path.read_text())["fingerprints"]
     assert expected_suri in lock_data
     assert old_suri not in lock_data

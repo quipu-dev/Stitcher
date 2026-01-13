@@ -23,7 +23,7 @@ def test_rename_symbol_via_attribute_access(tmp_path):
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
     graph.load("main")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     lock_manager = LockFileManager()
     ctx = RefactorContext(
@@ -64,7 +64,7 @@ def test_rename_symbol_imported_with_alias(tmp_path):
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
     graph.load("main")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     lock_manager = LockFileManager()
     ctx = RefactorContext(
@@ -88,7 +88,7 @@ def test_rename_symbol_imported_with_alias(tmp_path):
     assert "core.py" in write_ops
     assert write_ops["core.py"].content.strip() == "class NewHelper: pass"
     assert "main.py" in write_ops
-    
+
     # Check for content presence without strict whitespace matching
     actual_content = write_ops["main.py"].content
     for part in expected_main_parts:

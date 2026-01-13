@@ -67,7 +67,6 @@ class SidecarUpdateIntent(RefactorIntent):
 
 @dataclass(frozen=True)
 class LockSymbolUpdateIntent(RefactorIntent):
-    """Represents a renaming of a symbol within the stitcher.lock file."""
     package_root: Path
     old_suri: str
     new_suri: str
@@ -75,7 +74,6 @@ class LockSymbolUpdateIntent(RefactorIntent):
 
 @dataclass(frozen=True)
 class LockPathUpdateIntent(RefactorIntent):
-    """Represents a mass update of SURIs due to file/directory moves."""
     package_root: Path
     old_path_prefix: str  # Workspace-relative path prefix
     new_path_prefix: str  # Workspace-relative path prefix

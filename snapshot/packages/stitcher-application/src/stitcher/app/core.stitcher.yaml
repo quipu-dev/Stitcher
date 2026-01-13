@@ -40,5 +40,3 @@
 
   Args:
     files: An optional list of specific files to strip. If None, uses config.
-"StitcherApp.sig_manager": |-
-  Service for managing code signatures.

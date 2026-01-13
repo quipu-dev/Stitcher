@@ -16,10 +16,6 @@ log = logging.getLogger(__name__)
 
 
 def find_workspace_root(start_path: Path) -> Path:
-    """
-    Finds the workspace root by looking for a .git directory or a top-level pyproject.toml
-    defining a workspace.
-    """
     current = start_path.resolve()
     # If start_path is a file, start from its parent
     if current.is_file():
@@ -38,11 +34,15 @@ def find_workspace_root(start_path: Path) -> Path:
                 with pyproject.open("rb") as f:
                     data = tomllib.load(f)
                 # Check for uv workspace or similar tools
-                if "tool" in data and "uv" in data["tool"] and "workspace" in data["tool"]["uv"]:
+                if (
+                    "tool" in data
+                    and "uv" in data["tool"]
+                    and "workspace" in data["tool"]["uv"]
+                ):
                     return parent
             except Exception:
                 pass
-    
+
     # Fallback: if nothing found, return the start path (or raise error? For now, start path)
     return start_path
 
@@ -61,28 +61,19 @@ class Workspace:
             self._discover_packages()
 
     def find_owning_package(self, file_path: Path) -> Path:
-        """
-        Finds the nearest directory containing a pyproject.toml upwards from the file_path.
-        This determines the physical location of the stitcher.lock file.
-        Returns the workspace root if no package-level pyproject.toml is found.
-        """
         current = file_path.resolve()
         if current.is_file():
             current = current.parent
-        
+
         # Stop if we hit the workspace root to avoid escaping the project
         while current != self.root_path and current != current.parent:
             if (current / "pyproject.toml").exists():
                 return current
             current = current.parent
-            
+
         return self.root_path
 
     def to_workspace_relative(self, path: Path) -> str:
-        """
-        Converts an absolute path to a POSIX path relative to the workspace root.
-        This is the canonical format for SURI paths.
-        """
         return path.resolve().relative_to(self.root_path).as_posix()
 
     def _build_from_config(self) -> None:

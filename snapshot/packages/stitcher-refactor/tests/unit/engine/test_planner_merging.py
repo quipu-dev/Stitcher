@@ -43,9 +43,10 @@ def mock_context(tmp_path: Path) -> Mock:
     mock_lock = Mock(spec=LockManagerProtocol)
     mock_lock.load.return_value = {}
     ctx.lock_manager = mock_lock
-    
+
     # Mock find_symbol to prevent startswith TypeError
     from stitcher.analysis.semantic import SymbolNode
+
     mock_node = Mock(spec=SymbolNode)
     mock_node.path = tmp_path / "app.py"  # a valid path
     mock_graph.find_symbol.return_value = mock_node
@@ -68,13 +69,23 @@ def test_planner_merges_rename_operations_for_same_file(mock_context: Mock):
 
     def mock_find_usages(fqn):
         if fqn == "app.OldClass":
-            return [UsageLocation(file_path, 1, 6, 1, 14, ReferenceType.SYMBOL, "app.OldClass")]
+            return [
+                UsageLocation(
+                    file_path, 1, 6, 1, 14, ReferenceType.SYMBOL, "app.OldClass"
+                )
+            ]
         if fqn == "app.old_func":
-            return [UsageLocation(file_path, 2, 4, 2, 12, ReferenceType.SYMBOL, "app.old_func")]
+            return [
+                UsageLocation(
+                    file_path, 2, 4, 2, 12, ReferenceType.SYMBOL, "app.old_func"
+                )
+            ]
         return []
+
     mock_context.graph.find_usages.side_effect = mock_find_usages
 
     from unittest.mock import patch
+
     with patch.object(Path, "read_text", return_value=original_content):
         # 2. ACT
         planner = Planner()
@@ -83,7 +94,7 @@ def test_planner_merges_rename_operations_for_same_file(mock_context: Mock):
     # 3. ASSERT
     # Expect 2 ops: one for the source file, one for the lock file.
     assert len(file_ops) == 2
-    
+
     write_ops = {op.path.name: op for op in file_ops if isinstance(op, WriteFileOp)}
     assert "app.py" in write_ops
     assert "stitcher.lock" in write_ops
@@ -104,7 +115,9 @@ def test_planner_handles_move_and_rename_on_same_file(mock_context: Mock):
     src_path_abs = mock_context.graph.root_path / src_path_rel
     original_content = "class OldClass: pass"
 
-    move_op = MoveFileOperation(src_path_abs, mock_context.graph.root_path / dest_path_rel)
+    move_op = MoveFileOperation(
+        src_path_abs, mock_context.graph.root_path / dest_path_rel
+    )
     rename_op = RenameSymbolOperation("app.OldClass", "new_app.NewClass")
     spec = MigrationSpec().add(move_op).add(rename_op)
 
@@ -113,6 +126,7 @@ def test_planner_handles_move_and_rename_on_same_file(mock_context: Mock):
     ]
 
     from unittest.mock import patch
+
     with patch.object(Path, "read_text", return_value=original_content):
         # 2. ACT
         planner = Planner()

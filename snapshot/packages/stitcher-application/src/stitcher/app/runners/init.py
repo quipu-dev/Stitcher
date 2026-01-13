@@ -46,7 +46,7 @@ class InitRunner:
 
     def run_batch(self, modules: List[ModuleDef]) -> List[Path]:
         created_files: List[Path] = []
-        
+
         # 1. Group modules by their owning package (lock file boundary)
         # This reduces I/O by loading each lock file only once per batch.
         grouped_modules: Dict[Path, List[ModuleDef]] = defaultdict(list)
@@ -65,7 +65,7 @@ class InitRunner:
 
             for module in pkg_modules:
                 output_path = self.doc_manager.save_docs_for_module(module)
-                
+
                 # Compute logical/relative paths for SURI generation
                 module_abs_path = self.root_path / module.file_path
                 module_ws_rel = self.workspace.to_workspace_relative(module_abs_path)
@@ -104,7 +104,7 @@ class InitRunner:
                     relative_path = output_path.relative_to(self.root_path)
                     bus.success(L.init.file.created, path=relative_path)
                     created_files.append(output_path)
-            
+
             # Save lock file for the package
             if lock_updated:
                 self.lock_manager.save(pkg_root, lock_data)

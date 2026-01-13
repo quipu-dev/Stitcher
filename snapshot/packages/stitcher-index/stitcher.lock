@@ -1,0 +1,135 @@
+{
+  "fingerprints": {
+    "py://packages/stitcher-index/src/stitcher/__init__.py#__path__": {},
+    "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager": {
+      "baseline_code_signature_text": "class DatabaseManager:",
+      "baseline_code_structure_hash": "8e8e7c1774353ebabd34334d9c3d41fc898978cc27a5240e76db6667462b6333"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager.__init__": {
+      "baseline_code_signature_text": "def __init__(self, db_path: Path):",
+      "baseline_code_structure_hash": "cf4985b042007ee812049afa8df4871d7409ba0dd6877ee45ef7f5cfb32edeaa"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager._active_connection": {},
+    "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager._get_raw_connection": {
+      "baseline_code_signature_text": "def _get_raw_connection(self) -> sqlite3.Connection:",
+      "baseline_code_structure_hash": "6304fd6fa633e5a2298b3c39eba5fdcbedd9307841e77b28b840ad462cfacfca"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager.db_path": {},
+    "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager.get_connection": {
+      "baseline_code_signature_text": "def get_connection(self) -> Generator[sqlite3.Connection, None, None]:",
+      "baseline_code_structure_hash": "b59cf6b3c452497dfe97d723ccb692d383e55ccb602491b83cf81fb339587d1e",
+      "baseline_yaml_content_hash": "1d5d8552f486836f5d6754885e5a4cf5265c7d80f74e2e33062cc15157c0b51e"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager.initialize": {
+      "baseline_code_signature_text": "def initialize(self) -> None:",
+      "baseline_code_structure_hash": "e36fa6cfdacc0a16a73991ac1c1abede9d31bda0075ecf8a043ac766d3ce4893",
+      "baseline_yaml_content_hash": "e436d30be4ffa94c6c96df11489319423e096a74edced58568e99a460aa0bf27"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/db.py#DatabaseManager.session": {
+      "baseline_code_signature_text": "def session(self) -> Generator[None, None, None]:",
+      "baseline_code_structure_hash": "09ca8e8d7adff4896afb9e30646295643d6c72a8c78ea39789a710d54e968e0d",
+      "baseline_yaml_content_hash": "f74c0d2284a814bd8b5ee10d5cf1c4cfc1dd0decb819b2781a22a8705cd6bdc5"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/db.py#log": {},
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer": {
+      "baseline_code_signature_text": "class FileIndexer:",
+      "baseline_code_structure_hash": "77183fff1c8f5c2024c916a3586ff862db65f4452efdc652381694809bcc3455"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, store: IndexStoreProtocol):",
+      "baseline_code_structure_hash": "df6496de185eb42f41c6e7a907e69c332c44b11b25c8312cea7710c6d0daa9ff"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer._process_file_content": {
+      "baseline_code_signature_text": "def _process_file_content(self, file_id: int, abs_path: Path, content_bytes: bytes) -> None:",
+      "baseline_code_structure_hash": "32723c4260c9d953727020f9b974dcd3cbfbb7170138d638384e85207441fec1"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.adapters": {},
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.index_files": {
+      "baseline_code_signature_text": "def index_files(self, discovered_paths: Set[str]) -> Dict[str, Any]:",
+      "baseline_code_structure_hash": "f60678d8933a29288d8c48e1818beca57402a6f312083bd6204111b137486f27"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.register_adapter": {
+      "baseline_code_signature_text": "def register_adapter(self, extension: str, adapter: LanguageAdapter):",
+      "baseline_code_structure_hash": "612e1c336b757d75155c780601835ef353ecd9c299c6913ab522e9d625132706"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.root_path": {},
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#FileIndexer.store": {},
+    "py://packages/stitcher-index/src/stitcher/index/indexer.py#log": {},
+    "py://packages/stitcher-index/src/stitcher/index/linker.py#Linker": {
+      "baseline_code_signature_text": "class Linker:",
+      "baseline_code_structure_hash": "d4316f6a1b6b29b437e7c2315c8d9a86328ea38289eee332db6d936d899f732d"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/linker.py#Linker.__init__": {
+      "baseline_code_signature_text": "def __init__(self, db: DatabaseManager):",
+      "baseline_code_structure_hash": "e37f15612760ae56a0df5c0c090b44d0be9f95332ed1c9f273204dc4b85bcaf9"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/linker.py#Linker.db": {},
+    "py://packages/stitcher-index/src/stitcher/index/linker.py#Linker.link": {
+      "baseline_code_signature_text": "def link(self) -> None:",
+      "baseline_code_structure_hash": "d279b3e3a641feb0779899f94ecd5288c78bcdeed580d2a7e8437bef237264d6",
+      "baseline_yaml_content_hash": "6f9fafdd6caee12a67e8e133b0c4edaffacbcc68e59eecf13185617e01648b1a"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/linker.py#log": {},
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore": {
+      "baseline_code_signature_text": "class IndexStore:",
+      "baseline_code_structure_hash": "57c9e19555d831cd072e27805f6d84a1548ae24283f22ffdaa03da34c45940f3"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.__init__": {
+      "baseline_code_signature_text": "def __init__(self, db_manager: DatabaseManager):",
+      "baseline_code_structure_hash": "33fb90ba984edd391f3364b3681ac9de814db2162cdca6e3e8b0b4ee6a29ba5a"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore._linker": {},
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.db": {},
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.delete_file": {
+      "baseline_code_signature_text": "def delete_file(self, file_id: int) -> None:",
+      "baseline_code_structure_hash": "f4b6bec5e418adf6f132694eb9e24257b26541c900c4c6c9c2d825e98eaa20e4",
+      "baseline_yaml_content_hash": "c6d49d54bb6554bdda464262744e015ea0e8156cc74f1a718ba85d789ccf567f"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.find_references": {
+      "baseline_code_signature_text": "def find_references(self, target_fqn: str, target_id: Optional[str] = None) -> List[Tuple[ReferenceRecord, str]]:",
+      "baseline_code_structure_hash": "d657929aaa1c94b045f7f22516b7fb9525012e807319f6e95ac3ba1e95ab0569",
+      "baseline_yaml_content_hash": "7da29b80bb00efeda7e628034cb3954323ce63ff6ecc2212d03b576f011e5993"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.find_symbol_by_fqn": {
+      "baseline_code_signature_text": "def find_symbol_by_fqn(self, target_fqn: str) -> Optional[Tuple[SymbolRecord, str]]:",
+      "baseline_code_structure_hash": "8e05db3cfb2bf7a00728e97f7415cabf20ed9789ff860ec759080caa0bb93a8a",
+      "baseline_yaml_content_hash": "eee54d66b720f70649f6945900dcdadb2850a189c6cf0de15aff336e87780da4"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_all_files_metadata": {
+      "baseline_code_signature_text": "def get_all_files_metadata(self) -> List[FileRecord]:",
+      "baseline_code_structure_hash": "96540def72ef665f14f1c74fd8114a7747939c4f95c26a4c90da27eb0d46d599",
+      "baseline_yaml_content_hash": "6acaa68336db602aff9c876b2ed4ff5be2878bfc01ae4c86bee930df0d3a0df7"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_file_by_path": {
+      "baseline_code_signature_text": "def get_file_by_path(self, path: str) -> Optional[FileRecord]:",
+      "baseline_code_structure_hash": "cb2eb1b1d7156cfcb5123e907c93d329b7b0d6df6895a29e5adc2ebaa4c87820"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_references_by_file": {
+      "baseline_code_signature_text": "def get_references_by_file(self, file_id: int) -> List[ReferenceRecord]:",
+      "baseline_code_structure_hash": "7a315c5e95386f3d3290337755fa2816c9dd20624581576d2c61e7a2f56bb802"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_symbols_by_file": {
+      "baseline_code_signature_text": "def get_symbols_by_file(self, file_id: int) -> List[SymbolRecord]:",
+      "baseline_code_structure_hash": "36a970bc36c460f9391405a471a26d664ab4b00840b9c835d26d5970d57b10b0"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.get_symbols_by_file_path": {
+      "baseline_code_signature_text": "def get_symbols_by_file_path(self, file_path: str) -> List[SymbolRecord]:",
+      "baseline_code_structure_hash": "e68bf15c3abab873819d8ab9be5972e24abb9a7609b7845df9adff73c5ee692d"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.resolve_missing_links": {
+      "baseline_code_signature_text": "def resolve_missing_links(self) -> None:",
+      "baseline_code_structure_hash": "e9cb819f2d582a942ce72446df467482772baee91f35b8d8b274ab1a6d8d9aff"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.sync_file": {
+      "baseline_code_signature_text": "def sync_file(self, path: str, content_hash: str, mtime: float, size: int) -> Tuple[int, bool]:",
+      "baseline_code_structure_hash": "f316c8367aea45698054f617eaa3d5ada9f0902f6da70ad475c9a867ca0e91d7",
+      "baseline_yaml_content_hash": "4a67e6c906532f56dcea41ea0472a4fb3d54c8951e0db4be4242556bd130ff90"
+    },
+    "py://packages/stitcher-index/src/stitcher/index/store.py#IndexStore.update_analysis": {
+      "baseline_code_signature_text": "def update_analysis(self, file_id: int, symbols: List[SymbolRecord], references: List[ReferenceRecord]) -> None:",
+      "baseline_code_structure_hash": "a6f3ba80f7345a9a7a2a9d4cc1bd0bc8cee2eb896d35896ffb977a48d342fdb4",
+      "baseline_yaml_content_hash": "5ddcfe8b685880333187b38e97f76f37507b92712c2c539b2f3aff1bbea66442"
+    }
+  },
+  "version": "1.0"
+}

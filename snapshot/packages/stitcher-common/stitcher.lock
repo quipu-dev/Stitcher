@@ -1,0 +1,292 @@
+{
+  "fingerprints": {
+    "py://packages/stitcher-common/src/stitcher/__init__.py#__path__": {},
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#__all__": {},
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#__path__": {},
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#_common_assets_root": {},
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#_default_factory": {},
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#_detect_lang": {
+      "baseline_code_signature_text": "def _detect_lang() -> str:",
+      "baseline_code_structure_hash": "29d68989a36b5b512bdf941a43b9c622f7519b84013b58f5caa0735eb7219220"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#_operator_cache": {},
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#_project_root": {},
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#_user_factory": {},
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#bus": {
+      "baseline_yaml_content_hash": "4f1c69f6a0eeb6dd83463e36fa5744c82a2dc63985560db0f65d7e12d1a2357b"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#get_current_renderer": {
+      "baseline_code_signature_text": "def get_current_renderer() -> OverlayOperator:",
+      "baseline_code_structure_hash": "28a0e399d8cdbf153ce3f23f754d24686ed9a00f302833703e079fe0a4e2fd5a",
+      "baseline_yaml_content_hash": "b3227ed74c8be57d33cf0066d95e91694846b596eb2bdee23f2cc1c328b4b35f"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/__init__.py#stitcher_operator": {
+      "baseline_code_signature_text": "def stitcher_operator(key):",
+      "baseline_code_structure_hash": "c2101eaed3099b1b4efdf16190b79f922dada8a3ba21572db182e6cb87ccb9c0",
+      "baseline_yaml_content_hash": "05ff8cc82109124877fa1dc7586154851bb6a8ba2073c03b7bfeaccc83e6d7da"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/formatting.py#format_docstring": {
+      "baseline_code_signature_text": "def format_docstring(content: str, indent_str: str) -> str:",
+      "baseline_code_structure_hash": "0002f315d5415e31c8d0a4114ad4dce0f6a4242360dcc41aa10a82cd0f53e693",
+      "baseline_yaml_content_hash": "c28b6f5589f7038af9f615e47221482f3d09b4fb86adc96742772f2c06f545aa"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/formatting.py#parse_docstring": {
+      "baseline_code_signature_text": "def parse_docstring(raw_docstring: str) -> str:",
+      "baseline_code_structure_hash": "da1e60e151db151bdf5b638dbcc584cb098473e7fb35ca75b525880471e29f65",
+      "baseline_yaml_content_hash": "6a6bb488a11088e6af0b6e15ee19845bcf17f831978a578d7168d5d17ef19df3"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus": {
+      "baseline_code_signature_text": "class FeedbackBus:",
+      "baseline_code_structure_hash": "7deb756b2b17cf076baa1237a420d12b6f6eb487e0522b17991cdaa36fcd3782",
+      "baseline_yaml_content_hash": "72c2336022bfddbd67fe59611c469d6ea53844027063137f71aad3a2f37a4634"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus.__init__": {
+      "baseline_code_signature_text": "def __init__(self, operator: Callable[[Union[str, SemanticPointer]], str]):",
+      "baseline_code_structure_hash": "846e52773ff07823ad4aba827a5f846d034a3d943dcb5123a1784015a51190ef",
+      "baseline_yaml_content_hash": "144b8f2405c5422e2f3ad89b588c3b6ad82818b805f0911d68b108a496858be2"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus._operator": {},
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus._render": {
+      "baseline_code_signature_text": "def _render(self, level: str, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "f099d8527b0191b6e1ab31ed584439a758f0f95899752428e7ef4cd8e362d051"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus._renderer": {},
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus.debug": {
+      "baseline_code_signature_text": "def debug(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "5b525873dfc92b815010b05320d2fe42c27d0917cc7d901f7810d2b56d2a263a",
+      "baseline_yaml_content_hash": "928a0f620a841b283ac3837b7a3bae4ac2a6129370ac84f99ef0148390ea5018"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus.error": {
+      "baseline_code_signature_text": "def error(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "c5e349c7916d1623e1d664bb9335198f77596e281587b1ebcfdb1acaaf8c950f",
+      "baseline_yaml_content_hash": "402fb048fe23b2b066058add62b707cc907224bdf758dfcbeb00257083fcf39e"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus.info": {
+      "baseline_code_signature_text": "def info(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "c513649ec26c01d93e600e8617ef242d072791db4ec9ca70a5c33bd460740ef7",
+      "baseline_yaml_content_hash": "492b050ce206b8269e0c546d0fdf02295013a99ff671a3d9c8a71bcf302d92f6"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus.render_to_string": {
+      "baseline_code_signature_text": "def render_to_string(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> str:",
+      "baseline_code_structure_hash": "1b64f52f8f359bab1e4b62a356a7a8661abbb1cd4d278eb2b7b076236eb9765c",
+      "baseline_yaml_content_hash": "9bc4fc254d5dd3423bd7cde1d704f977d03be2bb085b6ce27447b6333b384f13"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus.set_renderer": {
+      "baseline_code_signature_text": "def set_renderer(self, renderer: Renderer):",
+      "baseline_code_structure_hash": "ce3ded2742fb947176e357aadf1a2a16da320a95d72c9a6c393d91f26a2c70a4",
+      "baseline_yaml_content_hash": "352efbb3b2f7be903a863ae23b78c258740621d2caa951306b9333ff7ff81730"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus.success": {
+      "baseline_code_signature_text": "def success(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "3e4e073f5175b379a480a69e878d06d1e7054d3436fd3f6dfc2787b3d6ce1fdd",
+      "baseline_yaml_content_hash": "0c66ab7b6d76ac047fc491a3e53d7cf905acff334b7703e7725d24723d87188f"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/bus.py#FeedbackBus.warning": {
+      "baseline_code_signature_text": "def warning(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "651c2c0ba80fe486d970ac50dcb73eed32e7f6693bcda46f1444cb5564847723",
+      "baseline_yaml_content_hash": "9544f3f112ad20455d4cad24942bceac10be5fdd581c785a4e1c679ed2fbcd63"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/protocols.py#Renderer": {
+      "baseline_code_signature_text": "class Renderer(Protocol):",
+      "baseline_code_structure_hash": "8342694db8d308b36ba5d1ecf2dc07bba1460712ac3a9a9438c5abba24852b3d",
+      "baseline_yaml_content_hash": "6ba2c47caabe0ed2327c10c89c85f60a2e2cc76a84c29bc37eca6057b93c9ec7"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/messaging/protocols.py#Renderer.render": {
+      "baseline_code_signature_text": "def render(self, message: str, level: str) -> None:",
+      "baseline_code_structure_hash": "5ee01c65ceae57a45c16a7c14d696ccdbefeca3e86709a97c1f828eeae4eedec",
+      "baseline_yaml_content_hash": "765e411c8cc6c732339171077c82052cce56b5e2d7637d310ebe40166fbeb6cf"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/services/__init__.py#__all__": {},
+    "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver": {
+      "baseline_code_signature_text": "class AssetPathResolver:",
+      "baseline_code_structure_hash": "884c539e9b6636dad1323ddd2f4dd47af9268fe830f532c2c22f01ee73472c10",
+      "baseline_yaml_content_hash": "be464b306bcdebc2da446e41fe3539fe29e8e74bc7689f1e0c4f0ece94ee38a7"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path):",
+      "baseline_code_structure_hash": "fe3d49a0f7b67ba97e4eb0d393846b4b1cc2e74794689bd9a2f35bb1ec1040a5"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.get_doc_path": {
+      "baseline_code_signature_text": "def get_doc_path(self, source_path: Union[str, Path]) -> Path:",
+      "baseline_code_structure_hash": "9cd2997120e533720db2e7d7ab9c880d7ac212cd66b238ab0d41576990c816a7",
+      "baseline_yaml_content_hash": "36da5909f6e1425f665edc695e5ab40189197a45299d7e1b284d11e83d4c630d"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.get_signature_path": {
+      "baseline_code_signature_text": "def get_signature_path(self, source_path: Union[str, Path]) -> Path:",
+      "baseline_code_structure_hash": "bb021e6f8d350eee00d6b1f74fd27f0a07d8d6ac9eead4b7ff515c4a8d40387c",
+      "baseline_yaml_content_hash": "ab2c8499fdda49d14e4a8b9abd32022a6411d8345396be3e6973d91a334462d2"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.root_path": {},
+    "py://packages/stitcher-common/src/stitcher/common/services/asset_path_resolver.py#AssetPathResolver.sig_root": {},
+    "py://packages/stitcher-common/src/stitcher/common/services/differ.py#Differ": {
+      "baseline_code_signature_text": "class Differ:",
+      "baseline_code_structure_hash": "56b3480d1ac9e95f38aa803a4d0f8a9c5b9db8a2277b1df20ef157cf1a64d625"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/services/differ.py#Differ.generate_text_diff": {
+      "baseline_code_signature_text": "def generate_text_diff(self, a: str, b: str, label_a: str = 'old', label_b: str = 'new') -> str:",
+      "baseline_code_structure_hash": "e506f5d6070ea3a706c5599b7738785e8872c0ee2b8d3e091c8b546f341c3fad"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#DeleteDirectoryOp": {
+      "baseline_code_signature_text": "class DeleteDirectoryOp(FileOp):",
+      "baseline_code_structure_hash": "bdab578d64aff01b70b394c4f51fa8baf095999ca974f67b55edc2d99a4eebe3"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#DeleteDirectoryOp.describe": {
+      "baseline_code_signature_text": "def describe(self) -> str:",
+      "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#DeleteDirectoryOp.execute": {
+      "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+      "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#DeleteFileOp": {
+      "baseline_code_signature_text": "class DeleteFileOp(FileOp):",
+      "baseline_code_structure_hash": "f1f5ad21b94e472ca4ef41156225852eec893874877ca8806f0482985e5bd370"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#DeleteFileOp.describe": {
+      "baseline_code_signature_text": "def describe(self) -> str:",
+      "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#DeleteFileOp.execute": {
+      "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+      "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileOp": {
+      "baseline_code_signature_text": "class FileOp(ABC):",
+      "baseline_code_structure_hash": "e23854a6d9e518329130d1903f2d07f123f83dd23cfdc726a14292ff98056763"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileOp.describe": {
+      "baseline_code_signature_text": "def describe(self) -> str:",
+      "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileOp.execute": {
+      "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+      "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileOp.path": {},
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileSystemAdapter": {
+      "baseline_code_signature_text": "class FileSystemAdapter(Protocol):",
+      "baseline_code_structure_hash": "f60f2f20b0cc337360e6c2f8316706df2ac2c2d9a1b00cf4cb13dc041d8a1426"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileSystemAdapter.exists": {
+      "baseline_code_signature_text": "def exists(self, path: Path) -> bool:",
+      "baseline_code_structure_hash": "6915af56c156cc519ca7892775ddf3382d311222ccf4c5cd53708b47f9d73b8f"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileSystemAdapter.move": {
+      "baseline_code_signature_text": "def move(self, src: Path, dest: Path) -> None:",
+      "baseline_code_structure_hash": "71e9c3b299b04bd83451fd5ff167377f71318e1af9f054f220c14fc6892a6e0c"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileSystemAdapter.read_text": {
+      "baseline_code_signature_text": "def read_text(self, path: Path) -> str:",
+      "baseline_code_structure_hash": "591cc75159dffa59d1866ae7b0ea00ee75d162006e7ed6c4957448be43cf8f96"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileSystemAdapter.remove": {
+      "baseline_code_signature_text": "def remove(self, path: Path) -> None:",
+      "baseline_code_structure_hash": "49255e103ece95aa5cae1fb6bd8ca4152fb4cca08f546f13e31b99d8b87cf01c"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileSystemAdapter.rmtree": {
+      "baseline_code_signature_text": "def rmtree(self, path: Path) -> None:",
+      "baseline_code_structure_hash": "603d7ce3ebc796ef372d7e0c997e27d3e5cbe9bbaaff2fcf9f151a52e2251dc9"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#FileSystemAdapter.write_text": {
+      "baseline_code_signature_text": "def write_text(self, path: Path, content: str) -> None:",
+      "baseline_code_structure_hash": "ba3d96911f7c8b9307afbd6478b9a4369320519af0de273184a4f968185e38a5"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#MoveFileOp": {
+      "baseline_code_signature_text": "class MoveFileOp(FileOp):",
+      "baseline_code_structure_hash": "09cec0661ccc42d6c6d5a9c062bef8fde37a891ef2a2482c4328f5f00dd14613"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#MoveFileOp.describe": {
+      "baseline_code_signature_text": "def describe(self) -> str:",
+      "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#MoveFileOp.dest": {},
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#MoveFileOp.execute": {
+      "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+      "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#RealFileSystem": {
+      "baseline_code_signature_text": "class RealFileSystem:",
+      "baseline_code_structure_hash": "8aba41996f6c8906c3e34d3d3ac7c27fd6571f51d92a921bcd007029399d3ddf"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#RealFileSystem.exists": {
+      "baseline_code_signature_text": "def exists(self, path: Path) -> bool:",
+      "baseline_code_structure_hash": "6915af56c156cc519ca7892775ddf3382d311222ccf4c5cd53708b47f9d73b8f"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#RealFileSystem.move": {
+      "baseline_code_signature_text": "def move(self, src: Path, dest: Path) -> None:",
+      "baseline_code_structure_hash": "71e9c3b299b04bd83451fd5ff167377f71318e1af9f054f220c14fc6892a6e0c"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#RealFileSystem.read_text": {
+      "baseline_code_signature_text": "def read_text(self, path: Path) -> str:",
+      "baseline_code_structure_hash": "591cc75159dffa59d1866ae7b0ea00ee75d162006e7ed6c4957448be43cf8f96"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#RealFileSystem.remove": {
+      "baseline_code_signature_text": "def remove(self, path: Path) -> None:",
+      "baseline_code_structure_hash": "49255e103ece95aa5cae1fb6bd8ca4152fb4cca08f546f13e31b99d8b87cf01c"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#RealFileSystem.rmtree": {
+      "baseline_code_signature_text": "def rmtree(self, path: Path) -> None:",
+      "baseline_code_structure_hash": "603d7ce3ebc796ef372d7e0c997e27d3e5cbe9bbaaff2fcf9f151a52e2251dc9"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#RealFileSystem.write_text": {
+      "baseline_code_signature_text": "def write_text(self, path: Path, content: str) -> None:",
+      "baseline_code_structure_hash": "ba3d96911f7c8b9307afbd6478b9a4369320519af0de273184a4f968185e38a5"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager": {
+      "baseline_code_signature_text": "class TransactionManager:",
+      "baseline_code_structure_hash": "59c487b91aa1b759f15fd50497364dd1e7ce13ef5e70996955608e13f1309f8a"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, fs: Optional[FileSystemAdapter] = None, dry_run: bool = False):",
+      "baseline_code_structure_hash": "7c02eb43624db9caab4889343b4e3b0141906aeec696ab042cdbb899e7f508a1"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager._ops": {},
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager._rebase_ops": {
+      "baseline_code_signature_text": "def _rebase_ops(self, ops: List[FileOp]) -> List[FileOp]:",
+      "baseline_code_structure_hash": "f4e148c5998a411bf9e10160f376208a1602542246ef1b67410113a28fdd3646",
+      "baseline_yaml_content_hash": "4fe6918e876d2a37c12845fc8ea596bb9604424b868d8dc91c8edf36ec9036ff"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.add_delete_dir": {
+      "baseline_code_signature_text": "def add_delete_dir(self, path: Union[str, Path]) -> None:",
+      "baseline_code_structure_hash": "523cc3d99f7a5ba9724c9858450bd79f5d9f0b2d4fd4bcd8629082f3709df907"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.add_delete_file": {
+      "baseline_code_signature_text": "def add_delete_file(self, path: Union[str, Path]) -> None:",
+      "baseline_code_structure_hash": "2d0f06efab2490fe5f8e4d15eb90592607e32be886898ca62a77574d2166ec2a"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.add_move": {
+      "baseline_code_signature_text": "def add_move(self, src: Union[str, Path], dest: Union[str, Path]) -> None:",
+      "baseline_code_structure_hash": "621f4daa79d67a601b7a866e10bcfc08e8c0877a57aa00f1cba3936c5183d482"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.add_write": {
+      "baseline_code_signature_text": "def add_write(self, path: Union[str, Path], content: str) -> None:",
+      "baseline_code_structure_hash": "28a1f2ca1964c7c302d486c840c0da2b2e44936896df6528efd00467c8acad2c"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.commit": {
+      "baseline_code_signature_text": "def commit(self) -> None:",
+      "baseline_code_structure_hash": "95e5246b1328e6191a7ccc1de1b30b6f1c46a216740933777a311550317b75f8"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.dry_run": {},
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.fs": {},
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.pending_count": {},
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.preview": {
+      "baseline_code_signature_text": "def preview(self) -> List[str]:",
+      "baseline_code_structure_hash": "42d00325fcbfefbcf799ae9b6e99a8b3ec0774b5ebb718e9d247a8ef8f628ce7"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#TransactionManager.root_path": {},
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#WriteFileOp": {
+      "baseline_code_signature_text": "class WriteFileOp(FileOp):",
+      "baseline_code_structure_hash": "9d5446c64dadb6dae708274c6d57198b3d6131771215bbed13bf6644586b4469"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#WriteFileOp.content": {},
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#WriteFileOp.describe": {
+      "baseline_code_signature_text": "def describe(self) -> str:",
+      "baseline_code_structure_hash": "26f81affa35667937b6b23b1d80ecc90e2b04fad3fdf8f7ae8b30ba28ad5808a"
+    },
+    "py://packages/stitcher-common/src/stitcher/common/transaction.py#WriteFileOp.execute": {
+      "baseline_code_signature_text": "def execute(self, fs: FileSystemAdapter, root: Path) -> None:",
+      "baseline_code_structure_hash": "d62ace51273a13e214a4b5455935ff2d046cf08ed503fe69da5b480e21dcb741"
+    }
+  },
+  "version": "1.0"
+}

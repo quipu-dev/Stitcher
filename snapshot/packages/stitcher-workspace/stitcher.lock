@@ -1,0 +1,64 @@
+{
+  "fingerprints": {
+    "py://packages/stitcher-workspace/src/stitcher/__init__.py#__path__": {},
+    "py://packages/stitcher-workspace/src/stitcher/workspace/__init__.py#__all__": {},
+    "py://packages/stitcher-workspace/src/stitcher/workspace/__init__.py#__path__": {},
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace": {
+      "baseline_code_signature_text": "class Workspace:",
+      "baseline_code_structure_hash": "b2a5fc0b2fb82e14bbb08d8b2421510009a0a42f1a6ee7780a11acfdaf371480"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.__init__": {
+      "baseline_code_signature_text": "def __init__(self, root_path: Path, config: Optional[StitcherConfig] = None):",
+      "baseline_code_structure_hash": "01adb170bd677800d033ff7fad6b7b53d4ee617df0b7440f21842904fe64228a"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace._build_from_config": {
+      "baseline_code_signature_text": "def _build_from_config(self) -> None:",
+      "baseline_code_structure_hash": "fc1f07484601245bd4135e26c9e447fa2ad16c500c39fe45892e4a0bf5164145"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace._discover_packages": {
+      "baseline_code_signature_text": "def _discover_packages(self) -> None:",
+      "baseline_code_structure_hash": "0fc2efb7202cd9db28211bc40f7e83a6e018fb53084e03b04336a5df447286c9"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace._find_code_dirs": {
+      "baseline_code_signature_text": "def _find_code_dirs(self, pkg_root: Path) -> List[Path]:",
+      "baseline_code_structure_hash": "c45acca5906fa3709d897eec30d07fd4649ddd54c324733413109cd5cdee11fa"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace._get_top_level_importables": {
+      "baseline_code_signature_text": "def _get_top_level_importables(self, src_path: Path) -> List[str]:",
+      "baseline_code_structure_hash": "0075a117b81dae865c8e7b5852839979d552364c0edd634668e37600886aaeee"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.config": {},
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.discover_files": {
+      "baseline_code_signature_text": "def discover_files(self) -> Set[str]:",
+      "baseline_code_structure_hash": "8cd2a635793a694a9cc486d604b0e769bff5983918cbae5c48187b596280b8aa"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.find_owning_package": {
+      "baseline_code_signature_text": "def find_owning_package(self, file_path: Path) -> Path:",
+      "baseline_code_structure_hash": "8a5792c80cfdf6613c98da60d08d8bb51591c3e6b6f25ab49746bdcb8a9c4619",
+      "baseline_yaml_content_hash": "91731e937bd4163d877baa57711b06e366569e172ef820d9fa41ecd76437132f"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.get_search_paths": {
+      "baseline_code_signature_text": "def get_search_paths(self) -> List[Path]:",
+      "baseline_code_structure_hash": "9238332060e9eff4c3360862f74e7c688ce2926535b633ee4a4acd3a2c344c7b"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.import_to_source_dirs": {},
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.is_peripheral": {
+      "baseline_code_signature_text": "def is_peripheral(self, file_path: Path) -> bool:",
+      "baseline_code_structure_hash": "e24accfaaa1c631476d9fd8ce2da5958abc720a3d5fae40ebf35ade6c0042064"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.peripheral_source_dirs": {},
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.root_path": {},
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace.to_workspace_relative": {
+      "baseline_code_signature_text": "def to_workspace_relative(self, path: Path) -> str:",
+      "baseline_code_structure_hash": "5b9675f1dea12fa93b64de8a37a5bb1f164ba94be6934919236c8836bc99f9a9",
+      "baseline_yaml_content_hash": "829547cff8b417d4c408b65bcc3289cb58af1f7312fc5fa81d2007b2412cba80"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#find_workspace_root": {
+      "baseline_code_signature_text": "def find_workspace_root(start_path: Path) -> Path:",
+      "baseline_code_structure_hash": "c851bfa3eef2f3e7953962b49ea9ca81912661224b188286474f7de68aabb811",
+      "baseline_yaml_content_hash": "47fe425218dc7d0a13020a78f26428839b9c8aaad35c33d8eb755f998ee587b6"
+    },
+    "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#log": {}
+  },
+  "version": "1.0"
+}

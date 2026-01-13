@@ -83,12 +83,12 @@ class MoveDirectoryOperation(AbstractOperation):
                         doc_path, ctx.sidecar_manager.get_doc_path(dest_item)
                     )
                 )
-        
+
         # 3. Declare Lock Update Intent for the entire directory
         rel_src_dir = ctx.workspace.to_workspace_relative(src_dir)
         rel_dest_dir = ctx.workspace.to_workspace_relative(dest_dir)
         owning_package = ctx.workspace.find_owning_package(src_dir)
-        
+
         intents.append(
             LockPathUpdateIntent(
                 package_root=owning_package,

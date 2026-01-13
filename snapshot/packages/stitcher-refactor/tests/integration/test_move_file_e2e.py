@@ -1,5 +1,4 @@
 import json
-import yaml
 from stitcher.analysis.semantic import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
 from stitcher.common.transaction import (
@@ -21,7 +20,9 @@ def test_move_file_flat_layout(tmp_path):
     old_suri = f"py://{py_rel_path}#A"
 
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "1"})}
+    fingerprints = {
+        old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "1"})
+    }
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
@@ -46,7 +47,7 @@ def test_move_file_flat_layout(tmp_path):
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("mypkg")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace,
@@ -74,7 +75,7 @@ def test_move_file_flat_layout(tmp_path):
     assert not old_py.exists()
     assert new_py.exists()
     assert new_py.with_suffix(".stitcher.yaml").exists()
-    
+
     new_app = app_py.read_text("utf-8")
     assert "from mypkg.new import A" in new_app
 

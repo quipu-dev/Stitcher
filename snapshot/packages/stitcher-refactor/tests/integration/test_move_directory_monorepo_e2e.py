@@ -1,5 +1,4 @@
 import json
-import yaml
 
 from stitcher.analysis.semantic import SemanticGraph
 from stitcher.refactor.engine.context import RefactorContext
@@ -23,23 +22,38 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
     old_suri = f"py://{py_rel_path}#EngineLogic"
 
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})}
+    fingerprints = {
+        old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})
+    }
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
-        factory
-        .with_pyproject("packages/cascade-engine")
-        .with_source("packages/cascade-engine/src/cascade/__init__.py", "__path__ = __import__('pkgutil').extend_path(__path__, __name__)")
+        factory.with_pyproject("packages/cascade-engine")
+        .with_source(
+            "packages/cascade-engine/src/cascade/__init__.py",
+            "__path__ = __import__('pkgutil').extend_path(__path__, __name__)",
+        )
         .with_source("packages/cascade-engine/src/cascade/engine/__init__.py", "")
         .with_source("packages/cascade-engine/src/cascade/engine/core/__init__.py", "")
-        .with_source("packages/cascade-engine/src/cascade/engine/core/logic.py", "class EngineLogic: pass")
-        .with_docs("packages/cascade-engine/src/cascade/engine/core/logic.stitcher.yaml", {"EngineLogic": "Core engine logic."})
+        .with_source(
+            "packages/cascade-engine/src/cascade/engine/core/logic.py",
+            "class EngineLogic: pass",
+        )
+        .with_docs(
+            "packages/cascade-engine/src/cascade/engine/core/logic.stitcher.yaml",
+            {"EngineLogic": "Core engine logic."},
+        )
         .with_raw_file("packages/cascade-engine/stitcher.lock", lock_content)
-        
         .with_pyproject("packages/cascade-runtime")
-        .with_source("packages/cascade-runtime/src/cascade/__init__.py", "__path__ = __import__('pkgutil').extend_path(__path__, __name__)")
+        .with_source(
+            "packages/cascade-runtime/src/cascade/__init__.py",
+            "__path__ = __import__('pkgutil').extend_path(__path__, __name__)",
+        )
         .with_source("packages/cascade-runtime/src/cascade/runtime/__init__.py", "")
-        .with_source("packages/cascade-runtime/src/cascade/runtime/app.py", "from cascade.engine.core.logic import EngineLogic\n\nlogic = EngineLogic()")
+        .with_source(
+            "packages/cascade-runtime/src/cascade/runtime/app.py",
+            "from cascade.engine.core.logic import EngineLogic\n\nlogic = EngineLogic()",
+        )
     ).build()
 
     src_dir = project_root / "packages/cascade-engine/src/cascade/engine/core"
@@ -52,7 +66,7 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
     workspace = Workspace(root_path=project_root)
     graph = SemanticGraph(workspace=workspace, index_store=index_store)
     graph.load("cascade")
-    
+
     sidecar_manager = SidecarManager(root_path=project_root)
     ctx = RefactorContext(
         workspace=workspace,
@@ -82,13 +96,13 @@ def test_move_directory_in_monorepo_updates_cross_package_references(tmp_path):
 
     assert not src_dir.exists()
     assert dest_dir.exists()
-    
+
     updated_consumer_code = consumer_path.read_text()
     assert "from cascade.runtime.core.logic import EngineLogic" in updated_consumer_code
 
     src_lock_data = json.loads(src_lock_path.read_text())["fingerprints"]
     assert old_suri not in src_lock_data
-    
+
     assert dest_lock_path.exists()
     dest_lock_data = json.loads(dest_lock_path.read_text())["fingerprints"]
     new_py_rel_path = "packages/cascade-runtime/src/cascade/runtime/core/logic.py"

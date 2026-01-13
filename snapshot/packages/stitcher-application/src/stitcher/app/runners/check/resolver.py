@@ -1,4 +1,3 @@
-import copy
 from pathlib import Path
 from collections import defaultdict
 from typing import List, Dict
@@ -59,10 +58,10 @@ class CheckResolver:
     ):
         # Group by package to batch lock updates
         updates_by_pkg: Dict[Path, Dict[str, Fingerprint]] = defaultdict(dict)
-        
+
         # Pre-load needed lock data? Or load on demand.
         # Since this is auto-reconcile, we iterate results.
-        
+
         for res in results:
             doc_update_violations = [
                 v for v in res.info_violations if v.kind == L.check.state.doc_updated
@@ -73,33 +72,33 @@ class CheckResolver:
             module_def = next((m for m in modules if m.file_path == res.path), None)
             if not module_def:
                 continue
-                
+
             abs_path = self.root_path / module_def.file_path
             pkg_root = self.workspace.find_owning_package(abs_path)
             ws_rel_path = self.workspace.to_workspace_relative(abs_path)
-            
-            # Load lock only if not already loaded for this batch? 
+
+            # Load lock only if not already loaded for this batch?
             # For simplicity, we load fresh, update in memory, then save later.
             # But here we need cumulative updates.
             if pkg_root not in updates_by_pkg:
                 updates_by_pkg[pkg_root] = self.lock_manager.load(pkg_root)
-            
+
             lock_data = updates_by_pkg[pkg_root]
             current_yaml_map = self.doc_manager.compute_yaml_content_hashes(module_def)
 
             for violation in doc_update_violations:
                 fqn = violation.fqn
                 suri = self.uri_generator.generate_symbol_uri(ws_rel_path, fqn)
-                
+
                 if suri in lock_data:
                     fp = lock_data[suri]
                     new_yaml_hash = current_yaml_map.get(fqn)
-                    
+
                     if new_yaml_hash is not None:
                         fp["baseline_yaml_content_hash"] = new_yaml_hash
                     elif "baseline_yaml_content_hash" in fp:
                         del fp["baseline_yaml_content_hash"]
-                        
+
         # Save all updated locks
         for pkg_root, lock_data in updates_by_pkg.items():
             self.lock_manager.save(pkg_root, lock_data)
@@ -199,15 +198,15 @@ class CheckResolver:
         # 1. Group resolutions by Package Root (Lock Boundary)
         updates_by_pkg: Dict[Path, Dict[str, Fingerprint]] = defaultdict(dict)
         actions_by_file = defaultdict(list)
-        
+
         # Pre-process actions to group by file first for efficient parsing
         for file_path, context_actions in resolutions.items():
             abs_path = self.root_path / file_path
             pkg_root = self.workspace.find_owning_package(abs_path)
-            
+
             if pkg_root not in updates_by_pkg:
                 updates_by_pkg[pkg_root] = self.lock_manager.load(pkg_root)
-            
+
             actions_by_file[file_path].extend(context_actions)
 
         # 2. Process file-by-file logic
@@ -217,29 +216,34 @@ class CheckResolver:
             abs_path = self.root_path / file_path
             pkg_root = self.workspace.find_owning_package(abs_path)
             ws_rel_path = self.workspace.to_workspace_relative(abs_path)
-            
+
             lock_data = updates_by_pkg[pkg_root]
-            
+
             # Need to parse code to get current state for Relink/Reconcile
-            has_sig_updates = any(a in [ResolutionAction.RELINK, ResolutionAction.RECONCILE] for _, a in context_actions)
-            
+            has_sig_updates = any(
+                a in [ResolutionAction.RELINK, ResolutionAction.RECONCILE]
+                for _, a in context_actions
+            )
+
             computed_fingerprints = {}
             current_yaml_map = {}
-            
+
             if has_sig_updates:
                 full_module_def = self.parser.parse(
                     abs_path.read_text("utf-8"), file_path
                 )
                 computed_fingerprints = self._compute_fingerprints(full_module_def)
-                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(full_module_def)
+                current_yaml_map = self.doc_manager.compute_yaml_content_hashes(
+                    full_module_def
+                )
 
             for context, action in context_actions:
                 fqn = context.fqn
-                
+
                 if action == ResolutionAction.PURGE_DOC:
                     purges_by_file[file_path].append(fqn)
                     continue
-                
+
                 suri = self.uri_generator.generate_symbol_uri(ws_rel_path, fqn)
                 if suri in lock_data:
                     fp = lock_data[suri]
@@ -253,7 +257,9 @@ class CheckResolver:
                         if current_code_hash:
                             fp["baseline_code_structure_hash"] = str(current_code_hash)
                         if fqn in current_yaml_map:
-                            fp["baseline_yaml_content_hash"] = str(current_yaml_map[fqn])
+                            fp["baseline_yaml_content_hash"] = str(
+                                current_yaml_map[fqn]
+                            )
 
         # 3. Save Lock Files
         for pkg_root, lock_data in updates_by_pkg.items():

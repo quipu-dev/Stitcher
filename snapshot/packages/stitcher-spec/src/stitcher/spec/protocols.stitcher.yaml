@@ -33,3 +33,5 @@
   Defines the contract for generating type stub files from Stitcher's IR.
 "StubGeneratorProtocol.generate": |-
   Generate the content of a type stub file (e.g. .pyi) from the ModuleDef IR.
+LockManagerProtocol: "Protocol for managing the stitcher.lock file, which serves as the distributed\npersistence layer for fingerprints."
+URIGeneratorProtocol: "Protocol for generating Stitcher Uniform Resource Identifiers (SURIs).\nSURIs must be anchored to the workspace root to ensure global uniqueness."

@@ -65,12 +65,12 @@ class IndexCheckSubjectAdapter(CheckSubject):
         # 1. Load data from all sources
         symbols_from_db = self._index_store.get_symbols_by_file_path(self.file_path)
         yaml_docs = self._doc_manager.load_docs_for_path(self.file_path)
-        
+
         # Load Lock Data
         abs_path = self._root_path / self.file_path
         pkg_root = self._workspace.find_owning_package(abs_path)
         lock_data = self._lock_manager.load(pkg_root)
-        
+
         # Prepare coordinates
         ws_rel_path = self._workspace.to_workspace_relative(abs_path)
 
@@ -188,11 +188,11 @@ class ASTCheckSubjectAdapter(CheckSubject):
 
         fingerprints = self._compute_fingerprints()
         yaml_hashes = self._doc_manager.compute_yaml_content_hashes(self._module)
-        
+
         # Load Lock Data
         lock_data = {}
         ws_rel_path = ""
-        
+
         if self._module.file_path:
             abs_path = self._root_path / self.file_path
             pkg_root = self._workspace.find_owning_package(abs_path)
@@ -210,7 +210,7 @@ class ASTCheckSubjectAdapter(CheckSubject):
         for fqn in all_fqns:
             fp = fingerprints.get(fqn, Fingerprint())
             source_ir = source_docs.get(fqn)
-            
+
             stored_fp = Fingerprint()
             if ws_rel_path:
                 suri = self._uri_generator.generate_symbol_uri(ws_rel_path, fqn)
