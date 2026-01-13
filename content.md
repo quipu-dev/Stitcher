@@ -1,163 +1,80 @@
-你的分析完全正确，我的诊断存在疏漏。我陷入了单元测试思维的陷阱：我为 `find_workspace_root` 函数本身添加了正确的行为和测试，但**我完全忽略了在应用程序的实际启动路径中调用它**。
+太棒了。通过验证该集成错误并完成修复，我们已经成功消除了系统中一个重大的“不确定性”隐患。现在，Stitcher 能够确定性地识别其操作边界，并能向用户提供高质量的错误反馈。
 
-这是一个典型的集成疏忽，也是“正规军工程标准”中“确定性路径追踪”原则的一个反面教材。系统在启动时没有追踪到正确的根路径，而是走了一条看似简单的“捷径”（`Path.cwd()`）。
+我将生成一个 `[COMMIT]` 计划，将这些变更作为一个逻辑完整的单元提交到仓库。
 
-**错误根源分析**:
-
-1.  `stitcher-cli` 中的 `commands/*.py` 文件调用 `factories.make_app()`。
-2.  `factories.make_app()` 调用 `factories.get_project_root()`，后者简单地返回 `Path.cwd()`。
-3.  `make_app()` 随后用这个 `Path.cwd()` 路径去初始化 `StitcherApp`。
-4.  `StitcherApp` 接收这个路径，并用它初始化 `Workspace`。
-5.  `Workspace` 类本身并不会去*寻找*根，它只是*接受*一个被指定的根。
-6.  因此，我们精心加固的 `find_workspace_root` 函数从未被调用，`WorkspaceNotFoundError` 自然也从未被抛出。系统愉快地将临时测试目录或 `~/tmp/o` 当作了项目根目录，并继续执行。
-
-现在，我们将纠正这个集成错误，确保应用程序的启动流程是确定且正确的。
-
-## [WIP] fix: 集成工作区根目录发现逻辑到应用启动路径
-
-### 错误分析
-上一个计划中创建的 `find_workspace_root` 函数虽然逻辑正确，但并未在 `stitcher-cli` 的应用工厂 (`make_app`) 中被实际调用。工厂函数错误地使用了 `Path.cwd()` 作为 `StitcherApp` 的根目录，绕过了所有健壮性检查，导致在无效目录中运行时命令依然“成功”执行，这与预期行为完全相反。
+## [COMMIT] refactor: 强化工作区发现逻辑与 CLI 错误处理
 
 ### 用户需求
-修改 `make_app` 工厂函数，强制它在创建 `StitcherApp` 实例之前，必须先调用 `find_workspace_root` 来确定一个有效的项目根目录。如果找不到，则应让 `WorkspaceNotFoundError` 自然抛出，由上层命令捕获。
+移除工作区发现过程中的静默回退行为，改为抛出显式异常，并在 CLI 层捕获该异常以提供友好的错误提示。
 
 ### 评论
-这是一个关键的修复，它将我们之前定义的确定性原则真正地应用到了系统的入口点。通过在“组合根 (Composition Root)”处解决路径问题，我们确保了整个应用程序实例都在一个已知且有效的上下文中运行。
+这是一次从“近似解”到“确定解”的成功重构。它不仅提高了系统的健壮性（避免在错误目录下创建 `.stitcher` 目录），还通过统一的异常处理提升了用户体验。
 
 ### 目标
-1.  修改 `stitcher.cli.factories.make_app` 函数。
-2.  移除多余的 `get_project_root` 函数。
-3.  确保 `make_app` 调用 `find_workspace_root` 并使用其返回值来实例化 `StitcherApp`。
-4.  重新运行测试，确认 `test_command_fails_gracefully_outside_workspace` 现在可以通过。
+1.  提交 `stitcher-workspace` 中新增的异常体系及加固后的发现逻辑。
+2.  提交 `stitcher-cli` 中集成的错误捕获与工厂函数修改。
+3.  提交新增的 i18n 资源文件。
+4.  提交相关的单元测试与集成测试。
 
 ### 基本原理
-应用程序的正确性始于其初始化。通过将根目录的发现和验证逻辑移至应用实例化的最前端，我们遵循了“先验证，后执行”的安全原则，从根本上杜绝了在错误上下文中操作的可能性。
+遵循“正规军”标准，通过在组合根（Composition Root）强制执行路径验证，我们将风险隔离在了系统启动阶段。这确保了后续所有依赖根路径的操作（如 SURI 生成）都建立在坚实的基础上。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical 
-#comp/cli #comp/workspace #scope/core 
+#intent/refine #flow/ready #priority/high 
+#comp/cli #comp/workspace #scope/core #scope/ux 
 #ai/refine
-#task/domain/workspace #task/object/root-discovery #task/action/hardening #task/state/continue
+#task/domain/workspace #task/object/root-discovery #task/action/hardening #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 修正应用工厂 `make_app`
+#### Acts 1: 提交工作区加固相关的变更
 
-这是唯一的、也是最关键的修改。我们将 `find_workspace_root` 集成到 `make_app` 中，并移除不再需要的 `get_project_root`。
+我们将所有涉及路径发现逻辑、错误处理以及验证这些行为的测试代码一并提交。
 
 ~~~~~act
-patch_file
+git_add
+packages/stitcher-workspace/src/stitcher/workspace/exceptions.py
+packages/stitcher-workspace/src/stitcher/workspace/__init__.py
+packages/stitcher-workspace/src/stitcher/workspace/workspace.py
+packages/stitcher-workspace/tests/unit/test_workspace.py
+packages/stitcher-common/src/stitcher/common/assets/needle/en/error/workspace.json
+packages/stitcher-common/src/stitcher/common/assets/needle/zh/error/workspace.json
+packages/stitcher-cli/src/stitcher/cli/commands/basics.py
+packages/stitcher-cli/src/stitcher/cli/commands/check.py
+packages/stitcher-cli/src/stitcher/cli/commands/cov.py
+packages/stitcher-cli/src/stitcher/cli/commands/index.py
+packages/stitcher-cli/src/stitcher/cli/commands/pump.py
+packages/stitcher-cli/src/stitcher/cli/commands/refactor.py
 packages/stitcher-cli/src/stitcher/cli/factories.py
+packages/stitcher-cli/tests/integration/test_error_handling.py
 ~~~~~
-~~~~~python.old
-import sys
-from pathlib import Path
-from typing import Optional
 
-from stitcher.app import StitcherApp
-from stitcher.spec.interaction import InteractionHandler
-from stitcher.common import stitcher_operator as nexus
-from stitcher.lang.python import (
-    GriffePythonParser,
-    PythonTransformer,
-    PythonFingerprintStrategy,
-)
-
-from .handlers import TyperInteractionHandler
-from .interactive import TyperInteractiveRenderer
-
-
-def get_project_root() -> Path:
-    return Path.cwd()
-
-
-def make_interaction_handler(
-    non_interactive: bool = False,
-    auto_resolve_mode: bool = False,
-) -> Optional[InteractionHandler]:
-    if sys.stdin.isatty() and not non_interactive and not auto_resolve_mode:
-        renderer = TyperInteractiveRenderer(nexus)
-        return TyperInteractionHandler(renderer)
-    return None
-
-
-def make_app(
-    handler: Optional[InteractionHandler] = None,
-) -> StitcherApp:
-    # Composition Root: Assemble the dependencies
-    # UNIFIED: Always use Griffe for analysis
-    parser = GriffePythonParser()
-
-    transformer = PythonTransformer()
-    strategy = PythonFingerprintStrategy()
-
-    return StitcherApp(
-        root_path=get_project_root(),
-        parser=parser,
-        transformer=transformer,
-        fingerprint_strategy=strategy,
-        interaction_handler=handler,
-    )
+~~~~~act
+git_commit
 ~~~~~
-~~~~~python.new
-import sys
-from pathlib import Path
-from typing import Optional
+~~~~~text
+refactor: harden workspace discovery and improve CLI error handling
 
-from stitcher.app import StitcherApp
-from stitcher.spec.interaction import InteractionHandler
-from stitcher.common import stitcher_operator as nexus
-from stitcher.lang.python import (
-    GriffePythonParser,
-    PythonTransformer,
-    PythonFingerprintStrategy,
-)
-from stitcher.workspace.workspace import find_workspace_root
+This commit addresses the architectural "uncertainty" in how Stitcher 
+identifies project roots. 
 
-from .handlers import TyperInteractionHandler
-from .interactive import TyperInteractiveRenderer
-
-
-def make_interaction_handler(
-    non_interactive: bool = False,
-    auto_resolve_mode: bool = False,
-) -> Optional[InteractionHandler]:
-    if sys.stdin.isatty() and not non_interactive and not auto_resolve_mode:
-        renderer = TyperInteractiveRenderer(nexus)
-        return TyperInteractionHandler(renderer)
-    return None
-
-
-def make_app(
-    handler: Optional[InteractionHandler] = None,
-) -> StitcherApp:
-    # Composition Root: Assemble the dependencies
-    
-    # 1. Determine the true workspace root. This may raise WorkspaceNotFoundError,
-    # which is caught by the command functions.
-    project_root = find_workspace_root(Path.cwd())
-
-    # 2. UNIFIED: Always use Griffe for analysis
-    parser = GriffePythonParser()
-
-    transformer = PythonTransformer()
-    strategy = PythonFingerprintStrategy()
-
-    return StitcherApp(
-        root_path=project_root,
-        parser=parser,
-        transformer=transformer,
-        fingerprint_strategy=strategy,
-        interaction_handler=handler,
-    )
+Key changes:
+- Removed silent fallback in 'find_workspace_root'; it now raises 
+  'WorkspaceNotFoundError' if no .git or pyproject.toml is found.
+- Integrated root discovery into the CLI application factory ('make_app'),
+  ensuring the entire app instance runs within a validated context.
+- Implemented explicit exception handling in all CLI commands, 
+  providing user-friendly, internationalized error messages via the 
+  feedback bus instead of raw Python tracebacks.
+- Added i18n resources for workspace-related errors in English and Chinese.
+- Added unit tests for discovery failure scenarios and integration tests
+  verifying graceful CLI exits outside of workspaces.
 ~~~~~
 
 ### 下一步建议
 
-这个修复应该能让之前失败的测试 `test_command_fails_gracefully_outside_workspace` 成功通过。我们已经确保了系统在无效环境中会明确且优雅地失败。
+工作区基础已经稳固。接下来我们将攻克当前架构中最后一块主要的“MVP 痕迹”：
 
-现在，我们重新回到宏观计划的正轨，处理最高优先级的架构债务：
-
-- **完成依赖注入 (P0)**: 在 `StitcherApp` 组装阶段创建 `URIGeneratorProtocol` 的单例，并将其通过构造函数注入到所有需要它的下游组件（如 `SidecarTransformer`, `Planner`, `Adapter`）中，彻底消除硬编码的 `PythonURIGenerator()` 实例化。
+- **完成依赖注入 (P0)**: 目前 `URIGenerator` 仍在多个组件中被硬编码实例化。我们将修改 `StitcherApp`，在初始化时创建 `PythonURIGenerator` 实例，并将其注入到 `Adapter`, `Planner` 等下游组件中。这将彻底解除逻辑层对具体语言实现的编译时依赖。
