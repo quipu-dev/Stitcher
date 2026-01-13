@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(core): 修复 Sidecar 发现机制与目录移动逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768278122.0625558, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(refactor): 修复 Planner 与 Sidecar 处理逻辑的深层缺陷", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768278325.0178726, "duration_ms": 0}}

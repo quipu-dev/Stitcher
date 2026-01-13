@@ -48,20 +48,20 @@ def parse_signature_references(content: str) -> List[Tuple[str, int, int]]:
     """
     references = []
     
-    # Matches keys that look like SURIs at the start of a line (standard formatting)
-    # e.g. "py://path/to/file.py#symbol":
-    pattern = re.compile(r'^\s*"(py://[^"]+)":')
+    # Matches any string key at the start of a line.
+    # We relaxed this from strictly matching "py://..." to allow FQN keys (legacy/test support).
+    pattern = re.compile(r'^\s*"([^"]+)":')
     
     lines = content.splitlines()
     for i, line in enumerate(lines):
         match = pattern.search(line)
         if match:
-            suri = match.group(1)
+            key = match.group(1)
             # Find the actual start column of the key quote
-            col = line.find('"' + suri + '"')
+            col = line.find('"' + key + '"')
             if col == -1: 
                 col = 0
-            references.append((suri, i + 1, col))
+            references.append((key, i + 1, col))
             
     return references
 
