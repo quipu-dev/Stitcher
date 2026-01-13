@@ -1,18 +1,18 @@
 from pathlib import Path
 from typing import List
 
+from stitcher.lang.python.analysis.utils import path_to_logical_fqn
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.operations.base import AbstractOperation, SidecarUpdateMixin
+from stitcher.refactor.operations.base import AbstractOperation
 from stitcher.refactor.engine.intent import (
     RefactorIntent,
     RenameIntent,
     MoveFileIntent,
     ScaffoldIntent,
-    SidecarUpdateIntent,
 )
 
 
-class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
+class MoveFileOperation(AbstractOperation):
     def __init__(self, src_path: Path, dest_path: Path):
         self.src_path = src_path
         self.dest_path = dest_path
@@ -26,10 +26,6 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
 
         old_module_fqn = self._path_to_fqn(src_path, ctx.graph.search_paths)
         new_module_fqn = self._path_to_fqn(dest_path, ctx.graph.search_paths)
-
-        # Prepare path strings for SURI updates
-        rel_src_path = src_path.relative_to(ctx.workspace.root_path).as_posix()
-        rel_dest_path = dest_path.relative_to(ctx.workspace.root_path).as_posix()
 
         # 1. Declare symbol rename intents if the module's FQN changes.
         if (
@@ -50,34 +46,7 @@ class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):
                     target_new_fqn = new_module_fqn + suffix
                     intents.append(RenameIntent(member.fqn, target_new_fqn))
 
-            # 2. Declare sidecar content update intents
-            doc_src_path = ctx.sidecar_manager.get_doc_path(src_path)
-            if doc_src_path.exists():
-                intents.append(
-                    SidecarUpdateIntent(
-                        sidecar_path=doc_src_path,
-                        module_fqn=old_module_fqn,
-                        old_fqn=old_module_fqn,
-                        new_fqn=new_module_fqn,
-                        old_file_path=rel_src_path,
-                        new_file_path=rel_dest_path,
-                    )
-                )
-
-            sig_src_path = ctx.sidecar_manager.get_signature_path(src_path)
-            if sig_src_path.exists():
-                intents.append(
-                    SidecarUpdateIntent(
-                        sidecar_path=sig_src_path,
-                        module_fqn=old_module_fqn,
-                        old_fqn=old_module_fqn,
-                        new_fqn=new_module_fqn,
-                        old_file_path=rel_src_path,
-                        new_file_path=rel_dest_path,
-                    )
-                )
-
-        # 3. Declare physical file move intents
+        # 2. Declare physical file move intents
         intents.append(MoveFileIntent(src_path, dest_path))
 
         yaml_src = ctx.sidecar_manager.get_doc_path(src_path)

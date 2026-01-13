@@ -1,23 +1,42 @@
 from pathlib import Path
 from typing import List
 
+from stitcher.lang.python.analysis.utils import path_to_logical_fqn
 from stitcher.refactor.engine.context import RefactorContext
-from stitcher.refactor.operations.base import AbstractOperation, SidecarUpdateMixin
+from stitcher.refactor.operations.base import AbstractOperation
 from stitcher.refactor.engine.intent import (
     RefactorIntent,
     RenameIntent,
     MoveFileIntent,
-    SidecarUpdateIntent,
     DeleteDirectoryIntent,
     ScaffoldIntent,
 )
 
 
-class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
+class MoveDirectoryOperation(AbstractOperation):
     def __init__(self, src_dir: Path, dest_dir: Path):
         # In a real app, we'd add more robust validation here.
         self.src_dir = src_dir
         self.dest_dir = dest_dir
+
+    def _path_to_fqn(self, path: Path, search_paths: List[Path]):
+        # A helper to derive FQN, should probably live in a more common place.
+        # For now, keeping it local to the operations that need it.
+        # This duplicates logic from the old mixin, but makes dependencies explicit.
+        base_path = None
+        for sp in sorted(search_paths, key=lambda p: len(p.parts), reverse=True):
+            try:
+                if path.is_relative_to(sp):
+                    base_path = sp
+                    break
+            except (ValueError, AttributeError):  # Handle Python < 3.9
+                if str(path).startswith(str(sp)):
+                     base_path = sp
+                     break
+        if base_path is None:
+            return None
+        rel_path = path.relative_to(base_path)
+        return path_to_logical_fqn(rel_path.as_posix())
 
     def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
         intents: List[RefactorIntent] = []
@@ -33,75 +52,21 @@ class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):
             # We explicitly check for truthiness above, so they are str here
             intents.append(RenameIntent(old_prefix, new_prefix))
             # Also handle all symbols inside the namespace
-            # Note: This might be slightly redundant if the renamer can handle prefixes,
-            # but being explicit is safer for now.
             for member in ctx.graph.iter_members(old_prefix):
                 if member.fqn.startswith(old_prefix + "."):
                     suffix = member.fqn[len(old_prefix) :]
                     new_fqn = new_prefix + suffix
                     intents.append(RenameIntent(member.fqn, new_fqn))
 
-        # 2. Declare physical file moves and sidecar updates for all files
-        processed_files = set()
+        # 2. Declare physical file moves for all files (code and sidecars)
         all_files = [p for p in src_dir.rglob("*") if p.is_file()]
 
         for src_item in all_files:
-            if src_item.suffix != ".py":
-                continue
-
-            processed_files.add(src_item)
             relative_path = src_item.relative_to(src_dir)
             dest_item = dest_dir / relative_path
-
-            # Prepare path strings for SURI updates
-            rel_src_path = src_item.relative_to(ctx.workspace.root_path).as_posix()
-            rel_dest_path = dest_item.relative_to(ctx.workspace.root_path).as_posix()
-
-            # Declare file move
             intents.append(MoveFileIntent(src_item, dest_item))
 
-            # Declare sidecar content update & move intents
-            item_module_fqn = self._path_to_fqn(src_item, ctx.graph.search_paths)
-
-            doc_path = ctx.sidecar_manager.get_doc_path(src_item)
-            if doc_path.exists() and old_prefix and new_prefix:
-                processed_files.add(doc_path)
-                intents.append(
-                    SidecarUpdateIntent(
-                        doc_path,
-                        item_module_fqn,
-                        old_prefix,
-                        new_prefix,
-                        old_file_path=rel_src_path,
-                        new_file_path=rel_dest_path,
-                    )
-                )
-                intents.append(
-                    MoveFileIntent(
-                        doc_path, ctx.sidecar_manager.get_doc_path(dest_item)
-                    )
-                )
-
-            sig_path = ctx.sidecar_manager.get_signature_path(src_item)
-            if sig_path.exists() and old_prefix and new_prefix:
-                processed_files.add(sig_path)
-                intents.append(
-                    SidecarUpdateIntent(
-                        sig_path,
-                        item_module_fqn,
-                        old_prefix,
-                        new_prefix,
-                        old_file_path=rel_src_path,
-                        new_file_path=rel_dest_path,
-                    )
-                )
-                intents.append(
-                    MoveFileIntent(
-                        sig_path, ctx.sidecar_manager.get_signature_path(dest_item)
-                    )
-                )
-
-        # Process non-Python files
+        # 3. Declare deletion of the source directory
         for src_item in all_files:
             if src_item in processed_files:
                 continue
