@@ -1,21 +1,21 @@
 from textwrap import dedent
 
 import pytest
-from stitcher.lang.sidecar.parser import parse_sidecar_references
+from stitcher.lang.sidecar.parser import parse_doc_references
 
 # Test cases: (input_yaml, expected_output)
-# expected_output is a list of (fqn, lineno, col_offset)
+# expected_output is a list of (fragment, lineno, col_offset)
 TEST_CASES = {
     "simple_keys": (
         """
 __doc__: Module docstring.
-my_pkg.my_module.my_function: Function docstring.
-my_pkg.my_module.MyClass: Class docstring.
+my_function: Function docstring.
+MyClass: Class docstring.
         """,
         [
             ("__doc__", 2, 0),
-            ("my_pkg.my_module.my_function", 3, 0),
-            ("my_pkg.my_module.MyClass", 4, 0),
+            ("my_function", 3, 0),
+            ("MyClass", 4, 0),
         ],
     ),
     "empty_content": ("", []),
@@ -67,12 +67,12 @@ my_pkg.func: A function.
         for test_id, (content, expected) in TEST_CASES.items()
     ],
 )
-def test_parse_sidecar_references(yaml_content, expected):
+def test_parse_doc_references(yaml_content, expected):
     """
-    Tests that the sidecar parser correctly extracts top-level keys as references
+    Tests that the doc parser correctly extracts top-level keys (fragments)
     with their correct source locations.
     """
-    references = parse_sidecar_references(yaml_content)
+    references = parse_doc_references(yaml_content)
 
     # Sort both lists to ensure comparison is order-independent
     sorted_references = sorted(references)
