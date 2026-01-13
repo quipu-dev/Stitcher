@@ -31,8 +31,8 @@ def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch):
     assert expected_yaml in created_files
 
     content = expected_yaml.read_text()
-    # Check for block style with quoted key
-    assert '"my_func": |-' in content
+    # Check for block style. ruamel.yaml is smart and won't quote simple keys.
+    assert "my_func: |-" in content
     assert "  This is a docstring." in content
 
     spy_bus.assert_id_called(L.init.file.created, level="success")
