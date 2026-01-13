@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(workspace): 实现工作区与包的根目录发现机制", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768288896.0684986, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(lang-python): 重构 SURIGenerator 以强制使用工作区相对路径", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768288973.834284, "duration_ms": 0}}
