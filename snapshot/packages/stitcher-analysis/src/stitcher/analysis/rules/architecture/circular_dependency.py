@@ -57,6 +57,7 @@ class CircularDependencyRule(ArchitectureRule):
                 details.append(f"\n  - In `{u}`:")
                 details.append(f"    - Causes dependency on `{v}` via import of `{first_reason}`")
                 if snippet:
+                    details.append("")  # Add a blank line for spacing
                     details.append(snippet)
 
 
