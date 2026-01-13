@@ -23,7 +23,7 @@ def test_move_directory_updates_all_contents_and_references(tmp_path):
     old_suri = f"py://{py_rel_path}#Helper"
 
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"hash": "123"})}
+    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "123"})}
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (

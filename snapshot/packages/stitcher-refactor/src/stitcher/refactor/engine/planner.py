@@ -1,7 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, TYPE_CHECKING
-import json
 
 if TYPE_CHECKING:
     from stitcher.refactor.migration import MigrationSpec
@@ -74,13 +73,14 @@ class Planner:
 
         sidecar_adapter = SidecarAdapter(ctx.workspace.root_path)
         sidecar_transformer = SidecarTransformer()
+        
         for path, intents in sidecar_updates.items():
-            is_yaml = path.suffix in [".yaml", ".yml"]
-            data = (
-                sidecar_adapter.load_raw_data(path)
-                if is_yaml
-                else json.loads(path.read_text("utf-8")) if path.exists() else {}
-            )
+            # Strict rule: Only process YAML sidecars using the adapter.
+            # JSON signatures have been moved to stitcher.lock.
+            if path.suffix not in [".yaml", ".yml"]:
+                continue
+
+            data = sidecar_adapter.load_raw_data(path)
 
             for intent in intents:
                 old_module_fqn = intent.module_fqn
@@ -99,11 +99,7 @@ class Planner:
                 )
                 data = sidecar_transformer.transform(path, data, transform_ctx)
 
-            content = (
-                sidecar_adapter.dump_raw_data_to_string(data)
-                if is_yaml
-                else json.dumps(data, indent=2, sort_keys=True)
-            )
+            content = sidecar_adapter.dump_raw_data_to_string(data)
             all_ops.append(WriteFileOp(path.relative_to(ctx.graph.root_path), content))
 
         # --- Process Lock Update Intents ---
@@ -121,8 +117,16 @@ class Planner:
 
         for intent in sorted_lock_intents:
             if isinstance(intent, LockPathUpdateIntent):
-                src_pkg = ctx.workspace.find_owning_package(ctx.workspace.root_path / intent.old_path_prefix)
-                dest_pkg = ctx.workspace.find_owning_package(ctx.workspace.root_path / intent.new_path_prefix)
+                # We need to find the owning package for both old and new paths to determine
+                # which lock file(s) to touch.
+                # Note: old_path_prefix and new_path_prefix are relative to workspace root.
+                
+                old_abs_path = ctx.workspace.root_path / intent.old_path_prefix
+                new_abs_path = ctx.workspace.root_path / intent.new_path_prefix
+                
+                src_pkg = ctx.workspace.find_owning_package(old_abs_path)
+                dest_pkg = ctx.workspace.find_owning_package(new_abs_path)
+                
                 src_data = get_lock_data(src_pkg)
 
                 suris_to_move = {}
@@ -136,6 +140,7 @@ class Planner:
                         new_path = intent.new_path_prefix + suffix
 
                     if new_path:
+                        # TODO: Phase 3 Inject URIGenerator
                         uri_gen = PythonURIGenerator()
                         new_suri = uri_gen.generate_symbol_uri(new_path, fragment) if fragment else uri_gen.generate_file_uri(new_path)
                         suris_to_move[suri] = new_suri

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] 我将分三步解决这个问题：", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768298742.829955, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Acts 1: Fix `InvalidFingerprintKeyError` in Tests", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768299167.9058812, "duration_ms": 0}}

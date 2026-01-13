@@ -18,7 +18,7 @@ def test_rename_symbol_in_monorepo_updates_all_references_and_sidecars(tmp_path)
     new_suri = f"py://{py_rel_path}#NewNameClass"
 
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"hash": "abc"})}
+    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})}
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (

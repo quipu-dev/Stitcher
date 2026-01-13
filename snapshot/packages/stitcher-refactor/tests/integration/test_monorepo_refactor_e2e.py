@@ -22,7 +22,7 @@ def test_move_file_in_monorepo_updates_cross_package_imports(tmp_path):
     old_suri = f"py://{py_rel_path}#SharedClass"
     
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"hash": "abc"})}
+    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})}
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (

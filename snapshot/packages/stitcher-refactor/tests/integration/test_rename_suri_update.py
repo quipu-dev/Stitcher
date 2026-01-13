@@ -17,7 +17,7 @@ def test_rename_symbol_updates_suri_in_lockfile(tmp_path):
     new_suri = f"py://{rel_py_path}#YourClass"
 
     lock_manager = LockFileManager()
-    fingerprints = {old_suri: Fingerprint.from_dict({"hash": "original_hash"})}
+    fingerprints = {old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "original_hash"})}
     lock_content = lock_manager.serialize(fingerprints)
 
     project_root = (
