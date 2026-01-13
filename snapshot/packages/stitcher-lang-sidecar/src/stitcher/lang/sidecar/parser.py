@@ -1,17 +1,13 @@
+import json
 from typing import List, Tuple
 from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
 
-def parse_sidecar_references(content: str) -> List[Tuple[str, int, int]]:
+def parse_yaml_references(content: str) -> List[Tuple[str, int, int]]:
     """
     Parses a Stitcher YAML file and returns a list of (fqn, lineno, col_offset)
     for all top-level keys.
-
-    Note: ruamel.yaml uses 0-based indexing for lines and columns internally,
-    but Stitcher (and most editors) expect 1-based lines and 0-based columns.
-    Wait, most AST parsers (Python's ast, LibCST) use 1-based lines.
-    We will normalize to 1-based lines here.
     """
     yaml = YAML()
     try:
@@ -24,29 +20,38 @@ def parse_sidecar_references(content: str) -> List[Tuple[str, int, int]]:
     if not isinstance(data, dict):
         return references
 
-    # ruamel.yaml attaches metadata to the loaded dict/objects
-    # We can inspect this metadata to find line numbers.
-
     for key in data.keys():
-        # The key itself usually corresponds to a Python FQN (e.g. "my_pkg.mod.func")
-        # We treat this as a reference to that Python symbol.
-
-        # Accessing line info for keys is tricky in ruamel.yaml.
-        # It is stored in data.lc.data (for dicts).
-        # data.lc.data is a dict-like structure or list where keys are indices?
-        # Actually, for CommentedMap, .lc.item(key) returns (lineno, colno, ...)
-
         lc = getattr(data, "lc", None)
         if lc and hasattr(lc, "item"):
-            # lc.item(key) returns [line, col, pre_key_comment_line, key_comment_line]
-            # line is 0-based.
             pos = lc.item(key)
             if pos:
                 lineno = pos[0] + 1  # Convert to 1-based
                 col_offset = pos[1]
                 references.append((str(key), lineno, col_offset))
-        else:
-            # Fallback if no line info (shouldn't happen with round-trip loader)
-            pass
+    return references
 
+
+def parse_json_references(content: str) -> List[Tuple[str, int, int]]:
+    """
+    Parses a Stitcher JSON file (signatures) and returns a list of (suri, lineno, col_offset).
+    """
+    references = []
+    try:
+        data = json.loads(content)
+        if not isinstance(data, dict):
+            return []
+    except json.JSONDecodeError:
+        return []
+
+    lines = content.splitlines()
+    for key in data.keys():
+        # Heuristic to find line number: find the line where the key is defined.
+        # This is robust for our auto-generated JSON format.
+        search_key = f'"{key}":'
+        for i, line in enumerate(lines):
+            col = line.find(search_key)
+            if col != -1:
+                # `i` is 0-based, we want 1-based line number.
+                references.append((key, i + 1, col))
+                break
     return references
