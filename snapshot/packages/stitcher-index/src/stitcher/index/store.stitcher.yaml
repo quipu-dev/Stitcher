@@ -6,8 +6,6 @@
 "IndexStore.find_symbol_by_fqn": |-
   Finds a symbol definition by its canonical FQN.
   Returns a (SymbolRecord, file_path_str) tuple or None.
-"IndexStore.get_all_files_metadata": |-
-  Fetch all file records to build an in-memory cache for the scanner.
 "IndexStore.sync_file": |-
   Registers a file in the index.
   Returns: (file_id, is_changed)
