@@ -55,6 +55,11 @@ class GraphBuilder:
 
             # Add edge if the target is an internal, resolved file
             if target_path and source_path != target_path:
-                graph.add_edge(source_path, target_path)
+                if not graph.has_edge(source_path, target_path):
+                    graph.add_edge(source_path, target_path, reasons=[])
+
+                # Attach the reason for this specific dependency edge
+                reason = f"{edge.target_fqn} (L{edge.lineno})"
+                graph[source_path][target_path]["reasons"].append(reason)
 
         return graph

@@ -1,172 +1,125 @@
-You are absolutely right. My previous attempt was a "blind fix," which goes against the HFEA principle of "Regression Driven Development." Without a test that fails before the fix and passes after, I cannot guarantee the correctness of the solution. Your insistence on creating a test file first is the only correct path forward.
+You are correct. My apologies for the malformed command. That was a critical error on my part. I failed to provide the necessary `old_str` and `new_str` arguments for the `patch_file` operations, which is a direct violation of the command's contract.
 
-I will now generate a plan to create a specific, failing unit test that precisely captures this `__init__.py` alias resolution problem.
+I will now correct this mistake and provide the complete, valid plan.
 
-## [WIP] test(analysis): Add failing test for __init__ alias resolution in GraphBuilder
+## [WIP] feat(analysis): 增强循环依赖检测的可观测性 (Corrected)
 
 ### 错误分析
 
-我之前的修复未能解决问题，这表明我的核心假设——即简单地循环解析 `alias_target_fqn` 就足够了——要么是错误的，要么是实现上有缺陷。根本原因是我在没有建立一个可复现的失败场景（即回归测试）的情况下就尝试进行修复。这违反了工程的最佳实践。
-
-现在，我们必须退后一步，构建一个“照明”工具——一个单元测试——来精确地照亮 `GraphBuilder` 在处理 `__init__.py` 桶式导出时的失败之处。
+我之前生成的 `patch_file` 指令缺少了必需的 `old_str` 和 `new_str` 参数，导致执行失败。这表明我在生成指令时疏忽了，没有遵循 `d1-quipu-command-reference-D1` 中定义的指令集规范。
 
 ### 用户需求
 
-创建一个新的单元测试，该测试专门模拟一个包含 `__init__.py` 文件重导出符号的场景，并断言 `GraphBuilder` 生成的依赖图存在错误（即，错误地将依赖指向 `__init__.py` 而不是真正的源文件）。
+在架构检查报告中，针对每一个循环依赖链中的每一跳，提供具体的“证据”：
+1.  触发依赖的源代码行号。
+2.  触发依赖的具体符号（`target_fqn`）。
 
 ### 评论
 
-这是纠正我们开发流程的关键一步。一个健壮的、专门针对此场景的回归测试将成为我们未来所有重构的安全网，并确保我们这次能真正地、一劳永逸地解决这个问题。我们不应再进行任何没有测试支持的修复。
+这不仅是一个 Debug 工具，更是架构治理的长效机制。它将把“这里有个环”这种模糊的报警，转化为“你在 A 文件第 10 行导入了 B 文件的 X 符号，构成了环”这种可行动的洞察。
 
 ### 目标
 
-1.  在 `packages/stitcher-analysis/tests/unit/graph/` 目录下创建一个新的测试文件（或扩展现有文件）。
-2.  在该文件中，定义一个名为 `test_build_dependency_graph_resolves_init_aliases_correctly` 的测试用例。
-3.  该测试将通过 `unittest.mock` 精心构建一个 `IndexStoreProtocol` 的模拟实现，该实现精确地描述了一个存在 `__init__.py` 别名的项目结构。
-4.  测试的核心断言将验证生成的图中边的连接是否正确：消费方模块应直接连接到符号的定义模块，而不是 `__init__.py`。
+1.  修改 `GraphBuilder`：在构建图的边（Edge）时，附带元数据（Metadata），记录导致该边产生的所有引用详情（行号、符号）。
+2.  修改 `CircularDependencyRule`：在格式化错误消息时，从图中提取并展示这些元数据。
 
 ### 基本原理
 
-我们将创建一个完全隔离的单元测试，只关注 `GraphBuilder` 的行为。通过模拟 `IndexStore`，我们可以完全控制输入数据，确保测试的确定性和速度。
-
-模拟的场景如下：
--   `app.py` 导入并使用了 `my_pkg.my_func`。
--   `my_pkg/__init__.py` 从 `./logic.py` 导入了 `my_func`，并将其暴露出来（`from .logic import my_func`）。
--   `my_pkg/logic.py` 是 `my_func` 的真正定义之处。
-
-我们的测试将断言，最终的图中必须存在一条从 `app.py` 指向 `my_pkg/logic.py` 的边，并且**绝对不能**存在一条从 `app.py` 指向 `my_pkg/__init__.py` 的边。
+我们将利用 `networkx` 的边属性功能。当 `GraphBuilder` 添加边时，它不再只是建立连接，而是会挂载一个 `causes` 列表。
+- 如果 A 引用了 B 中的 `Sym1`，边 A->B 将被创建，`causes` 为 `[{sym: Sym1, line: 10}]`。
+- 如果 A 稍后又引用了 B 中的 `Sym2`，边 A->B 保持不变，但 `causes` 列表将追加新记录。
 
 ### 标签
 
-#intent/tooling #flow/ready #priority/critical #comp/tests #concept/state #scope/core #ai/brainstorm #task/domain/testing #task/object/architecture-check #task/action/bug-fix #task/state/continue
+#intent/tooling #flow/ready #priority/high #comp/engine #concept/graph #scope/core #ai/instruct #task/domain/analysis #task/object/graph-builder #task/action/enhance-observability #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建精确复现错误的单元测试
+#### Acts 1: 让 GraphBuilder 记录边的成因
 
-我们将创建新的测试文件 `test_builder.py` 并添加能够捕获此别名解析错误的测试用例。
+我们将修改 `GraphBuilder`，使其在添加边时记录 `target_fqn` 和 `lineno`。
 
 ~~~~~act
-write_file
-packages/stitcher-analysis/tests/unit/graph/test_builder.py
+patch_file
+packages/stitcher-analysis/src/stitcher/analysis/graph/builder.py
 ~~~~~
-~~~~~python
-from unittest.mock import MagicMock
-import networkx as nx
-
-from stitcher.spec.index import FileRecord, DependencyEdge, SymbolRecord
-from stitcher.analysis.graph.builder import GraphBuilder
-
-
-def test_build_dependency_graph_simple():
-    # 1. Arrange: Setup mock store and data
-    mock_store = MagicMock()
-
-    mock_files = [
-        FileRecord(id=1, path="src/a.py", content_hash="a", last_mtime=1, last_size=1, indexing_status=1),
-        FileRecord(id=2, path="src/b.py", content_hash="b", last_mtime=1, last_size=1, indexing_status=1),
-    ]
-    mock_store.get_all_files.return_value = mock_files
-
-    mock_edges = [
-        DependencyEdge(source_path="src/a.py", target_fqn="b_module.some_func", kind="import", lineno=1),
-    ]
-    mock_store.get_all_dependency_edges.return_value = mock_edges
-
-    def mock_find_symbol(fqn):
-        symbol_rec = SymbolRecord(id=fqn, name="", kind="", lineno=1, col_offset=0, end_lineno=1, end_col_offset=0)
-        if fqn.startswith("b_module"):
-            return (symbol_rec, "src/b.py")
-        return None
-
-    mock_store.find_symbol_by_fqn.side_effect = mock_find_symbol
-
-    # 2. Act: Build the graph
-    builder = GraphBuilder()
-    graph = builder.build_dependency_graph(mock_store)
-
-    # 3. Assert: Verify the graph structure
-    assert isinstance(graph, nx.DiGraph)
-    assert set(graph.nodes) == {"src/a.py", "src/b.py"}
-    assert graph.has_edge("src/a.py", "src/b.py")
-
-
-def test_build_dependency_graph_resolves_init_aliases_correctly():
-    """
-    This is the regression test for the __init__.py barrel export issue.
-    
-    It simulates the following structure:
-    - app.py:        `from my_pkg import my_func`
-    - my_pkg/__init__.py: `from .logic import my_func`
-    - my_pkg/logic.py:  `def my_func(): ...`
-    
-    The graph edge should be `app.py -> my_pkg/logic.py`, NOT `app.py -> my_pkg/__init__.py`.
-    """
-    # 1. Arrange
-    mock_store = MagicMock()
-
-    # Define the files in our simulated project
-    mock_files = [
-        FileRecord(id=1, path="app.py", content_hash="a", last_mtime=1, last_size=1, indexing_status=1),
-        FileRecord(id=2, path="my_pkg/__init__.py", content_hash="b", last_mtime=1, last_size=1, indexing_status=1),
-        FileRecord(id=3, path="my_pkg/logic.py", content_hash="c", last_mtime=1, last_size=1, indexing_status=1),
-    ]
-    mock_store.get_all_files.return_value = mock_files
-
-    # Define the import relationships
-    mock_edges = [
-        # app.py imports the aliased symbol from the package
-        DependencyEdge(source_path="app.py", target_fqn="my_pkg.my_func", kind="import", lineno=1),
-        # __init__.py creates the alias by importing from the logic module
-        DependencyEdge(source_path="my_pkg/__init__.py", target_fqn="my_pkg.logic.my_func", kind="import", lineno=1),
-    ]
-    mock_store.get_all_dependency_edges.return_value = mock_edges
-
-    # Define the symbols and how to find them
-    # This is the REAL function definition
-    func_symbol = SymbolRecord(
-        id="...", name="my_func", kind="function", lineno=1, col_offset=0, end_lineno=1, end_col_offset=0,
-        canonical_fqn="my_pkg.logic.my_func"
-    )
-    # This is the ALIAS created in __init__.py
-    alias_symbol = SymbolRecord(
-        id="...", name="my_func", kind="alias", lineno=1, col_offset=0, end_lineno=1, end_col_offset=0,
-        canonical_fqn="my_pkg.my_func",
-        alias_target_fqn="my_pkg.logic.my_func" # Critical link
-    )
-    
-    symbol_map = {
-        "my_pkg.my_func": (alias_symbol, "my_pkg/__init__.py"),
-        "my_pkg.logic.my_func": (func_symbol, "my_pkg/logic.py"),
-    }
-    mock_store.find_symbol_by_fqn.side_effect = lambda fqn: symbol_map.get(fqn)
-
-    # 2. Act
-    builder = GraphBuilder()
-    graph = builder.build_dependency_graph(mock_store)
-    
-    # 3. Assert
-    # The graph must connect app.py to the *real* source file, not the __init__
-    assert graph.has_edge("app.py", "my_pkg/logic.py"), \
-        "Graph should link consumer to the canonical source of the symbol."
-    
-    # The incorrect edge must NOT exist
-    assert not graph.has_edge("app.py", "my_pkg/__init__.py"), \
-        "Graph should NOT link consumer to the __init__.py alias."
-
-    # The internal dependency from __init__ to logic should still exist
-    assert graph.has_edge("my_pkg/__init__.py", "my_pkg/logic.py"), \
-        "The internal dependency from __init__ to its implementation module should be preserved."
+~~~~~python.old
+            # Add edge if the target is an internal, resolved file
+            if target_path and source_path != target_path:
+                graph.add_edge(source_path, target_path)
 ~~~~~
+~~~~~python.new
+            # Add edge if the target is an internal, resolved file
+            if target_path and source_path != target_path:
+                if not graph.has_edge(source_path, target_path):
+                    graph.add_edge(source_path, target_path, reasons=[])
+
+                # Attach the reason for this specific dependency edge
+                reason = f"{edge.target_fqn} (L{edge.lineno})"
+                graph[source_path][target_path]["reasons"].append(reason)
+~~~~~
+
+#### Acts 2: 让 CircularDependencyRule 展示成因
+
+我们将修改规则，使其在报告环路时，打印出每一跳的具体原因。为了保持日志整洁，我们只打印每个连接的前 3 个原因。
+
 ~~~~~act
-delete_file
-packages/stitcher-analysis/tests/unit/graph/test_builder_alias_resolution.py
+patch_file
+packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/circular_dependency.py
+~~~~~
+~~~~~python.old
+        for cycle in cycles:
+            # Create a human-readable representation of the cycle
+            cycle_path = " -> ".join(cycle) + f" -> {cycle[0]}"
+
+            # An architecture violation applies to the whole project, but we use
+            # the first file in the cycle as the primary "location" for reporting.
+            violations.append(
+                Violation(
+                    kind=L.check.architecture.circular_dependency,
+                    fqn=cycle[0],
+                    context={"cycle": cycle_path},
+                )
+            )
+~~~~~
+~~~~~python.new
+        for cycle in cycles:
+            # Create a human-readable representation of the cycle
+            # cycle is a list of nodes [n1, n2, n3] representing n1->n2->n3->n1
+
+            details = []
+            cycle_len = len(cycle)
+            for i in range(cycle_len):
+                u = cycle[i]
+                v = cycle[(i + 1) % cycle_len]
+
+                # Extract reasons from the graph edge
+                reasons = graph[u][v].get("reasons", [])
+                # Take top 3 reasons to avoid clutter
+                reason_str = ", ".join(reasons[:3])
+                if len(reasons) > 3:
+                    reason_str += ", ..."
+
+                # Format: "a.py --[import x (L1)]--> b.py"
+                details.append(f"\n      {u} --[{reason_str}]--> {v}")
+
+            cycle_path = "".join(details)
+
+            # An architecture violation applies to the whole project, but we use
+            # the first file in the cycle as the primary "location" for reporting.
+            violations.append(
+                Violation(
+                    kind=L.check.architecture.circular_dependency,
+                    fqn=cycle[0],
+                    context={"cycle": cycle_path},
+                )
+            )
 ~~~~~
 
 ### 下一步建议
 
-现在我们已经有了一个专门捕获此错误的测试。请执行它，我们期望它会失败。
+现在指令已经修正，请执行它。
 
-一旦我们确认了测试的失败，我将基于这个失败的测试用例，重新审视并提出一个能够使其通过的、正确的 `GraphBuilder` 修复方案。这是唯一可靠的前进道路。
+执行成功后，请再次运行 `stitcher check`。这次的错误报告将为我们提供解开循环依赖谜题所需的详细线索。

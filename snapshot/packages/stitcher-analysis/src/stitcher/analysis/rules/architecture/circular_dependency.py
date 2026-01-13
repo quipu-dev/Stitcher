@@ -16,7 +16,25 @@ class CircularDependencyRule(ArchitectureRule):
 
         for cycle in cycles:
             # Create a human-readable representation of the cycle
-            cycle_path = " -> ".join(cycle) + f" -> {cycle[0]}"
+            # cycle is a list of nodes [n1, n2, n3] representing n1->n2->n3->n1
+
+            details = []
+            cycle_len = len(cycle)
+            for i in range(cycle_len):
+                u = cycle[i]
+                v = cycle[(i + 1) % cycle_len]
+
+                # Extract reasons from the graph edge
+                reasons = graph[u][v].get("reasons", [])
+                # Take top 3 reasons to avoid clutter
+                reason_str = ", ".join(reasons[:3])
+                if len(reasons) > 3:
+                    reason_str += ", ..."
+
+                # Format: "a.py --[import x (L1)]--> b.py"
+                details.append(f"\n      {u} --[{reason_str}]--> {v}")
+
+            cycle_path = "".join(details)
 
             # An architecture violation applies to the whole project, but we use
             # the first file in the cycle as the primary "location" for reporting.
