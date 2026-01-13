@@ -1,48 +1,50 @@
-## [WIP] refactor(refactor): Rewrite SidecarUpdateMixin for SURI/Fragment logic
+You've correctly identified the failures. My apologies, my previous implementation of the `SidecarUpdateMixin` was flawed in two critical ways:
+1.  **Logical Error**: The `_calculate_fragments` method was too simplistic, incorrectly stripping parent context from nested symbols (like methods), which caused the `AssertionError` in the integration test.
+2.  **Implementation Error**: The unit tests for the mixin were not updated to match the new method signature, nor were they rewritten to test the new SURI/Fragment-based logic, leading to a cascade of `TypeError` failures.
+
+This is a failure to maintain "Architectural Incorruptibility". The tests have done their job by highlighting this flaw. I will now correct it.
+
+## [WIP] fix: Correct SURI fragment logic and repair sidecar update tests
+
+### 錯誤分析
+
+1.  **Incorrect Fragment Calculation**: The primary logic error lies in `_calculate_fragments`. When renaming a method like `MyClass.old_method` to `MyClass.new_method`, my previous logic incorrectly calculated the new fragment as just `new_method` instead of the correct `MyClass.new_method`. This caused the SURI to be malformed and the integration test to fail.
+2.  **Obsolete Unit Tests**: The unit tests for `SidecarUpdateMixin` were a relic of the old FQN-based system. They were calling the new method with an incorrect signature and asserting outdated logic. They must be completely rewritten to validate the new, bifurcated SURI vs. Fragment update strategies.
 
 ### 用户需求
 
-清理 `stitcher-refactor` 包，使其不再依赖旧的 FQN 字符串匹配逻辑来更新 sidecar 文件。
-具体要求：
-1.  **区分策略**: 根据 sidecar 文件类型（`.json` vs `.yaml`）采用不同的更新策略。
-2.  **JSON (SURI)**: 对于签名文件，必须基于 SURI (`py://path#fragment`) 进行更新。支持“路径变更”（文件移动）和“Fragment 变更”（符号重命名）的组合更新。
-3.  **YAML (Fragment)**: 对于文档文件，必须基于 Fragment（短名）进行更新。注意：单纯的文件移动**不应**改变 YAML 中的键（因为它们是相对的），只有符号重命名才应更新键。
+Fix the failing tests by correcting the SURI generation logic for nested symbols and rewriting the unit tests for `SidecarUpdateMixin` to accurately reflect and validate the new identifier ontology.
 
 ### 评论
 
-这是“大清洗”计划的第三阶段，也是逻辑最复杂的部分。之前的 Mixin 试图用一种通用的 FQN 替换逻辑来处理所有情况，导致了逻辑混淆和脆弱性。现在的目标是**分离关注点**：物理移动只影响物理 ID (SURI)，逻辑重命名影响逻辑 ID (Fragment)。通过明确区分这两者，我们的重构引擎将变得极其健壮。
-
-**特别注意**: 我们不需要引入 `stitcher-lang-sidecar` 作为依赖。`Planner` 已经完成了文件的 I/O 操作（加载为 dict），Mixin 只需要负责纯粹的数据转换逻辑。所有的 SURI 解析和生成逻辑都可以利用 `stitcher-lang-python` 中的 `SURIGenerator`。
+This is a perfect example of tests serving as an architectural safety net. The failures clearly pinpoint the logical gap in the implementation. By fixing the core fragment logic and rewriting the unit tests to be specifications for the *desired* SURI/Fragment behavior, we are not just patching an error; we are solidifying the new ontology and ensuring the refactoring engine's correctness.
 
 ### 目标
 
-1.  重写 `stitcher.refactor.operations.base.SidecarUpdateMixin`。
-2.  更新 `stitcher.refactor.engine.planner.Planner` 以配合新的 Mixin 签名（传入 `sidecar_path`）。
+1.  **Fix Core Logic**: Correct the implementation of `_calculate_fragments` in `SidecarUpdateMixin` to properly handle nested symbols (e.g., `Class.method`).
+2.  **Rewrite Unit Tests**: Replace the entire obsolete test file (`test_sidecar_update_mixin.py`) with a new set of tests that specifically validate:
+    *   SURI key updates in JSON for symbol renames (including nested ones).
+    *   SURI key updates in JSON for file moves.
+    *   Fragment key updates in YAML for symbol renames.
+    *   The **absence** of key changes in YAML for pure file moves.
 
 ### 基本原理
 
-1.  **Fragment 计算**: 在 Mixin 中增加逻辑，通过比较 `module_fqn` 和 `target_fqn` 来提取 `fragment`。
-2.  **SURI 更新逻辑**:
-    *   解析现有的 key (SURI)。
-    *   检查其 `path` 部分是否匹配 `intent.old_file_path`。如果匹配，更新为 `intent.new_file_path`。
-    *   检查其 `fragment` 部分是否匹配 `old_fragment`。如果匹配，更新为 `new_fragment`。
-    *   如果任一部分发生变化，重新生成 SURI 并更新字典。
-3.  **Fragment 更新逻辑**:
-    *   遍历现有的 keys (Fragments)。
-    *   如果 key 匹配 `old_fragment`，替换为 `new_fragment`。
-    *   (关键) 如果只是文件移动但符号没改名，`old_fragment` 和 `new_fragment` 是一样的（或者为空），YAML 内容保持不变。这是正确的行为。
+First, I will provide a new, correct implementation for `operations/base.py` using `write_file` for clarity. The new `_calculate_fragments` will correctly derive the full fragment (e.g., `MyClass.new_method`) by stripping the module prefix from the full FQN, rather than naively taking the last part of the name.
+
+Second, I will completely replace the old unit test file with a new one. This new test file will be structured with distinct classes for testing JSON (SURI) updates and YAML (Fragment) updates, covering all critical rename and move scenarios. This ensures our test suite is no longer just "passing" but is actively enforcing the architectural principles we've established.
 
 ### 标签
 
-#intent/refine #flow/ready #priority/critical #comp/engine #concept/state #scope/core #ai/instruct #task/domain/testing #task/object/identifier-ontology #task/action/refactor #task/state/continue
+#intent/fix #flow/ready #priority/critical #comp/engine #comp/tests #concept/state #scope/core #ai/instruct #task/domain/testing #task/object/identifier-ontology #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重写 `SidecarUpdateMixin`
+#### Acts 1: Correct the `SidecarUpdateMixin` Logic
 
-我们在 `base.py` 中彻底重写更新逻辑。
+We will replace the entire `base.py` file with the corrected logic for fragment calculation.
 
 ~~~~~act
 write_file
@@ -80,57 +82,66 @@ class SidecarUpdateMixin:
         self, module_fqn: Optional[str], old_fqn: str, new_fqn: str
     ) -> Tuple[Optional[str], Optional[str]]:
         """
-        Derives the symbol fragments (short names) from FQNs relative to a module.
-        If the FQN implies the module itself, the fragment is None.
+        Derives symbol fragments by stripping the module FQN prefix.
         """
-        if not module_fqn:
-            # Fallback: if we don't know the module, we assume top-level or can't determine fragment safely.
-            # However, for simple renames, old_fqn might be the full key.
-            return None, None
-
         old_fragment = None
-        new_fragment = None
-
-        # Check if old_fqn is inside module_fqn
-        if old_fqn == module_fqn:
-            # The operation is on the module itself (e.g. file move/rename).
-            # Fragment is empty/None.
-            pass
-        elif old_fqn.startswith(module_fqn + "."):
+        if module_fqn and old_fqn.startswith(module_fqn + "."):
             old_fragment = old_fqn[len(module_fqn) + 1 :]
+        elif module_fqn and old_fqn == module_fqn:
+            old_fragment = None # Represents the module itself
+        else:
+            old_fragment = old_fqn # Fallback for non-nested names
 
-        # Check if new_fqn is inside the *logical* new module location.
-        # Note: We rely on the caller to provide consistent FQNs.
-        # If it's a rename: module_fqn matches parent.
-        # If it's a move: new_fqn matches new path.
-        # We assume symmetry for the fragment calculation.
-        if old_fragment:
-            # Heuristic: If we extracted an old fragment, we try to extract a new one
-            # assuming the structure is preserved or it's a direct rename.
-            # If new_fqn is just a different name in same scope:
-            #   module.Old -> module.New
-            # If new_fqn is moved:
-            #   old_mod.Class -> new_mod.Class
-            # We need to act carefully.
 
-            # Simple Strategy:
-            # If it's a RenameSymbol, old_fqn and new_fqn share the parent module prefix usually.
-            # If it's a MoveFile, the fragment usually stays the same.
+        new_fragment = None
+        # To calculate the new fragment, we need to know the *new* module FQN.
+        # In a simple rename, it's the same. In a move, it's different.
+        # Let's assume the new_fqn is correctly structured.
+        new_module_prefix = ".".join(new_fqn.split(".")[:-1])
+        if new_fqn.startswith(new_module_prefix + "."):
+             new_fragment = ".".join(new_fqn.split(".")[1:]) if "." in new_fqn else new_fqn
+             # This logic is still tricky. Let's simplify.
+             # The FQN is composed of module + fragment.
+             if module_fqn and new_fqn.startswith(module_fqn + "."):
+                 new_fragment = new_fqn[len(module_fqn) + 1:]
+             else:
+                 # It might have been moved. The last part is a good guess for the new symbol name.
+                 # But the parent part is also needed.
+                 if old_fragment and "." in old_fragment: # e.g. Class.method
+                     new_parent = ".".join(new_fqn.split(".")[:-1])
+                     new_base_name = new_fqn.split(".")[-1]
+                     old_base_name = old_fqn.split(".")[-1]
 
-            # Let's try to deduce the new fragment by stripping the known prefix if possible,
-            # or by taking the last part if it looks like a symbol.
-            if "." in new_fqn:
-                new_fragment = new_fqn.split(".")[-1]
-                # Consistency check: if it's a move, fragments often match
-                if "." in old_fqn and old_fqn.split(".")[-1] == new_fragment:
-                    pass
-                else:
-                    # It's a rename
-                    pass
-            else:
-                new_fragment = new_fqn
+                     if new_base_name != old_base_name: # method rename
+                        new_fragment = old_fragment.replace(old_base_name, new_base_name)
+                     else: # class rename
+                        new_fragment = new_fqn[len(module_fqn or "") + 1 :]
+
+                 else:
+                    if module_fqn and new_fqn.startswith(module_fqn + "."):
+                         new_fragment = new_fqn[len(module_fqn)+1:]
+                    else:
+                         new_fragment = new_fqn
+
+        # Corrected Logic: Strip the common prefix (module) to get the fragment.
+        # This handles nested fragments correctly.
+        if module_fqn:
+             if old_fqn.startswith(module_fqn + "."):
+                 old_fragment = old_fqn.split(module_fqn + ".", 1)[1]
+             else:
+                 old_fragment = old_fqn
+             
+             if new_fqn.startswith(module_fqn + "."):
+                 new_fragment = new_fqn.split(module_fqn + ".", 1)[1]
+             else:
+                 new_fragment = new_fqn
+        else: # No module context, treat FQNs as fragments
+            old_fragment = old_fqn
+            new_fragment = new_fqn
+
 
         return old_fragment, new_fragment
+
 
     def _update_sidecar_data(
         self,
@@ -145,7 +156,6 @@ class SidecarUpdateMixin:
         """
         Dispatcher for sidecar updates based on file type.
         """
-        # Calculate fragments once
         old_fragment, new_fragment = self._calculate_fragments(
             module_fqn, old_fqn, new_fqn
         )
@@ -187,26 +197,25 @@ class SidecarUpdateMixin:
             path_changed = False
             fragment_changed = False
 
-            # 1. Path Update (File Move)
-            # We match strictly on the path part of the SURI.
             if old_file_path and new_file_path and path == old_file_path:
                 path = new_file_path
                 path_changed = True
 
-            # 2. Fragment Update (Symbol Rename)
-            # We match strictly on the fragment part.
             if old_fragment and new_fragment and fragment:
                 if fragment == old_fragment:
                     fragment = new_fragment
                     fragment_changed = True
                 elif fragment.startswith(old_fragment + "."):
-                    # Handle nested symbols: Class.method -> NewClass.method
                     suffix = fragment[len(old_fragment) :]
                     fragment = new_fragment + suffix
                     fragment_changed = True
 
             if path_changed or fragment_changed:
-                new_key = SURIGenerator.for_symbol(path, fragment) if fragment else SURIGenerator.for_file(path)
+                new_key = (
+                    SURIGenerator.for_symbol(path, fragment)
+                    if fragment
+                    else SURIGenerator.for_file(path)
+                )
                 new_data[new_key] = value
                 modified = True
             else:
@@ -222,33 +231,24 @@ class SidecarUpdateMixin:
     ) -> Dict[str, Any]:
         """
         Updates Doc YAML data where keys are Fragments (Short Names).
-        File moves do NOT affect these keys (as they are relative), unless the symbol itself is renamed.
         """
         if not old_fragment or not new_fragment or old_fragment == new_fragment:
-            # No symbol rename occurred, or we couldn't determine fragments.
-            # For pure file moves, YAML content usually stays static.
             return data
 
         new_data = {}
         modified = False
 
         for key, value in data.items():
-            # Check for exact match (Top-level symbol rename)
             if key == old_fragment:
                 new_data[new_fragment] = value
                 modified = True
-                continue
-
-            # Check for nested match (Method rename via Class rename)
-            # e.g. Key="OldClass.method", Rename="OldClass"->"NewClass"
-            if key.startswith(old_fragment + "."):
+            elif key.startswith(old_fragment + "."):
                 suffix = key[len(old_fragment) :]
                 new_key = new_fragment + suffix
                 new_data[new_key] = value
                 modified = True
-                continue
-
-            new_data[key] = value
+            else:
+                new_data[key] = value
 
         return new_data if modified else data
 
@@ -257,50 +257,6 @@ class AbstractOperation(ABC):
     @abstractmethod
     def collect_intents(self, ctx: RefactorContext) -> List[RefactorIntent]:
         pass
+
+
 ~~~~~
-
-#### Acts 2: 更新 `Planner` 以传递路径
-
-我们需要更新 `Planner`，使其在调用 `_update_sidecar_data` 时传递 `intent.sidecar_path`，以便 Mixin 可以进行类型分发。
-
-~~~~~act
-patch_file
-packages/stitcher-refactor/src/stitcher/refactor/engine/planner.py
-~~~~~
-~~~~~python.old
-            # Apply all intents for this file
-            for intent in intents:
-                data = self._update_sidecar_data(
-                    data,
-                    intent.module_fqn,
-                    intent.old_fqn,
-                    intent.new_fqn,
-                    old_file_path=intent.old_file_path,
-                    new_file_path=intent.new_file_path,
-                )
-~~~~~
-~~~~~python.new
-            # Apply all intents for this file
-            for intent in intents:
-                data = self._update_sidecar_data(
-                    data,
-                    intent.sidecar_path,
-                    intent.module_fqn,
-                    intent.old_fqn,
-                    intent.new_fqn,
-                    old_file_path=intent.old_file_path,
-                    new_file_path=intent.new_file_path,
-                )
-~~~~~
-
-### 下一步建议
-
-我们已经完成了“大清洗”的全部实施步骤：
-1.  测试数据已更新为 SURI/Fragment 格式。
-2.  `SidecarAdapter` 已重写，支持物理 SURI 计算。
-3.  `Planner` (通过 `SidecarUpdateMixin`) 已重写，拥有了清晰的、基于文件类型的更新逻辑。
-
-现在，我们可以再次运行测试来验证整个系统的整合情况。如果所有测试通过，这意味着我们成功地将系统架构迁移到了更稳固的“物理事实”基础上。
-
-我建议立即运行测试：
-`pytest packages/stitcher-refactor/tests/integration/`
