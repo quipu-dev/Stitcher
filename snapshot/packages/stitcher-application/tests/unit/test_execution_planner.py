@@ -6,7 +6,10 @@ from stitcher.spec import (
     ModuleDef,
     FunctionDef,
     ResolutionAction,
+    LockManagerProtocol,
+    URIGeneratorProtocol,
 )
+from stitcher.workspace import Workspace
 
 
 @pytest.fixture

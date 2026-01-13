@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 stitcher-test-utils 中的过时引用", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768296768.1088986, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 NameError 并重写过时的重构测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768296899.452628, "duration_ms": 0}}

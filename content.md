@@ -1,123 +1,163 @@
-好的，又发现一个 `ImportError`。`stitcher-test-utils` 这个包还在引用已被删除的 `SignatureManager`。这很正常，测试辅助工具往往与它们所辅助的旧实现紧密耦合。我需要修复它。
+好的，我看到了新的错误报告。
 
-## [WIP] fix: 修复 stitcher-test-utils 中的过时引用
+1.  `test_execution_planner.py` 出现了 `NameError`，因为我忘记在测试文件中导入 `Workspace`, `LockManagerProtocol`, 和 `URIGeneratorProtocol`。
+2.  `test_refactor_move_updates_suri_in_signatures.py` 出现了 `AssertionError`。这个测试是专门为旧的签名文件物理移动而设计的。现在我们迁移到了 `stitcher.lock`，这个测试的**整个逻辑和断言基础都已经失效**。它还在检查 `.stitcher/signatures/` 目录下的物理文件，而新系统根本不会创建这个目录。
+
+**结论**：我必须同时修复 `NameError` 并彻底重写或删除那个过时的重构测试。由于“阶段 4”就是要简化重构引擎，现在重写这个测试是合适的，可以作为一个先行指标。
+
+## [WIP] fix: 修复 NameError 并重写过时的重构测试
 
 ### 错误分析
-`pytest` 报告在 `stitcher-test-utils/src/stitcher/test_utils/helpers.py` 中无法导入 `SignatureManager`，因为我之前已经删除了这个类。辅助函数 `get_stored_hashes` 是专门为旧的签名管理器设计的，现在它已经完全失效。我需要用一个等效的、与 `LockFileManager` 交互的新辅助函数来替换它。
+1.  **`NameError`**: `test_execution_planner.py` 在 `mocker.create_autospec()` 中使用了 `Workspace` 等类型，但没有从各自的包中导入它们。
+2.  **`AssertionError`**: `test_refactor_move_updates_suri_in_signatures.py` 的测试逻辑与新的 `stitcher.lock` 架构完全不兼容。它断言了旧的、基于物理文件的行为，而新系统致力于消除这种行为。
 
 ### 用户需求
-1.  修复 `stitcher-test-utils` 中由删除 `SignatureManager` 引起的 `ImportError`。
-2.  重写 `get_stored_hashes` 辅助函数，使其能够读取新的 `stitcher.lock` 文件，并返回与旧函数格式兼容的数据，以减少对现有测试用例的冲击。
+1.  为 `test_execution_planner.py` 添加必要的导入语句来解决 `NameError`。
+2.  重写 `test_refactor_move_updates_suri_in_signatures.py`，使其验证**新的正确行为**：当文件移动时，旧的 `stitcher.lock` 文件中的 SURI key 会被更新为新的 SURI key，而不是物理地移动一个 `.json` 文件。
 
 ### 评论
-这个修复是必要的，以确保整个测试套件能够运行。重写 `get_stored_hashes` 是一个务实的选择，它创建了一个适配层，让依赖它的旧测试可以继续工作，而无需大规模重写。
+这次修复不仅是解决错误，更是将测试套件与新的架构愿景对齐。重写重构测试将迫使我们提前思考“阶段 4”中 `refactor` 模块的简化逻辑，确保我们的方向是正确的。这是一个很好的机会，用一个具体的测试来驱动下一步的开发。
 
 ### 目标
-1.  修改 `stitcher-test-utils/src/stitcher/test_utils/helpers.py`，移除对 `SignatureManager` 的导入。
-2.  用 `LockFileManager` 重新实现 `get_stored_hashes`，使其能够解析 `stitcher.lock` 文件。
+1.  修复 `packages/stitcher-application/tests/unit/test_execution_planner.py` 中的导入问题。
+2.  重写 `packages/stitcher-refactor/tests/integration/test_refactor_move_updates_suri_in_signatures.py` 的测试逻辑，使其断言 `stitcher.lock` 文件的内容变化。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/tests #scope/dx #ai/instruct #task/domain/storage #task/object/suri-lockfile #task/action/test-utility-fix #task/state/continue
+#intent/fix #intent/refine #flow/ready #priority/high #comp/tests #comp/refactor #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/suri-lockfile #task/action/test-suite-alignment #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `stitcher-test-utils`
+#### Acts 1: 修复 `test_execution_planner.py` 的导入问题
 
-我们将重写 `helpers.py`，移除旧的导入并更新 `get_stored_hashes` 的实现。
+添加缺失的导入语句。
+
+~~~~~act
+patch_file
+packages/stitcher-application/tests/unit/test_execution_planner.py
+~~~~~
+~~~~~python.old
+from stitcher.app.services import DocumentManager, DocstringMerger
+from stitcher.spec import (
+    ModuleDef,
+    FunctionDef,
+    ResolutionAction,
+)
+~~~~~
+~~~~~python.new
+from stitcher.app.services import DocumentManager, DocstringMerger
+from stitcher.spec import (
+    ModuleDef,
+    FunctionDef,
+    ResolutionAction,
+    LockManagerProtocol,
+    URIGeneratorProtocol,
+)
+from stitcher.workspace import Workspace
+~~~~~
+
+#### Acts 2: 重写过时的重构集成测试
+
+这个测试需要被彻底改造，以验证 `stitcher.lock` 文件内部的 SURI key 是否被正确更新。
 
 ~~~~~act
 write_file
-packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py
+packages/stitcher-refactor/tests/integration/test_refactor_move_updates_suri_in_signatures.py
 ~~~~~
 ~~~~~python
+import json
 from pathlib import Path
-from typing import Optional, Dict
-
-from stitcher.app import StitcherApp
-from stitcher.spec.interaction import InteractionHandler
-from stitcher.lang.python import (
-    PythonTransformer,
-    PythonFingerprintStrategy,
-)
-from stitcher.workspace import Workspace
-
-from stitcher.lang.python.parser.griffe import GriffePythonParser
-from stitcher.index.db import DatabaseManager
-from stitcher.index.store import IndexStore
-from stitcher.index.indexer import FileIndexer
-from stitcher.lang.python.adapter import PythonAdapter
-from stitcher.lang.sidecar import LockFileManager
+from stitcher.test_utils import WorkspaceFactory, create_test_app
 
 
-def create_populated_index(root_path: Path) -> IndexStore:
-    db_path = root_path / ".stitcher" / "index" / "index.db"
-
-    db_manager = DatabaseManager(db_path)
-    db_manager.initialize()
-    store = IndexStore(db_manager)
-
-    # The indexer needs a workspace-aware adapter.
-    workspace = Workspace(root_path)
-    search_paths = workspace.get_search_paths()
-
-    # Discover files first, then index them.
-    files_to_index = workspace.discover_files()
-
-    indexer = FileIndexer(root_path, store)
-    indexer.register_adapter(".py", PythonAdapter(root_path, search_paths))
-    indexer.index_files(files_to_index)
-
-    return store
-
-
-def create_test_app(
-    root_path: Path, interaction_handler: Optional[InteractionHandler] = None
-) -> StitcherApp:
-    parser = GriffePythonParser()
-    transformer = PythonTransformer()
-    strategy = PythonFingerprintStrategy()
-    return StitcherApp(
-        root_path=root_path,
-        parser=parser,
-        transformer=transformer,
-        fingerprint_strategy=strategy,
-        interaction_handler=interaction_handler,
+def test_move_file_operation_updates_suri_in_lockfile(tmp_path: Path):
+    """
+    Verify that moving a file updates the SURI keys in the corresponding stitcher.lock file.
+    """
+    # --- Arrange ---
+    # Note: We now have a package structure.
+    pkg_a_root = tmp_path / "packages" / "pkg-a"
+    workspace_factory = WorkspaceFactory(root_path=tmp_path)
+    workspace_root = (
+        workspace_factory
+        .with_config({
+            "scan_paths": ["packages/pkg-a/src"]
+        })
+        .with_pyproject("packages/pkg-a")  # Creates pyproject.toml for pkg-a
+        .with_source(
+            "packages/pkg-a/src/my_app/logic.py",
+            """
+        def do_something():
+            \"\"\"This is a docstring.\"\"\"
+            pass
+        """,
+        )
+        .build()
     )
 
+    app = create_test_app(workspace_root)
 
-def get_stored_hashes(project_root: Path, file_path: str) -> Dict[str, dict]:
-    """
-    Test helper to read fingerprints from the appropriate stitcher.lock file.
+    # --- Act 1: Initialize the project to create the lock file ---
+    app.run_init()
+
+    # --- Assert 1: Verify initial lock file and SURI key ---
+    lock_path = pkg_a_root / "stitcher.lock"
+    assert lock_path.exists(), "stitcher.lock should be created in the package root"
+
+    old_suri = "py://packages/pkg-a/src/my_app/logic.py#do_something"
+    new_suri = "py://packages/pkg-a/src/my_app/core/logic.py#do_something"
+
+    initial_data = json.loads(lock_path.read_text())
+    assert old_suri in initial_data["fingerprints"]
+    assert "baseline_code_structure_hash" in initial_data["fingerprints"][old_suri]
+
+    # --- Arrange 2: Create the migration script ---
+    migration_script_content = """
+from pathlib import Path
+from stitcher.refactor.migration import MigrationSpec, Move
+
+def upgrade(spec: MigrationSpec):
+    spec.add(Move(
+        Path("packages/pkg-a/src/my_app/logic.py"),
+        Path("packages/pkg-a/src/my_app/core/logic.py")
+    ))
+"""
+    migration_script_path = workspace_root / "migration.py"
+    migration_script_path.write_text(migration_script_content)
+
+    # --- Act 2: Run the refactor operation ---
+    # We are asserting False because the refactor logic is not yet updated.
+    # This is a placeholder to show what the new test *should* do.
+    # The next step (Phase 4) will make this test pass.
+    # For now, we expect it to fail, but for the right reasons.
+    try:
+        app.run_refactor_apply(migration_script_path, confirm_callback=lambda _: True)
+    except Exception as e:
+        # The refactor might fail because its internal logic is still old.
+        # We accept this for now, the goal is to have the test structure ready.
+        print(f"Refactor apply failed as expected (will be fixed in Phase 4): {e}")
+
+
+    # --- Assert 2: Verify the lock file content was updated ---
+    # The test will fail here until Phase 4 is complete. This is intentional.
+    # The assertion is our goal.
+    assert lock_path.exists(), "Lock file should still exist"
     
-    This function simulates the logic of finding the owning package and reading
-    the lock file to retrieve fingerprint data, providing it in a format
-    (fragment -> dict) that is easy to assert against in tests.
-    """
-    workspace = Workspace(project_root)
-    lock_manager = LockFileManager()
+    # This part of the test will fail until the refactor logic is updated.
+    if lock_path.exists():
+        final_data = json.loads(lock_path.read_text())
+        assert old_suri not in final_data["fingerprints"], "The old SURI key should be removed from the lock file"
+        assert new_suri in final_data["fingerprints"], "The new SURI key should be present in the lock file"
 
-    # 1. Find the package root for the given file
-    abs_file_path = project_root / file_path
-    pkg_root = workspace.find_owning_package(abs_file_path)
-
-    # 2. Load the lock data for that package
-    lock_data = lock_manager.load(pkg_root)
-
-    # 3. Filter and re-key the data for the specific file
-    # We want to return a dict of {fragment: fingerprint_dict} for just this file.
-    ws_rel_path = workspace.to_workspace_relative(abs_file_path)
-    file_prefix = f"py://{ws_rel_path}#"
-    
-    file_hashes = {}
-    for suri, fp in lock_data.items():
-        if suri.startswith(file_prefix):
-            fragment = suri[len(file_prefix):]
-            file_hashes[fragment] = fp.to_dict()
-            
-    return file_hashes
+        # Also verify the fingerprint data was preserved
+        assert "baseline_code_structure_hash" in final_data["fingerprints"][new_suri]
+    else:
+        # This branch is for the current failing state, where the lock file might be deleted or not updated.
+        assert False, "Lock file was not correctly updated or was deleted during refactor."
 ~~~~~
 
 ### 下一步建议
-测试辅助工具已修复。现在所有的 `ImportError` 和主要的 `TypeError` 都应该解决了。我们可以重新尝试运行测试，如果通过，就可以继续进行 **阶段 4: 重构引擎简化 (Refactor Engine Lobotomy)**。
+我们已经修复了 `NameError`，并且将一个关键的集成测试升级为符合新架构的“目标状态”测试。虽然这个测试现在预期会失败，但它为我们接下来的工作提供了明确的目标。
+
+现在，测试套件应该能更完整地运行了。我们可以安全地进入 **阶段 4: 重构引擎简化 (Refactor Engine Lobotomy)**，其核心任务就是让这个刚刚重写的测试通过。
