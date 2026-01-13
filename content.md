@@ -1,14 +1,14 @@
-My apologies. The test failures indicate that my previous fix was insufficient and contained a significant logical flaw in the fragment calculation. I failed to correctly handle nested symbols and moves, which is a direct violation of the HFEA's "Zero Heuristics" principle. My previous `_calculate_fragments` function was a piece of guesswork, not deterministic logic.
+You are absolutely right to point out the persistent failures. My apologies. I clearly have a recurring blind spot in the logic for `_calculate_fragments`. The tests are functioning as a perfect, unflinching specification, and my implementation is repeatedly failing to meet it. The error is not in the tests; it is in my code.
 
-The tests are performing their function perfectly by preventing this flawed code from being accepted. I will now correct this error by implementing a robust fragment calculation strategy and ensuring all tests pass.
+This is a failure to achieve "Ontological Correctness". The translation from an absolute FQN to a relative Fragment is the heart of this refactor, and my logic has been flawed. I will fix it now, definitively.
 
-## [WIP] fix: Implement robust fragment calculation for refactor engine
+## [WIP] fix: Implement correct nested fragment calculation logic
 
 ### 錯誤分析
 
-The core of all four test failures is a single logical bug in the `SidecarUpdateMixin._calculate_fragments` method. The test diffs clearly show that my previous implementation was incorrectly producing fragments that included the module prefix (e.g., `app.MyClass.new_method` instead of the correct `MyClass.new_method`).
+The test failures are all symptoms of the same root cause: the `_calculate_fragments` method incorrectly calculates the `new_fragment`. When given a nested FQN like `app.MyClass.new_method`, my logic was wrongly stripping the parent class part, resulting in an incomplete fragment (`new_method`) instead of the correct, full relative path (`MyClass.new_method`).
 
-This happened because the logic failed to correctly identify and strip the module part of the `new_fqn`, especially in cases of nested renames and file moves. The function was not robustly determining the correct "parent" module for the new FQN.
+The core mistake was trying to be too clever in inferring the "new module". The logic must be symmetrical and simple: a fragment is what remains after stripping the relevant module's FQN from the symbol's FQN.
 
 ### 用户需求
 
@@ -16,16 +16,21 @@ Fix the failing integration and unit tests by implementing a correct and determi
 
 ### 评论
 
-This is a critical fix. Without a correct way to translate between a symbol's absolute identity (FQN) and its local identity (Fragment), the entire refactoring engine is unreliable. The new implementation will be based on a simple, clear rule: a fragment is what remains after stripping the symbol's module FQN from its own FQN. This approach is deterministic and directly aligns with our identifier ontology.
+I am abandoning my previous complex and incorrect heuristics. The principle of "Zero Heuristics" demands a deterministic solution. The new implementation will be based on a single, clear, symmetrical rule that correctly handles all cases, including nested symbols and file moves. This is the final step to make the refactoring engine's core logic sound.
 
 ### 目标
 
-1.  Replace the flawed `SidecarUpdateMixin` implementation with a new version that contains a corrected `_calculate_fragments` method.
+1.  Replace the flawed `SidecarUpdateMixin` implementation with a new version containing a corrected and simplified `_calculate_fragments` method.
 2.  Ensure all previously failing unit and integration tests now pass.
 
 ### 基本原理
 
-I will replace the entire `operations/base.py` file. The new `_calculate_fragments` method will be rewritten to be stateless and deterministic. It will use a helper to reliably determine the module FQN for any given symbol FQN (`fqn.rsplit('.', 1)[0]`). It will then symmetrically calculate the `old_fragment` and `new_fragment` by stripping their respective module prefixes. This guarantees that fragments are always correctly relative to their containing module, resolving all reported assertion errors.
+I will again replace the `operations/base.py` file. The new `_calculate_fragments` method will be radically simplified to adhere to the following logic:
+
+1.  The `old_fragment` is derived by stripping the `module_fqn` (context of the *old* file) from the `old_fqn`.
+2.  The `new_fragment` is derived by stripping the `new_module_fqn` (context of the *new* file, inferred from `new_fqn`) from the `new_fqn`.
+
+This symmetrical approach correctly isolates the relative path of the symbol within its containing file for both the "before" and "after" states, finally fixing the bug for nested symbols.
 
 ### 标签
 
@@ -35,9 +40,9 @@ I will replace the entire `operations/base.py` file. The new `_calculate_fragmen
 
 ### Script
 
-#### Acts 1: Implement Correct `SidecarUpdateMixin` Logic
+#### Acts 1: Implement the Final Correct `SidecarUpdateMixin` Logic
 
-We will replace the entire `base.py` file with the corrected, robust implementation.
+This `write_file` operation will replace the flawed logic with a version that correctly handles nested fragments.
 
 ~~~~~act
 write_file
@@ -83,26 +88,29 @@ class SidecarUpdateMixin:
         self, module_fqn: Optional[str], old_fqn: str, new_fqn: str
     ) -> Tuple[Optional[str], Optional[str]]:
         """
-        Derives symbol fragments by stripping the module FQN prefix.
+        Derives symbol fragments by stripping their respective module FQN prefixes.
         This correctly handles nested fragments like 'Class.method'.
         """
         # --- Calculate Old Fragment ---
         old_fragment = old_fqn
-        # The module_fqn is the context of the sidecar file, which relates to the OLD state.
+        # The provided module_fqn is the context of the sidecar, which is the old module.
         if module_fqn and old_fqn.startswith(module_fqn + "."):
             old_fragment = old_fqn.split(module_fqn + ".", 1)[1]
         elif module_fqn and old_fqn == module_fqn:
-            old_fragment = None  # Represents the module itself
+            old_fragment = None  # Represents the module rename itself.
 
         # --- Calculate New Fragment ---
         new_fragment = new_fqn
-        # The new fragment must be relative to the NEW module FQN.
+        # The new fragment must be relative to ITS OWN module, which we infer.
         new_module_fqn = self._get_module_fqn_from_symbol_fqn(new_fqn)
         if new_module_fqn and new_fqn.startswith(new_module_fqn + "."):
             new_fragment = new_fqn.split(new_module_fqn + ".", 1)[1]
+        elif new_module_fqn is None: # It's a top-level module
+             new_fragment = None
         
-        # Handle renaming of a module itself
+        # Special case: If a module itself is renamed, fragments are None
         if old_fqn == module_fqn:
+            old_fragment = None
             new_fragment = None
 
         return old_fragment, new_fragment
@@ -165,7 +173,8 @@ class SidecarUpdateMixin:
                 path = new_file_path
                 path_changed = True
 
-            if old_fragment and new_fragment and fragment:
+            # Use fragments only if they are not None. A None fragment means a module-level change.
+            if old_fragment is not None and new_fragment is not None and fragment is not None:
                 if fragment == old_fragment:
                     fragment = new_fragment
                     fragment_changed = True
@@ -196,7 +205,7 @@ class SidecarUpdateMixin:
         """
         Updates Doc YAML data where keys are Fragments (Short Names).
         """
-        if not old_fragment or not new_fragment or old_fragment == new_fragment:
+        if old_fragment is None or new_fragment is None or old_fragment == new_fragment:
             return data
 
         new_data = {}
@@ -225,6 +234,6 @@ class AbstractOperation(ABC):
 
 ### 下一步建议
 
-The core logic has been corrected. I am confident that the tests will now pass. Please run the tests again to confirm. If they succeed, we can proceed to commit this final fix for the "Great Purge" task.
+I am confident this is the correct and final logic. Please run the tests one last time to confirm that all failures are resolved.
 
 `pytest packages/stitcher-refactor/`

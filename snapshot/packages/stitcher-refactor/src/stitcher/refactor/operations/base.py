@@ -37,26 +37,29 @@ class SidecarUpdateMixin:
         self, module_fqn: Optional[str], old_fqn: str, new_fqn: str
     ) -> Tuple[Optional[str], Optional[str]]:
         """
-        Derives symbol fragments by stripping the module FQN prefix.
+        Derives symbol fragments by stripping their respective module FQN prefixes.
         This correctly handles nested fragments like 'Class.method'.
         """
         # --- Calculate Old Fragment ---
         old_fragment = old_fqn
-        # The module_fqn is the context of the sidecar file, which relates to the OLD state.
+        # The provided module_fqn is the context of the sidecar, which is the old module.
         if module_fqn and old_fqn.startswith(module_fqn + "."):
             old_fragment = old_fqn.split(module_fqn + ".", 1)[1]
         elif module_fqn and old_fqn == module_fqn:
-            old_fragment = None  # Represents the module itself
+            old_fragment = None  # Represents the module rename itself.
 
         # --- Calculate New Fragment ---
         new_fragment = new_fqn
-        # The new fragment must be relative to the NEW module FQN.
+        # The new fragment must be relative to ITS OWN module, which we infer.
         new_module_fqn = self._get_module_fqn_from_symbol_fqn(new_fqn)
         if new_module_fqn and new_fqn.startswith(new_module_fqn + "."):
             new_fragment = new_fqn.split(new_module_fqn + ".", 1)[1]
+        elif new_module_fqn is None: # It's a top-level module
+             new_fragment = None
         
-        # Handle renaming of a module itself
+        # Special case: If a module itself is renamed, fragments are None
         if old_fqn == module_fqn:
+            old_fragment = None
             new_fragment = None
 
         return old_fragment, new_fragment
@@ -119,7 +122,8 @@ class SidecarUpdateMixin:
                 path = new_file_path
                 path_changed = True
 
-            if old_fragment and new_fragment and fragment:
+            # Use fragments only if they are not None. A None fragment means a module-level change.
+            if old_fragment is not None and new_fragment is not None and fragment is not None:
                 if fragment == old_fragment:
                     fragment = new_fragment
                     fragment_changed = True
@@ -150,7 +154,7 @@ class SidecarUpdateMixin:
         """
         Updates Doc YAML data where keys are Fragments (Short Names).
         """
-        if not old_fragment or not new_fragment or old_fragment == new_fragment:
+        if old_fragment is None or new_fragment is None or old_fragment == new_fragment:
             return data
 
         new_data = {}
