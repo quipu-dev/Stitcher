@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "style: ruff and stitcher Capture: M stitcher.lock, M test_execution_planner.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768302289.5313394, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 增强 Workspace 根目录识别的确定性", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768304737.0139976, "duration_ms": 0}}

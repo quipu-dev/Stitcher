@@ -1,5 +1,20 @@
-from stitcher.workspace import Workspace
+import pytest
+from pathlib import Path
+from stitcher.workspace import Workspace, WorkspaceNotFoundError
+from stitcher.workspace.workspace import find_workspace_root
 from stitcher.test_utils import WorkspaceFactory
+
+
+def test_find_workspace_root_throws_on_failure(tmp_path):
+    # Arrange: 创建一个完全空目录，没有任何 .git 或 pyproject.toml
+    empty_dir = tmp_path / "abandoned_zone"
+    empty_dir.mkdir()
+    
+    # Act & Assert
+    with pytest.raises(WorkspaceNotFoundError) as excinfo:
+        find_workspace_root(empty_dir)
+    
+    assert str(empty_dir) in str(excinfo.value)
 
 
 def test_discover_files_git(tmp_path):
