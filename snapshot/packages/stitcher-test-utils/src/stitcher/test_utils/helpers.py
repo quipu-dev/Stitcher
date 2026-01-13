@@ -14,6 +14,7 @@ from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
 from stitcher.index.indexer import FileIndexer
 from stitcher.lang.python.adapter import PythonAdapter
+from stitcher.lang.python.uri import PythonURIGenerator
 from stitcher.lang.sidecar import LockFileManager
 
 
@@ -32,7 +33,10 @@ def create_populated_index(root_path: Path) -> IndexStore:
     files_to_index = workspace.discover_files()
 
     indexer = FileIndexer(root_path, store)
-    indexer.register_adapter(".py", PythonAdapter(root_path, search_paths))
+    uri_generator = PythonURIGenerator()
+    indexer.register_adapter(
+        ".py", PythonAdapter(root_path, search_paths, uri_generator=uri_generator)
+    )
     indexer.index_files(files_to_index)
 
     return store
