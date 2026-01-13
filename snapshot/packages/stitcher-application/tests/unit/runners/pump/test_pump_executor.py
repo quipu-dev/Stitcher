@@ -68,7 +68,10 @@ def sample_module() -> ModuleDef:
 
 
 def test_executor_hydrates_new_doc(
-    mocker, executor: PumpExecutor, sample_module: ModuleDef
+    mocker,
+    executor: PumpExecutor,
+    sample_module: ModuleDef,
+    mock_sig_manager: SignatureManagerProtocol,
 ):
     """Test standard pumping of a new docstring without conflicts."""
     mock_tm = mocker.create_autospec(TransactionManager, instance=True)
@@ -77,8 +80,8 @@ def test_executor_hydrates_new_doc(
 
     # Assert YAML file is written to the correct relative path with ANY content
     mock_tm.add_write.assert_any_call("src/main.stitcher.yaml", ANY)
-    # Assert signature file is written to the correct relative path with ANY content
-    mock_tm.add_write.assert_any_call(".stitcher/signatures/src/main.json", ANY)
+    # Assert signature manager was told to save the new hashes in memory
+    mock_sig_manager.save_composite_hashes.assert_called_once()
 
 
 def test_executor_overwrite_and_strip(
@@ -86,6 +89,7 @@ def test_executor_overwrite_and_strip(
     executor: PumpExecutor,
     sample_module: ModuleDef,
     mock_doc_manager: DocumentManagerProtocol,
+    mock_sig_manager: SignatureManagerProtocol,
 ):
     """Test HYDRATE_OVERWRITE decision with stripping enabled."""
     mock_tm = mocker.create_autospec(TransactionManager, instance=True)
@@ -107,8 +111,8 @@ def test_executor_overwrite_and_strip(
 
     # Assert YAML is written
     mock_tm.add_write.assert_any_call("src/main.stitcher.yaml", ANY)
-    # Assert signature is written
-    mock_tm.add_write.assert_any_call(".stitcher/signatures/src/main.json", ANY)
+    # Assert signature manager was told to save hashes
+    mock_sig_manager.save_composite_hashes.assert_called_once()
     # Assert source file is stripped and written back
     executor.transformer.strip.assert_called_once()  # type: ignore[reportAttributeAccessIssue]
     mock_tm.add_write.assert_any_call("src/main.py", "stripped content")

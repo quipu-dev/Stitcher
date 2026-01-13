@@ -18,6 +18,8 @@ class TestJsonSuriUpdates:
             new_module_fqn="app",
             old_fqn="app.OldClass",
             new_fqn="app.NewClass",
+            old_file_path="src/app.py",
+            new_file_path="src/app.py",
         )
         updated = transformer.transform(Path("src/app.json"), data, context)
         assert updated == {new_suri: {"hash": "1"}}
@@ -31,6 +33,8 @@ class TestJsonSuriUpdates:
             new_module_fqn="app",
             old_fqn="app.MyClass.old_method",
             new_fqn="app.MyClass.new_method",
+            old_file_path="src/app.py",
+            new_file_path="src/app.py",
         )
         updated = transformer.transform(Path("src/app.json"), data, context)
         assert updated == {new_suri: {"hash": "1"}}
@@ -44,6 +48,8 @@ class TestJsonSuriUpdates:
             new_module_fqn="app",
             old_fqn="app.OldClass",
             new_fqn="app.NewClass",
+            old_file_path="src/app.py",
+            new_file_path="src/app.py",
         )
         updated = transformer.transform(Path("src/app.json"), data, context)
         assert updated == {new_suri: {"hash": "1"}}

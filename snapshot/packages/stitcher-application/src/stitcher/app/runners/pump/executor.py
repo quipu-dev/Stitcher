@@ -170,16 +170,9 @@ class PumpExecutor:
                     )
 
                 if new_hashes != stored_hashes:
-                    sig_path = self.sig_manager.get_signature_path(module.file_path)
-                    rel_sig_path = str(sig_path.relative_to(self.root_path))
-                    if not new_hashes:
-                        if sig_path.exists():
-                            tm.add_delete_file(rel_sig_path)
-                    else:
-                        sig_content = self.sig_manager.serialize_hashes(
-                            module.file_path, new_hashes
-                        )
-                        tm.add_write(rel_sig_path, sig_content)
+                    self.sig_manager.save_composite_hashes(
+                        module.file_path, new_hashes
+                    )
 
                 if file_has_redundancy:
                     redundant_files_list.append(self.root_path / module.file_path)

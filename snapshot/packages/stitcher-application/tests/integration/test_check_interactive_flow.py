@@ -93,14 +93,16 @@ def func_b(x: str): # int -> str
 
     # Verify Hashes are actually updated in storage
     final_hashes = get_stored_hashes(project_root, "src/app.py")
+    suri_a = "py://src/app.py#func_a"
+    suri_b = "py://src/app.py#func_b"
 
     # func_a should have updated yaml hash
     expected_doc_a_hash = app.doc_manager.compute_yaml_content_hash("New Doc A.")
-    assert final_hashes["func_a"]["baseline_yaml_content_hash"] == expected_doc_a_hash
+    assert final_hashes[suri_a]["baseline_yaml_content_hash"] == expected_doc_a_hash
 
     # func_b should have updated code hash due to RELINK
-    assert "baseline_code_structure_hash" in final_hashes["func_b"]
-    assert final_hashes["func_b"]["baseline_code_structure_hash"] is not None
+    assert "baseline_code_structure_hash" in final_hashes[suri_b]
+    assert final_hashes[suri_b]["baseline_code_structure_hash"] is not None
 
 
 @pytest.fixture
@@ -243,6 +245,7 @@ def test_check_interactive_relink_fixes_drift(drift_workspace, monkeypatch):
     spy_bus = SpyBus()
 
     initial_hashes = get_stored_hashes(drift_workspace, "src/app.py")
+    suri = "py://src/app.py#func"
 
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         assert app.run_check() is True
@@ -251,8 +254,8 @@ def test_check_interactive_relink_fixes_drift(drift_workspace, monkeypatch):
 
     final_hashes = get_stored_hashes(drift_workspace, "src/app.py")
     assert (
-        final_hashes["func"]["baseline_code_structure_hash"]
-        != initial_hashes["func"]["baseline_code_structure_hash"]
+        final_hashes[suri]["baseline_code_structure_hash"]
+        != initial_hashes[suri]["baseline_code_structure_hash"]
     )
 
     # Verify that a subsequent check is clean
@@ -304,6 +307,7 @@ def test_check_interactive_reconcile_fixes_co_evolution(
     spy_bus = SpyBus()
 
     initial_hashes = get_stored_hashes(co_evolution_workspace, "src/app.py")
+    suri = "py://src/app.py#func"
 
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         assert app.run_check() is True
@@ -312,12 +316,12 @@ def test_check_interactive_reconcile_fixes_co_evolution(
 
     final_hashes = get_stored_hashes(co_evolution_workspace, "src/app.py")
     assert (
-        final_hashes["func"]["baseline_code_structure_hash"]
-        != initial_hashes["func"]["baseline_code_structure_hash"]
+        final_hashes[suri]["baseline_code_structure_hash"]
+        != initial_hashes[suri]["baseline_code_structure_hash"]
     )
     assert (
-        final_hashes["func"]["baseline_yaml_content_hash"]
-        != initial_hashes["func"]["baseline_yaml_content_hash"]
+        final_hashes[suri]["baseline_yaml_content_hash"]
+        != initial_hashes[suri]["baseline_yaml_content_hash"]
     )
 
     # Verify that a subsequent check is clean

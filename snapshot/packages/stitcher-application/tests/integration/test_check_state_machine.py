@@ -65,6 +65,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
     )
 
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
+    suri = "py://src/module.py#func"
 
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -77,12 +78,12 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
 
     final_hashes = get_stored_hashes(project_root, "src/module.py")
     assert (
-        final_hashes["func"]["baseline_code_structure_hash"]
-        == initial_hashes["func"]["baseline_code_structure_hash"]
+        final_hashes[suri]["baseline_code_structure_hash"]
+        == initial_hashes[suri]["baseline_code_structure_hash"]
     )
 
     expected_hash = app.doc_manager.compute_yaml_content_hash(new_doc_content)
-    assert final_hashes["func"]["baseline_yaml_content_hash"] == expected_hash
+    assert final_hashes[suri]["baseline_yaml_content_hash"] == expected_hash
 
 
 def test_state_signature_drift_error(tmp_path, monkeypatch):
@@ -129,6 +130,7 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
 
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
+    suri = "py://src/module.py#func"
 
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -141,12 +143,12 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
     final_hashes = get_stored_hashes(project_root, "src/module.py")
 
     assert (
-        final_hashes["func"]["baseline_code_structure_hash"]
-        != initial_hashes["func"]["baseline_code_structure_hash"]
+        final_hashes[suri]["baseline_code_structure_hash"]
+        != initial_hashes[suri]["baseline_code_structure_hash"]
     )
     assert (
-        final_hashes["func"]["baseline_yaml_content_hash"]
-        == initial_hashes["func"]["baseline_yaml_content_hash"]
+        final_hashes[suri]["baseline_yaml_content_hash"]
+        == initial_hashes[suri]["baseline_yaml_content_hash"]
     )
 
 
@@ -205,6 +207,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
     )
 
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
+    suri = "py://src/module.py#func"
 
     spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -216,13 +219,13 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
 
     final_hashes = get_stored_hashes(project_root, "src/module.py")
     assert (
-        final_hashes["func"]["baseline_code_structure_hash"]
-        != initial_hashes["func"]["baseline_code_structure_hash"]
+        final_hashes[suri]["baseline_code_structure_hash"]
+        != initial_hashes[suri]["baseline_code_structure_hash"]
     )
     assert (
-        final_hashes["func"]["baseline_yaml_content_hash"]
-        != initial_hashes["func"]["baseline_yaml_content_hash"]
+        final_hashes[suri]["baseline_yaml_content_hash"]
+        != initial_hashes[suri]["baseline_yaml_content_hash"]
     )
 
     expected_doc_hash = app.doc_manager.compute_yaml_content_hash(new_doc_content)
-    assert final_hashes["func"]["baseline_yaml_content_hash"] == expected_doc_hash
+    assert final_hashes[suri]["baseline_yaml_content_hash"] == expected_doc_hash

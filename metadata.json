@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(core): 适配应用层以支持 stitcher.lock 模式", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768289355.6334994, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(core): Align application layer and tests with stitcher.lock architecture", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768289779.6307054, "duration_ms": 0}}

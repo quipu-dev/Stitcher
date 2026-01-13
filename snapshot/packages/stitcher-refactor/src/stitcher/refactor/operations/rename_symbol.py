@@ -33,6 +33,7 @@ class RenameSymbolOperation(AbstractOperation):
         if definition_node and definition_node.path:
             definition_file_path = definition_node.path
             module_fqn = path_to_fqn(definition_file_path, ctx.graph.search_paths)
+            rel_path = ctx.workspace.get_suri_path(definition_file_path)
 
             # Doc file intent
             doc_path = ctx.sidecar_manager.get_doc_path(definition_file_path)
@@ -43,6 +44,8 @@ class RenameSymbolOperation(AbstractOperation):
                         module_fqn=module_fqn,
                         old_fqn=self.old_fqn,
                         new_fqn=self.new_fqn,
+                        old_file_path=rel_path,
+                        new_file_path=rel_path,
                     )
                 )
 
@@ -55,6 +58,8 @@ class RenameSymbolOperation(AbstractOperation):
                         module_fqn=module_fqn,
                         old_fqn=self.old_fqn,
                         new_fqn=self.new_fqn,
+                        old_file_path=rel_path,
+                        new_file_path=rel_path,
                     )
                 )
 

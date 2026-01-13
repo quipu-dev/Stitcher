@@ -57,7 +57,8 @@ def func():
 
     # Verify init happened
     hashes_initial = get_stored_hashes(tmp_path, "src/pkg1/mod.py")
-    assert hashes_initial["func"]["baseline_yaml_content_hash"] is not None
+    suri = "py://src/pkg1/mod.py#func"
+    assert hashes_initial[suri]["baseline_yaml_content_hash"] is not None
 
     # 3. Modify Docs in YAML (Simulate Doc Improvement)
     # This creates a state: Code Hash matches, YAML Hash differs -> Doc Improvement
@@ -84,6 +85,6 @@ def func():
     # The stored hash should now reflect "Better Doc."
     # We don't check the hash value specifically, but it must differ from initial.
     assert (
-        hashes_after["func"]["baseline_yaml_content_hash"]
-        != hashes_initial["func"]["baseline_yaml_content_hash"]
+        hashes_after[suri]["baseline_yaml_content_hash"]
+        != hashes_initial[suri]["baseline_yaml_content_hash"]
     )
