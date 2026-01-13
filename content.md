@@ -1,326 +1,88 @@
-好的，我们完全达成了一致。这套新的指导原则——保真性、意图区分、职责分离——是构建一个健壮且值得信赖的工具的正确基石。我将立即开始执行您制定的新路线图。
+好的，我们立即开始执行路线图的第二步。
 
-这是实现第一步的计划。
+我的分析显示，`DocumentManager` 已经正确地将其所有 I/O 操作委托给了新的 `SidecarAdapter`，因此我们无需对其进行修改。我们的任务将聚焦于彻底移除 `stitcher-common` 中陈旧的 `YamlAdapter` 及其所有引用，完成架构的净化。
 
-## [WIP] refactor(sidecar): 实现意图感知的 SidecarAdapter
+## [WIP] refactor(arch): 净化 I/O 职责并移除旧的 YamlAdapter
 
 ### 用户需求
 
-根据新的实施路线图，我们需要实现第一步：重构 `SidecarAdapter`，使其具备“意图感知”能力，能够智能地区分“创建 (CREATE)”和“更新 (UPDATE)”两种操作，并采取截然不同的文件写入策略。
+根据路线图第二步，我们需要净化项目架构，移除位于 `stitcher-common` 中的旧 `YamlAdapter`，并清理其所有引用，从而确立 `stitcher-lang-sidecar` 中的 `SidecarAdapter` 作为处理 sidecar 文件的唯一权威。
 
 ### 评论
 
-这是一个至关重要的架构修正。它将工具的行为从“机器便利”转向了“尊重用户意图”，彻底解决了之前版本中因隐式自动格式化而导致的数据保真性丢失问题。这是构建一个真正专业的开发工具所必需的。
+这是一个关键的架构清理步骤。通过移除冗余和功能上已被取代的组件，我们不仅减少了代码量，更重要的是提高了系统的内聚性。这使得未来的维护者能够更容易地理解数据流，因为处理 sidecar 文件的逻辑现在被清晰地隔离在一个专用的包中。
 
 ### 目标
 
-1.  重构 `SidecarAdapter.save_doc_irs` 方法，为其增加区分文件存在与否的逻辑分支。
-2.  **创建路径 (CREATE)**: 当目标文件不存在时，生成一个键已排序、格式标准（使用 `|-` 块风格）的全新文件。
-3.  **更新路径 (UPDATE)**: 当目标文件已存在时，加载其完整内容（包括格式、注释和键序），仅在加载的对象上进行追加或修改，然后写回，从而实现高保真更新。
-4.  为新的 `save_doc_irs` 行为编写全面的单元测试，覆盖 CREATE 和 UPDATE 两种场景。
+1.  从 `stitcher.common` 的 `__init__.py` 中移除对旧 `YamlAdapter` 的导入及其在 `__all__` 中的导出。
+2.  物理删除 `packages/stitcher-common/src/stitcher/common/adapters/yaml_adapter.py` 文件。
+3.  完成此步骤后，整个项目将不再有任何对旧 `YamlAdapter` 的依赖。
 
 ### 基本原理
 
-我们将利用 `ruamel.yaml` 库强大的“往返 (round-trip)”能力。在更新现有文件时，我们先加载它，这会将 YAML 内容解析为一个保留了所有元数据（注释、顺序等）的特殊对象。我们对这个对象进行修改，然后再将其写回。`ruamel.yaml` 会确保所有未被触及的部分都保持原样。而在创建新文件时，我们则从一个标准的 Python 字典开始，这允许我们施加确定性的排序和格式化规则，以建立一个干净的基线。
+`SidecarAdapter` 提供了比旧 `YamlAdapter` 更强大、更符合我们新确立原则的功能（特别是其意图感知的保存逻辑）。由于 `DocumentManager` 已经完全依赖于 `SidecarAdapter`，旧的 `YamlAdapter` 已经成为无人使用的遗留代码。移除它可以消除潜在的混淆，并使项目的依赖关系更加清晰，完全符合我们“职责分离”的核心共识。
 
 ### 标签
 
-#intent/refine #flow/ready #priority/high #scope/core #ai/instruct #task/domain/architecture #task/object/sidecar-adapter #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/common #comp/lang-sidecar #scope/core #ai/instruct #task/domain/architecture #task/object/sidecar-adapter #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 SidecarAdapter
+#### Acts 1: 清理 `stitcher-common` 中的引用
 
-我将修改 `SidecarAdapter.save_doc_irs` 方法，实现其意图感知能力。
+我将首先修改 `__init__.py` 文件，移除对即将被删除的 `YamlAdapter` 的所有引用。
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py
+packages/stitcher-common/src/stitcher/common/__init__.py
 ~~~~~
 ~~~~~python.old
-    def save_doc_irs(
-        self,
-        path: Path,
-        irs: Dict[str, DocstringIR],
-        serializer: DocstringSerializerProtocol,
-    ) -> None:
-        sorted_irs = dict(sorted(irs.items()))
-        yaml_data = {fqn: serializer.to_yaml(ir) for fqn, ir in sorted_irs.items()}
-        
-        # Enforce block scalar style for all string values
-        formatted_data = self._to_literal_strings(yaml_data)
-
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        original_content = ""
-        if path.exists():
-            try:
-                original_content = path.read_text("utf-8")
-            except (OSError, UnicodeDecodeError):
-                pass
-
-        string_stream = io.StringIO()
-        self._yaml.dump(formatted_data, string_stream)
-        new_content = string_stream.getvalue()
-
-        if original_content != new_content:
-            with path.open("w", encoding="utf-8") as f:
-                f.write(new_content)
+from stitcher.spec.persistence import DocumentAdapter
+from .adapters.yaml_adapter import YamlAdapter
 ~~~~~
 ~~~~~python.new
-    def save_doc_irs(
-        self,
-        path: Path,
-        irs: Dict[str, DocstringIR],
-        serializer: DocstringSerializerProtocol,
-    ) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        if path.exists():
-            # --- UPDATE PATH ---
-            # Load existing content to preserve formatting, comments, and key order.
-            try:
-                with path.open("r", encoding="utf-8") as f:
-                    data = self._yaml.load(f)
-                original_content = path.read_text("utf-8")
-            except Exception:
-                # If we can't read/parse, treat it as a new file creation.
-                data = {}
-                original_content = ""
-
-            if not isinstance(data, dict):
-                data = {}
-
-            # Update the loaded data with new/modified IRs.
-            # NO SORTING is applied to preserve original key order.
-            # New keys will be appended by ruamel.yaml.
-            for fqn, ir in irs.items():
-                yaml_val = serializer.to_yaml(ir)
-                if isinstance(yaml_val, str):
-                    formatted_val = LiteralScalarString(yaml_val)
-                elif isinstance(yaml_val, dict):
-                    formatted_val = self._to_literal_strings(yaml_val)
-                else:
-                    formatted_val = yaml_val
-                data[fqn] = formatted_val
-
-            string_stream = io.StringIO()
-            self._yaml.dump(data, string_stream)
-            new_content = string_stream.getvalue()
-
-            # Compare with original content to avoid unnecessary writes/mtime changes.
-            if original_content != new_content:
-                with path.open("w", encoding="utf-8") as f:
-                    f.write(new_content)
-        else:
-            # --- CREATE PATH ---
-            # For new files, create a clean, sorted baseline for predictability.
-            sorted_irs = dict(sorted(irs.items()))
-            yaml_data = {
-                fqn: serializer.to_yaml(ir) for fqn, ir in sorted_irs.items()
-            }
-            formatted_data = self._to_literal_strings(yaml_data)
-            string_stream = io.StringIO()
-            self._yaml.dump(formatted_data, string_stream)
-            with path.open("w", encoding="utf-8") as f:
-                f.write(string_stream.getvalue())
+from stitcher.spec.persistence import DocumentAdapter
 ~~~~~
-
-#### Acts 2: 增强单元测试
-
-接下来，我将更新单元测试套件，以验证新的 CREATE 和 UPDATE 行为是否符合我们的原则。
 
 ~~~~~act
-write_file
-packages/stitcher-lang-sidecar/tests/unit/test_sidecar_adapter.py
+patch_file
+packages/stitcher-common/src/stitcher/common/__init__.py
 ~~~~~
-~~~~~python
-from pathlib import Path
-from textwrap import dedent
+~~~~~python.old
+__all__ = [
+    "bus",
+    "stitcher_operator",
+    "format_docstring",
+    "parse_docstring",
+    "DocumentAdapter",
+    "YamlAdapter",
+]
+~~~~~
+~~~~~python.new
+__all__ = [
+    "bus",
+    "stitcher_operator",
+    "format_docstring",
+    "parse_docstring",
+    "DocumentAdapter",
+]
+~~~~~
 
-from stitcher.lang.sidecar.adapter import SidecarAdapter
-from stitcher.lang.sidecar.parser import parse_signature_references
-from stitcher.lang.python.analysis.models import ReferenceType
-from stitcher.spec import DocstringIR
-from stitcher.lang.python.docstring import RawSerializer
+#### Acts 2: 物理删除旧的 `YamlAdapter`
 
+现在，在所有引用都已清理干净后，我将物理删除这个冗余的文件。
 
-def test_parse_signature_references():
-    content = dedent("""
-    {
-      "py://src/mod.py#Func": {
-        "hash": "abc"
-      },
-      "py://src/mod.py#Class": {
-        "hash": "def"
-      }
-    }
-    """).strip()
-
-    refs = parse_signature_references(content)
-    expected = [
-        ("py://src/mod.py#Func", 2, 2),
-        ("py://src/mod.py#Class", 5, 2),
-    ]
-    assert sorted(refs) == sorted(expected)
-
-
-def test_adapter_json_dispatch(tmp_path: Path):
-    adapter = SidecarAdapter(root_path=tmp_path)
-    path = tmp_path / "test.json"
-    content = dedent("""
-    {
-      "py://foo#bar": {}
-    }
-    """)
-
-    symbols, refs = adapter.parse(path, content)
-
-    assert len(symbols) == 0
-    assert len(refs) == 1
-
-    ref = refs[0]
-    assert ref.kind == ReferenceType.SIDECAR_ID.value
-    assert ref.target_id == "py://foo#bar"
-    assert ref.target_fqn is None
-
-
-def test_adapter_yaml_suri_computation(tmp_path: Path):
-    # 1. ARRANGE: Create a mock file system
-    src_dir = tmp_path / "src"
-    src_dir.mkdir()
-    py_file = src_dir / "module.py"
-    py_file.touch()
-
-    yaml_file = src_dir / "module.stitcher.yaml"
-    yaml_content = dedent("""
-    MyClass:
-      doc: hello
-    my_func:
-      doc: world
-    """)
-    yaml_file.write_text(yaml_content)
-
-    # 2. ACT
-    adapter = SidecarAdapter(root_path=tmp_path)
-    symbols, refs = adapter.parse(yaml_file, yaml_content)
-
-    # 3. ASSERT
-    assert len(symbols) == 0
-    assert len(refs) == 2
-
-    refs_by_id = {ref.target_id: ref for ref in refs}
-
-    # Verify first reference
-    suri1 = "py://src/module.py#MyClass"
-    assert suri1 in refs_by_id
-    ref1 = refs_by_id[suri1]
-    assert ref1.kind == ReferenceType.SIDECAR_DOC_ID.value
-    assert ref1.lineno == 2
-    assert ref1.col_offset == 0
-
-    # Verify second reference
-    suri2 = "py://src/module.py#my_func"
-    assert suri2 in refs_by_id
-    ref2 = refs_by_id[suri2]
-    assert ref2.kind == ReferenceType.SIDECAR_DOC_ID.value
-    assert ref2.lineno == 4
-    assert ref2.col_offset == 0
-
-
-def test_save_doc_irs_create_path_sorts_and_formats(tmp_path: Path):
-    """
-    Verifies that when creating a new file, the adapter sorts keys alphabetically
-    and uses the standard block scalar format.
-    """
-    # ARRANGE
-    adapter = SidecarAdapter(root_path=tmp_path)
-    serializer = RawSerializer()
-    doc_path = tmp_path / "new_module.stitcher.yaml"
-
-    # Unsorted IRs
-    irs = {
-        "z_function": DocstringIR(summary="Doc for Z"),
-        "a_function": DocstringIR(summary="Doc for A"),
-        "c_class": DocstringIR(summary="Doc for C"),
-    }
-
-    # ACT
-    adapter.save_doc_irs(doc_path, irs, serializer)
-
-    # ASSERT
-    content = doc_path.read_text()
-
-    # 1. Check for standard block scalar format
-    assert "a_function: |-\n  Doc for A" in content
-    assert "c_class: |-\n  Doc for C" in content
-    assert "z_function: |-\n  Doc for Z" in content
-
-    # 2. Check for alphabetical sorting
-    a_pos = content.find("a_function")
-    c_pos = content.find("c_class")
-    z_pos = content.find("z_function")
-
-    assert a_pos < c_pos < z_pos
-
-
-def test_save_doc_irs_update_path_preserves_order_and_comments(tmp_path: Path):
-    """
-    Verifies that when updating an existing file, the adapter preserves
-    original key order and comments, and appends new keys.
-    """
-    # ARRANGE
-    adapter = SidecarAdapter(root_path=tmp_path)
-    serializer = RawSerializer()
-    doc_path = tmp_path / "existing_module.stitcher.yaml"
-
-    # Create an initial file with specific order and comments
-    initial_content = dedent("""
-        # A special comment that must be preserved
-        z_function: |-
-          Original doc for Z
-        a_function: |-
-          Original doc for A
-    """).strip() + "\n"
-    doc_path.write_text(initial_content)
-
-    # New/updated IRs to "pump"
-    irs = {
-        "a_function": DocstringIR(summary="Updated doc for A"),  # Update existing
-        "b_function": DocstringIR(summary="New doc for B"),  # Add new
-    }
-
-    # ACT
-    adapter.save_doc_irs(doc_path, irs, serializer)
-
-    # ASSERT
-    content = doc_path.read_text()
-
-    # 1. Check that the comment is preserved
-    assert "# A special comment that must be preserved" in content
-
-    # 2. Check that the original key order is preserved
-    z_pos = content.find("z_function")
-    a_pos = content.find("a_function")
-    b_pos = content.find("b_function")
-
-    assert z_pos != -1 and a_pos != -1 and b_pos != -1
-    assert z_pos < a_pos < b_pos
-
-    # 3. Check that values are updated/added correctly
-    assert "z_function: |-\n  Original doc for Z" in content
-    assert "a_function: |-\n  Updated doc for A" in content
-    assert "b_function: |-\n  New doc for B" in content
+~~~~~act
+delete_file
+packages/stitcher-common/src/stitcher/common/adapters/yaml_adapter.py
 ~~~~~
 
 ### 下一步建议
 
-我们已经成功完成了路线图的第一步。下一步是**第二步：净化 `DocumentManager` 与 `stitcher-common`**。
+我们已经成功完成了路线图的第二步，项目架构变得更加清晰。
 
-具体行动将是：
-1.  审查 `DocumentManager`，确保它完全依赖我们刚刚重构的 `SidecarAdapter` 来处理所有 `.stitcher.yaml` 的 I/O 操作。
-2.  在确认依赖关系解耦后，物理删除位于 `stitcher-common` 中的旧 `YamlAdapter`。
+接下来的**第三步**至关重要：**更新并增强测试套件以验证新原则**。我们需要创建新的集成测试，来严格验证我们的高保真更新逻辑，确保 `pump` 命令在更新现有文件时，能够完美保留用户的自定义格式和注释。
 
-如果您同意，我将为您准备执行第二步的计划。
+如果您同意，我将为您准备执行第三步的计划。

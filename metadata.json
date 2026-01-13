@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(sidecar): 实现意图感知的 SidecarAdapter", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768285686.3488424, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(arch): 净化 I/O 职责并移除旧的 YamlAdapter", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768285814.1521506, "duration_ms": 0}}
