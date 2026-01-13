@@ -57,7 +57,7 @@ stitcher-analysis = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "-ra -s --cov=stitcher --cov=needle --cov-report=term-missing"
-log_cli = "true"
+# log_cli = "true"
 # log_cli_level = "DEBUG"
 testpaths = ["tests", "packages"]
 norecursedirs = ["tests/fixtures"]

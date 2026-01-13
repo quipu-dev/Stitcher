@@ -37,9 +37,9 @@ class SURIGenerator:
         # after 'py://' as the netloc (host), causing it to be lost from .path.
         # e.g. py://src/main.py -> netloc='src', path='/main.py'.
         # By treating it as a plain string, we preserve the full relative path.
-        
+
         body = suri[5:]  # Strip 'py://'
-        
+
         if "#" in body:
             path, fragment = body.split("#", 1)
         else:
