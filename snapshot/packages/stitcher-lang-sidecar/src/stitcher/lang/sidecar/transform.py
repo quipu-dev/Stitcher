@@ -97,6 +97,21 @@ class SidecarTransformer:
         old_fragment: Optional[str],
         new_fragment: Optional[str],
     ) -> Dict[str, Any]:
+        # Handle stitcher.lock format (nested fingerprints)
+        if "fingerprints" in data and isinstance(data["fingerprints"], dict):
+            new_fingerprints = self._transform_json_data(
+                data["fingerprints"],
+                old_file_path,
+                new_file_path,
+                old_fragment,
+                new_fragment,
+            )
+            if new_fingerprints is not data["fingerprints"]:
+                new_data = data.copy()
+                new_data["fingerprints"] = new_fingerprints
+                return new_data
+            return data
+
         new_data = {}
         modified = False
 
@@ -114,7 +129,15 @@ class SidecarTransformer:
             original_path, original_fragment = path, fragment
             current_path, current_fragment = path, fragment
 
-            if old_file_path and new_file_path and current_path == old_file_path:
+            # Normalize paths for comparison (remove potential leading slashes from SURI parsing)
+            # We assume old_file_path/new_file_path provided by context are relative/normalized.
+            norm_current_path = current_path.lstrip("/")
+
+            if (
+                old_file_path
+                and new_file_path
+                and norm_current_path == old_file_path.lstrip("/")
+            ):
                 current_path = new_file_path
 
             if (
