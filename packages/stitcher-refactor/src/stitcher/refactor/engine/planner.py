@@ -1,8 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, DefaultDict, TYPE_CHECKING
-
-from stitcher.common.adapters.yaml_adapter import YamlAdapter
 import json
 
 if TYPE_CHECKING:
@@ -25,7 +23,11 @@ from stitcher.refactor.engine.intent import (
     DeleteDirectoryIntent,
 )
 from stitcher.refactor.engine.renamer import GlobalBatchRenamer
-from stitcher.lang.sidecar import SidecarTransformer, SidecarTransformContext
+from stitcher.lang.sidecar import (
+    SidecarTransformer,
+    SidecarTransformContext,
+    SidecarAdapter,
+)
 from .utils import path_to_fqn
 
 
@@ -69,14 +71,13 @@ class Planner:
             if isinstance(intent, SidecarUpdateIntent):
                 sidecar_updates[intent.sidecar_path].append(intent)
 
-        # TODO: Inject real adapters instead of instantiating them here.
-        yaml_adapter = YamlAdapter()
+        sidecar_adapter = SidecarAdapter(ctx.workspace.root_path)
         sidecar_transformer = SidecarTransformer()
         for path, intents in sidecar_updates.items():
             # Load the sidecar file only once
-            is_yaml = path.suffix == ".yaml"
+            is_yaml = path.suffix in [".yaml", ".yml"]
             data = (
-                yaml_adapter.load(path)
+                sidecar_adapter.load_raw_data(path)
                 if is_yaml
                 else json.loads(path.read_text("utf-8"))
             )
@@ -98,7 +99,7 @@ class Planner:
 
             # Dump the final state
             content = (
-                yaml_adapter.dump(data)
+                sidecar_adapter.dump_raw_data_to_string(data)
                 if is_yaml
                 else json.dumps(data, indent=2, sort_keys=True)
             )

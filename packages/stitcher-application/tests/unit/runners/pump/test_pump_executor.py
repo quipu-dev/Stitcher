@@ -24,7 +24,10 @@ def mock_doc_manager(mocker) -> MagicMock:
     mock.flatten_module_docs.return_value = {
         "func_a": DocstringIR(summary="Source Doc A")
     }
-    mock.dump_data.return_value = "yaml content"
+    # Mock the new high-fidelity methods
+    mock.load_raw_data.return_value = {}  # Return an empty dict for updates
+    mock.dump_raw_data_to_string.return_value = "high-fidelity yaml content"
+    mock.serialize_ir.side_effect = lambda ir: ir.summary  # Simple mock serialization
     return mock
 
 

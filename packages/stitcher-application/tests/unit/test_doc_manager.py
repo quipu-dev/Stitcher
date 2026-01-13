@@ -1,25 +1,7 @@
 import pytest
-from pathlib import Path
+from ruamel.yaml import YAML
 from stitcher.spec import ModuleDef, FunctionDef, ClassDef, Attribute
 from stitcher.app.services import DocumentManager
-from stitcher.common import DocumentAdapter
-
-
-class MockAdapter(DocumentAdapter):
-    def __init__(self):
-        self.saved_data = {}
-        self.saved_path = None
-
-    def load(self, path: Path):
-        return {}
-
-    def save(self, path: Path, data: dict):
-        self.saved_path = path
-        self.saved_data = data
-
-    def dump(self, data: dict) -> str:
-        # Not used in these tests, but required by the protocol
-        return ""
 
 
 @pytest.fixture
@@ -51,12 +33,16 @@ def test_flatten_module_docs(tmp_path, sample_module_ir):
 
 
 def test_save_docs_for_module(tmp_path, sample_module_ir):
-    mock_adapter = MockAdapter()
-    manager = DocumentManager(root_path=tmp_path, adapter=mock_adapter)
+    manager = DocumentManager(root_path=tmp_path)
 
     output_path = manager.save_docs_for_module(sample_module_ir)
 
     expected_path = tmp_path / "src/main.stitcher.yaml"
     assert output_path == expected_path
-    assert mock_adapter.saved_path == expected_path
-    assert mock_adapter.saved_data["MyClass.method"] == "Method doc"
+    assert expected_path.exists()
+
+    # Load the content with a YAML parser to verify data correctness
+    yaml = YAML()
+    content = yaml.load(expected_path.read_text("utf-8"))
+    assert content["MyClass.method"] == "Method doc"
+    assert content["__doc__"] == "Module doc"

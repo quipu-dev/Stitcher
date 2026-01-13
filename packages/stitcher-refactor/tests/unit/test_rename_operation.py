@@ -24,6 +24,7 @@ def test_rename_symbol_analyze_orchestration():
     mock_graph.search_paths = [tmp_path]
 
     mock_workspace = Mock(spec=Workspace)
+    mock_workspace.root_path = tmp_path
     mock_sidecar_manager = Mock(spec=SidecarManager)
     mock_sidecar_manager.get_doc_path.return_value.exists.return_value = False
     mock_sidecar_manager.get_signature_path.return_value.exists.return_value = False

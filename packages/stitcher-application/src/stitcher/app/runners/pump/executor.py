@@ -155,14 +155,16 @@ class PumpExecutor:
 
             if not file_has_errors:
                 if file_had_updates:
-                    final_data = {
-                        k: self.doc_manager.serialize_ir(v)
-                        for k, v in new_yaml_docs.items()
-                    }
+                    # High-fidelity update: Load raw data, update it, then dump back.
+                    # This preserves comments, key order, and other formatting.
+                    raw_data = self.doc_manager.load_raw_data(module.file_path)
+                    for fqn, ir in new_yaml_docs.items():
+                        raw_data[fqn] = self.doc_manager.serialize_ir(ir)
+
                     doc_path = (self.root_path / module.file_path).with_suffix(
                         ".stitcher.yaml"
                     )
-                    yaml_content = self.doc_manager.dump_data(final_data)
+                    yaml_content = self.doc_manager.dump_raw_data_to_string(raw_data)
                     tm.add_write(
                         str(doc_path.relative_to(self.root_path)), yaml_content
                     )

@@ -227,8 +227,6 @@ class StitcherApp:
         if not index_stats["success"]:
             self.scanner.had_errors = True
 
-        modified_paths = index_stats.get("modified_paths", set())
-
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
 
@@ -273,20 +271,10 @@ class StitcherApp:
                 file_module_stubs = [ModuleDef(file_path=p) for p in rel_paths]
                 batch_modules = file_module_stubs + plugin_modules
 
-                # 6. Reformat FIRST to stabilize file hashes before reconciliation.
-                # Optimization: Only reformat files that were actually modified in this cycle.
-                hot_modules = [
-                    m
-                    for m in batch_modules
-                    if m.file_path in modified_paths or not m.file_path
-                ]
-                if hot_modules:
-                    self.check_runner.reformat_all(hot_modules)
-
-                # 7. Auto-Reconcile Docs (now reads stable hashes)
+                # 6. Auto-Reconcile Docs (e.g., when only docs are updated)
                 self.check_runner.auto_reconcile_docs(batch_results, batch_modules)
 
-                # 8. Resolve interactive/manual conflicts
+                # 7. Resolve interactive/manual conflicts
                 if not self.check_runner.resolve_conflicts(
                     batch_results, batch_conflicts, force_relink, reconcile
                 ):

@@ -2,7 +2,7 @@
   Service responsible for managing documentation assets.
   Handles extraction of docstrings from IR and persistence via adapters.
 "DocumentManager._deserialize_ir": |-
-  Converts YAML data (string or dict) into DocstringIR.
+  Internal method for testing strategy-based deserialization.
 "DocumentManager._extract_from_class": |-
   Recursively extracts docstrings from a class and its methods.
 "DocumentManager._extract_from_function": |-
@@ -11,8 +11,6 @@
   Extracts addressable FQNs from the module IR.
 "DocumentManager._serialize_ir": |-
   Converts DocstringIR back to YAML data (string or dict).
-"DocumentManager.adapter": |-
-  The document adapter for reading/writing docs.
 "DocumentManager.apply_docs_to_module": |-
   Loads external docs and applies them to the ModuleDef IR in-place.
   Prioritizes external docs over existing source docs.
@@ -43,3 +41,7 @@
   Extracts docs from module (code), serializes them, and saves to YAML.
 "DocumentManager.set_strategy": |-
   Injects the parsing and serialization strategy.
+DocumentManager.dump_raw_data_to_string: |-
+  Dumps raw YAML data with high fidelity using the sidecar adapter.
+DocumentManager.load_raw_data: |-
+  Loads raw YAML data with high fidelity using the sidecar adapter.

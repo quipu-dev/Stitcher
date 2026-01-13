@@ -24,6 +24,10 @@
     "baseline_code_signature_text": "def dump_data(self, data: Dict[str, Any]) -> str:",
     "baseline_code_structure_hash": "87f7e2826b33e290acbcf8b13fbf140b1568a495c149839f651816938df73f32"
   },
+  "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.dump_raw_data_to_string": {
+    "baseline_code_signature_text": "def dump_raw_data_to_string(self, data: Dict[str, Any]) -> str:",
+    "baseline_code_structure_hash": "a41ba7eaa06eb51f8d15d63a04dcb1f64fb61ee5ef3a562f40bbe2e2358b621f"
+  },
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.flatten_module_docs": {
     "baseline_code_signature_text": "def flatten_module_docs(self, module: ModuleDef) -> Dict[str, DocstringIR]:",
     "baseline_code_structure_hash": "743d7524d695e466e9bb0d5e32b9e05a599f694eb69f25a912e5f398fb2035d5"
@@ -39,6 +43,10 @@
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.load_docs_for_path": {
     "baseline_code_signature_text": "def load_docs_for_path(self, file_path: str) -> Dict[str, DocstringIR]:",
     "baseline_code_structure_hash": "a36e455a746d04cd9e6395399920eaabb2ea9cc5a0e398f646502c351ae435fd"
+  },
+  "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.load_raw_data": {
+    "baseline_code_signature_text": "def load_raw_data(self, file_path: str) -> Dict[str, Any]:",
+    "baseline_code_structure_hash": "88708441449cfdec304ae1ade1b611eea13d9672cc731315de561248e2067207"
   },
   "py://packages/stitcher-spec/src/stitcher/spec/managers.py#DocumentManagerProtocol.reformat_docs_for_module": {
     "baseline_code_signature_text": "def reformat_docs_for_module(self, module: ModuleDef) -> bool:",
