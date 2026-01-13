@@ -1,7 +1,7 @@
 {
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#MoveDirectoryOperation": {
-    "baseline_code_signature_text": "class MoveDirectoryOperation(AbstractOperation, SidecarUpdateMixin):",
-    "baseline_code_structure_hash": "1c60a2362a0be611c1bc5d817f15fc98aa340b12e9de20c888a008f2118e7a18",
+    "baseline_code_signature_text": "class MoveDirectoryOperation(AbstractOperation):",
+    "baseline_code_structure_hash": "5b37591b08a752e447745a2bc705bccacd71c7fae59d321c16277e7decd4fdba",
     "baseline_yaml_content_hash": "6172506e80531470464c4cba619d5b4f70461811bd478af108e20b69f0a2e646"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_directory.py#MoveDirectoryOperation.__init__": {

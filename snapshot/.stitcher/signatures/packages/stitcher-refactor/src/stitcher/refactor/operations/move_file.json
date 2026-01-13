@@ -1,7 +1,7 @@
 {
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py#MoveFileOperation": {
-    "baseline_code_signature_text": "class MoveFileOperation(AbstractOperation, SidecarUpdateMixin):",
-    "baseline_code_structure_hash": "7527b676ed93abeeaa7a7ff3269912be2aea8fcfdec5494492403c234dd93488"
+    "baseline_code_signature_text": "class MoveFileOperation(AbstractOperation):",
+    "baseline_code_structure_hash": "0494fe666452f1784c1112ab439d99655dd95b6c890c30455897ee1942ca02c9"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py#MoveFileOperation.__init__": {
     "baseline_code_signature_text": "def __init__(self, src_path: Path, dest_path: Path):",

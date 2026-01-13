@@ -1,12 +1,3 @@
 "AbstractOperation.collect_intents": |-
   Analyzes the codebase and returns a list of high-level intents
   without planning execution.
-"SidecarUpdateMixin._calculate_fragments": |-
-  Derives symbol fragments by stripping the module FQN prefix.
-  This correctly handles nested fragments like 'Class.method'.
-"SidecarUpdateMixin._update_json_data": |-
-  Updates Signature JSON data where keys are SURIs (py://path#fragment).
-"SidecarUpdateMixin._update_sidecar_data": |-
-  Dispatcher for sidecar updates based on file type.
-"SidecarUpdateMixin._update_yaml_data": |-
-  Updates Doc YAML data where keys are Fragments (Short Names).

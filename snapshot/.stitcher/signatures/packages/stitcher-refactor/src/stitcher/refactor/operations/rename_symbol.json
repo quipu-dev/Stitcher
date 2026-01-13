@@ -1,7 +1,7 @@
 {
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/rename_symbol.py#RenameSymbolOperation": {
-    "baseline_code_signature_text": "class RenameSymbolOperation(AbstractOperation, SidecarUpdateMixin):",
-    "baseline_code_structure_hash": "235898e1d736b36f96af9c634f371e9bc027339e1168d39407aca37a68fde317"
+    "baseline_code_signature_text": "class RenameSymbolOperation(AbstractOperation):",
+    "baseline_code_structure_hash": "104735b568acdac9d7d3597e58a356c252c1c3ecb0b1a4823328e204870172e9"
   },
   "py://packages/stitcher-refactor/src/stitcher/refactor/operations/rename_symbol.py#RenameSymbolOperation.__init__": {
     "baseline_code_signature_text": "def __init__(self, old_fqn: str, new_fqn: str):",
