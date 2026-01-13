@@ -14,25 +14,32 @@ from stitcher.spec import (
     FingerprintStrategyProtocol,
     DocstringIR,
     DocstringMergerProtocol,
+    LockManagerProtocol,
+    URIGeneratorProtocol,
 )
-from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
+from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.app.types import PumpResult
 from stitcher.common.transaction import TransactionManager
+from stitcher.workspace import Workspace
 
 
 class PumpExecutor:
     def __init__(
         self,
         root_path: Path,
+        workspace: Workspace,
         doc_manager: DocumentManagerProtocol,
-        sig_manager: SignatureManagerProtocol,
+        lock_manager: LockManagerProtocol,
+        uri_generator: URIGeneratorProtocol,
         transformer: LanguageTransformerProtocol,
         merger: DocstringMergerProtocol,
         fingerprint_strategy: FingerprintStrategyProtocol,
     ):
         self.root_path = root_path
+        self.workspace = workspace
         self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
+        self.lock_manager = lock_manager
+        self.uri_generator = uri_generator
         self.transformer = transformer
         self.merger = merger
         self.fingerprint_strategy = fingerprint_strategy
@@ -89,115 +96,129 @@ class PumpExecutor:
         total_reconciled_keys = 0
         unresolved_conflicts_count = 0
 
+        # Group modules by package for Lock file batching
+        grouped_modules: Dict[Path, List[ModuleDef]] = defaultdict(list)
         for module in modules:
-            source_docs = self.doc_manager.flatten_module_docs(module)
-            file_plan = self._generate_execution_plan(
-                module, decisions, strip, source_docs
-            )
-            current_yaml_docs = self.doc_manager.load_docs_for_module(module)
-            stored_hashes = self.sig_manager.load_composite_hashes(module.file_path)
-            current_fingerprints = self._compute_fingerprints(module)
+            if not module.file_path:
+                continue
+            abs_path = self.root_path / module.file_path
+            pkg_root = self.workspace.find_owning_package(abs_path)
+            grouped_modules[pkg_root].append(module)
 
-            new_yaml_docs = current_yaml_docs.copy()
-            new_hashes = copy.deepcopy(stored_hashes)
+        for pkg_root, pkg_modules in grouped_modules.items():
+            # Load Lock Data once per package
+            current_lock_data = self.lock_manager.load(pkg_root)
+            new_lock_data = copy.deepcopy(current_lock_data)
+            lock_updated = False
 
-            file_had_updates, file_has_errors, file_has_redundancy = False, False, False
-            updated_keys_in_file, reconciled_keys_in_file = [], []
+            for module in pkg_modules:
+                source_docs = self.doc_manager.flatten_module_docs(module)
+                file_plan = self._generate_execution_plan(
+                    module, decisions, strip, source_docs
+                )
+                current_yaml_docs = self.doc_manager.load_docs_for_module(module)
+                current_fingerprints = self._compute_fingerprints(module)
 
-            for fqn, plan in file_plan.items():
-                if fqn in decisions and decisions[fqn] == ResolutionAction.SKIP:
-                    unresolved_conflicts_count += 1
-                    file_has_errors = True
-                    bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
-                    continue
+                new_yaml_docs = current_yaml_docs.copy()
+                
+                module_abs_path = self.root_path / module.file_path
+                module_ws_rel = self.workspace.to_workspace_relative(module_abs_path)
 
-                if plan.hydrate_yaml and fqn in source_docs:
-                    src_ir, existing_ir = source_docs[fqn], new_yaml_docs.get(fqn)
-                    merged_ir = self.merger.merge(existing_ir, src_ir)
-                    if existing_ir != merged_ir:
-                        new_yaml_docs[fqn] = merged_ir
-                        updated_keys_in_file.append(fqn)
-                        file_had_updates = True
+                file_had_updates, file_has_errors, file_has_redundancy = False, False, False
+                updated_keys_in_file, reconciled_keys_in_file = [], []
 
-                fp = new_hashes.get(fqn) or Fingerprint()
-                fqn_was_updated = False
-                if plan.update_code_fingerprint:
-                    current_fp = current_fingerprints.get(fqn, Fingerprint())
-                    if "current_code_structure_hash" in current_fp:
-                        fp["baseline_code_structure_hash"] = current_fp[
-                            "current_code_structure_hash"
-                        ]
-                    if "current_code_signature_text" in current_fp:
-                        fp["baseline_code_signature_text"] = current_fp[
-                            "current_code_signature_text"
-                        ]
-                    fqn_was_updated = True
+                for fqn, plan in file_plan.items():
+                    if fqn in decisions and decisions[fqn] == ResolutionAction.SKIP:
+                        unresolved_conflicts_count += 1
+                        file_has_errors = True
+                        bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
+                        continue
 
-                if plan.update_doc_fingerprint and fqn in source_docs:
-                    ir_to_save = new_yaml_docs.get(fqn)
-                    if ir_to_save:
-                        fp["baseline_yaml_content_hash"] = (
-                            self.doc_manager.compute_ir_hash(ir_to_save)
-                        )
+                    if plan.hydrate_yaml and fqn in source_docs:
+                        src_ir, existing_ir = source_docs[fqn], new_yaml_docs.get(fqn)
+                        merged_ir = self.merger.merge(existing_ir, src_ir)
+                        if existing_ir != merged_ir:
+                            new_yaml_docs[fqn] = merged_ir
+                            updated_keys_in_file.append(fqn)
+                            file_had_updates = True
+
+                    # Generate SURI for lock lookup
+                    suri = self.uri_generator.generate_symbol_uri(module_ws_rel, fqn)
+                    fp = new_lock_data.get(suri) or Fingerprint()
+                    
+                    fqn_was_updated = False
+                    if plan.update_code_fingerprint:
+                        current_fp = current_fingerprints.get(fqn, Fingerprint())
+                        if "current_code_structure_hash" in current_fp:
+                            fp["baseline_code_structure_hash"] = current_fp[
+                                "current_code_structure_hash"
+                            ]
+                        if "current_code_signature_text" in current_fp:
+                            fp["baseline_code_signature_text"] = current_fp[
+                                "current_code_signature_text"
+                            ]
                         fqn_was_updated = True
 
-                if fqn_was_updated:
-                    new_hashes[fqn] = fp
-                if (
-                    fqn in decisions
-                    and decisions[fqn] == ResolutionAction.HYDRATE_KEEP_EXISTING
-                ):
-                    reconciled_keys_in_file.append(fqn)
-                if plan.strip_source_docstring:
-                    strip_jobs[module.file_path].append(fqn)
-                if fqn in source_docs and not plan.strip_source_docstring:
-                    file_has_redundancy = True
+                    if plan.update_doc_fingerprint and fqn in source_docs:
+                        ir_to_save = new_yaml_docs.get(fqn)
+                        if ir_to_save:
+                            fp["baseline_yaml_content_hash"] = (
+                                self.doc_manager.compute_ir_hash(ir_to_save)
+                            )
+                            fqn_was_updated = True
 
-            if not file_has_errors:
-                if file_had_updates:
-                    # High-fidelity update: Load raw data, update it, then dump back.
-                    # This preserves comments, key order, and other formatting.
-                    raw_data = self.doc_manager.load_raw_data(module.file_path)
-                    for fqn, ir in new_yaml_docs.items():
-                        raw_data[fqn] = self.doc_manager.serialize_ir(ir)
+                    if fqn_was_updated:
+                        new_lock_data[suri] = fp
+                        lock_updated = True
 
-                    doc_path = (self.root_path / module.file_path).with_suffix(
-                        ".stitcher.yaml"
-                    )
-                    yaml_content = self.doc_manager.dump_raw_data_to_string(raw_data)
-                    tm.add_write(
-                        str(doc_path.relative_to(self.root_path)), yaml_content
-                    )
+                    if (
+                        fqn in decisions
+                        and decisions[fqn] == ResolutionAction.HYDRATE_KEEP_EXISTING
+                    ):
+                        reconciled_keys_in_file.append(fqn)
+                    if plan.strip_source_docstring:
+                        strip_jobs[module.file_path].append(fqn)
+                    if fqn in source_docs and not plan.strip_source_docstring:
+                        file_has_redundancy = True
 
-                if new_hashes != stored_hashes:
-                    sig_path = self.sig_manager.get_signature_path(module.file_path)
-                    rel_sig_path = str(sig_path.relative_to(self.root_path))
-                    if not new_hashes:
-                        if sig_path.exists():
-                            tm.add_delete_file(rel_sig_path)
-                    else:
-                        sig_content = self.sig_manager.serialize_hashes(
-                            module.file_path, new_hashes
+                if not file_has_errors:
+                    if file_had_updates:
+                        raw_data = self.doc_manager.load_raw_data(module.file_path)
+                        for fqn, ir in new_yaml_docs.items():
+                            raw_data[fqn] = self.doc_manager.serialize_ir(ir)
+
+                        doc_path = (self.root_path / module.file_path).with_suffix(
+                            ".stitcher.yaml"
                         )
-                        tm.add_write(rel_sig_path, sig_content)
+                        yaml_content = self.doc_manager.dump_raw_data_to_string(raw_data)
+                        tm.add_write(
+                            str(doc_path.relative_to(self.root_path)), yaml_content
+                        )
 
-                if file_has_redundancy:
-                    redundant_files_list.append(self.root_path / module.file_path)
+                    if file_has_redundancy:
+                        redundant_files_list.append(self.root_path / module.file_path)
 
-            if updated_keys_in_file:
-                total_updated_keys += len(updated_keys_in_file)
-                bus.success(
-                    L.pump.file.success,
-                    path=module.file_path,
-                    count=len(updated_keys_in_file),
-                )
-            if reconciled_keys_in_file:
-                total_reconciled_keys += len(reconciled_keys_in_file)
-                bus.info(
-                    L.pump.info.reconciled,
-                    path=module.file_path,
-                    count=len(reconciled_keys_in_file),
-                )
+                if updated_keys_in_file:
+                    total_updated_keys += len(updated_keys_in_file)
+                    bus.success(
+                        L.pump.file.success,
+                        path=module.file_path,
+                        count=len(updated_keys_in_file),
+                    )
+                if reconciled_keys_in_file:
+                    total_reconciled_keys += len(reconciled_keys_in_file)
+                    bus.info(
+                        L.pump.info.reconciled,
+                        path=module.file_path,
+                        count=len(reconciled_keys_in_file),
+                    )
+
+            if lock_updated:
+                # To maintain transactionality, we write to the lock file via TM
+                # using the serialize() method we added to LockFileManager
+                lock_content = self.lock_manager.serialize(new_lock_data)
+                lock_path = pkg_root / self.lock_manager.LOCK_FILE_NAME
+                tm.add_write(str(lock_path.relative_to(self.root_path)), lock_content)
 
         if strip_jobs:
             self._execute_strip_jobs(strip_jobs, tm)

@@ -13,7 +13,6 @@ from stitcher.stubgen import StubgenService
 from stitcher.config import load_config_from_path, StitcherConfig
 from stitcher.app.services import (
     DocumentManager,
-    SignatureManager,
     ScannerService,
     DocstringMerger,
 )
@@ -46,6 +45,8 @@ from stitcher.lang.python.docstring import (
     get_docstring_serializer,
 )
 from stitcher.spec.interaction import InteractionContext
+from stitcher.lang.sidecar import LockFileManager
+from stitcher.lang.python import PythonURIGenerator
 
 
 class StitcherApp:
@@ -62,7 +63,8 @@ class StitcherApp:
         self.fingerprint_strategy = fingerprint_strategy
         # 1. Core Services
         self.doc_manager = DocumentManager(root_path)
-        self.sig_manager = SignatureManager(root_path)
+        self.lock_manager = LockFileManager()
+        self.uri_generator = PythonURIGenerator()
         self.scanner = ScannerService(root_path, parser)
         self.differ = Differ()
         self.merger = DocstringMerger()
@@ -85,18 +87,22 @@ class StitcherApp:
         # 3. Runners (Command Handlers)
         check_resolver = CheckResolver(
             root_path,
+            self.workspace,
             parser,
             self.doc_manager,
-            self.sig_manager,
+            self.lock_manager,
+            self.uri_generator,
             interaction_handler,
             self.fingerprint_strategy,
         )
         check_reporter = CheckReporter()
         self.check_runner = CheckRunner(
             self.doc_manager,
-            self.sig_manager,
+            self.lock_manager,
+            self.uri_generator,
             self.fingerprint_strategy,
             self.index_store,
+            self.workspace,
             differ=self.differ,
             resolver=check_resolver,
             reporter=check_reporter,
@@ -106,8 +112,10 @@ class StitcherApp:
         pump_engine = create_pump_engine(differ=self.differ)
         pump_executor = PumpExecutor(
             root_path,
+            self.workspace,
             self.doc_manager,
-            self.sig_manager,
+            self.lock_manager,
+            self.uri_generator,
             transformer,
             self.merger,
             self.fingerprint_strategy,
@@ -118,14 +126,18 @@ class StitcherApp:
             interaction_handler=interaction_handler,
             # Pass dependencies needed for subject creation
             doc_manager=self.doc_manager,
-            sig_manager=self.sig_manager,
+            lock_manager=self.lock_manager,
+            uri_generator=self.uri_generator,
+            workspace=self.workspace,
             fingerprint_strategy=self.fingerprint_strategy,
         )
 
         self.init_runner = InitRunner(
             root_path,
+            self.workspace,
             self.doc_manager,
-            self.sig_manager,
+            self.lock_manager,
+            self.uri_generator,
             fingerprint_strategy=self.fingerprint_strategy,
         )
         self.transform_runner = TransformRunner(

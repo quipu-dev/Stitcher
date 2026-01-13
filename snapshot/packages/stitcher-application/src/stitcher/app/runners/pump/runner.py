@@ -6,8 +6,10 @@ from stitcher.spec import (
     ModuleDef,
     ResolutionAction,
     FingerprintStrategyProtocol,
+    LockManagerProtocol,
+    URIGeneratorProtocol,
 )
-from stitcher.spec.managers import DocumentManagerProtocol, SignatureManagerProtocol
+from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.spec.interaction import InteractionHandler
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import PumpResult
@@ -16,6 +18,7 @@ from stitcher.common.transaction import TransactionManager
 from stitcher.analysis.engines import PumpEngine
 from .protocols import PumpExecutorProtocol
 from ..check.subject import ASTCheckSubjectAdapter
+from stitcher.workspace import Workspace
 
 
 class PumpRunner:
@@ -26,14 +29,18 @@ class PumpRunner:
         interaction_handler: InteractionHandler | None,
         # Dependencies required for subject creation
         doc_manager: DocumentManagerProtocol,
-        sig_manager: SignatureManagerProtocol,
+        lock_manager: LockManagerProtocol,
+        uri_generator: URIGeneratorProtocol,
+        workspace: Workspace,
         fingerprint_strategy: FingerprintStrategyProtocol,
     ):
         self.pump_engine = pump_engine
         self.executor = executor
         self.interaction_handler = interaction_handler
         self.doc_manager = doc_manager
-        self.sig_manager = sig_manager
+        self.lock_manager = lock_manager
+        self.uri_generator = uri_generator
+        self.workspace = workspace
         self.fingerprint_strategy = fingerprint_strategy
 
     def run_batch(
@@ -52,7 +59,9 @@ class PumpRunner:
             subject = ASTCheckSubjectAdapter(
                 module,
                 self.doc_manager,
-                self.sig_manager,
+                self.lock_manager,
+                self.uri_generator,
+                self.workspace,
                 self.fingerprint_strategy,
                 tm.root_path,
             )

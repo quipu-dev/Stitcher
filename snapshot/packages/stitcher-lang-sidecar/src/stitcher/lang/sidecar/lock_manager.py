@@ -51,3 +51,19 @@ class LockFileManager(LockManagerProtocol):
         with lock_path.open("w", encoding="utf-8") as f:
             json.dump(lock_content, f, indent=2, sort_keys=True)
             f.write("\n")  # Ensure trailing newline
+
+    def serialize(self, data: Dict[str, Fingerprint]) -> str:
+        """
+        Serializes the fingerprint data to a formatted JSON string representing
+        the stitcher.lock content.
+        """
+        serializable_data = {
+            suri: fp.to_dict() for suri, fp in data.items()
+        }
+
+        lock_content = {
+            "version": "1.0",
+            "fingerprints": serializable_data,
+        }
+        
+        return json.dumps(lock_content, indent=2, sort_keys=True) + "\n"
