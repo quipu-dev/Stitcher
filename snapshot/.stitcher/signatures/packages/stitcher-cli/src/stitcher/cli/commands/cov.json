@@ -1,6 +1,0 @@
-{
-  "py://packages/stitcher-cli/src/stitcher/cli/commands/cov.py#cov_command": {
-    "baseline_code_signature_text": "def cov_command():",
-    "baseline_code_structure_hash": "f82d1984ea0a7e542b1dbfb2aa13a37b442ae4d55f4d066488b4ecace7ec5ede"
-  }
-}

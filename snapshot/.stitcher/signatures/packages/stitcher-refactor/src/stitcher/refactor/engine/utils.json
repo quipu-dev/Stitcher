@@ -1,6 +1,0 @@
-{
-  "py://packages/stitcher-refactor/src/stitcher/refactor/engine/utils.py#path_to_fqn": {
-    "baseline_code_signature_text": "def path_to_fqn(path: Path, search_paths: List[Path]) -> Optional[str]:",
-    "baseline_code_structure_hash": "61b6931b7515de1fb6be37384c4585f99bc1bdeb64f3b15afa5def2ca0f07d8e"
-  }
-}

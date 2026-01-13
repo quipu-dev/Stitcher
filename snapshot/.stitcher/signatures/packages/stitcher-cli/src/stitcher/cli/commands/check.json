@@ -1,7 +1,0 @@
-{
-  "py://packages/stitcher-cli/src/stitcher/cli/commands/check.py#check_command": {
-    "baseline_code_signature_text": "def check_command(force_relink: bool = typer.Option(False, '--force-relink', help=(nexus(L.cli.option.force_relink.help))), reconcile: bool = typer.Option(False, '--reconcile', help=(nexus(L.cli.option.reconcile_co_evolution.help))), non_interactive: bool = typer.Option(False, '--non-interactive', help=(nexus(L.cli.option.non_interactive.help)))):",
-    "baseline_code_structure_hash": "59919aebae0153bbe277488c09b9d545623a43825cd18cd1f2b84783011b9fdf",
-    "baseline_yaml_content_hash": "94906b1fda366194217772c2bedb475e28f01da9625e1f4d1b2a6a01c9d64859"
-  }
-}

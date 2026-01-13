@@ -1,9 +1,0 @@
-{
-  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/models.py#SymbolNode": {
-    "baseline_code_signature_text": "class SymbolNode:",
-    "baseline_code_structure_hash": "6d1f0076516df53dfd78ff363213a4e05c32e5e19d824e9701c0ff10af133855"
-  },
-  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/models.py#SymbolNode.fqn": {},
-  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/models.py#SymbolNode.kind": {},
-  "py://packages/stitcher-analysis/src/stitcher/analysis/semantic/models.py#SymbolNode.path": {}
-}
