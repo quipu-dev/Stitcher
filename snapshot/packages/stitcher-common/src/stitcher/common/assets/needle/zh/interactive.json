@@ -7,7 +7,8 @@
     "signature_drift": "原因: 签名已变更，但文档未变 (签名漂移)。",
     "co_evolution": "原因: 签名和文档均已变更 (协同演进)。",
     "doc_content_conflict": "原因: 源代码文档字符串与 YAML 文档字符串不一致。",
-    "dangling_doc": "原因: 文档存在于 YAML 但代码中不存在 (悬空文档)。"
+    "dangling_doc": "原因: 文档存在于 YAML 但代码中不存在 (悬空文档)。",
+    "circular_dependency": "原因: 检测到模块之间存在循环依赖。"
   },
   "option": {
     "relink": { "label": "[F]强制重链 (Force-relink)", "desc": "强制将新签名关联到旧文档。" },

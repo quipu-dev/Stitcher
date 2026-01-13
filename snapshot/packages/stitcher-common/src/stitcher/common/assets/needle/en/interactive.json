@@ -7,7 +7,8 @@
     "signature_drift": "Reason: Signature has changed, but docs have not (Signature Drift).",
     "co_evolution": "Reason: Both signature and docs have changed (Co-evolution).",
     "doc_content_conflict": "Reason: Source code docstring differs from YAML docstring.",
-    "dangling_doc": "Reason: Documentation exists in YAML but not in code (Dangling Doc)."
+    "dangling_doc": "Reason: Documentation exists in YAML but not in code (Dangling Doc).",
+    "circular_dependency": "Reason: A circular dependency between modules was detected."
   },
   "option": {
     "relink": { "label": "[F]orce-relink", "desc": "Force-relink new signature with old docs." },

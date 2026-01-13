@@ -4,6 +4,5 @@
   "missing": "   - [MISSING]   {key} (entity exists, but no docstring in code or YAML)",
   "pending": "   - [PENDING]   {key} (new docstring in code, please run `stitcher pump`)",
   "redundant": "   - [REDUNDANT] {key} (docstring exists in both code and YAML; please run `stitcher strip`)",
-  "untracked_missing_key": "   - [MISSING]   {key} (please add a docstring in the source code)",
-  "architecture.circular_dependency": "   - [ARCH]      {key}: Circular dependency detected: {cycle}"
+  "untracked_missing_key": "   - [MISSING]   {key} (please add a docstring in the source code)"
 }

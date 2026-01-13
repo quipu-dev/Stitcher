@@ -1,0 +1,3 @@
+{
+  "circular_dependency": "   - [ARCH]      {key}: Circular dependency detected: {cycle}"
+}
