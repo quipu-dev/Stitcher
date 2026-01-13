@@ -101,7 +101,9 @@ class IRBuildingVisitor(cst.CSTVisitor):
                     self.dunder_all = value_code
                 else:
                     self._add_attribute(
-                        Attribute(name=name, annotation=None, value=value_code, location=loc)
+                        Attribute(
+                            name=name, annotation=None, value=value_code, location=loc
+                        )
                     )
             elif isinstance(target, (cst.Tuple, cst.List)):
                 for element in target.elements:
@@ -109,7 +111,7 @@ class IRBuildingVisitor(cst.CSTVisitor):
                     # Both have a .value attribute containing the actual expression.
                     process_target(element.value)
             elif isinstance(target, cst.StarredElement):
-                # This handles cases where StarredElement might be passed directly 
+                # This handles cases where StarredElement might be passed directly
                 # (though usually it's handled by the parent container's loop).
                 process_target(target.value)
 

@@ -15,7 +15,8 @@ def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch):
     factory = WorkspaceFactory(tmp_path)
     # Create a file with a docstring that will be extracted
     project_root = (
-        factory.with_config({"scan_paths": ["src"]})
+        factory.init_git()
+        .with_config({"scan_paths": ["src"]})
         .with_source(
             "src/main.py",
             '''
@@ -72,7 +73,8 @@ def test_pump_with_strip_flag_executes_strip(tmp_path, monkeypatch):
     # 1. Arrange
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory.with_config({"scan_paths": ["src"]})
+        factory.init_git()
+        .with_config({"scan_paths": ["src"]})
         .with_source(
             "src/main.py",
             '''

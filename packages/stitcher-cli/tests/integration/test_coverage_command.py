@@ -17,6 +17,7 @@ def test_coverage_command_output_and_alignment(tmp_path, monkeypatch):
     # 1. Setup a workspace with diverse documentation coverage
     ws_root = (
         WorkspaceFactory(tmp_path)
+        .init_git()
         .with_config({"scan_paths": ["src"]})
         .with_source(
             "src/fully_documented.py",

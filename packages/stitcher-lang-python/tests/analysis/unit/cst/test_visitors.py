@@ -50,7 +50,7 @@ x, y = 1, 2
 [a, b] = func()
         """
         module = parse_source_code(code)
-        
+
         attr_names = {a.name for a in module.attributes}
         assert "x" in attr_names
         assert "y" in attr_names
@@ -71,7 +71,7 @@ class Outer:
         assert len(module.classes) == 1
         outer = module.classes[0]
         assert outer.name == "Outer"
-        
+
         # 目前模型不支持嵌套类，所以 Inner 应该被忽略，但 outer_method 必须存在
         method_names = {m.name for m in outer.methods}
         assert "outer_method" in method_names
@@ -80,7 +80,7 @@ class Outer:
     def test_parse_starred_unpacking(self):
         code = "x, *y = 1, 2, 3"
         module = parse_source_code(code)
-        
+
         attr_names = {a.name for a in module.attributes}
         assert "x" in attr_names
         assert "y" in attr_names

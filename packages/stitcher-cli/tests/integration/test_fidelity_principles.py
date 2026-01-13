@@ -19,7 +19,8 @@ def test_pump_update_preserves_fidelity(tmp_path, monkeypatch):
     # and a new function in the source code to be pumped.
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory.with_config({"scan_paths": ["src"]})
+        factory.init_git()
+        .with_config({"scan_paths": ["src"]})
         .with_source(
             "src/main.py",
             """
@@ -83,7 +84,8 @@ def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
     # clean state (docs only in YAML).
     factory = WorkspaceFactory(tmp_path)
     project_root = (
-        factory.with_config({"scan_paths": ["src"]})
+        factory.init_git()
+        .with_config({"scan_paths": ["src"]})
         .with_source(
             "src/main.py",
             """
