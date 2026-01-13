@@ -67,17 +67,8 @@ class MoveFileOperation(AbstractOperation):
                 )
 
         # 3. Declare Lock Update Intent (Mass update SURIs)
-        # Note: We need to update SURIs in the OLD package's lock file.
-        # If the file moves across packages, we technically need to move entries from one lock to another.
-        # LockPathUpdateIntent handles updating the path prefix.
-        # But if package_root changes, we need to handle migration?
-        # For simplicity in this phase, we assume LockPathUpdateIntent updates paths within the same lock context
-        # OR Planner is smart enough to handle cross-package moves if we provide enough info.
-        # Current simplified strategy: Update SURIs in the source package's lock.
-        # If it moves to a new package, the entries in the old lock will point to a path outside the old package root.
-        # This is valid for SURI (workspace relative), but 'stitcher.lock' usually scopes to the package.
-        # TODO: Handle Cross-Package Lock Migration.
-        # For now, we just emit the intent on the source package.
+        # Planner is responsible for detecting cross-package moves and migrating
+        # fingerprints between stitcher.lock files if necessary.
 
         owning_package = ctx.workspace.find_owning_package(src_path)
         intents.append(

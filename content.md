@@ -1,157 +1,72 @@
-好的，我们遵循测试驱动开发（TDD）流程，首先创建一个专门用于验证跨包移动时 `stitcher.lock` 条目迁移问题的测试用例。这个测试用例在当前的实现下预期会失败，从而为我们后续的修复提供明确的目标。
+好的。既然分析和测试证明 `Planner` 已经正确处理了跨包迁移，那行过时的 `TODO` 和相关的犹豫性注释确实应当移除。
 
-我将生成一个计划来创建这个新的集成测试文件。
+我将生成一个计划来清理 `move_file.py` 中的这些注释，并将其替换为对当前正确机制的简要说明。
 
-我将创建 `packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py` 文件，其中包含一个测试，模拟将一个文件从 `pkg-a` 移动到 `pkg-b`，并断言 `stitcher.lock` 中的指纹条目也相应地从 `pkg-a` 的锁文件迁移到了 `pkg-b` 的锁文件中。
-
-## [WIP] test: 添加跨包移动时 lock 文件迁移的 E2E 测试
+## [WIP] refactor: 移除 move_file.py 中关于跨包迁移的过时 TODO
 
 ### 用户需求
 
-为重构引擎添加一个端到端测试，专门验证当一个源文件从一个包（`pkg-a`）移动到另一个包（`pkg-b`）时，其在 `stitcher.lock` 文件中的指纹（fingerprint）条目是否能被正确地从 `pkg-a/stitcher.lock` 迁移到 `pkg-b/stitcher.lock`。
+删除 `packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py` 中关于跨包 lock 文件迁移的冗余和误导性注释及 `TODO`。
 
 ### 评论
 
-这是一个关键的集成测试，它直接暴露了当前重构引擎在处理 Monorepo 跨包操作时的架构缺陷。当前的 `LockPathUpdateIntent` 和 `Planner` 实现很可能没有考虑到 `package_root` 发生变化的情况，导致锁文件中的历史指纹信息丢失或错位。
-
-这个测试将作为我们修复此问题的“黄金标准”，确保最终的解决方案是健壮和正确的。
+这些注释是在开发早期对 `Planner` 的处理能力不确定时留下的。经过验证，`Planner` 已经能够通过独立解析路径所属包的方式，优雅地处理跨包的指纹数据迁移。移除这些陈旧信息不仅能使代码库更整洁，还能避免其他开发者在阅读代码时产生不必要的疑虑。
 
 ### 目标
 
-1.  创建一个新的测试文件 `packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py`。
-2.  在该文件中实现一个名为 `test_move_file_across_packages_migrates_lock_entry` 的测试函数。
-3.  测试场景将构建一个包含 `pkg-a` 和 `pkg-b` 的 Monorepo 结构。
-4.  `pkg-a` 将包含一个源文件和一个预置了指纹条目的 `stitcher.lock`。
-5.  执行一个 `MoveFileOperation` 将源文件从 `pkg-a` 移动到 `pkg-b`。
-6.  断言（Assert）：
-    *   旧的指纹条目已从 `pkg-a/stitcher.lock` 中移除。
-    *   新的 `pkg-b/stitcher.lock` 文件被创建。
-    *   更新了 SURI 路径的新指纹条目已存在于 `pkg-b/stitcher.lock` 中。
+1.  定位到 `packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py` 中的相关注释块。
+2.  移除包含 `TODO: Handle Cross-Package Lock Migration.` 的整个说明段落。
+3.  替换为一行简洁的说明，确认 `Planner` 负责处理跨包迁移。
 
 ### 基本原理
 
-通过 TDD 方法，我们首先定义失败的场景。这个测试用例精确地模拟了跨包文件移动的边界情况。当这个测试用例通过时，就证明我们的 `Planner` 和 `LockPathUpdateIntent` 逻辑已经足够智能，能够处理因文件移动导致的 `package_root` 变更，并正确地维护了 `stitcher.lock` 文件的状态一致性，保留了宝贵的历史指纹信息。
+根据 **高保真工程公理 (HFEA)** 中的“架构不可腐蚀性”原则，任何形式的误导性信息或已经解决但仍然存在的“虚假”缺陷都被视为架构异味。及时铲除这些异味是维护系统“本体论正确性”的必要步骤。
 
 ### 标签
 
-#intent/tooling #flow/ready #priority/high #comp/tests #comp/refactor #concept/state #scope/dx #ai/instruct #task/domain/testing #task/object/refactor-engine #task/action/test-creation #task/state/begin
+#intent/refine #flow/ready #priority/low #comp/refactor #concept/state #scope/dx #ai/instruct #task/domain/refactor #task/object/move-file-op #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 创建跨包移动重构测试文件
+#### Acts 1: 清理 `move_file.py` 中的冗余注释
 
-创建新的集成测试文件，用于验证在 Monorepo 场景下，文件在不同包之间移动时，其 `stitcher.lock` 条目是否能被正确迁移。
+我们将移除 `move_file.py` 中关于跨包迁移的过时说明，因为它描述的限制早已被 `Planner` 解决。
 
 ~~~~~act
-write_file
-packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py
+patch_file
+packages/stitcher-refactor/src/stitcher/refactor/operations/move_file.py
 ~~~~~
-~~~~~python
-import json
-from stitcher.refactor.engine.context import RefactorContext
-from stitcher.analysis.semantic import SemanticGraph
-from stitcher.common.transaction import (
-    TransactionManager,
-    MoveFileOp,
-    WriteFileOp,
-)
-from stitcher.refactor.operations.move_file import MoveFileOperation
-from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.lang.sidecar import LockFileManager
-from stitcher.lang.python.uri import PythonURIGenerator
-from stitcher.workspace import Workspace
-from stitcher.test_utils import WorkspaceFactory, create_populated_index
-from stitcher.spec import Fingerprint
+~~~~~python.old
+        # 3. Declare Lock Update Intent (Mass update SURIs)
+        # Note: We need to update SURIs in the OLD package's lock file.
+        # If the file moves across packages, we technically need to move entries from one lock to another.
+        # LockPathUpdateIntent handles updating the path prefix.
+        # But if package_root changes, we need to handle migration?
+        # For simplicity in this phase, we assume LockPathUpdateIntent updates paths within the same lock context
+        # OR Planner is smart enough to handle cross-package moves if we provide enough info.
+        # Current simplified strategy: Update SURIs in the source package's lock.
+        # If it moves to a new package, the entries in the old lock will point to a path outside the old package root.
+        # This is valid for SURI (workspace relative), but 'stitcher.lock' usually scopes to the package.
+        # TODO: Handle Cross-Package Lock Migration.
+        # For now, we just emit the intent on the source package.
 
+        owning_package = ctx.workspace.find_owning_package(src_path)
+~~~~~
+~~~~~python.new
+        # 3. Declare Lock Update Intent (Mass update SURIs)
+        # Planner is responsible for detecting cross-package moves and migrating
+        # fingerprints between stitcher.lock files if necessary.
 
-def test_move_file_across_packages_migrates_lock_entry(tmp_path):
-    """
-    Verifies that moving a file across packages correctly migrates its
-    fingerprint entry from the source package's stitcher.lock to the
-    destination's.
-    """
-    # 1. ARRANGE
-    factory = WorkspaceFactory(tmp_path)
-    py_rel_path_a = "packages/pkg-a/src/pkga/core.py"
-    old_suri = f"py://{py_rel_path_a}#SharedClass"
-
-    lock_manager = LockFileManager()
-    fingerprints = {
-        old_suri: Fingerprint.from_dict({"baseline_code_structure_hash": "abc"})
-    }
-    lock_content = lock_manager.serialize(fingerprints)
-
-    project_root = (
-        factory.with_pyproject("packages/pkg-a")
-        .with_source("packages/pkg-a/src/pkga/__init__.py", "")
-        .with_source("packages/pkg-a/src/pkga/core.py", "class SharedClass: pass")
-        .with_raw_file("packages/pkg-a/stitcher.lock", lock_content)
-        .with_pyproject("packages/pkg-b")
-        .with_source("packages/pkg-b/src/pkgb/__init__.py", "")
-        .build()
-    )
-
-    src_path = project_root / py_rel_path_a
-    dest_path = project_root / "packages/pkg-b/src/pkgb/core.py"
-    src_lock_path = project_root / "packages/pkg-a/stitcher.lock"
-    dest_lock_path = project_root / "packages/pkg-b/stitcher.lock"
-
-    # 2. ACT
-    index_store = create_populated_index(project_root)
-    workspace = Workspace(root_path=project_root)
-    graph = SemanticGraph(workspace=workspace, index_store=index_store)
-    graph.load("pkga")
-    graph.load("pkgb")
-
-    sidecar_manager = SidecarManager(root_path=project_root)
-    ctx = RefactorContext(
-        workspace=workspace,
-        graph=graph,
-        sidecar_manager=sidecar_manager,
-        index_store=index_store,
-        lock_manager=lock_manager,
-        uri_generator=PythonURIGenerator(),
-    )
-
-    from stitcher.refactor.migration import MigrationSpec
-    from stitcher.refactor.engine.planner import Planner
-
-    op = MoveFileOperation(src_path, dest_path)
-    spec = MigrationSpec().add(op)
-    planner = Planner()
-    file_ops = planner.plan(spec, ctx)
-
-    tm = TransactionManager(project_root)
-    for fop in file_ops:
-        if isinstance(fop, MoveFileOp):
-            tm.add_move(fop.path, fop.dest)
-        elif isinstance(fop, WriteFileOp):
-            tm.add_write(fop.path, fop.content)
-    tm.commit()
-
-    # 3. ASSERT
-    assert not src_path.exists(), "Source file should have been moved"
-    assert dest_path.exists(), "Destination file should exist"
-
-    # Assert source lock file is updated (or empty)
-    src_lock_data = json.loads(src_lock_path.read_text())["fingerprints"]
-    assert old_suri not in src_lock_data, "Old SURI should be removed from source lock"
-
-    # Assert destination lock file is created and contains the migrated entry
-    assert dest_lock_path.exists(), "Destination stitcher.lock should be created"
-    dest_lock_data = json.loads(dest_lock_path.read_text())["fingerprints"]
-    py_rel_path_b = "packages/pkg-b/src/pkgb/core.py"
-    expected_new_suri = f"py://{py_rel_path_b}#SharedClass"
-    assert (
-        expected_new_suri in dest_lock_data
-    ), "New SURI should be present in destination lock"
-    assert dest_lock_data[expected_new_suri] == {
-        "baseline_code_structure_hash": "abc"
-    }, "Fingerprint data should be preserved"
+        owning_package = ctx.workspace.find_owning_package(src_path)
 ~~~~~
 
 ### 下一步建议
 
-现在，请执行这个计划。新创建的测试用例在运行时应该会失败。一旦我们确认了失败，我将开始分析 `Planner` 和 `LockPathUpdateIntent` 的实现，并制定一个修复计划来解决这个问题。
+清理工作已完成。目前我们已经：
+1.  完成了核心组件的依赖注入。
+2.  增强了 Workspace 根目录判定的确定性。
+3.  通过新的集成测试验证了跨包重构的健壮性。
+
+建议下一步回顾 **“3. 强化 CST Visitor”**。目前的 CST 访问器对于 Python 的赋值语句解析依然非常原始（仅支持单变量赋值），这限制了索引器处理解包赋值（Unpacking Assignment）的能力。我们可以先为该功能编写一个失败的测试用例。
