@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 修复因重构导致的单元测试失败", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768286130.6761727, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: Enhance test suite to validate high-fidelity principles", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768286219.5428355, "duration_ms": 0}}

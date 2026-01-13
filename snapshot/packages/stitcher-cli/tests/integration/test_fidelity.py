@@ -1,44 +1,3 @@
-Excellent. We are making significant architectural progress. Let's proceed to the third and most crucial step of the roadmap: validating our new principles with a robust set of tests. This will solidify the correctness of our refactoring.
-
-## [WIP] test: Enhance test suite to validate high-fidelity principles
-
-### 用户需求
-
-根据路线图第三步，我们需要更新并增强测试套件，以严格验证新确立的“保真性高于一切”和“职责分离”原则。这包括为 `pump` 和 `check` 命令添加新的集成测试。
-
-### 评论
-
-这是确保我们架构重构成功的关键一步。仅仅实现代码是不够的，我们必须通过自动化测试来为新原则的正确执行提供契约保障。这些测试将成为未来开发的“护栏”，防止任何对用户手动格式化的无意破坏，确保工具的行为是可预测且值得信赖的。
-
-### 目标
-
-1.  **为 `pump` 命令添加高保真更新测试**：创建一个新的集成测试，验证 `stitcher pump` 在更新一个已存在的、包含自定义格式和注释的 `.stitcher.yaml` 文件时，能够完整保留所有原始格式，并仅在文件末尾追加新的文档条目。
-2.  **为 `check` 命令添加“无格式化副作用”测试**：创建一个新的集成测试，验证 `stitcher check` 在处理一个键顺序非字母序的 `.stitcher.yaml` 文件时，**不会**对其进行任何重新排序或格式化操作。
-3.  **将这些原则性测试隔离到专用的测试文件中**，以明确其作为项目核心行为契约的重要性。
-
-### 基本原理
-
-我们将使用 `WorkspaceFactory` 来精确地构建测试场景。
--   对于 `pump` 测试，我们将使用 `with_raw_file` 来创建一个具有特定非标准顺序和注释的初始 `.stitcher.yaml` 文件。然后，我们将运行 `pump` 命令，并断言最终文件内容在保留了所有原始特征的同时，正确地追加了新内容。
--   对于 `check` 测试，我们将首先运行 `init` 来创建一个基线状态，然后手动修改 `.stitcher.yaml` 文件以引入非字母序的键顺序。接着，运行 `check` 命令，并断言该文件内容未发生任何变化，从而证明 `check` 命令是只读的，没有任何格式化的副作用。
-
-### 标签
-
-#intent/tooling #flow/ready #priority/high #comp/cli #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/fidelity-tests #task/action/implementation #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建新的高保真原则测试文件
-
-我将创建一个新的测试文件 `test_fidelity.py`，专门用于存放验证我们核心原则的集成测试。
-
-~~~~~act
-write_file
-packages/stitcher-cli/tests/integration/test_fidelity.py
-~~~~~
-~~~~~python
 from pathlib import Path
 from textwrap import dedent
 from typer.testing import CliRunner
@@ -173,33 +132,3 @@ def test_check_command_has_no_formatting_side_effects(tmp_path: Path):
     # The file must not have been changed.
     final_content = yaml_path.read_text()
     assert final_content == unsorted_content, "Check command reordered the YAML file!"
-~~~~~
-
-### 下一步建议
-
-我们已经成功地为我们的核心架构原则建立了自动化测试契约。这标志着路线图的第三步已圆满完成。
-
-最后一步是**第四步：为未来工作创建记录**。我们需要将 `stitcher format` 命令的想法正式记录下来，以确保这个重要的功能不会在未来的开发中被遗忘。
-
-由于这是一个文档和项目管理任务，通常在外部系统（如 GitHub Issues）中完成，我建议您在您的项目中创建一个相应的功能请求。
-
-**描述模板建议如下**：
-
----
-**功能请求: 实现 `stitcher format` 命令**
-
-**动机:**
-根据我们的核心架构原则，`stitcher check` 和 `stitcher pump` 命令必须保留用户在 `.stitcher.yaml` 文件中的手动格式（如键顺序和注释），以确保高保真性。然而，在某些场景下（如 pre-commit 钩子或 CI/CD），用户需要一个确定性的方式来格式化这些文件，以确保代码库的一致性。
-
-**目标:**
-创建一个新的、独立的 `stitcher format` 命令，其唯一职责是对指定的 `.stitcher.yaml` 文件或整个项目进行格式化。
-
-**行为:**
--   该命令应读取一个 `.stitcher.yaml` 文件。
--   将其键按字母顺序排序。
--   应用标准化的块风格（`|-`）。
--   写回文件内容。
--   应支持 `--check` 模式，该模式下仅报告文件是否符合格式，而不进行修改，并以非零退出码表示需要格式化。
----
-
-至此，我们已经完成了本次重构的所有实施步骤。我们的架构现在更加清晰、健壮，并且有测试作为保障。
