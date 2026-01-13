@@ -14,6 +14,7 @@ from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
 from stitcher.index.indexer import FileIndexer
 from stitcher.lang.python.adapter import PythonAdapter
+from stitcher.lang.sidecar.adapter import SidecarAdapter
 from stitcher.app.services import SignatureManager
 
 
@@ -32,7 +33,13 @@ def create_populated_index(root_path: Path) -> IndexStore:
     files_to_index = workspace.discover_files()
 
     indexer = FileIndexer(root_path, store)
-    indexer.register_adapter(".py", PythonAdapter(root_path, search_paths))
+    python_adapter = PythonAdapter(root_path, search_paths)
+    sidecar_adapter = SidecarAdapter()
+    
+    indexer.register_adapter(".py", python_adapter)
+    indexer.register_adapter(".yaml", sidecar_adapter)
+    indexer.register_adapter(".json", sidecar_adapter)
+    
     indexer.index_files(files_to_index)
 
     return store
