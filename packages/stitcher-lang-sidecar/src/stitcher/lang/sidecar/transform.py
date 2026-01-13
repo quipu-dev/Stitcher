@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from stitcher.lang.python.uri import SURIGenerator
+from stitcher.lang.python.uri import PythonURIGenerator
 
 
 @dataclass
@@ -106,7 +106,7 @@ class SidecarTransformer:
                 continue
 
             try:
-                path, fragment = SURIGenerator.parse(key)
+                path, fragment = PythonURIGenerator.parse(key)
             except ValueError:
                 new_data[key] = value
                 continue
@@ -128,10 +128,12 @@ class SidecarTransformer:
                     fragment_changed = True
 
             if path_changed or fragment_changed:
+                # TODO: Replace temporary instantiation with dependency injection in Phase 3
+                uri_gen = PythonURIGenerator()
                 new_key = (
-                    SURIGenerator.for_symbol(path, fragment)
+                    uri_gen.generate_symbol_uri(path, fragment)
                     if fragment
-                    else SURIGenerator.for_file(path)
+                    else uri_gen.generate_file_uri(path)
                 )
                 new_data[new_key] = value
                 modified = True

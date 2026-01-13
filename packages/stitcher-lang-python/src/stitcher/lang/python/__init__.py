@@ -6,7 +6,7 @@ from .inspector import InspectionError, parse_plugin_entry
 from .parser.griffe import GriffePythonParser
 from .parser.cst import PythonParser
 from .transform.facade import PythonTransformer
-from .uri import SURIGenerator
+from .uri import PythonURIGenerator
 from .refactor import PythonRefactoringStrategy
 
 __all__ = [
@@ -17,6 +17,6 @@ __all__ = [
     "GriffePythonParser",
     "PythonParser",
     "PythonTransformer",
-    "SURIGenerator",
+    "PythonURIGenerator",
     "PythonRefactoringStrategy",
 ]

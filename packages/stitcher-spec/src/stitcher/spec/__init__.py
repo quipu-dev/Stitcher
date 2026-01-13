@@ -26,6 +26,8 @@ from .protocols import (
     DocstringSerializerProtocol,
     DifferProtocol,
     DocstringMergerProtocol,
+    LockManagerProtocol,
+    URIGeneratorProtocol,
 )
 from .storage import IndexStoreProtocol
 from .managers import DocumentManagerProtocol, SignatureManagerProtocol
@@ -42,6 +44,8 @@ __all__ = [
     "DocstringParserProtocol",
     "DocstringRendererProtocol",
     "DocstringSerializerProtocol",
+    "URIGeneratorProtocol",
+    "LockManagerProtocol",
     "DocumentManagerProtocol",
     "SignatureManagerProtocol",
     "DifferProtocol",

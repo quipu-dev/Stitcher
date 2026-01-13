@@ -8,7 +8,7 @@ from stitcher.spec import (
     InvalidFingerprintKeyError,
 )
 from stitcher.common.services import AssetPathResolver
-from stitcher.lang.python.uri import SURIGenerator
+from stitcher.lang.python.uri import PythonURIGenerator
 
 
 class SignatureManager:
@@ -23,8 +23,10 @@ class SignatureManager:
         return self._get_sig_path(file_path)
 
     def serialize_hashes(self, file_path: str, hashes: Dict[str, Fingerprint]) -> str:
+        # TODO: Replace temporary instantiation with dependency injection in Phase 3
+        uri_gen = PythonURIGenerator()
         serialized_data = {
-            SURIGenerator.for_symbol(file_path, fqn): fp.to_dict()
+            uri_gen.generate_symbol_uri(file_path, fqn): fp.to_dict()
             for fqn, fp in hashes.items()
         }
         return json.dumps(serialized_data, indent=2, sort_keys=True)
@@ -59,7 +61,7 @@ class SignatureManager:
                     try:
                         # Protocol Check: If it's a SURI, parse it.
                         if key.startswith("py://"):
-                            _path, fragment = SURIGenerator.parse(key)
+                            _path, fragment = PythonURIGenerator.parse(key)
                         else:
                             # Legacy Fallback: Treat key as direct fragment
                             fragment = key

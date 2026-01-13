@@ -14,7 +14,7 @@ from stitcher.lang.sidecar.parser import (
     parse_signature_references,
 )
 from stitcher.common.services import AssetPathResolver
-from stitcher.lang.python.uri import SURIGenerator
+from stitcher.lang.python.uri import PythonURIGenerator
 from stitcher.lang.python.analysis.models import ReferenceType
 
 
@@ -78,7 +78,8 @@ class SidecarAdapter(LanguageAdapter):
 
                 refs = parse_doc_references(content)
                 for fragment, line, col in refs:
-                    suri = SURIGenerator.for_symbol(rel_py_path, fragment)
+                    # TODO: Replace temporary instantiation with dependency injection in Phase 3
+                    suri = PythonURIGenerator().generate_symbol_uri(rel_py_path, fragment)
                     references.append(
                         ReferenceRecord(
                             target_id=suri,
