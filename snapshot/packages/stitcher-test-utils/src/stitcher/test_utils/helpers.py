@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 
 from stitcher.app import StitcherApp
 from stitcher.spec.interaction import InteractionHandler
@@ -14,7 +14,7 @@ from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
 from stitcher.index.indexer import FileIndexer
 from stitcher.lang.python.adapter import PythonAdapter
-from stitcher.app.services import SignatureManager
+from stitcher.lang.sidecar import LockFileManager
 
 
 def create_populated_index(root_path: Path) -> IndexStore:
@@ -53,7 +53,33 @@ def create_test_app(
     )
 
 
-def get_stored_hashes(project_root: Path, file_path: str) -> dict:
-    manager = SignatureManager(root_path=project_root)
-    fingerprints = manager.load_composite_hashes(file_path)
-    return {fqn: fp.to_dict() for fqn, fp in fingerprints.items()}
+def get_stored_hashes(project_root: Path, file_path: str) -> Dict[str, dict]:
+    """
+    Test helper to read fingerprints from the appropriate stitcher.lock file.
+    
+    This function simulates the logic of finding the owning package and reading
+    the lock file to retrieve fingerprint data, providing it in a format
+    (fragment -> dict) that is easy to assert against in tests.
+    """
+    workspace = Workspace(project_root)
+    lock_manager = LockFileManager()
+
+    # 1. Find the package root for the given file
+    abs_file_path = project_root / file_path
+    pkg_root = workspace.find_owning_package(abs_file_path)
+
+    # 2. Load the lock data for that package
+    lock_data = lock_manager.load(pkg_root)
+
+    # 3. Filter and re-key the data for the specific file
+    # We want to return a dict of {fragment: fingerprint_dict} for just this file.
+    ws_rel_path = workspace.to_workspace_relative(abs_file_path)
+    file_prefix = f"py://{ws_rel_path}#"
+    
+    file_hashes = {}
+    for suri, fp in lock_data.items():
+        if suri.startswith(file_prefix):
+            fragment = suri[len(file_prefix):]
+            file_hashes[fragment] = fp.to_dict()
+            
+    return file_hashes
