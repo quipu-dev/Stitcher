@@ -8,6 +8,7 @@ from stitcher.common.transaction import (
 from stitcher.refactor.operations.move_file import MoveFileOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.lang.sidecar import LockFileManager
+from stitcher.lang.python.uri import PythonURIGenerator
 from stitcher.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory, create_populated_index
 
@@ -73,6 +74,7 @@ def test_move_file_in_monorepo_updates_tests_and_cross_package_imports(tmp_path)
         sidecar_manager=sidecar_manager,
         index_store=index_store,
         lock_manager=lock_manager,
+        uri_generator=PythonURIGenerator(),
     )
     from stitcher.refactor.migration import MigrationSpec
     from stitcher.refactor.engine.planner import Planner

@@ -36,12 +36,14 @@ def test_rename_symbol_analyze_orchestration():
 
     mock_lock = Mock(spec=LockManagerProtocol)
 
+    from stitcher.lang.python.uri import PythonURIGenerator
     ctx = RefactorContext(
         graph=mock_graph,
         workspace=mock_workspace,
         sidecar_manager=mock_sidecar_manager,
         index_store=mock_index,
         lock_manager=mock_lock,
+        uri_generator=PythonURIGenerator(),
     )
 
     # 2. Define Test Data

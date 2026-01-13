@@ -44,6 +44,10 @@ def mock_context(tmp_path: Path) -> Mock:
     mock_lock.load.return_value = {}
     ctx.lock_manager = mock_lock
 
+    # Mock URIGenerator
+    from stitcher.lang.python.uri import PythonURIGenerator
+    ctx.uri_generator = PythonURIGenerator()
+
     # Mock find_symbol to prevent startswith TypeError
     from stitcher.analysis.semantic import SymbolNode
 

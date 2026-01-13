@@ -1,5 +1,6 @@
 from pathlib import Path
 from stitcher.lang.python.adapter import PythonAdapter
+from stitcher.lang.python.uri import PythonURIGenerator
 
 
 def test_extract_references_basic():
@@ -19,7 +20,7 @@ class Processor:
         pass
 """
     root = Path("/tmp/proj")
-    adapter = PythonAdapter(root, [root])
+    adapter = PythonAdapter(root, [root], PythonURIGenerator())
     file_path = root / "src/main.py"
 
     # 执行解析

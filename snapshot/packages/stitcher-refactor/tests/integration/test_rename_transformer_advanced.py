@@ -4,6 +4,7 @@ from stitcher.common.transaction import WriteFileOp
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.lang.sidecar import LockFileManager
+from stitcher.lang.python.uri import PythonURIGenerator
 from stitcher.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory, create_populated_index
 
@@ -32,6 +33,7 @@ def test_rename_symbol_via_attribute_access(tmp_path):
         sidecar_manager=sidecar_manager,
         index_store=index_store,
         lock_manager=lock_manager,
+        uri_generator=PythonURIGenerator(),
     )
 
     from stitcher.refactor.migration import MigrationSpec
@@ -73,6 +75,7 @@ def test_rename_symbol_imported_with_alias(tmp_path):
         sidecar_manager=sidecar_manager,
         index_store=index_store,
         lock_manager=lock_manager,
+        uri_generator=PythonURIGenerator(),
     )
 
     from stitcher.refactor.migration import MigrationSpec

@@ -10,6 +10,7 @@ from stitcher.common.transaction import (
 from stitcher.refactor.operations.move_directory import MoveDirectoryOperation
 from stitcher.refactor.sidecar.manager import SidecarManager
 from stitcher.lang.sidecar import LockFileManager
+from stitcher.lang.python.uri import PythonURIGenerator
 from stitcher.workspace import Workspace
 from stitcher.test_utils import WorkspaceFactory, create_populated_index
 from stitcher.spec import Fingerprint
@@ -65,6 +66,7 @@ def test_move_deeply_nested_directory_updates_all_references_and_sidecars(tmp_pa
         sidecar_manager=sidecar_manager,
         index_store=index_store,
         lock_manager=lock_manager,
+        uri_generator=PythonURIGenerator(),
     )
 
     from stitcher.refactor.migration import MigrationSpec

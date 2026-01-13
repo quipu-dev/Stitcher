@@ -1,9 +1,10 @@
 from stitcher.lang.python.adapter import PythonAdapter
+from stitcher.lang.python.uri import PythonURIGenerator
 
 
 def test_python_adapter_symbol_extraction(tmp_path):
     root = tmp_path
-    adapter = PythonAdapter(root, [root])
+    adapter = PythonAdapter(root, [root], PythonURIGenerator())
 
     code = """
 class MyClass:
