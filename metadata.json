@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(tests): 修复集成测试以符合确定性工作区发现规则", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768305724.6713305, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 补全集成测试中的 Git 工作区初始化", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768305797.1638284, "duration_ms": 0}}

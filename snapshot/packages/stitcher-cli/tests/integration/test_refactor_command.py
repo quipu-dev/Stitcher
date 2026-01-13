@@ -53,7 +53,8 @@ def test_refactor_apply_dry_run(tmp_path, monkeypatch):
     # 1. Arrange
     factory = WorkspaceFactory(tmp_path)
     (
-        factory.with_project_name("mypkg")
+        factory.init_git()
+        .with_project_name("mypkg")
         .with_config({"scan_paths": ["src"]})
         .with_source("src/mypkg/__init__.py", "")
         .with_source("src/mypkg/core.py", "class Old: pass")

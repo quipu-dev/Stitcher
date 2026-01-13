@@ -1,16 +1,16 @@
-根据全量测试的反馈，由于我们加强了 `stitcher-workspace` 的发现逻辑（禁止静默回退），现有的集成测试环境因为缺失 `.git` 目录或 `[tool.uv.workspace]` 标记而无法被识别为合法的工作区。
+收到。分析显示，我之前的补丁漏掉了这些文件中部分测试函数的 `WorkspaceFactory` 初始化调用。由于我们强化了工作区发现规则，每一个涉及 CLI 执行的集成测试都必须具备合法的 Git 根目录标识。
 
-我们将通过为测试用的 `WorkspaceFactory` 增加 `.init_git()` 调用来修复这些测试，确保它们符合“确定性工作区”的要求。
+我将补全这些缺失的 `.init_git()` 调用。
 
-## [WIP] fix(tests): 修复集成测试以符合确定性工作区发现规则
+## [WIP] fix(tests): 补全集成测试中的 Git 工作区初始化
 
 ### 错误分析
-在之前的重构中，我们强化了 `find_workspace_root` 的逻辑：如果没有找到 `.git` 或特定的 `pyproject.toml` 配置，系统将抛出错误。
-目前的集成测试中，`WorkspaceFactory` 创建的临时目录是一个平铺的文件夹，缺乏这些标识符，导致 CLI 在尝试定位工作区根目录时失败。
+测试失败的根本原因仍然是 `StitcherApp` 无法在临时目录中找到工作区根目录（`.git`）。虽然之前已经修复了部分函数，但每个独立的测试函数如果重新创建了 `factory`，都必须显式调用 `.init_git()`。
 
 ### 目标
-1.  在所有失败的集成测试中，为 `WorkspaceFactory` 链增加 `.init_git()` 调用。
-2.  确保 `stitcher-cli` 的集成测试能够在模拟的 Git 仓库中运行。
+1.  修复 `test_fidelity_principles.py` 中的 `test_check_does_not_reformat_file_on_success`。
+2.  修复 `test_pump_strip_interaction.py` 中的 `test_pump_with_strip_flag_executes_strip`。
+3.  修复 `test_refactor_command.py` 中的 `test_refactor_apply_dry_run`。
 
 ### 标签
 #intent/fix #flow/ready #priority/critical #comp/tests #comp/workspace #scope/core #ai/refine #task/domain/testing #task/object/integration-tests #task/action/fix #task/state/continue
@@ -19,54 +19,13 @@
 
 ### Script
 
-#### Acts 1: 修复 `test_coverage_command.py`
-
-~~~~~act
-patch_file
-packages/stitcher-cli/tests/integration/test_coverage_command.py
-~~~~~
-~~~~~python.old
-    # 1. Setup a workspace with diverse documentation coverage
-    ws_root = (
-        WorkspaceFactory(tmp_path)
-        .with_config({"scan_paths": ["src"]})
-~~~~~
-~~~~~python.new
-    # 1. Setup a workspace with diverse documentation coverage
-    ws_root = (
-        WorkspaceFactory(tmp_path)
-        .init_git()
-        .with_config({"scan_paths": ["src"]})
-~~~~~
-
-#### Acts 2: 修复 `test_fidelity_principles.py`
+#### Acts 1: 修复 `test_fidelity_principles.py`
 
 ~~~~~act
 patch_file
 packages/stitcher-cli/tests/integration/test_fidelity_principles.py
 ~~~~~
 ~~~~~python.old
-    comments are preserved, and new keys are appended.
-    """
-    # 1. ARRANGE
-    # Create a workspace with an existing, custom-formatted .stitcher.yaml
-    # and a new function in the source code to be pumped.
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-~~~~~
-~~~~~python.new
-    comments are preserved, and new keys are appended.
-    """
-    # 1. ARRANGE
-    # Create a workspace with an existing, custom-formatted .stitcher.yaml
-    # and a new function in the source code to be pumped.
-    factory = WorkspaceFactory(tmp_path)
-    project_root = (
-        factory.init_git()
-        .with_config({"scan_paths": ["src"]})
-~~~~~
-~~~~~python.old
     # 1. ARRANGE
     # Create a workspace, run `init`, and then `strip` to get a truly
     # clean state (docs only in YAML).
@@ -84,54 +43,19 @@ packages/stitcher-cli/tests/integration/test_fidelity_principles.py
         .with_config({"scan_paths": ["src"]})
 ~~~~~
 
-#### Acts 3: 修复 `test_pump_strip_interaction.py`
+#### Acts 2: 修复 `test_pump_strip_interaction.py`
 
 ~~~~~act
 patch_file
 packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py
 ~~~~~
 ~~~~~python.old
-def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch):
-    """
-    Verifies that when 'pump' extracts docstrings (making source docs redundant),
-    it prompts the user to strip them, and performs the strip if confirmed.
-    """
-    # 1. Arrange
-    factory = WorkspaceFactory(tmp_path)
-    # Create a file with a docstring that will be extracted
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-~~~~~
-~~~~~python.new
-def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch):
-    """
-    Verifies that when 'pump' extracts docstrings (making source docs redundant),
-    it prompts the user to strip them, and performs the strip if confirmed.
-    """
-    # 1. Arrange
-    factory = WorkspaceFactory(tmp_path)
-    # Create a file with a docstring that will be extracted
-    project_root = (
-        factory.init_git()
-        .with_config({"scan_paths": ["src"]})
-~~~~~
-~~~~~python.old
-def test_pump_with_strip_flag_executes_strip(tmp_path, monkeypatch):
-    """
-    Verifies that 'pump --strip' directly triggers a strip operation and
-    emits the correct completion signal. This test bypasses interactive prompts.
-    """
     # 1. Arrange
     factory = WorkspaceFactory(tmp_path)
     project_root = (
         factory.with_config({"scan_paths": ["src"]})
 ~~~~~
 ~~~~~python.new
-def test_pump_with_strip_flag_executes_strip(tmp_path, monkeypatch):
-    """
-    Verifies that 'pump --strip' directly triggers a strip operation and
-    emits the correct completion signal. This test bypasses interactive prompts.
-    """
     # 1. Arrange
     factory = WorkspaceFactory(tmp_path)
     project_root = (
@@ -139,28 +63,11 @@ def test_pump_with_strip_flag_executes_strip(tmp_path, monkeypatch):
         .with_config({"scan_paths": ["src"]})
 ~~~~~
 
-#### Acts 4: 修复 `test_refactor_command.py`
+#### Acts 3: 修复 `test_refactor_command.py`
 
 ~~~~~act
 patch_file
 packages/stitcher-cli/tests/integration/test_refactor_command.py
-~~~~~
-~~~~~python.old
-def test_refactor_apply_e2e(tmp_path, monkeypatch):
-    # 1. Arrange: Create a project and a migration script
-    factory = WorkspaceFactory(tmp_path)
-    # Project with a symbol to be renamed
-    (
-        factory.with_project_name("mypkg")
-~~~~~
-~~~~~python.new
-def test_refactor_apply_e2e(tmp_path, monkeypatch):
-    # 1. Arrange: Create a project and a migration script
-    factory = WorkspaceFactory(tmp_path)
-    # Project with a symbol to be renamed
-    (
-        factory.init_git()
-        .with_project_name("mypkg")
 ~~~~~
 ~~~~~python.old
 def test_refactor_apply_dry_run(tmp_path, monkeypatch):
@@ -179,5 +86,5 @@ def test_refactor_apply_dry_run(tmp_path, monkeypatch):
 ~~~~~
 
 ### 下一步建议
-1.  **验证集成测试**: 重新运行 `packages/stitcher-cli` 下的集成测试，确保“无法定位工作区”的错误消失。
-2.  **检查测试独立性**: 确保 `init_git()` 在 `tmp_path` 下创建的 `.git` 不会干扰父目录（即项目本身）的 Git 状态。`WorkspaceFactory` 默认应该处理好了这一点。
+1.  **运行全量测试**: 执行 `pytest packages/stitcher-cli/tests/integration` 以确保所有集成测试全部转绿。
+2.  **代码审查**: 检查 `WorkspaceFactory` 是否可以默认执行 `init_git()`，以减少未来测试编写时的心智负担（除非某些测试需要显式验证“非 Git 环境”的行为）。
