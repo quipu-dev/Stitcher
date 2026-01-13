@@ -725,6 +725,7 @@ dependencies = [
     { name = "stitcher-config" },
     { name = "stitcher-index" },
     { name = "stitcher-lang-python" },
+    { name = "stitcher-lang-sidecar" },
     { name = "stitcher-spec" },
     { name = "stitcher-stubgen" },
     { name = "stitcher-workspace" },
@@ -738,6 +739,7 @@ requires-dist = [
     { name = "stitcher-config", editable = "packages/stitcher-config" },
     { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-lang-python", editable = "packages/stitcher-lang-python" },
+    { name = "stitcher-lang-sidecar", editable = "packages/stitcher-lang-sidecar" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
     { name = "stitcher-stubgen", editable = "packages/stitcher-stubgen" },
     { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
@@ -829,6 +831,7 @@ dependencies = [
     { name = "stitcher-common" },
     { name = "stitcher-lang-python" },
     { name = "stitcher-spec" },
+    { name = "stitcher-workspace" },
 ]
 
 [package.metadata]
@@ -837,6 +840,7 @@ requires-dist = [
     { name = "stitcher-common", editable = "packages/stitcher-common" },
     { name = "stitcher-lang-python", editable = "packages/stitcher-lang-python" },
     { name = "stitcher-spec", editable = "packages/stitcher-spec" },
+    { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
 ]
 
 [[package]]
