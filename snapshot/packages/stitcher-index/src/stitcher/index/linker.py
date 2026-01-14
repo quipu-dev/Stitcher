@@ -49,3 +49,18 @@ class Linker:
             )
             if cursor.rowcount > 0:
                 log.debug(f"Linked {cursor.rowcount} aliases.")
+
+            # 3. Link SURI References (Direct ID match)
+            # Strategy: If target_fqn is a SURI (starts with py://), match it directly to symbols.id
+            log.debug("Linking SURI references...")
+            cursor = conn.execute(
+                """
+                UPDATE "references"
+                SET target_id = target_fqn
+                WHERE target_id IS NULL 
+                  AND target_fqn LIKE 'py://%'
+                  AND EXISTS (SELECT 1 FROM symbols WHERE id = "references".target_fqn)
+                """
+            )
+            if cursor.rowcount > 0:
+                log.debug(f"Linked {cursor.rowcount} SURI references.")

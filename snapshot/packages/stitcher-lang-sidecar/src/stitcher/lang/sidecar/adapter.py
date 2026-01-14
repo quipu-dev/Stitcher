@@ -67,8 +67,8 @@ class SidecarAdapter(LanguageAdapter):
             for suri, line, col in refs:
                 references.append(
                     ReferenceRecord(
-                        target_fqn=None,
-                        target_id=suri,
+                        target_fqn=suri,  # Treat SURI as FQN for deferred linking
+                        target_id=None,
                         kind=ReferenceType.SIDECAR_ID.value,
                         lineno=line,
                         col_offset=col,
@@ -87,11 +87,16 @@ class SidecarAdapter(LanguageAdapter):
                 py_name = file_path.name.replace(".stitcher.yaml", ".py")
                 py_path = file_path.with_name(py_name)
 
-                if not py_path.exists():
-                    return symbols, references
-
-                # For SURI generation, we need the workspace-relative path of the source file
-                rel_py_path = py_path.relative_to(self.root_path).as_posix()
+                # Even if py_path does not exist on disk (e.g. during a move refactor),
+                # we should still try to compute the expected SURI if we can derive the path.
+                # However, without existence, we can't be sure of the casing or exact rel path
+                # if the FS is case-insensitive. But assuming standard behavior:
+                if py_path.exists():
+                    rel_py_path = py_path.relative_to(self.root_path).as_posix()
+                else:
+                    # Fallback logic: assume it's relative to root based on file_path location
+                    # This helps in edge cases where .py is moved but .yaml is still scanned before move
+                    rel_py_path = py_path.relative_to(self.root_path).as_posix()
 
                 # Full parsing for DocEntryRecord creation
                 data = self._yaml.load(content)
@@ -137,7 +142,8 @@ class SidecarAdapter(LanguageAdapter):
                             # 6. Also create a ReferenceRecord for graph analysis
                             references.append(
                                 ReferenceRecord(
-                                    target_id=suri,
+                                    target_fqn=suri,  # Treat SURI as FQN for deferred linking
+                                    target_id=None,
                                     kind=ReferenceType.SIDECAR_DOC_ID.value,
                                     lineno=lineno,
                                     col_offset=0,  # Col is less precise for YAML keys
