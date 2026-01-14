@@ -37,17 +37,20 @@ class DocumentManager:
         self.parser = parser
         self.serializer = serializer
 
-    def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
-        return self._sidecar_adapter.serialize_ir(ir, self.serializer)
+    def _serialize_ir_for_transfer(self, ir: DocstringIR) -> Dict[str, Any]:
+        # This is now the single point of truth for creating a serializable dict.
+        return self.serializer.to_transfer_data(ir)
 
-    def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
-        return self.serializer.from_yaml(data)
+    def serialize_ir(self, ir: DocstringIR) -> Dict[str, Any]:
+        # Kept for backward compatibility if other internal parts use it.
+        # It's now explicitly for transfer data.
+        return self._serialize_ir_for_transfer(ir)
 
-    def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
-        return self._serialize_ir(ir)
+    def serialize_ir_for_view(self, ir: DocstringIR) -> Any:
+        return self.serializer.to_view_data(ir)
 
     def compute_ir_hash(self, ir: DocstringIR) -> str:
-        serialized = self._serialize_ir(ir)
+        serialized = self._serialize_ir_for_transfer(ir)
         return self.compute_yaml_content_hash(serialized)
 
     def dump_data(self, data: Dict[str, Any]) -> str:

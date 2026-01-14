@@ -189,7 +189,7 @@ class PumpExecutor:
                     if file_had_updates:
                         raw_data = self.doc_manager.load_raw_data(module.file_path)
                         for fqn, ir in new_yaml_docs.items():
-                            raw_data[fqn] = self.doc_manager.serialize_ir(ir)
+                            raw_data[fqn] = self.doc_manager.serialize_ir_for_view(ir)
 
                         doc_path = (self.root_path / module.file_path).with_suffix(
                             ".stitcher.yaml"

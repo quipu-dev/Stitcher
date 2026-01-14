@@ -108,7 +108,9 @@ class SidecarAdapter(LanguageAdapter):
             if not isinstance(raw_data, dict):
                 return {}
 
-            return {fqn: serializer.from_yaml(val) for fqn, val in raw_data.items()}
+            return {
+                fqn: serializer.from_view_data(val) for fqn, val in raw_data.items()
+            }
         except Exception:
             return {}
 
@@ -122,46 +124,40 @@ class SidecarAdapter(LanguageAdapter):
 
         if path.exists():
             # --- UPDATE PATH ---
-            # Load existing content to preserve formatting, comments, and key order.
             try:
                 with path.open("r", encoding="utf-8") as f:
                     data = self._yaml.load(f)
                 original_content = path.read_text("utf-8")
             except Exception:
-                # If we can't read/parse, treat it as a new file creation.
                 data = {}
                 original_content = ""
 
             if not isinstance(data, dict):
                 data = {}
 
-            # Update the loaded data with new/modified IRs.
-            # NO SORTING is applied to preserve original key order.
-            # New keys will be appended by ruamel.yaml.
             for fqn, ir in irs.items():
-                yaml_val = serializer.to_yaml(ir)
-                if isinstance(yaml_val, str):
-                    formatted_val = LiteralScalarString(yaml_val)
-                elif isinstance(yaml_val, dict):
-                    formatted_val = self._to_literal_strings(yaml_val)
+                view_obj = serializer.to_view_data(ir)
+                if isinstance(view_obj, str):
+                    data[fqn] = LiteralScalarString(view_obj)
+                elif isinstance(view_obj, dict):
+                    data[fqn] = self._to_literal_strings(view_obj)
                 else:
-                    formatted_val = yaml_val
-                data[fqn] = formatted_val
+                    data[fqn] = view_obj
 
             string_stream = io.StringIO()
             self._yaml.dump(data, string_stream)
             new_content = string_stream.getvalue()
 
-            # Compare with original content to avoid unnecessary writes/mtime changes.
             if original_content != new_content:
                 with path.open("w", encoding="utf-8") as f:
                     f.write(new_content)
         else:
             # --- CREATE PATH ---
-            # For new files, create a clean, sorted baseline for predictability.
             sorted_irs = dict(sorted(irs.items()))
-            yaml_data = {fqn: serializer.to_yaml(ir) for fqn, ir in sorted_irs.items()}
-            formatted_data = self._to_literal_strings(yaml_data)
+            view_data = {
+                fqn: serializer.to_view_data(ir) for fqn, ir in sorted_irs.items()
+            }
+            formatted_data = self._to_literal_strings(view_data)
             string_stream = io.StringIO()
             self._yaml.dump(formatted_data, string_stream)
             with path.open("w", encoding="utf-8") as f:
@@ -189,7 +185,7 @@ class SidecarAdapter(LanguageAdapter):
         self._yaml.dump(data, string_stream)
         return string_stream.getvalue()
 
-    def serialize_ir(
+    def serialize_ir_for_transfer(
         self, ir: DocstringIR, serializer: DocstringSerializerProtocol
-    ) -> Union[str, Dict[str, Any]]:
-        return serializer.to_yaml(ir)
+    ) -> Dict[str, Any]:
+        return serializer.to_transfer_data(ir)

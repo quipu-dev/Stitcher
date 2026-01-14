@@ -1,3 +1,4 @@
+from stitcher.spec import DocstringIR
 from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory, get_stored_hashes
@@ -81,7 +82,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
         == initial_hashes["func"]["baseline_code_structure_hash"]
     )
 
-    expected_hash = app.doc_manager.compute_yaml_content_hash(new_doc_content)
+    expected_hash = app.doc_manager.compute_ir_hash(DocstringIR(summary=new_doc_content))
     assert final_hashes["func"]["baseline_yaml_content_hash"] == expected_hash
 
 
@@ -224,5 +225,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
         != initial_hashes["func"]["baseline_yaml_content_hash"]
     )
 
-    expected_doc_hash = app.doc_manager.compute_yaml_content_hash(new_doc_content)
+    expected_doc_hash = app.doc_manager.compute_ir_hash(
+        DocstringIR(summary=new_doc_content)
+    )
     assert final_hashes["func"]["baseline_yaml_content_hash"] == expected_doc_hash

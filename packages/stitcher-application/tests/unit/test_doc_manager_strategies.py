@@ -53,8 +53,8 @@ class TestDocumentManagerStrategies:
         serializer = get_docstring_serializer(style)
         doc_manager.set_strategy(parser, serializer)
 
-        # 2. Serialize (internal method call for direct testing)
-        serialized_data = doc_manager._serialize_ir(sample_ir)
+        # 2. Serialize to transfer data
+        serialized_data = doc_manager.serialize_ir(sample_ir)
 
         # 3. Assert serialized format
         assert isinstance(serialized_data, dict)
@@ -68,7 +68,7 @@ class TestDocumentManagerStrategies:
         assert params["param2"] == "Description for param2."
 
         # 4. Deserialize
-        deserialized_ir = doc_manager._deserialize_ir(serialized_data)
+        deserialized_ir = doc_manager.serializer.from_transfer_data(serialized_data)
 
         # 5. Assert roundtrip equality (main fields)
         assert deserialized_ir.summary == sample_ir.summary
@@ -92,7 +92,8 @@ class TestDocumentManagerStrategies:
         doc_manager.set_strategy(parser, serializer)
 
         # 2. Serialize
-        serialized_data = doc_manager._serialize_ir(sample_ir)
+        # NOTE: We now test the VIEW data for raw serialization's hybrid mode
+        serialized_data = doc_manager.serializer.to_view_data(sample_ir)
 
         # 3. Assert serialized format (Hybrid Mode because of addons)
         assert isinstance(serialized_data, dict)
@@ -103,7 +104,7 @@ class TestDocumentManagerStrategies:
         assert "Parameters" not in serialized_data
 
         # 4. Deserialize
-        deserialized_ir = doc_manager._deserialize_ir(serialized_data)
+        deserialized_ir = doc_manager.serializer.from_view_data(serialized_data)
 
         # 5. Assert roundtrip equality
         assert deserialized_ir.summary == sample_ir.summary
@@ -118,11 +119,11 @@ class TestDocumentManagerStrategies:
         doc_manager.set_strategy(parser, serializer)
 
         ir = DocstringIR(summary="Just a simple string.")
-        serialized_data = doc_manager._serialize_ir(ir)
+        serialized_data = doc_manager.serializer.to_view_data(ir)
 
         assert isinstance(serialized_data, str)
         assert serialized_data == "Just a simple string."
 
-        deserialized_ir = doc_manager._deserialize_ir(serialized_data)
+        deserialized_ir = doc_manager.serializer.from_view_data(serialized_data)
         assert deserialized_ir.summary == "Just a simple string."
         assert not deserialized_ir.addons

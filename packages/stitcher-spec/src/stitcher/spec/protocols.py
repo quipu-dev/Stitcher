@@ -48,9 +48,24 @@ class DocstringRendererProtocol(Protocol):
 
 
 class DocstringSerializerProtocol(Protocol):
-    def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]: ...
+    """
+    负责 DocstringIR 的序列化与反序列化。
+    区分“数据传输(DTO)”与“人类视图(View)”两种场景。
+    """
 
-    def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR: ...
+    # --- 数据传输层 (Data Transfer Layer) ---
+    # 用于：Database Storage, Hashing, Inter-process Communication
+    # 约束：必须返回 JSON-safe 的原生类型 (dict, list, str, int, bool)。严禁自定义对象。
+    def to_transfer_data(self, ir: DocstringIR) -> Dict[str, Any]: ...
+
+    def from_transfer_data(self, data: Dict[str, Any]) -> DocstringIR: ...
+
+    # --- 视图层 (View Layer) ---
+    # 用于：YAML File Generation, CLI Output
+    # 约束：可以返回 ruamel.yaml 的富文本对象 (CommentedMap, LiteralScalarString) 以控制格式。
+    def to_view_data(self, ir: DocstringIR) -> Any: ...
+
+    def from_view_data(self, data: Any) -> DocstringIR: ...
 
 
 class URIGeneratorProtocol(Protocol):
