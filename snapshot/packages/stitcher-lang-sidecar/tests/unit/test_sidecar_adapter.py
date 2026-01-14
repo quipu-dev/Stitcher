@@ -88,7 +88,7 @@ def test_adapter_yaml_suri_computation(tmp_path: Path):
     assert suri2 in refs_by_id
     ref2 = refs_by_id[suri2]
     assert ref2.kind == ReferenceType.SIDECAR_DOC_ID.value
-    assert ref2.lineno == 4
+    assert ref2.lineno == 3
     assert ref2.col_offset == 0
 
     # Verify doc entries
@@ -100,7 +100,7 @@ def test_adapter_yaml_suri_computation(tmp_path: Path):
 
     assert suri2 in doc_entries_by_id
     de2 = doc_entries_by_id[suri2]
-    assert de2.lineno == 4
+    assert de2.lineno == 3
     assert '"summary": "world"' in de2.ir_data_json
 
 

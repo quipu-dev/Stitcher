@@ -1,3 +1,4 @@
+import sqlite3
 from typing import Optional, List, Tuple
 from .db import DatabaseManager
 from .linker import Linker
@@ -146,23 +147,30 @@ class IndexStore:
 
             # 4. Insert new doc entries
             if doc_entries:
-                conn.executemany(
-                    """
-                    INSERT INTO doc_entries (
-                        file_id, symbol_id, content_hash, ir_data_json, lineno
-                    ) VALUES (?, ?, ?, ?, ?)
-                    """,
-                    [
-                        (
-                            file_id,
-                            d.symbol_id,
-                            d.content_hash,
-                            d.ir_data_json,
-                            d.lineno,
-                        )
-                        for d in doc_entries
-                    ],
-                )
+                try:
+                    conn.executemany(
+                        """
+                        INSERT INTO doc_entries (
+                            file_id, symbol_id, content_hash, ir_data_json, lineno
+                        ) VALUES (?, ?, ?, ?, ?)
+                        """,
+                        [
+                            (
+                                file_id,
+                                d.symbol_id,
+                                d.content_hash,
+                                d.ir_data_json,
+                                d.lineno,
+                            )
+                            for d in doc_entries
+                        ],
+                    )
+                except sqlite3.IntegrityError as e:
+                    # Enhance error message for debugging
+                    raise sqlite3.IntegrityError(
+                        f"Failed to insert doc_entries for file_id={file_id}. "
+                        f"Original error: {e}"
+                    ) from e
 
             # 5. Mark as indexed
             conn.execute(
