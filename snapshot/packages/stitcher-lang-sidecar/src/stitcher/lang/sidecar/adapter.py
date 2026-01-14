@@ -67,7 +67,8 @@ class SidecarAdapter(LanguageAdapter):
             for suri, line, col in refs:
                 references.append(
                     ReferenceRecord(
-                        target_fqn=suri,  # Treat SURI as FQN for deferred linking
+                        target_fqn=None,
+                        target_suri=suri,  # Use dedicated field
                         target_id=None,
                         kind=ReferenceType.SIDECAR_ID.value,
                         lineno=line,
@@ -142,7 +143,8 @@ class SidecarAdapter(LanguageAdapter):
                             # 6. Also create a ReferenceRecord for graph analysis
                             references.append(
                                 ReferenceRecord(
-                                    target_fqn=suri,  # Treat SURI as FQN for deferred linking
+                                    target_fqn=None,
+                                    target_suri=suri,  # Use dedicated field
                                     target_id=None,
                                     kind=ReferenceType.SIDECAR_DOC_ID.value,
                                     lineno=lineno,

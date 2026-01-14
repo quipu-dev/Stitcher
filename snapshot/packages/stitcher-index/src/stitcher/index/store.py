@@ -125,14 +125,15 @@ class IndexStore:
                 conn.executemany(
                     """
                     INSERT INTO 'references' (
-                        source_file_id, target_fqn, target_id, kind, 
+                        source_file_id, target_fqn, target_suri, target_id, kind, 
                         lineno, col_offset, end_lineno, end_col_offset
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     [
                         (
                             file_id,
                             r.target_fqn,
+                            r.target_suri,
                             r.target_id,
                             r.kind,
                             r.lineno,

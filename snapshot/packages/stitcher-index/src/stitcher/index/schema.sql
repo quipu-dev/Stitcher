@@ -68,8 +68,12 @@ CREATE TABLE IF NOT EXISTS 'references' (
 
     -- The logical FQN of the target, extracted by the parser.
     -- e.g., "os.path.join"
-    -- This can be NULL for references that are purely by ID (e.g. SURI in signatures).
     target_fqn TEXT,
+
+    -- The explicit SURI reference, extracted from Sidecar files or other precise sources.
+    -- e.g., "py://src/mod.py#func". 
+    -- This represents an intention to link to a physical ID, without FK constraints.
+    target_suri TEXT,
     
     -- The resolved SURI of the target symbol (FK to symbols.id).
     -- This is populated by the Linker phase. Can be NULL if unresolved.

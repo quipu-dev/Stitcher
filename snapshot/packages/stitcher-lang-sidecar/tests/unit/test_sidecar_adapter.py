@@ -45,8 +45,8 @@ def test_adapter_json_dispatch(tmp_path: Path):
 
     ref = refs[0]
     assert ref.kind == ReferenceType.SIDECAR_ID.value
-    # SURI is now stored in target_fqn to defer linking/FK checks
-    assert ref.target_fqn == "py://foo#bar"
+    assert ref.target_suri == "py://foo#bar"
+    assert ref.target_fqn is None
     assert ref.target_id is None
 
 
@@ -58,6 +58,7 @@ def test_adapter_yaml_suri_computation(tmp_path: Path):
     py_file.touch()
 
     yaml_file = src_dir / "module.stitcher.yaml"
+    # dedent creates a string starting with \n if the triple quote is on next line
     yaml_content = dedent("""
     MyClass: hello
     my_func: world
@@ -73,25 +74,25 @@ def test_adapter_yaml_suri_computation(tmp_path: Path):
     assert len(refs) == 2
     assert len(doc_entries) == 2
 
-    # Map using target_fqn as that's where SURI is stored now
-    refs_by_fqn = {ref.target_fqn: ref for ref in refs}
+    # Map using target_suri
+    refs_by_suri = {ref.target_suri: ref for ref in refs}
     doc_entries_by_id = {de.symbol_id: de for de in doc_entries}
 
-    # Verify first reference
+    # Verify first reference (MyClass is on line 2 because of leading \n)
     suri1 = "py://src/module.py#MyClass"
-    assert suri1 in refs_by_fqn
-    ref1 = refs_by_fqn[suri1]
+    assert suri1 in refs_by_suri
+    ref1 = refs_by_suri[suri1]
     assert ref1.kind == ReferenceType.SIDECAR_DOC_ID.value
     assert ref1.lineno == 2
     assert ref1.col_offset == 0
-    assert ref1.target_id is None  # Should be None until linked
+    assert ref1.target_id is None
 
-    # Verify second reference
+    # Verify second reference (my_func is on line 3)
     suri2 = "py://src/module.py#my_func"
-    assert suri2 in refs_by_fqn
-    ref2 = refs_by_fqn[suri2]
+    assert suri2 in refs_by_suri
+    ref2 = refs_by_suri[suri2]
     assert ref2.kind == ReferenceType.SIDECAR_DOC_ID.value
-    assert ref2.lineno == 4
+    assert ref2.lineno == 3  # Corrected from 4 to 3
     assert ref2.col_offset == 0
 
     # Verify doc entries
