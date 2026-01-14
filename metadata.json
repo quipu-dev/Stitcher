@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(index): 修复 Sidecar 索引时的 FK 冲突与 SURI 链接逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768379609.3365242, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test(sidecar): 更新 SidecarAdapter 测试以匹配 SURI-in-FQN 架构", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768379899.2201693, "duration_ms": 0}}

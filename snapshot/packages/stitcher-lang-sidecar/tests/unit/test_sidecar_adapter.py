@@ -45,8 +45,9 @@ def test_adapter_json_dispatch(tmp_path: Path):
 
     ref = refs[0]
     assert ref.kind == ReferenceType.SIDECAR_ID.value
-    assert ref.target_id == "py://foo#bar"
-    assert ref.target_fqn is None
+    # SURI is now stored in target_fqn to defer linking/FK checks
+    assert ref.target_fqn == "py://foo#bar"
+    assert ref.target_id is None
 
 
 def test_adapter_yaml_suri_computation(tmp_path: Path):
@@ -72,21 +73,23 @@ def test_adapter_yaml_suri_computation(tmp_path: Path):
     assert len(refs) == 2
     assert len(doc_entries) == 2
 
-    refs_by_id = {ref.target_id: ref for ref in refs}
+    # Map using target_fqn as that's where SURI is stored now
+    refs_by_fqn = {ref.target_fqn: ref for ref in refs}
     doc_entries_by_id = {de.symbol_id: de for de in doc_entries}
 
     # Verify first reference
     suri1 = "py://src/module.py#MyClass"
-    assert suri1 in refs_by_id
-    ref1 = refs_by_id[suri1]
+    assert suri1 in refs_by_fqn
+    ref1 = refs_by_fqn[suri1]
     assert ref1.kind == ReferenceType.SIDECAR_DOC_ID.value
     assert ref1.lineno == 2
     assert ref1.col_offset == 0
+    assert ref1.target_id is None  # Should be None until linked
 
     # Verify second reference
     suri2 = "py://src/module.py#my_func"
-    assert suri2 in refs_by_id
-    ref2 = refs_by_id[suri2]
+    assert suri2 in refs_by_fqn
+    ref2 = refs_by_fqn[suri2]
     assert ref2.kind == ReferenceType.SIDECAR_DOC_ID.value
     assert ref2.lineno == 4
     assert ref2.col_offset == 0

@@ -1,263 +1,140 @@
 简要回答
-执行高保真修复：解决 FK 约束冲突与链接器逻辑缺失，确立 Zero-IO 索引架构的稳定性。
+执行单元测试修复，使其与“SURI 作为 FQN 存储”的架构变更保持一致。
 
-## [WIP] fix(index): 修复 Sidecar 索引时的 FK 冲突与 SURI 链接逻辑
+## [WIP] test(sidecar): 更新 SidecarAdapter 测试以匹配 SURI-in-FQN 架构
 
 ### 错误分析
-测试中出现的 `FOREIGN KEY constraint failed` 和非确定性失败（Flaky Tests）揭示了 `stitcher-index` 的一个严重架构缺陷：**索引顺序依赖性**。
-
-1.  **FK 冲突**: `SidecarAdapter` 在解析 `.stitcher.yaml` 时，直接将 SURI (如 `py://...`) 填入 `references.target_id`。数据库 Schema 定义了 `FOREIGN KEY (target_id) REFERENCES symbols(id)`。如果 `.stitcher.yaml` 比对应的 `.py` 源文件先被索引（这是完全可能的，取决于文件系统遍历顺序），`symbols` 表中尚无对应的 SURI 记录，从而触发 FK 约束失败，导致事务回滚。
-2.  **链接缺失**: 由于上述回滚，或者即使顺序正确，当前的 `Linker` 仅支持基于 `canonical_fqn` 的链接，缺乏对 SURI (既是 ID 也是引用) 的直接链接支持。
-3.  **结果**: 索引构建失败 (`scanner.had_errors = True`)，导致后续的所有 `stitcher check` 操作直接返回 False，引发大量测试级联失败。
+`test_sidecar_adapter.py` 中的测试失败是因为我们在上一步（Act 1）中修改了 `SidecarAdapter` 的行为——将 SURI 存储在 `target_fqn` 而非 `target_id`——但没有同步更新测试用例的断言逻辑。这导致了 `None != 'py://...'` 的断言错误。
 
 ### 用户需求
-修复测试套件中的非确定性失败，确保 `stitcher index` 的健壮性，使其不再依赖文件扫描顺序。
+修复因架构变更导致的单元测试失败，确保测试套件如实反映当前的系统行为。
 
 ### 评论
-这是一个教科书式的“最终一致性”问题。在关系型数据库中处理双向依赖（代码引文档，文档引代码）时，必须解耦“引用声明”与“引用解析”。
+这是标准的重构步骤：Red -> Green -> Refactor。我们在 Green 阶段（实现修复）打破了旧的测试（变为 Red），现在必须修复测试以使其变绿。
 
 ### 目标
-1.  修改 `SidecarAdapter`，在生成引用时将 SURI 放入 `target_fqn` 而非 `target_id`，从而推迟约束检查。
-2.  升级 `Linker`，使其能够识别并链接基于 SURI 的引用。
-3.  增强 `SidecarAdapter` 的健壮性，确保在源文件缺失时不会抛出异常。
+1.  更新 `test_adapter_json_dispatch`，断言 `ref.target_fqn` 为 SURI，`ref.target_id` 为 None。
+2.  更新 `test_adapter_yaml_suri_computation`，使用 `target_fqn` 构建查找表并进行断言。
 
 ### 基本原理
-通过将 SURI 视为一种特殊的 FQN（逻辑标识符）存储在 `target_fqn` 字段中，并将 `target_id` 留空（NULL），我们遵循了 Stitcher 的“两阶段索引”哲学（先 Parse 入库，后 Link 解析）。这消除了索引时的 FK 约束，允许任意顺序的文件处理。`Linker` 随后在所有符号就位后，通过简单的 SQL 更新完成连接。
+为了解决数据库 FK 约束问题，我们推迟了链接过程，将 SURI 暂时视为 FQN。单元测试必须验证这一“推迟”行为是否正确发生。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/index #concept/state #scope/core #ai/instruct #task/domain/indexing #task/object/fk-constraint #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/unit-test #task/action/update #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 SidecarAdapter 的引用生成逻辑
+#### Acts 1: 修复 test_sidecar_adapter.py
 
-我们将修改 `SidecarAdapter`，使其在生成 `ReferenceRecord` 时，将 SURI 赋值给 `target_fqn` 而不是 `target_id`。这避免了插入时的 FK 检查。
-
-~~~~~act
-patch_file
-packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py
-~~~~~
-~~~~~python.old
-        # This adapter handles both .json (signatures) and .yaml (docs)
-        if file_path.suffix == ".json":
-            refs = parse_signature_references(content)
-            for suri, line, col in refs:
-                references.append(
-                    ReferenceRecord(
-                        target_fqn=None,
-                        target_id=suri,
-                        kind=ReferenceType.SIDECAR_ID.value,
-                        lineno=line,
-                        col_offset=col,
-                        end_lineno=line,
-                        end_col_offset=col + len(suri),
-                    )
-                )
-            return symbols, references
-
-        elif file_path.suffix in (".yaml", ".yml"):
-            try:
-                if not file_path.name.endswith(".stitcher.yaml"):
-                    return symbols, references
-
-                # Derive the associated source Python file path
-                py_name = file_path.name.replace(".stitcher.yaml", ".py")
-                py_path = file_path.with_name(py_name)
-
-                if not py_path.exists():
-                    return symbols, references
-
-                # For SURI generation, we need the workspace-relative path of the source file
-                rel_py_path = py_path.relative_to(self.root_path).as_posix()
-
-                # Full parsing for DocEntryRecord creation
-                data = self._yaml.load(content)
-                # Use RawSerializer as a default for the indexing path
-                serializer = RawSerializer()
-
-                if isinstance(data, dict):
-                    for fragment, raw_ir_obj in data.items():
-                        # 1. Determine location (line/col) from ruamel
-                        lineno = 0
-                        lc = getattr(data, "lc", None)
-                        if lc and hasattr(lc, "item"):
-                            pos = lc.item(fragment)
-                            if pos:
-                                lineno = pos[0] + 1
-
-                        # 2. Generate SURI for the symbol
-                        suri = self.uri_generator.generate_symbol_uri(
-                            rel_py_path, str(fragment)
-                        )
-
-                        try:
-                            # 3. Normalize to IR, then to a JSON-safe DTO
-                            ir = serializer.from_yaml_object(raw_ir_obj)
-                            ir_dict = serializer.to_serializable_dict(ir)
-                            ir_json = json.dumps(ir_dict, sort_keys=True)
-
-                            # 4. Compute deterministic hash from the JSON string
-                            content_hash = hashlib.sha256(
-                                ir_json.encode("utf-8")
-                            ).hexdigest()
-
-                            # 5. Create the DocEntryRecord for the indexer
-                            doc_entries.append(
-                                DocEntryRecord(
-                                    symbol_id=suri,
-                                    content_hash=content_hash,
-                                    ir_data_json=ir_json,
-                                    lineno=lineno,
-                                )
-                            )
-
-                            # 6. Also create a ReferenceRecord for graph analysis
-                            references.append(
-                                ReferenceRecord(
-                                    target_id=suri,
-                                    kind=ReferenceType.SIDECAR_DOC_ID.value,
-                                    lineno=lineno,
-                                    col_offset=0,  # Col is less precise for YAML keys
-                                    end_lineno=lineno,
-                                    end_col_offset=len(str(fragment)),
-                                )
-                            )
-
-                        except Exception:
-                            # Skip malformed entries within the YAML file
-                            continue
-~~~~~
-~~~~~python.new
-        # This adapter handles both .json (signatures) and .yaml (docs)
-        if file_path.suffix == ".json":
-            refs = parse_signature_references(content)
-            for suri, line, col in refs:
-                references.append(
-                    ReferenceRecord(
-                        target_fqn=suri,  # Treat SURI as FQN for deferred linking
-                        target_id=None,
-                        kind=ReferenceType.SIDECAR_ID.value,
-                        lineno=line,
-                        col_offset=col,
-                        end_lineno=line,
-                        end_col_offset=col + len(suri),
-                    )
-                )
-            return symbols, references
-
-        elif file_path.suffix in (".yaml", ".yml"):
-            try:
-                if not file_path.name.endswith(".stitcher.yaml"):
-                    return symbols, references
-
-                # Derive the associated source Python file path
-                py_name = file_path.name.replace(".stitcher.yaml", ".py")
-                py_path = file_path.with_name(py_name)
-
-                # Even if py_path does not exist on disk (e.g. during a move refactor),
-                # we should still try to compute the expected SURI if we can derive the path.
-                # However, without existence, we can't be sure of the casing or exact rel path
-                # if the FS is case-insensitive. But assuming standard behavior:
-                if py_path.exists():
-                    rel_py_path = py_path.relative_to(self.root_path).as_posix()
-                else:
-                    # Fallback logic: assume it's relative to root based on file_path location
-                    # This helps in edge cases where .py is moved but .yaml is still scanned before move
-                    rel_py_path = py_path.relative_to(self.root_path).as_posix()
-
-                # Full parsing for DocEntryRecord creation
-                data = self._yaml.load(content)
-                # Use RawSerializer as a default for the indexing path
-                serializer = RawSerializer()
-
-                if isinstance(data, dict):
-                    for fragment, raw_ir_obj in data.items():
-                        # 1. Determine location (line/col) from ruamel
-                        lineno = 0
-                        lc = getattr(data, "lc", None)
-                        if lc and hasattr(lc, "item"):
-                            pos = lc.item(fragment)
-                            if pos:
-                                lineno = pos[0] + 1
-
-                        # 2. Generate SURI for the symbol
-                        suri = self.uri_generator.generate_symbol_uri(
-                            rel_py_path, str(fragment)
-                        )
-
-                        try:
-                            # 3. Normalize to IR, then to a JSON-safe DTO
-                            ir = serializer.from_yaml_object(raw_ir_obj)
-                            ir_dict = serializer.to_serializable_dict(ir)
-                            ir_json = json.dumps(ir_dict, sort_keys=True)
-
-                            # 4. Compute deterministic hash from the JSON string
-                            content_hash = hashlib.sha256(
-                                ir_json.encode("utf-8")
-                            ).hexdigest()
-
-                            # 5. Create the DocEntryRecord for the indexer
-                            doc_entries.append(
-                                DocEntryRecord(
-                                    symbol_id=suri,
-                                    content_hash=content_hash,
-                                    ir_data_json=ir_json,
-                                    lineno=lineno,
-                                )
-                            )
-
-                            # 6. Also create a ReferenceRecord for graph analysis
-                            references.append(
-                                ReferenceRecord(
-                                    target_fqn=suri,  # Treat SURI as FQN for deferred linking
-                                    target_id=None,
-                                    kind=ReferenceType.SIDECAR_DOC_ID.value,
-                                    lineno=lineno,
-                                    col_offset=0,  # Col is less precise for YAML keys
-                                    end_lineno=lineno,
-                                    end_col_offset=len(str(fragment)),
-                                )
-                            )
-
-                        except Exception:
-                            # Skip malformed entries within the YAML file
-                            continue
-~~~~~
-
-#### Acts 2: 升级 Linker 以支持 SURI 链接
-
-我们需要修改 `Linker`，使其能够识别 `target_fqn` 看起来像 SURI (即以 `py://` 开头) 的记录，并直接将其链接到 `symbols` 表的 `id` 字段。
+更新断言逻辑以匹配新的 `SidecarAdapter` 行为。
 
 ~~~~~act
 patch_file
-packages/stitcher-index/src/stitcher/index/linker.py
+packages/stitcher-lang-sidecar/tests/unit/test_sidecar_adapter.py
 ~~~~~
 ~~~~~python.old
-            if cursor.rowcount > 0:
-                log.debug(f"Linked {cursor.rowcount} aliases.")
+    ref = refs[0]
+    assert ref.kind == ReferenceType.SIDECAR_ID.value
+    assert ref.target_id == "py://foo#bar"
+    assert ref.target_fqn is None
+
+
+def test_adapter_yaml_suri_computation(tmp_path: Path):
+    # 1. ARRANGE: Create a mock file system
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    py_file = src_dir / "module.py"
+    py_file.touch()
+
+    yaml_file = src_dir / "module.stitcher.yaml"
+    yaml_content = dedent("""
+    MyClass: hello
+    my_func: world
+    """)
+    yaml_file.write_text(yaml_content)
+
+    # 2. ACT
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
+    symbols, refs, doc_entries = adapter.parse(yaml_file, yaml_content)
+
+    # 3. ASSERT
+    assert len(symbols) == 0
+    assert len(refs) == 2
+    assert len(doc_entries) == 2
+
+    refs_by_id = {ref.target_id: ref for ref in refs}
+    doc_entries_by_id = {de.symbol_id: de for de in doc_entries}
+
+    # Verify first reference
+    suri1 = "py://src/module.py#MyClass"
+    assert suri1 in refs_by_id
+    ref1 = refs_by_id[suri1]
+    assert ref1.kind == ReferenceType.SIDECAR_DOC_ID.value
+    assert ref1.lineno == 2
+    assert ref1.col_offset == 0
+
+    # Verify second reference
+    suri2 = "py://src/module.py#my_func"
+    assert suri2 in refs_by_id
+    ref2 = refs_by_id[suri2]
+    assert ref2.kind == ReferenceType.SIDECAR_DOC_ID.value
+    assert ref2.lineno == 4
+    assert ref2.col_offset == 0
 ~~~~~
 ~~~~~python.new
-            if cursor.rowcount > 0:
-                log.debug(f"Linked {cursor.rowcount} aliases.")
+    ref = refs[0]
+    assert ref.kind == ReferenceType.SIDECAR_ID.value
+    # SURI is now stored in target_fqn to defer linking/FK checks
+    assert ref.target_fqn == "py://foo#bar"
+    assert ref.target_id is None
 
-            # 3. Link SURI References (Direct ID match)
-            # Strategy: If target_fqn is a SURI (starts with py://), match it directly to symbols.id
-            log.debug("Linking SURI references...")
-            cursor = conn.execute(
-                """
-                UPDATE "references"
-                SET target_id = target_fqn
-                WHERE target_id IS NULL 
-                  AND target_fqn LIKE 'py://%'
-                  AND EXISTS (SELECT 1 FROM symbols WHERE id = "references".target_fqn)
-                """
-            )
-            if cursor.rowcount > 0:
-                log.debug(f"Linked {cursor.rowcount} SURI references.")
+
+def test_adapter_yaml_suri_computation(tmp_path: Path):
+    # 1. ARRANGE: Create a mock file system
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    py_file = src_dir / "module.py"
+    py_file.touch()
+
+    yaml_file = src_dir / "module.stitcher.yaml"
+    yaml_content = dedent("""
+    MyClass: hello
+    my_func: world
+    """)
+    yaml_file.write_text(yaml_content)
+
+    # 2. ACT
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
+    symbols, refs, doc_entries = adapter.parse(yaml_file, yaml_content)
+
+    # 3. ASSERT
+    assert len(symbols) == 0
+    assert len(refs) == 2
+    assert len(doc_entries) == 2
+
+    # Map using target_fqn as that's where SURI is stored now
+    refs_by_fqn = {ref.target_fqn: ref for ref in refs}
+    doc_entries_by_id = {de.symbol_id: de for de in doc_entries}
+
+    # Verify first reference
+    suri1 = "py://src/module.py#MyClass"
+    assert suri1 in refs_by_fqn
+    ref1 = refs_by_fqn[suri1]
+    assert ref1.kind == ReferenceType.SIDECAR_DOC_ID.value
+    assert ref1.lineno == 2
+    assert ref1.col_offset == 0
+    assert ref1.target_id is None  # Should be None until linked
+
+    # Verify second reference
+    suri2 = "py://src/module.py#my_func"
+    assert suri2 in refs_by_fqn
+    ref2 = refs_by_fqn[suri2]
+    assert ref2.kind == ReferenceType.SIDECAR_DOC_ID.value
+    assert ref2.lineno == 4
+    assert ref2.col_offset == 0
 ~~~~~
 
 ### 下一步建议
-
-现在基础的索引完整性问题已修复，建议运行测试以验证修复效果。如果测试仍然失败，我们将需要深入调查 `stitcher-refactor` 中关于 Lockfile 更新的逻辑（即为什么 Refactor 操作后 Lockfile 没有更新）。
+运行测试。如果这些单元测试通过，而 `test_refactor_move_updates_suri_in_signatures` 仍然失败，我们应检查 Refactor 流程中是否有其他组件（如 Intent 生成器）也假设了 `target_id` 已被填充，或者是否 `LockManager` 的逻辑在无索引状态下有缺陷。
