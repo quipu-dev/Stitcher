@@ -41,7 +41,7 @@ class ReferenceRecord:
     end_col_offset: int
     target_fqn: Optional[str] = None
     target_suri: Optional[str] = None  # New: Unresolved physical reference
-    target_id: Optional[str] = None    # Resolved FK
+    target_id: Optional[str] = None  # Resolved FK
     source_file_id: Optional[int] = None
     id: Optional[int] = None
 

@@ -13,7 +13,6 @@ from stitcher.spec.registry import LanguageAdapter
 from stitcher.spec.index import SymbolRecord, ReferenceRecord, DocEntryRecord
 
 from .parser import (
-    parse_doc_references,
     parse_signature_references,
 )
 from stitcher.common.services import AssetPathResolver
@@ -176,7 +175,9 @@ class SidecarAdapter(LanguageAdapter):
             if not isinstance(raw_data, dict):
                 return {}
 
-            return {fqn: serializer.from_yaml_object(val) for fqn, val in raw_data.items()}
+            return {
+                fqn: serializer.from_yaml_object(val) for fqn, val in raw_data.items()
+            }
         except Exception:
             return {}
 
@@ -228,7 +229,9 @@ class SidecarAdapter(LanguageAdapter):
             # --- CREATE PATH ---
             # For new files, create a clean, sorted baseline for predictability.
             sorted_irs = dict(sorted(irs.items()))
-            yaml_data = {fqn: serializer.to_yaml_object(ir) for fqn, ir in sorted_irs.items()}
+            yaml_data = {
+                fqn: serializer.to_yaml_object(ir) for fqn, ir in sorted_irs.items()
+            }
             formatted_data = self._to_literal_strings(yaml_data)
             string_stream = io.StringIO()
             self._yaml.dump(formatted_data, string_stream)
