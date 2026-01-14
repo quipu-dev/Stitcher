@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Acts 1: 使性能分析脚本能够处理中断", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768389616.4711854, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 优化循环依赖检测算法以解决性能问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768389906.9235613, "duration_ms": 0}}

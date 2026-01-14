@@ -16,64 +16,37 @@ class CircularDependencyRule(ArchitectureRule):
         violations: List[Violation] = []
         cycles = detect_circular_dependencies(graph)
 
-        for cycle in cycles:
-            # Create a human-readable representation of the cycle
-            # cycle is a list of nodes [n1, n2, n3] representing n1->n2->n3->n1
+        if not cycles:
+            return []
 
-            details = []
-            cycle_len = len(cycle)
-            for i in range(cycle_len):
-                u = cycle[i]
-                v = cycle[(i + 1) % cycle_len]
+        # To avoid overwhelming output and memory usage, report a summary.
+        total_cycles = len(cycles)
+        # Sort by length and then alphabetically to get a deterministic sample
+        sorted_cycles = sorted(cycles, key=lambda c: (len(c), sorted(c)))
+        sample_cycles = sorted_cycles[:3]  # Take up to 3 samples
 
-                # Extract reasons from the graph edge
-                reasons = graph[u][v].get("reasons", [])
-                if not reasons:
-                    details.append(f"\n  {u} -> {v} (reason unavailable)")
-                    continue
+        sample_details = []
+        for i, sample in enumerate(sample_cycles):
+            path_str = " -> ".join(sample) + f" -> {sample[0]}"
+            sample_details.append(f"  - Example {i+1}: {path_str}")
 
-                # For simplicity, focus on the first reason to extract code context
-                first_reason = reasons[0]
-                line_match = re.search(r"\(L(\d+)\)", first_reason)
-                line_number = int(line_match.group(1)) if line_match else -1
+        summary_report = (
+            f"\n  Found {total_cycles} circular dependencies. "
+            "This can severely impact maintainability and cause import errors."
+            "\n\n  Please break the cycles. Here are a few examples:"
+            f"\n" + "\n".join(sample_details)
+        )
 
-                snippet = ""
-                if line_number > 0:
-                    try:
-                        source_path = Path(u)
-                        if source_path.exists():
-                            lines = source_path.read_text(encoding="utf-8").splitlines()
-                            start = max(0, line_number - 3)
-                            end = min(len(lines), line_number + 2)
+        # An architecture violation applies to the whole project. We report it once.
+        # We use the first file of the first detected cycle as the primary "location" for reporting.
+        report_location = sorted_cycles[0][0]
 
-                            snippet_lines = []
-                            for idx, line_content in enumerate(
-                                lines[start:end], start=start + 1
-                            ):
-                                prefix = "> " if idx == line_number else "  "
-                                snippet_lines.append(
-                                    f"    {idx:4d} | {prefix}{line_content}"
-                                )
-                            snippet = "\n".join(snippet_lines)
-                    except Exception:
-                        snippet = "    <Could not read source file>"
-
-                details.append(f"\n  - In `{u}`:")
-                details.append(
-                    f"    - Causes dependency on `{v}` via import of `{first_reason}`"
-                )
-                if snippet:
-                    details.append(f"\n{snippet}")
-
-            cycle_path = "".join(details)
-
-            # An architecture violation applies to the whole project, but we use
-            # the first file in the cycle as the primary "location" for reporting.
-            violations.append(
-                Violation(
-                    kind=L.check.architecture.circular_dependency,
-                    fqn=cycle[0],
-                    context={"cycle": cycle_path},
-                )
+        violations.append(
+            Violation(
+                kind=L.check.architecture.circular_dependency,
+                fqn=report_location,
+                context={"cycle": summary_report},
             )
+        )
+
         return violations
