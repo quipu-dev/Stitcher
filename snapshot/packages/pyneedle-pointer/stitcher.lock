@@ -5,6 +5,10 @@
       "baseline_yaml_content_hash": "5e55532552577057534a84ad4cd558f486a70c923608b0f42e4ab473e8bf400e"
     },
     "py://packages/pyneedle-pointer/src/needle/pointer/__init__.py#__all__": {},
+    "py://packages/pyneedle-pointer/src/needle/pointer/__init__.py#__getattr__": {
+      "baseline_code_signature_text": "def __getattr__(name: str):",
+      "baseline_code_structure_hash": "8633e39dbba5aab35e89a79442db05c6d6fa09e0c453d2a6903bdfb5c22eaa3d"
+    },
     "py://packages/pyneedle-pointer/src/needle/pointer/__init__.py#__path__": {},
     "py://packages/pyneedle-pointer/src/needle/pointer/core.py#SemanticPointer": {
       "baseline_code_signature_text": "class SemanticPointer(SemanticPointerProtocol):",

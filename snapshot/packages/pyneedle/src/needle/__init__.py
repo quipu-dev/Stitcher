@@ -20,6 +20,7 @@ def __getattr__(name: str):
     if name in ("L", "SemanticPointer", "PointerSet"):
         # We must import all, as the module only executes once.
         from needle.pointer import L, SemanticPointer, PointerSet
+
         if name == "L":
             return L
         if name == "SemanticPointer":
@@ -27,6 +28,7 @@ def __getattr__(name: str):
         return PointerSet  # PointerSet
     elif name == "nexus":
         from needle.runtime import nexus
+
         return nexus
     elif name in ("OperatorProtocol", "SemanticPointerProtocol", "PointerSetProtocol"):
         from needle.spec import (
@@ -34,6 +36,7 @@ def __getattr__(name: str):
             SemanticPointerProtocol,
             PointerSetProtocol,
         )
+
         if name == "OperatorProtocol":
             return OperatorProtocol
         if name == "SemanticPointerProtocol":
@@ -41,6 +44,7 @@ def __getattr__(name: str):
         return PointerSetProtocol  # PointerSetProtocol
     elif name == "OverlayOperator":
         from needle.operators import OverlayOperator
+
         return OverlayOperator
 
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
