@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 修复循环依赖并验证索引缓存", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768387404.2209551, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(test): Correct spy target to validate indexer cache miss", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768387489.3532634, "duration_ms": 0}}
