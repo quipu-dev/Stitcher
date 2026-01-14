@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(workspace): 通过提取 utils 模块解决循环导入问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768374702.5623238, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M factories.py, M test_workspace.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768374836.934886, "duration_ms": 0}}

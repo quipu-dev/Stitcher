@@ -10,7 +10,7 @@ from stitcher.lang.python import (
     PythonTransformer,
     PythonFingerprintStrategy,
 )
-from stitcher.workspace.core import find_workspace_root
+from stitcher.workspace.utils import find_workspace_root
 
 from .handlers import TyperInteractionHandler
 from .interactive import TyperInteractiveRenderer

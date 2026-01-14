@@ -1,6 +1,6 @@
 import pytest
 from stitcher.workspace import Workspace, WorkspaceNotFoundError
-from stitcher.workspace.core import find_workspace_root
+from stitcher.workspace.utils import find_workspace_root
 from stitcher.test_utils import WorkspaceFactory
 
 
