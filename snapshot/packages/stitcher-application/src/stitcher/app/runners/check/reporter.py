@@ -88,19 +88,41 @@ class CheckReporter:
                 continue
 
             violations = violations_by_kind[kind]
-            # Special handling for untracked files
-            if kind == L.check.file.untracked_with_details:
-                violation = violations[0]  # There should only be one
+            
+            if kind == L.check.architecture.circular_dependency:
+                # Group violations by their SCC to print one summary per component
+                grouped_by_scc = defaultdict(list)
+                for v in violations:
+                    # A tuple of sorted nodes serves as a unique, hashable ID for an SCC
+                    scc_id = tuple(v.context.get("scc_nodes", []))
+                    if scc_id:
+                        grouped_by_scc[scc_id].append(v)
+
+                for scc_id, scc_violations in grouped_by_scc.items():
+                    # Print the summary header for this SCC
+                    first_v = scc_violations[0]
+                    bus.error(
+                        L.check.architecture.scc_summary,
+                        count=first_v.context.get("scc_size", 0),
+                        nodes="\n    ".join(scc_id),
+                    )
+                    # Then print each cycle within this SCC
+                    for v in sorted(scc_violations, key=lambda x: x.context.get("index", 0)):
+                        bus.error(v.kind, key=v.fqn, **v.context)
+
+            elif kind == L.check.file.untracked_with_details:
+                violation = violations[0]
                 keys = violation.context.get("keys", [])
                 bus.warning(kind, path=res.path, count=len(keys))
                 for key in sorted(keys):
                     bus.warning(L.check.issue.untracked_missing_key, key=key)
+            
             elif kind == L.check.file.untracked:
                 bus.warning(kind, path=res.path)
+
             else:
                 # Standard symbol-based violations
                 level = "error" if kind in res._ERROR_KINDS else "warning"
                 bus_func = getattr(bus, level)
                 for v in sorted(violations, key=lambda v: v.fqn):
-                    # Pass full context for rendering complex messages
                     bus_func(v.kind, key=v.fqn, **v.context)

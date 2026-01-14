@@ -1,63 +1,52 @@
 import networkx as nx
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Set
 
 
-def detect_circular_dependencies(graph: nx.DiGraph) -> List[List[str]]:
+def detect_circular_dependencies(graph: nx.DiGraph) -> List[Dict[str, Any]]:
     """
     Detects circular dependencies using an "Iterative Shortest Cycle Removal" strategy.
 
-    Instead of enumerating all cycles (exponential) or just finding one (insufficient),
-    this algorithm provides a heuristic "roadmap" for fixing the architecture:
-
-    1. Decompose graph into Strongly Connected Components (SCCs).
-    2. For each SCC, identify the *shortest* cycle.
-    3. Report this cycle.
-    4. Virtually "break" the cycle by removing one of its edges (simulating a fix).
-    5. Repeat until the SCC is cycle-free.
-
-    This ensures that:
-    - We report the most critical (shortest) feedback loops first.
-    - We provide a set of cycles that, if fixed, likely resolve the entire SCC.
-    - Performance is kept efficient (Polynomial) compared to exhaustive enumeration.
+    Returns a list of dictionaries, where each dictionary represents a
+    Strongly Connected Component (SCC) and contains:
+    - 'scc': A set of file paths in the component.
+    - 'cycles': A list of prioritized cycles (node lists) within that component.
     """
-    cycles = []
-    
-    # 1. Find all SCCs initially
+    scc_results = []
+
     sccs = list(nx.strongly_connected_components(graph))
 
     for scc in sccs:
-        # Skip trivial SCCs (single node without self-loop)
-        if len(scc) < 2:
+        cycles_in_scc: List[List[str]] = []
+        
+        # Handle self-loop explicitly as a cycle of one
+        if len(scc) == 1:
             node = list(scc)[0]
-            if not graph.has_edge(node, node):
-                continue
-            # Handle self-loop explicitly
-            cycles.append([node])
-            continue
+            if graph.has_edge(node, node):
+                cycles_in_scc.append([node])
+        
+        # For larger components, find cycles iteratively
+        elif len(scc) > 1:
+            subgraph = graph.subgraph(scc).copy()
+            max_iterations = 100
 
-        # Create a working subgraph for this SCC to perform destructive analysis
-        subgraph = graph.subgraph(scc).copy()
+            while max_iterations > 0:
+                cycle = _find_shortest_cycle_in_subgraph(subgraph)
+                if not cycle:
+                    break
+                
+                cycles_in_scc.append(cycle)
+                
+                # Virtual Fix: Remove the closing edge of the cycle
+                u, v = cycle[-1], cycle[0]
+                if subgraph.has_edge(u, v):
+                    subgraph.remove_edge(u, v)
 
-        # Safety break to prevent infinite loops in pathological cases
-        max_iterations = 100
+                max_iterations -= 1
 
-        while max_iterations > 0:
-            cycle = _find_shortest_cycle_in_subgraph(subgraph)
-            if not cycle:
-                break
+        if cycles_in_scc:
+            scc_results.append({"scc": scc, "cycles": cycles_in_scc})
 
-            cycles.append(cycle)
-
-            # Virtual Fix: Remove the last edge of the cycle (u -> v)
-            # cycle is a list of nodes [n1, n2, ... nk] representing n1->n2->...->nk->n1
-            # We break the closing edge (nk, n1)
-            u, v = cycle[-1], cycle[0]
-            if subgraph.has_edge(u, v):
-                subgraph.remove_edge(u, v)
-
-            max_iterations -= 1
-
-    return cycles
+    return scc_results
 
 
 def _find_shortest_cycle_in_subgraph(graph: nx.DiGraph) -> List[str]:

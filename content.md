@@ -1,72 +1,59 @@
-## [WIP] feat(analysis): 引入迭代式最短环检测算法 (Iterative Shortest Cycle Removal)
+好的，这是一个非常敏锐的观察。你指出了一个关键的开发者体验 (DX) 问题：**上下文缺失**。
+
+即使我们提供了修复路线图（优先级的环），但如果没有宏观视角，开发者就像在迷雾中摸索，不知道问题的波及范围有多大。提供所有涉事文件的列表，正是为了驱散这片迷雾。
+
+这个需求是完全可行的，而且我们的新算法已经为它打下了完美的基础。强连通分量 (SCC) 本身就定义了“所有纠缠在一起的文件集合”。我们只需要将这个信息从算法层一路传递到最终的报告层即可。
+
+我将生成一个计划来增强报告，在提供详细环路之前，先总结整个耦合组件的范围。
+
+## [WIP] feat(analysis): 在循环依赖报告中增加强耦合组件摘要
 
 ### 用户需求
 
-1.  **解决单一环反馈不足的问题**: 用户指出目前的检测虽然快，但一次只报一个环，无法提供完整的修复路线图。
-2.  **提供最短实施路线图**: 希望 Stitcher 能通过算法提供一组“最小切割集”，即修完这些就能消除所有环。
-3.  **算法模块化**: 建议将算法逻辑抽取到独立的包中，为未来的 SDK 做准备。
-4.  **更新语言包**: 确保输出信息能反映新的“路线图”或优先级特性。
+1.  **提供宏观视角**: 在报告具体的循环依赖路径之前，先列出所有参与到这个“死结”中的文件列表。
+2.  **保留路线图**: 不取代现有的“优先级环路”报告，而是在其基础上增加这个摘要信息。
 
 ### 评论
 
-这是一个极具价值的反馈，将静态分析工具从单纯的“报错”提升到了“辅助修复”的层次。
+这是一个极佳的 DX 改进。它将为开发者提供两个层面的信息：
 
-为了实现“最短实施路线图”，我将实施 **Iterative Shortest Cycle Removal (ISCR)** 启发式算法：
-1.  在 SCC 中寻找**最短**的环（通常是最根本的耦合）。
-2.  报告该环。
-3.  虚拟切断该环的一条边（模拟修复）。
-4.  重复此过程直到 SCC 被解开。
+1.  **战略层面 (耦合组件摘要)**: "你的问题区域是这 N 个文件，它们搅在了一起。"
+2.  **战术层面 (优先级环路)**: "在这个问题区域内，从这条最短的环路开始修复效率最高。"
 
-这将生成一个有序的修复列表，用户按顺序处理往往能获得最高的修复效率（多米诺效应）。同时，我将创建一个新的子包 `algo` 来容纳这些核心图算法。
+这种分层报告能帮助开发者快速评估问题的严重性，并制定更有效的重构策略。
 
 ### 目标
 
-1.  创建 `stitcher.analysis.graph.algo` 子包。
-2.  实现 `detect_circular_dependencies` 的 ISCR 算法版本。
-3.  更新 `CircularDependencyRule` 以向 Violation 上下文注入 `index` (优先级)。
-4.  更新中英文语言包，在报错信息中体现 `Priority #{index}`，强化“路线图”的心智模型。
+1.  **算法层**: 修改 `detect_circular_dependencies` 函数，使其返回每个 SCC 及其内部的环路列表。
+2.  **规则层**: 更新 `CircularDependencyRule`，将完整的 SCC 文件列表和大小信息附加到每个 `Violation` 的上下文中。
+3.  **报告层**: 修改 `CheckReporter`，使其能够识别出属于同一个 SCC 的一组 `Violation`，并为它们打印一次性的摘要头。
+4.  **语言包**: 增加新的翻译条目用于显示这个摘要信息。
 
 ### 基本原理
 
-*   **最短环优先**: 长环往往是由短环（如 A<->B）引起的。优先修复短环能最大程度简化图结构。
-*   **虚拟修复模拟**: 通过在图副本上移除边来模拟用户的修复行为，从而能够发现被当前环“掩盖”的其他独立环，提供完整的视野。
-*   **算法隔离**: 将纯粹的图算法与业务规则 (`rules/`) 和基础设施 (`builder.py`) 分离，符合关注点分离原则，也方便未来复用。
+我们将利用强连通分量 (SCC) 这个图论概念作为“耦合组件”的精确定义。
+
+1.  `detect_circular_dependencies` 将不再返回一个扁平的环路列表，而是返回一个结构化列表，每个元素包含一个 SCC (文件集合) 和该 SCC 内的环路列表。
+2.  `CircularDependencyRule` 在处理时，会将同一个 SCC 的信息（如所有文件名）附加到由它产生的所有 `Violation` 对象上。
+3.  `CheckReporter` 在报告前，会根据 `Violation` 上的 SCC 信息进行分组。对每一组，它会先打印一个包含所有文件名和数量的摘要，然后再逐一打印该组内的具体环路和修复优先级。
 
 ### 标签
 
-#intent/build #flow/ready #priority/high #comp/runtime #concept/history #scope/core #ai/instruct #task/domain/analysis #task/object/cycle-detection #task/action/optimize #task/state/continue
+#intent/build #flow/ready #priority/high #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/analysis #task/object/cycle-detection #task/action/refine #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建算法子包及核心算法
+#### Acts 1: 升级算法以返回 SCC 上下文
 
-首先创建新的包结构，并实现 `Iterative Shortest Cycle Removal` 算法。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~bash
-mkdir -p packages/stitcher-analysis/src/stitcher/analysis/graph/algo
-~~~~~
+修改 `cycles.py`，让 `detect_circular_dependencies` 返回更丰富的数据结构。
 
 ~~~~~act
-write_file
-packages/stitcher-analysis/src/stitcher/analysis/graph/algo/__init__.py
-~~~~~
-~~~~~python
-from .cycles import detect_circular_dependencies
-
-__all__ = ["detect_circular_dependencies"]
-~~~~~
-
-~~~~~act
-write_file
+patch_file
 packages/stitcher-analysis/src/stitcher/analysis/graph/algo/cycles.py
 ~~~~~
-~~~~~python
-import networkx as nx
+~~~~~python.old
 from typing import List, Optional
 
 
@@ -126,104 +113,128 @@ def detect_circular_dependencies(graph: nx.DiGraph) -> List[List[str]]:
             max_iterations -= 1
 
     return cycles
+~~~~~
+~~~~~python.new
+from typing import List, Optional, Dict, Any, Set
 
 
-def _find_shortest_cycle_in_subgraph(graph: nx.DiGraph) -> List[str]:
+def detect_circular_dependencies(graph: nx.DiGraph) -> List[Dict[str, Any]]:
     """
-    Finds the shortest cycle in the graph by iterating over all edges (u, v)
-    and finding the shortest path from v to u.
-    Returns the list of nodes in the cycle: [n1, n2, ... nk].
+    Detects circular dependencies using an "Iterative Shortest Cycle Removal" strategy.
+
+    Returns a list of dictionaries, where each dictionary represents a
+    Strongly Connected Component (SCC) and contains:
+    - 'scc': A set of file paths in the component.
+    - 'cycles': A list of prioritized cycles (node lists) within that component.
     """
-    best_cycle: Optional[List[str]] = None
+    scc_results = []
 
-    # We iterate over edges. If an edge (u, v) is part of a cycle,
-    # there must be a path v -> ... -> u.
-    # The cycle length would be len(path) + 1.
-    for u, v in graph.edges():
-        # Optimization: If we already found a cycle of length 2 (A <-> B),
-        # it is impossible to find shorter. Stop immediately.
-        if best_cycle and len(best_cycle) == 2:
-            return best_cycle
+    sccs = list(nx.strongly_connected_components(graph))
 
-        try:
-            # BFS for shortest path from target(v) back to source(u)
-            path = nx.shortest_path(graph, source=v, target=u)
-            
-            # If path is [v, x, u], and we have edge (u, v).
-            # The full cycle sequence is v -> x -> u -> v.
-            # The node list representation is [v, x, u].
-            
-            if best_cycle is None or len(path) < len(best_cycle):
-                best_cycle = path
+    for scc in sccs:
+        cycles_in_scc: List[List[str]] = []
+        
+        # Handle self-loop explicitly as a cycle of one
+        if len(scc) == 1:
+            node = list(scc)[0]
+            if graph.has_edge(node, node):
+                cycles_in_scc.append([node])
+        
+        # For larger components, find cycles iteratively
+        elif len(scc) > 1:
+            subgraph = graph.subgraph(scc).copy()
+            max_iterations = 100
 
-        except nx.NetworkXNoPath:
-            continue
+            while max_iterations > 0:
+                cycle = _find_shortest_cycle_in_subgraph(subgraph)
+                if not cycle:
+                    break
+                
+                cycles_in_scc.append(cycle)
+                
+                # Virtual Fix: Remove the closing edge of the cycle
+                u, v = cycle[-1], cycle[0]
+                if subgraph.has_edge(u, v):
+                    subgraph.remove_edge(u, v)
 
-    return best_cycle if best_cycle else []
+                max_iterations -= 1
+
+        if cycles_in_scc:
+            scc_results.append({"scc": scc, "cycles": cycles_in_scc})
+
+    return scc_results
 ~~~~~
 
-#### Acts 2: 集成算法到 Facade
+#### Acts 2: 更新规则以传递 SCC 上下文
 
-修改原有的 `algorithms.py`，使其委托给新的算法包。
-
-~~~~~act
-write_file
-packages/stitcher-analysis/src/stitcher/analysis/graph/algorithms.py
-~~~~~
-~~~~~python
-from typing import List
-import networkx as nx
-from .algo.cycles import detect_circular_dependencies
-
-
-def has_path(graph: nx.DiGraph, source: str, target: str) -> bool:
-    return nx.has_path(graph, source, target)
-
-
-# Re-export for compatibility
-__all__ = ["detect_circular_dependencies", "has_path"]
-~~~~~
-
-#### Acts 3: 更新规则逻辑注入优先级
-
-修改 `circular_dependency.py`，在生成 Violation 时注入 `index`。
+修改 `circular_dependency.py` 以处理新的数据结构，并将 SCC 信息附加到 `Violation` 上。
 
 ~~~~~act
 patch_file
 packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/circular_dependency.py
 ~~~~~
 ~~~~~python.old
-        for cycle in cycles:
-            # Create a human-readable representation of the cycle
-            # cycle is a list of nodes [n1, n2, n3] representing n1->n2->n3->n1
+from stitcher.analysis.graph.algorithms import detect_circular_dependencies
+from .protocols import ArchitectureRule
 
-            details = []
-~~~~~
-~~~~~python.new
+
+@dataclass
+class CircularDependencyRule(ArchitectureRule):
+    def check(self, graph: nx.DiGraph) -> List[Violation]:
+        violations: List[Violation] = []
+        cycles = detect_circular_dependencies(graph)
+
         for index, cycle in enumerate(cycles, start=1):
             # Create a human-readable representation of the cycle
             # cycle is a list of nodes [n1, n2, n3] representing n1->n2->n3->n1
 
             details = []
-~~~~~
+            cycle_len = len(cycle)
+            for i in range(cycle_len):
+                u = cycle[i]
+                v = cycle[(i + 1) % cycle_len]
 
-~~~~~act
-patch_file
-packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/circular_dependency.py
-~~~~~
-~~~~~python.old
-            # An architecture violation applies to the whole project, but we use
-            # the first file in the cycle as the primary "location" for reporting.
-            violations.append(
-                Violation(
-                    kind=L.check.architecture.circular_dependency,
-                    fqn=cycle[0],
-                    context={"cycle": cycle_path},
+                # Extract reasons from the graph edge
+                reasons = graph[u][v].get("reasons", [])
+                if not reasons:
+                    details.append(f"\n  {u} -> {v} (reason unavailable)")
+                    continue
+
+                # For simplicity, focus on the first reason to extract code context
+                first_reason = reasons[0]
+                line_match = re.search(r"\(L(\d+)\)", first_reason)
+                line_number = int(line_match.group(1)) if line_match else -1
+
+                snippet = ""
+                if line_number > 0:
+                    try:
+                        source_path = Path(u)
+                        if source_path.exists():
+                            lines = source_path.read_text(encoding="utf-8").splitlines()
+                            start = max(0, line_number - 3)
+                            end = min(len(lines), line_number + 2)
+
+                            snippet_lines = []
+                            for idx, line_content in enumerate(
+                                lines[start:end], start=start + 1
+                            ):
+                                prefix = "> " if idx == line_number else "  "
+                                snippet_lines.append(
+                                    f"    {idx:4d} | {prefix}{line_content}"
+                                )
+                            snippet = "\n".join(snippet_lines)
+                    except Exception:
+                        snippet = "    <Could not read source file>"
+
+                details.append(f"\n  - In `{u}`:")
+                details.append(
+                    f"    - Causes dependency on `{v}` via import of `{first_reason}`"
                 )
-            )
-        return violations
-~~~~~
-~~~~~python.new
+                if snippet:
+                    details.append(f"\n{snippet}")
+
+            cycle_path = "".join(details)
+
             # An architecture violation applies to the whole project, but we use
             # the first file in the cycle as the primary "location" for reporting.
             violations.append(
@@ -235,10 +246,170 @@ packages/stitcher-analysis/src/stitcher/analysis/rules/architecture/circular_dep
             )
         return violations
 ~~~~~
+~~~~~python.new
+from stitcher.analysis.graph.algo import detect_circular_dependencies
+from .protocols import ArchitectureRule
+
+
+@dataclass
+class CircularDependencyRule(ArchitectureRule):
+    def check(self, graph: nx.DiGraph) -> List[Violation]:
+        violations: List[Violation] = []
+        scc_results = detect_circular_dependencies(graph)
+
+        for scc_result in scc_results:
+            scc_nodes = sorted(list(scc_result["scc"]))
+            scc_size = len(scc_nodes)
+            cycles_in_scc = scc_result["cycles"]
+
+            for index, cycle in enumerate(cycles_in_scc, start=1):
+                # Create a human-readable representation of the cycle
+                details = []
+                # Handle self-loop case
+                if len(cycle) == 1:
+                    u = cycle[0]
+                    reasons = graph[u][u].get("reasons", [])
+                    reason_str = reasons[0] if reasons else "self-reference"
+                    details.append(f"\n  - In `{u}`:")
+                    details.append(
+                        f"    - Causes dependency on itself via `{reason_str}`"
+                    )
+                else:
+                    cycle_len = len(cycle)
+                    for i in range(cycle_len):
+                        u = cycle[i]
+                        v = cycle[(i + 1) % cycle_len]
+
+                        reasons = graph[u][v].get("reasons", [])
+                        if not reasons:
+                            details.append(f"\n  {u} -> {v} (reason unavailable)")
+                            continue
+                        
+                        first_reason = reasons[0]
+                        line_match = re.search(r"\(L(\d+)\)", first_reason)
+                        line_number = int(line_match.group(1)) if line_match else -1
+                        
+                        snippet = ""
+                        if line_number > 0:
+                            try:
+                                source_path = Path(u)
+                                if source_path.exists():
+                                    lines = source_path.read_text(encoding="utf-8").splitlines()
+                                    start = max(0, line_number - 3)
+                                    end = min(len(lines), line_number + 2)
+                                    
+                                    snippet_lines = [
+                                        f"    {idx:4d} | {'> ' if idx == line_number else '  '}{line}"
+                                        for idx, line in enumerate(lines[start:end], start=start + 1)
+                                    ]
+                                    snippet = "\n".join(snippet_lines)
+                            except Exception:
+                                snippet = "    <Could not read source file>"
+
+                        details.append(f"\n  - In `{u}`:")
+                        details.append(
+                            f"    - Causes dependency on `{v}` via import of `{first_reason}`"
+                        )
+                        if snippet:
+                            details.append(f"\n{snippet}")
+
+                cycle_path = "".join(details)
+
+                violations.append(
+                    Violation(
+                        kind=L.check.architecture.circular_dependency,
+                        fqn=cycle[0],
+                        context={
+                            "cycle": cycle_path,
+                            "index": index,
+                            "scc_nodes": scc_nodes,
+                            "scc_size": scc_size,
+                        },
+                    )
+                )
+        return violations
+~~~~~
+
+#### Acts 3: 更新报告器以打印摘要
+
+修改 `reporter.py`，使其能够对 `Violation` 进行分组并打印摘要。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/check/reporter.py
+~~~~~
+~~~~~python.old
+        for kind in REPORTING_ORDER:
+            if kind not in violations_by_kind:
+                continue
+
+            violations = violations_by_kind[kind]
+            # Special handling for untracked files
+            if kind == L.check.file.untracked_with_details:
+                violation = violations[0]  # There should only be one
+                keys = violation.context.get("keys", [])
+                bus.warning(kind, path=res.path, count=len(keys))
+                for key in sorted(keys):
+                    bus.warning(L.check.issue.untracked_missing_key, key=key)
+            elif kind == L.check.file.untracked:
+                bus.warning(kind, path=res.path)
+            else:
+                # Standard symbol-based violations
+                level = "error" if kind in res._ERROR_KINDS else "warning"
+                bus_func = getattr(bus, level)
+                for v in sorted(violations, key=lambda v: v.fqn):
+                    # Pass full context for rendering complex messages
+                    bus_func(v.kind, key=v.fqn, **v.context)
+~~~~~
+~~~~~python.new
+        for kind in REPORTING_ORDER:
+            if kind not in violations_by_kind:
+                continue
+
+            violations = violations_by_kind[kind]
+            
+            if kind == L.check.architecture.circular_dependency:
+                # Group violations by their SCC to print one summary per component
+                grouped_by_scc = defaultdict(list)
+                for v in violations:
+                    # A tuple of sorted nodes serves as a unique, hashable ID for an SCC
+                    scc_id = tuple(v.context.get("scc_nodes", []))
+                    if scc_id:
+                        grouped_by_scc[scc_id].append(v)
+
+                for scc_id, scc_violations in grouped_by_scc.items():
+                    # Print the summary header for this SCC
+                    first_v = scc_violations[0]
+                    bus.error(
+                        L.check.architecture.scc_summary,
+                        count=first_v.context.get("scc_size", 0),
+                        nodes="\n    ".join(scc_id),
+                    )
+                    # Then print each cycle within this SCC
+                    for v in sorted(scc_violations, key=lambda x: x.context.get("index", 0)):
+                        bus.error(v.kind, key=v.fqn, **v.context)
+
+            elif kind == L.check.file.untracked_with_details:
+                violation = violations[0]
+                keys = violation.context.get("keys", [])
+                bus.warning(kind, path=res.path, count=len(keys))
+                for key in sorted(keys):
+                    bus.warning(L.check.issue.untracked_missing_key, key=key)
+            
+            elif kind == L.check.file.untracked:
+                bus.warning(kind, path=res.path)
+
+            else:
+                # Standard symbol-based violations
+                level = "error" if kind in res._ERROR_KINDS else "warning"
+                bus_func = getattr(bus, level)
+                for v in sorted(violations, key=lambda v: v.fqn):
+                    bus_func(v.kind, key=v.fqn, **v.context)
+~~~~~
 
 #### Acts 4: 更新语言包
 
-更新语言包以显示优先级信息。
+为新的摘要信息添加翻译。
 
 ~~~~~act
 patch_file
@@ -246,12 +417,13 @@ packages/stitcher-common/src/stitcher/common/assets/needle/en/check/architecture
 ~~~~~
 ~~~~~json.old
 {
-  "circular_dependency": "   - [ARCH]      {key}: Circular dependency detected:{cycle}"
+  "circular_dependency": "   - [ARCH]      {key}: Circular dependency detected (Priority #{index}):{cycle}"
 }
 ~~~~~
 ~~~~~json.new
 {
-  "circular_dependency": "   - [ARCH]      {key}: Circular dependency detected (Priority #{index}):{cycle}"
+  "scc_summary": "\nFound an entangled component of {count} files:\n    {nodes}",
+  "circular_dependency": "   - [ARCH]      (Priority #{index}) in {key}:{cycle}"
 }
 ~~~~~
 
@@ -261,19 +433,18 @@ packages/stitcher-common/src/stitcher/common/assets/needle/zh/check/architecture
 ~~~~~
 ~~~~~json.old
 {
-  "circular_dependency": "   - [架构问题]  {key}: 检测到循环依赖:{cycle}"
+  "circular_dependency": "   - [架构问题]  {key}: 检测到循环依赖 (优先级 #{index}):{cycle}"
 }
 ~~~~~
 ~~~~~json.new
 {
-  "circular_dependency": "   - [架构问题]  {key}: 检测到循环依赖 (优先级 #{index}):{cycle}"
+  "scc_summary": "\n发现一个由 {count} 个文件组成的强耦合组件:\n    {nodes}",
+  "circular_dependency": "   - [架构问题]  (优先级 #{index}) 位于 {key}:{cycle}"
 }
 ~~~~~
 
 ### 下一步建议
 
-现在 `stitcher check` 应该能够：
-1.  极其快速地运行（得益于 SCC 预筛选）。
-2.  为每个复杂的依赖团块提供一份有序的“拆弹指南”，优先列出最短的环。
+变更已完成。现在，`stitcher check` 的输出将更加清晰和富有洞察力。请执行此计划，然后运行 `stitcher check` 体验新的报告格式。
 
-建议再次运行 `stitcher --loglevel debug check` 来验证输出的格式和速度。
+确认无误后，我们可以为这次 DX 提升创建一个最终的 `[COMMIT]` 计划。

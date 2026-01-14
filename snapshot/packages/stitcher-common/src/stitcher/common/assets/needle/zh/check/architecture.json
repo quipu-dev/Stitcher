@@ -1,3 +1,4 @@
 {
-  "circular_dependency": "   - [架构问题]  {key}: 检测到循环依赖 (优先级 #{index}):{cycle}"
+  "scc_summary": "\n发现一个由 {count} 个文件组成的强耦合组件:\n    {nodes}",
+  "circular_dependency": "   - [架构问题]  (优先级 #{index}) 位于 {key}:{cycle}"
 }

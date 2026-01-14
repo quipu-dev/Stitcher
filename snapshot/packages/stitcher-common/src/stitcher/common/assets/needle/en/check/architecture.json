@@ -1,3 +1,4 @@
 {
-  "circular_dependency": "   - [ARCH]      {key}: Circular dependency detected (Priority #{index}):{cycle}"
+  "scc_summary": "\nFound an entangled component of {count} files:\n    {nodes}",
+  "circular_dependency": "   - [ARCH]      (Priority #{index}) in {key}:{cycle}"
 }
