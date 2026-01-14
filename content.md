@@ -1,186 +1,346 @@
-好的，我们将首先执行核心的协议定义变更。这是所有后续重构的基础。
+Excellent. Proceeding with the implementation of the refactored `DocstringSerializerProtocol`.
 
-## [WIP] refactor: Clarify DocstringSerializerProtocol semantics
+## [WIP] refactor: Implement clarified DocstringSerializerProtocol
 
 ### 用户需求
 
-The user requires a refactoring of `DocstringSerializerProtocol` to clearly separate the concerns of high-fidelity, format-specific serialization (for `.yaml` files) from data-transfer-object serialization (for database storage and hashing).
+Implement the newly defined `DocstringSerializerProtocol` in all concrete serializer classes (`RawSerializer`, `StructuredSerializer`, etc.) within the `stitcher-lang-python` package. This involves replacing the old `to_yaml`/`from_yaml` methods with the new, semantically clear `to_serializable_dict`/`from_serializable_dict` and `to_yaml_object`/`from_yaml_object` methods.
 
 ### 评论
 
-This is a high-impact architectural refinement that aligns with the High-Fidelity Engineering Axioms (HFEA). By renaming the methods in the protocol, we establish a strong, unambiguous contract for all implementing classes. This eliminates semantic ambiguity and makes the data flow in dependent components (`SidecarAdapter`, `IndexStore`) cleaner and more robust. It replaces reliance on implementation details with a clear, enforceable design.
+This is the implementation phase of our architectural decision. By refactoring the concrete serializer classes, we are embedding the new, clearer contract into the codebase. The separation of logic is particularly important for `RawSerializer`, where the representation for a YAML file (potentially a raw string) differs significantly from the consistent dictionary structure required for database DTOs. This change enhances maintainability and reduces the cognitive load for future development.
 
 ### 目标
 
-1.  Modify `stitcher.spec.protocols.DocstringSerializerProtocol` to replace the ambiguous `to_yaml`/`from_yaml` methods with two pairs of semantically precise methods:
-    *   `to_serializable_dict` / `from_serializable_dict` for JSON-safe data transfer.
-    *   `to_yaml_object` / `from_yaml_object` for high-fidelity YAML representation.
-2.  Update all references to this protocol throughout the codebase to reflect the new method names.
+1.  Update `BaseSerializer` to reflect the new four-method protocol definition.
+2.  Refactor `RawSerializer` to implement all four methods, providing a consistent dictionary structure for `to_serializable_dict`.
+3.  Refactor `StructuredSerializer` to implement all four methods, correctly separating the logic for handling raw string fallbacks into `from_yaml_object`.
 
 ### 基本原理
 
-This is a cross-cutting change that affects the protocol definition and all its consumers. The plan will proceed with the following atomic `patch_file` operations:
-1.  **Update the Spec**: The `DocstringSerializerProtocol` in `packages/stitcher-spec/src/stitcher/spec/protocols.py` will be modified first to establish the new contract.
-2.  **Update Consumers**: All files that import and use `DocstringSerializerProtocol` will be updated to call the new, more specific methods. This includes `DocumentManager` in `stitcher-lang-sidecar` and the serializer implementations in `stitcher-lang-python`.
+The entire change is confined to the `serializers.py` file in `stitcher-lang-python`. We will use a series of precise `patch_file` operations to replace the outdated class and method definitions with their new, compliant versions. This ensures an atomic and complete update to the serializer implementations.
+
+1.  **`BaseSerializer`**: Replace the old two abstract methods with the new four.
+2.  **`RawSerializer`**: Replace the entire class implementation to cleanly introduce the new DTO logic alongside the existing YAML object logic.
+3.  **`StructuredSerializer`**: Replace the two old methods (`to_yaml`, `from_yaml`) with the four new ones, reusing the core logic and correctly delegating between them.
 
 ### 标签
 
-#intent/refine #flow/ready #priority/high #comp/spec #comp/sidecar #comp/python #scope/api #ai/brainstorm #task/domain/storage #task/object/sidecar-index #task/action/implementation #task/state/continue #task/status/active
+#intent/refine #flow/ready #priority/high #comp/python #scope/api #ai/instruct #task/domain/storage #task/object/sidecar-index #task/action/implementation #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: Refactor DocstringSerializerProtocol in stitcher-spec
+#### Acts 1: Refactor the BaseSerializer Protocol Definition
 
-We will redefine the protocol to have clear, distinct methods for DTO conversion and YAML object representation.
-
-~~~~~act
-patch_file
-packages/stitcher-spec/src/stitcher/spec/protocols.py
-~~~~~
-~~~~~python.old
-class DocstringSerializerProtocol(Protocol):
-    def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]: ...
-
-    def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR: ...
-~~~~~
-~~~~~python.new
-class DocstringSerializerProtocol(Protocol):
-    # For data transfer, hashing, and database storage (must be JSON-safe and deterministic)
-    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]: ...
-    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR: ...
-
-    # For high-fidelity writing to .yaml files (may contain format-specific objects)
-    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]: ...
-    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR: ...
-~~~~~
-
-#### Acts 2: Update stitcher-lang-sidecar consumers
-
-Now we update `DocumentManager` and `SidecarAdapter` to use the new protocol methods.
+First, we update the abstract base class to match the new protocol.
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py
+packages/stitcher-lang-python/src/stitcher/lang/python/docstring/serializers.py
 ~~~~~
 ~~~~~python.old
-    def load_doc_irs(
-        self, path: Path, serializer: DocstringSerializerProtocol
-    ) -> Dict[str, DocstringIR]:
-        if not path.exists():
-            return {}
+class BaseSerializer(DocstringSerializerProtocol):
+    def _extract_addons(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return {k: v for k, v in data.items() if k.startswith("Addon.")}
 
-        try:
-            with path.open("r", encoding="utf-8") as f:
-                raw_data = self._yaml.load(f)
-            if not isinstance(raw_data, dict):
-                return {}
+    def _encode_item_value(self, item: DocstringItem) -> str:
+        return item.description or ""
 
-            return {fqn: serializer.from_yaml(val) for fqn, val in raw_data.items()}
-        except Exception:
-            return {}
+    def _decode_item_value(self, value: str) -> dict:
+        return {"annotation": None, "description": value}
 
-    def save_doc_irs(
-        self,
-        path: Path,
-        irs: Dict[str, DocstringIR],
-        serializer: DocstringSerializerProtocol,
-    ) -> None:
+    def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        raise NotImplementedError
+
+    def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        raise NotImplementedError
 ~~~~~
 ~~~~~python.new
-    def load_doc_irs(
-        self, path: Path, serializer: DocstringSerializerProtocol
-    ) -> Dict[str, DocstringIR]:
-        if not path.exists():
-            return {}
+class BaseSerializer(DocstringSerializerProtocol):
+    def _extract_addons(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return {k: v for k, v in data.items() if k.startswith("Addon.")}
 
-        try:
-            with path.open("r", encoding="utf-8") as f:
-                raw_data = self._yaml.load(f)
-            if not isinstance(raw_data, dict):
-                return {}
+    def _encode_item_value(self, item: DocstringItem) -> str:
+        return item.description or ""
 
-            return {fqn: serializer.from_yaml_object(val) for fqn, val in raw_data.items()}
-        except Exception:
-            return {}
+    def _decode_item_value(self, value: str) -> dict:
+        return {"annotation": None, "description": value}
 
-    def save_doc_irs(
-        self,
-        path: Path,
-        irs: Dict[str, DocstringIR],
-        serializer: DocstringSerializerProtocol,
-    ) -> None:
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
+        raise NotImplementedError
+
+    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        raise NotImplementedError
+
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        raise NotImplementedError
 ~~~~~
+
+#### Acts 2: Refactor RawSerializer with DTO Logic
+
+Next, we replace the `RawSerializer` implementation to conform to the new protocol and introduce a canonical DTO format.
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py
+packages/stitcher-lang-python/src/stitcher/lang/python/docstring/serializers.py
 ~~~~~
 ~~~~~python.old
-            # Update the loaded data with new/modified IRs.
-            # NO SORTING is applied to preserve original key order.
-            # New keys will be appended by ruamel.yaml.
-            for fqn, ir in irs.items():
-                yaml_val = serializer.to_yaml(ir)
-                if isinstance(yaml_val, str):
-                    formatted_val = LiteralScalarString(yaml_val)
+class RawSerializer(BaseSerializer):
+    def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        summary = ir.summary or ""
+        if ir.addons:
+            data = {"Raw": summary}
+            data.update(ir.addons)
+            return data
+        return summary
+
+    def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        if isinstance(data, str):
+            return DocstringIR(summary=data)
+
+        ir = DocstringIR()
+        if isinstance(data, dict):
+            ir.summary = data.get("Raw", "")
+            ir.addons = self._extract_addons(data)
+        return ir
 ~~~~~
 ~~~~~python.new
-            # Update the loaded data with new/modified IRs.
-            # NO SORTING is applied to preserve original key order.
-            # New keys will be appended by ruamel.yaml.
-            for fqn, ir in irs.items():
-                yaml_val = serializer.to_yaml_object(ir)
-                if isinstance(yaml_val, str):
-                    formatted_val = LiteralScalarString(yaml_val)
+class RawSerializer(BaseSerializer):
+    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        summary = ir.summary or ""
+        if ir.addons:
+            data = {"Raw": summary}
+            data.update(ir.addons)
+            return data
+        return summary
+
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        if isinstance(data, str):
+            return DocstringIR(summary=data)
+
+        ir = DocstringIR()
+        if isinstance(data, dict):
+            ir.summary = data.get("Raw", "")
+            ir.addons = self._extract_addons(data)
+        return ir
+
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
+        dto: Dict[str, Any] = {"summary": ir.summary or ""}
+        if ir.addons:
+            dto["addons"] = ir.addons
+        return dto
+
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
+        return DocstringIR(
+            summary=data.get("summary", ""),
+            addons=data.get("addons", {}),
+        )
 ~~~~~
+
+#### Acts 3: Refactor StructuredSerializer Methods
+
+Finally, we refactor `StructuredSerializer` to use the new method names and correctly separate the logic.
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py
+packages/stitcher-lang-python/src/stitcher/lang/python/docstring/serializers.py
 ~~~~~
 ~~~~~python.old
-            # --- CREATE PATH ---
-            # For new files, create a clean, sorted baseline for predictability.
-            sorted_irs = dict(sorted(irs.items()))
-            yaml_data = {fqn: serializer.to_yaml(ir) for fqn, ir in sorted_irs.items()}
-            formatted_data = self._to_literal_strings(yaml_data)
-            string_stream = io.StringIO()
+    def to_yaml(self, ir: DocstringIR) -> Dict[str, Any]:
+        data = {}
+
+        if ir.summary:
+            data["Summary"] = ir.summary
+
+        if ir.extended:
+            data["Extended"] = ir.extended
+
+        for section in ir.sections:
+            key = self.KIND_TO_KEY.get(section.kind)
+            if not key:
+                # Fallback for unknown sections: use title or capitalized kind
+                key = section.title or section.kind.capitalize()
+
+            if isinstance(section.content, str):
+                data[key] = section.content
+            elif isinstance(section.content, list):
+                # Dict[name, encoded_value]
+                section_data = {}
+                for item in section.content:
+                    # If item has no name (e.g. Returns/Raises), we need a strategy.
+                    # For Returns/Raises, Google/NumPy style often puts type as name or key.
+                    # We use item.annotation as key if name is missing?
+                    # Or just a list? YAML dicts are better.
+
+                    k = item.name
+                    if not k:
+                        # Fallback for return/raises where name might be empty but annotation exists
+                        k = item.annotation or "return"  # Fallback key
+
+                    section_data[k] = self._encode_item_value(item)
+
+                data[key] = section_data
+
+        if ir.addons:
+            data.update(ir.addons)
+
+        return data
+
+    def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        # Graceful fallback if data is just a string (User switched from Raw to Structured)
+        if isinstance(data, str):
+            return DocstringIR(summary=data)
+
+        ir = DocstringIR()
+        ir.addons = self._extract_addons(data)
+
+        ir.summary = data.get("Summary")
+        ir.extended = data.get("Extended")
+
+        for key, value in data.items():
+            if key in ["Summary", "Extended"] or key.startswith("Addon."):
+                continue
+
+            kind = self.KEY_TO_KIND.get(
+                key, SectionKind.TEXT
+            )  # Default to text if unknown key
+
+            # Heuristic: If it's a dict, parse as items. If string, parse as text content.
+            if isinstance(value, dict):
+                items = []
+                for name, content in value.items():
+                    decoded = self._decode_item_value(str(content))
+
+                    # Reconstruction logic
+                    item = DocstringItem(description=decoded["description"])
+
+                    if kind in [
+                        SectionKind.RETURNS,
+                        SectionKind.YIELDS,
+                        SectionKind.RAISES,
+                    ]:
+                        # For these, the 'key' in YAML usually represents the Type/Exception
+                        # We stored it as 'name' in section_data above for persistence
+                        # But semantically it maps to annotation for Returns/Raises
+                        item.annotation = name
+                        # item.name remains None
+                    else:
+                        item.name = name
+                        if decoded["annotation"]:
+                            item.annotation = decoded["annotation"]
+
+                    items.append(item)
+
+                ir.sections.append(DocstringSection(kind=kind, content=items))
+
+            elif isinstance(value, str):
+                ir.sections.append(DocstringSection(kind=kind, content=value))
+
+        return ir
 ~~~~~
 ~~~~~python.new
-            # --- CREATE PATH ---
-            # For new files, create a clean, sorted baseline for predictability.
-            sorted_irs = dict(sorted(irs.items()))
-            yaml_data = {fqn: serializer.to_yaml_object(ir) for fqn, ir in sorted_irs.items()}
-            formatted_data = self._to_literal_strings(yaml_data)
-            string_stream = io.StringIO()
-~~~~~
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
+        data = {}
 
-~~~~~act
-patch_file
-packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/manager.py
-~~~~~
-~~~~~python.old
-    def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
-        return self._sidecar_adapter.serialize_ir(ir, self.serializer)
+        if ir.summary:
+            data["Summary"] = ir.summary
 
-    def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
-        return self.serializer.from_yaml(data)
+        if ir.extended:
+            data["Extended"] = ir.extended
 
-    def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
-        return self._serialize_ir(ir)
-~~~~~
-~~~~~python.new
-    def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
-        return self._sidecar_adapter.serialize_ir(ir, self.serializer)
+        for section in ir.sections:
+            key = self.KIND_TO_KEY.get(section.kind)
+            if not key:
+                # Fallback for unknown sections: use title or capitalized kind
+                key = section.title or section.kind.capitalize()
 
-    def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
-        return self.serializer.from_yaml_object(data)
+            if isinstance(section.content, str):
+                data[key] = section.content
+            elif isinstance(section.content, list):
+                # Dict[name, encoded_value]
+                section_data = {}
+                for item in section.content:
+                    # If item has no name (e.g. Returns/Raises), we need a strategy.
+                    # For Returns/Raises, Google/NumPy style often puts type as name or key.
+                    # We use item.annotation as key if name is missing?
+                    # Or just a list? YAML dicts are better.
 
-    def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
-        return self._serialize_ir(ir)
+                    k = item.name
+                    if not k:
+                        # Fallback for return/raises where name might be empty but annotation exists
+                        k = item.annotation or "return"  # Fallback key
+
+                    section_data[k] = self._encode_item_value(item)
+
+                data[key] = section_data
+
+        if ir.addons:
+            data.update(ir.addons)
+
+        return data
+
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
+        ir = DocstringIR()
+        ir.addons = self._extract_addons(data)
+
+        ir.summary = data.get("Summary")
+        ir.extended = data.get("Extended")
+
+        for key, value in data.items():
+            if key in ["Summary", "Extended"] or key.startswith("Addon."):
+                continue
+
+            kind = self.KEY_TO_KIND.get(
+                key, SectionKind.TEXT
+            )  # Default to text if unknown key
+
+            # Heuristic: If it's a dict, parse as items. If string, parse as text content.
+            if isinstance(value, dict):
+                items = []
+                for name, content in value.items():
+                    decoded = self._decode_item_value(str(content))
+
+                    # Reconstruction logic
+                    item = DocstringItem(description=decoded["description"])
+
+                    if kind in [
+                        SectionKind.RETURNS,
+                        SectionKind.YIELDS,
+                        SectionKind.RAISES,
+                    ]:
+                        # For these, the 'key' in YAML usually represents the Type/Exception
+                        # We stored it as 'name' in section_data above for persistence
+                        # But semantically it maps to annotation for Returns/Raises
+                        item.annotation = name
+                        # item.name remains None
+                    else:
+                        item.name = name
+                        if decoded["annotation"]:
+                            item.annotation = decoded["annotation"]
+
+                    items.append(item)
+
+                ir.sections.append(DocstringSection(kind=kind, content=items))
+
+            elif isinstance(value, str):
+                ir.sections.append(DocstringSection(kind=kind, content=value))
+
+        return ir
+
+    def to_yaml_object(self, ir: DocstringIR) -> Dict[str, Any]:
+        return self.to_serializable_dict(ir)
+
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        # Graceful fallback if data is just a string (User switched from Raw to Structured)
+        if isinstance(data, str):
+            return DocstringIR(summary=data)
+        return self.from_serializable_dict(data)
 ~~~~~
 
 ### 下一步建议
-The contract is now clear. The next logical step is to implement this new contract in the concrete serializer classes within `stitcher-lang-python`: `RawSerializer`, `GoogleSerializer`, and `NumpySerializer`. I will generate a plan for that if you agree.
+The protocol implementations are now correct and robust. We have completed the foundational changes. The next step is to update the final consumer, `SidecarAdapter`, to leverage these new, clear methods for generating `DocEntryRecord`s during the indexing process. I will prepare a plan for this final integration step.

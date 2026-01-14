@@ -18,15 +18,21 @@ class BaseSerializer(DocstringSerializerProtocol):
     def _decode_item_value(self, value: str) -> dict:
         return {"annotation": None, "description": value}
 
-    def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
         raise NotImplementedError
 
-    def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
+        raise NotImplementedError
+
+    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        raise NotImplementedError
+
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
         raise NotImplementedError
 
 
 class RawSerializer(BaseSerializer):
-    def to_yaml(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
         summary = ir.summary or ""
         if ir.addons:
             data = {"Raw": summary}
@@ -34,7 +40,7 @@ class RawSerializer(BaseSerializer):
             return data
         return summary
 
-    def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
         if isinstance(data, str):
             return DocstringIR(summary=data)
 
@@ -43,6 +49,18 @@ class RawSerializer(BaseSerializer):
             ir.summary = data.get("Raw", "")
             ir.addons = self._extract_addons(data)
         return ir
+
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
+        dto: Dict[str, Any] = {"summary": ir.summary or ""}
+        if ir.addons:
+            dto["addons"] = ir.addons
+        return dto
+
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
+        return DocstringIR(
+            summary=data.get("summary", ""),
+            addons=data.get("addons", {}),
+        )
 
 
 class StructuredSerializer(BaseSerializer):
@@ -55,7 +73,7 @@ class StructuredSerializer(BaseSerializer):
         # Build reverse mapping automatically
         self.KEY_TO_KIND = {v: k for k, v in self.KIND_TO_KEY.items()}
 
-    def to_yaml(self, ir: DocstringIR) -> Dict[str, Any]:
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
         data = {}
 
         if ir.summary:
@@ -95,11 +113,7 @@ class StructuredSerializer(BaseSerializer):
 
         return data
 
-    def from_yaml(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
-        # Graceful fallback if data is just a string (User switched from Raw to Structured)
-        if isinstance(data, str):
-            return DocstringIR(summary=data)
-
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
         ir = DocstringIR()
         ir.addons = self._extract_addons(data)
 
@@ -146,6 +160,15 @@ class StructuredSerializer(BaseSerializer):
                 ir.sections.append(DocstringSection(kind=kind, content=value))
 
         return ir
+
+    def to_yaml_object(self, ir: DocstringIR) -> Dict[str, Any]:
+        return self.to_serializable_dict(ir)
+
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        # Graceful fallback if data is just a string (User switched from Raw to Structured)
+        if isinstance(data, str):
+            return DocstringIR(summary=data)
+        return self.from_serializable_dict(data)
 
 
 class GoogleSerializer(StructuredSerializer):
