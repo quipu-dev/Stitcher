@@ -94,6 +94,10 @@
       "baseline_code_structure_hash": "f89d59683438de558067208c16afd530ade146b9e043ac53ced40e6559a80857"
     },
     "py://packages/stitcher-workspace/src/stitcher/workspace/exceptions.py#WorkspaceNotFoundError.start_path": {},
+    "py://packages/stitcher-workspace/src/stitcher/workspace/utils.py#find_workspace_root": {
+      "baseline_code_signature_text": "def find_workspace_root(start_path: Path) -> Path:",
+      "baseline_code_structure_hash": "c851bfa3eef2f3e7953962b49ea9ca81912661224b188286474f7de68aabb811"
+    },
     "py://packages/stitcher-workspace/src/stitcher/workspace/workspace.py#Workspace": {
       "baseline_code_signature_text": "class Workspace:",
       "baseline_code_structure_hash": "b2a5fc0b2fb82e14bbb08d8b2421510009a0a42f1a6ee7780a11acfdaf371480"

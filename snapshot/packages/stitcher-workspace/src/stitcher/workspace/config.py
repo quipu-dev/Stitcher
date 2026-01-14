@@ -2,6 +2,8 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Any, Dict, Optional, Tuple
+from .utils import find_workspace_root
+from .exceptions import WorkspaceNotFoundError
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -18,10 +20,6 @@ class StitcherConfig:
     stub_package: Optional[str] = None
     docstring_style: str = "raw"
     peripheral_paths: List[str] = field(default_factory=list)
-
-
-from .utils import find_workspace_root
-from .exceptions import WorkspaceNotFoundError
 
 
 def _find_plugins(workspace_root: Path) -> Dict[str, str]:
