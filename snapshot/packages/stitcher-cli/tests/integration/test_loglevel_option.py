@@ -3,7 +3,7 @@ from typer.testing import CliRunner
 
 from stitcher.cli.main import app
 from stitcher.test_utils import WorkspaceFactory, SpyBus
-from needle.pointer import L
+from needle.pointer import L, SemanticPointer
 
 runner = CliRunner()
 
@@ -16,7 +16,7 @@ def workspace_factory(tmp_path, monkeypatch):
     return factory
 
 
-def assert_id_not_called(spy_bus: SpyBus, msg_id: L):
+def assert_id_not_called(spy_bus: SpyBus, msg_id: SemanticPointer):
     """Helper to assert that a specific message ID was NOT called."""
     key = str(msg_id)
     for msg in spy_bus.get_messages():
