@@ -16,7 +16,7 @@ class CircularDependencyRule(ArchitectureRule):
         violations: List[Violation] = []
         cycles = detect_circular_dependencies(graph)
 
-        for cycle in cycles:
+        for index, cycle in enumerate(cycles, start=1):
             # Create a human-readable representation of the cycle
             # cycle is a list of nodes [n1, n2, n3] representing n1->n2->n3->n1
 
@@ -73,7 +73,7 @@ class CircularDependencyRule(ArchitectureRule):
                 Violation(
                     kind=L.check.architecture.circular_dependency,
                     fqn=cycle[0],
-                    context={"cycle": cycle_path},
+                    context={"cycle": cycle_path, "index": index},
                 )
             )
         return violations

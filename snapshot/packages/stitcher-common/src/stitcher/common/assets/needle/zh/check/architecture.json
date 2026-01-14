@@ -1,3 +1,3 @@
 {
-  "circular_dependency": "   - [架构问题]  {key}: 检测到循环依赖:{cycle}"
+  "circular_dependency": "   - [架构问题]  {key}: 检测到循环依赖 (优先级 #{index}):{cycle}"
 }
