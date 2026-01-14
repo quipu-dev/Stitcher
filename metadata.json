@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M circular_dependency.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768395260.7491, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(analysis): 深度重构循环依赖分析以提升性能与修复体验", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768395267.3401382, "duration_ms": 0}}
