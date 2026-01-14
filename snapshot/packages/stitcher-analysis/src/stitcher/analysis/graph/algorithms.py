@@ -1,46 +1,79 @@
-from typing import List
+from typing import List, Set, Tuple
 import networkx as nx
 
 
-def detect_circular_dependencies(graph: nx.DiGraph) -> List[List[str]]:
-    cycles = []
-    # 1. Find all strongly connected components (SCCs).
-    # An SCC is a subgraph where every node is reachable from every other node.
-    # Any cycle must exist entirely within an SCC.
+def find_shortest_cycle(graph: nx.DiGraph) -> List[str]:
+    """
+    Finds one of the shortest cycles in a given directed graph component.
+    This implementation iterates through each node and performs a BFS to find
+    the shortest cycle starting and ending at that node.
+    """
+    shortest_cycle = None
+    nodes = list(graph.nodes)
+
+    for start_node in nodes:
+        # BFS implementation to find the shortest path back to start_node
+        # queue stores tuples of (node, path_list)
+        queue: List[Tuple[str, List[str]]] = [(start_node, [start_node])]
+        visited = {start_node}
+
+        head = 0
+        while head < len(queue):
+            current_node, path = queue[head]
+            head += 1
+
+            # If we've already found a cycle and the current path is longer,
+            # we can prune this search branch.
+            if shortest_cycle is not None and len(path) >= len(shortest_cycle):
+                continue
+
+            for neighbor in graph.successors(current_node):
+                if neighbor == start_node:
+                    # Found a cycle. Since we are using BFS, this is the shortest
+                    # cycle starting and ending at `start_node`.
+                    found_cycle = path
+                    if shortest_cycle is None or len(found_cycle) < len(shortest_cycle):
+                        shortest_cycle = found_cycle
+                    # Break from the inner loop to not explore further from this node
+                    # as we already found the shortest cycle from it.
+                    break
+                
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, path + [neighbor]))
+            else:
+                # This `else` belongs to the `for` loop. It continues if `break` was not hit.
+                continue
+            # This `break` belongs to the `while` loop.
+            break
+            
+    return shortest_cycle if shortest_cycle else []
+
+
+def detect_circular_dependencies(graph: nx.DiGraph) -> List[Tuple[Set[str], List[str]]]:
+    """
+    Detects circular dependencies by finding strongly connected components (SCCs)
+    and then finding the shortest cycle within each non-trivial SCC.
+    
+    Returns:
+        A list of tuples, where each tuple contains:
+        - A set of strings representing all nodes in the coupled component (SCC).
+        - A list of strings representing the nodes in the shortest found cycle.
+    """
+    problematic_components = []
     sccs = nx.strongly_connected_components(graph)
 
     for scc in sccs:
-        # A non-trivial SCC (potential for a cycle) has more than one node,
-        # or it's a single node that points to itself (a self-loop).
         is_trivial_scc = len(scc) < 2
         if is_trivial_scc:
-            # The type hint for scc elements is `Node`, which is generic. In our
-            # case, they are strings representing file paths.
             node = list(scc)[0]
             if not graph.has_edge(node, node):
-                continue  # Skip single-node SCCs without self-loops.
+                continue
 
-        # 2. For each non-trivial SCC, find just *one* representative cycle.
-        # This avoids the combinatorial explosion of `nx.simple_cycles`.
         scc_subgraph = graph.subgraph(scc)
-        try:
-            # `find_cycle` is highly optimized to return as soon as it finds any cycle.
-            # It returns a list of edges, e.g., [(u, v), (v, w), (w, u)].
-            # We respect the original graph's directionality.
-            cycle_edges = nx.find_cycle(scc_subgraph, orientation="original")
+        shortest_cycle_nodes = find_shortest_cycle(scc_subgraph)
 
-            # 3. Convert the edge list to a node list to maintain compatibility
-            # with the reporting rule, which expects a list of nodes [u, v, w].
-            cycle_nodes = [edge[0] for edge in cycle_edges]
-            cycles.append(cycle_nodes)
+        if shortest_cycle_nodes:
+            problematic_components.append((scc, shortest_cycle_nodes))
 
-        except nx.NetworkXNoCycle:
-            # This should theoretically not happen for a non-trivial SCC,
-            # but we include it for robustness.
-            pass
-
-    return cycles
-
-
-def has_path(graph: nx.DiGraph, source: str, target: str) -> bool:
-    return nx.has_path(graph, source, target)
+    return problematic_components
