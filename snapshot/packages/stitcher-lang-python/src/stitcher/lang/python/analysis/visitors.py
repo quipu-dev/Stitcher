@@ -1,6 +1,5 @@
-from typing import List, Optional, Set, cast
+from typing import List, Optional, cast
 
-import re
 import libcst as cst
 from libcst.metadata import PositionProvider, CodeRange
 from stitcher.spec import (

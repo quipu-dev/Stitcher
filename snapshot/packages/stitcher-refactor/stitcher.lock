@@ -259,7 +259,17 @@
       "baseline_code_signature_text": "def test_repro_sidecar_keys_should_remain_short_names_after_directory_move(tmp_path):",
       "baseline_code_structure_hash": "72d440c3b2cb5885ea53bbcf4627916c29b0aabbd8f84142fad7ef26448de00d",
       "baseline_yaml_content_hash": "a1a0a90b448a35b655ae2a2b63ace058ffa3a09bdf248d73fa41f9d12ba0dc82"
-    }
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/types.py#RefactorContext": {
+      "baseline_code_signature_text": "class RefactorContext:",
+      "baseline_code_structure_hash": "ee382f8aff665f15d490297eb9ff9581918f78a5c11248fe83c60938f55965d3"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/types.py#RefactorContext.graph": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/types.py#RefactorContext.index_store": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/types.py#RefactorContext.lock_manager": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/types.py#RefactorContext.sidecar_manager": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/types.py#RefactorContext.uri_generator": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/types.py#RefactorContext.workspace": {}
   },
   "version": "1.0"
 }
