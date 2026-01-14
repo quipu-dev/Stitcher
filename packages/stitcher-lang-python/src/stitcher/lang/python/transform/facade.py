@@ -1,5 +1,5 @@
 from typing import Dict, Optional, List
-from stitcher.lang.python.transform.cst_visitors import (
+from .cst_visitors import (
     strip_docstrings,
     inject_docstrings,
 )

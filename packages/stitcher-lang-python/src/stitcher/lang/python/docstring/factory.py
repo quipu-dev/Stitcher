@@ -1,15 +1,15 @@
 from typing import Tuple
 
 from stitcher.spec import DocstringParserProtocol, DocstringRendererProtocol
-from stitcher.lang.python.docstring.parsers import (
+from .parsers import (
     RawDocstringParser,
     GriffeDocstringParser,
 )
-from stitcher.lang.python.docstring.renderers import (
+from .renderers import (
     GoogleDocstringRenderer,
     NumpyDocstringRenderer,
 )
-from stitcher.lang.python.docstring.serializers import (
+from .serializers import (
     RawSerializer,
     GoogleSerializer,
     NumpySerializer,

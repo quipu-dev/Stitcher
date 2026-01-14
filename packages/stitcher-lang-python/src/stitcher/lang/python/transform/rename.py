@@ -1,7 +1,7 @@
 import libcst as cst
 from libcst.metadata import PositionProvider, CodeRange
 from typing import Dict, List, Tuple, Optional, cast
-from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
+from ..analysis.models import UsageLocation, ReferenceType
 
 
 class SymbolRenamerTransformer(cst.CSTTransformer):

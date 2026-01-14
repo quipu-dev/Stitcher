@@ -4,7 +4,7 @@ from typing import List, Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from stitcher.refactor.migration import MigrationSpec
-from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.types import RefactorContext
 from stitcher.common.transaction import (
     FileOp,
     MoveFileOp,

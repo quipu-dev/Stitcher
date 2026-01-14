@@ -8,10 +8,10 @@ from stitcher.spec import IndexStoreProtocol
 from stitcher.index.indexer import FileIndexer
 from stitcher.refactor.engine import (
     SemanticGraph,
-    RefactorContext,
     Planner,
     TransactionManager,
 )
+from stitcher.refactor.types import RefactorContext
 from stitcher.refactor.migration import MigrationLoader, MigrationError
 from stitcher.workspace import Workspace
 from stitcher.refactor.sidecar.manager import SidecarManager

@@ -1,6 +1,6 @@
 import json
 from stitcher.analysis.semantic import SemanticGraph
-from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.types import RefactorContext
 from stitcher.common.transaction import TransactionManager, WriteFileOp
 from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
 from stitcher.refactor.sidecar.manager import SidecarManager

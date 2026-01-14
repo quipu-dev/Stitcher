@@ -1,6 +1,5 @@
-from typing import List, Optional, Set, cast
+from typing import List, Optional, cast
 
-import re
 import libcst as cst
 from libcst.metadata import PositionProvider, CodeRange
 from stitcher.spec import (
@@ -286,95 +285,6 @@ class IRBuildingVisitor(cst.CSTVisitor):
         return result
 
 
-def _collect_annotations(module: ModuleDef) -> Set[str]:
-    annotations = set()
-
-    def add_if_exists(ann: Optional[str]):
-        if ann:
-            annotations.add(ann)
-
-    # 1. Module attributes
-    for attr in module.attributes:
-        add_if_exists(attr.annotation)
-
-    # 2. Functions (args + return)
-    def collect_from_func(func: FunctionDef):
-        add_if_exists(func.return_annotation)
-        for arg in func.args:
-            add_if_exists(arg.annotation)
-
-    for func in module.functions:
-        collect_from_func(func)
-
-    # 3. Classes (attributes + methods)
-    for cls in module.classes:
-        for attr in cls.attributes:
-            add_if_exists(attr.annotation)
-        for method in cls.methods:
-            collect_from_func(method)
-
-    return annotations
-
-
-def _has_unannotated_attributes(module: ModuleDef) -> bool:
-    # Ignore attributes that are aliases (alias_target is set)
-    if any(
-        attr.annotation is None and attr.alias_target is None
-        for attr in module.attributes
-    ):
-        return True
-    for cls in module.classes:
-        if any(
-            attr.annotation is None and attr.alias_target is None
-            for attr in cls.attributes
-        ):
-            return True
-    return False
-
-
-def _enrich_typing_imports(module: ModuleDef):
-    TYPING_SYMBOLS = {
-        "List",
-        "Dict",
-        "Tuple",
-        "Set",
-        "Optional",
-        "Union",
-        "Any",
-        "Callable",
-        "Sequence",
-        "Iterable",
-        "Type",
-        "Final",
-        "ClassVar",
-        "Mapping",
-    }
-
-    required_symbols = set()
-
-    # 1. Proactively add 'Any' if generator will need it for unannotated attributes.
-    if _has_unannotated_attributes(module):
-        required_symbols.add("Any")
-
-    # 2. Reactively find symbols used in explicit annotations.
-    annotations = _collect_annotations(module)
-    for ann in annotations:
-        for symbol in TYPING_SYMBOLS:
-            if re.search(rf"\b{symbol}\b", ann):
-                required_symbols.add(symbol)
-
-    if not required_symbols:
-        return
-
-    # 3. Add imports for required symbols that are not already imported.
-    existing_imports_text = "\n".join(module.imports)
-
-    for symbol in sorted(list(required_symbols)):
-        # Heuristic: if the symbol appears as a word in the imports, assume it's covered.
-        if not re.search(rf"\b{symbol}\b", existing_imports_text):
-            module.imports.append(f"from typing import {symbol}")
-
-
 def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
     try:
         cst_module = cst.parse_module(source_code)
@@ -397,7 +307,5 @@ def parse_source_code(source_code: str, file_path: str = "") -> ModuleDef:
         imports=visitor.imports,
         dunder_all=visitor.dunder_all,
     )
-
-    _enrich_typing_imports(module_def)
 
     return module_def
