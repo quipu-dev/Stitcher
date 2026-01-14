@@ -313,27 +313,9 @@ class StitcherApp:
 
             # --- Phase B: Architecture Check (Global) ---
             arch_violations = self.architecture_engine.analyze(self.index_store)
-            if arch_violations:
-                # Group violations by their primary file for reporting
-                violations_by_file = {}
-                for v in arch_violations:
-                    if v.fqn not in violations_by_file:
-                        violations_by_file[v.fqn] = []
-                    violations_by_file[v.fqn].append(v)
-
-                # Merge into existing results
-                for res in all_results:
-                    if res.path in violations_by_file:
-                        res.violations.extend(violations_by_file.pop(res.path))
-
-                # Add new results for any files not already in the list
-                for file_path, violations in violations_by_file.items():
-                    all_results.append(
-                        FileCheckResult(path=file_path, violations=violations)
-                    )
 
         # 9. Final Report
-        report_success = self.check_runner.report(all_results)
+        report_success = self.check_runner.report(all_results, arch_violations)
         return report_success and not self.scanner.had_errors
 
     def run_pump(

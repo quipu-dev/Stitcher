@@ -89,7 +89,7 @@ def test_check_runner_orchestrates_analysis_and_resolution(mocker):
     # 继续执行工作流
     runner.auto_reconcile_docs(results, mock_modules)
     resolution_success = runner.resolve_conflicts(results, conflicts)
-    report_success = runner.report(results)
+    report_success = runner.report(results, [])
 
     # 验证与 mock 的交互
     mock_engine.analyze.assert_called_once()
@@ -97,7 +97,7 @@ def test_check_runner_orchestrates_analysis_and_resolution(mocker):
     mock_resolver.resolve_conflicts.assert_called_once_with(
         results, conflicts, force_relink=False, reconcile=False
     )
-    mock_reporter.report.assert_called_once_with(results)
+    mock_reporter.report.assert_called_once_with(results, [])
 
     assert resolution_success is True
     assert report_success is True

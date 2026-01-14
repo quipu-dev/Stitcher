@@ -57,15 +57,27 @@
       "baseline_code_signature_text": "def create_pump_engine(differ: DifferProtocol | None = None) -> PumpEngine:",
       "baseline_code_structure_hash": "74304ee5e0dd865fb5debe1fb7dc4cb1ccde40bd17257c89ed4318890f7a9fe5"
     },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/graph/algo/__init__.py#__all__": {},
+    "py://packages/stitcher-analysis/src/stitcher/analysis/graph/algo/cycles.py#_find_shortest_cycle_in_subgraph": {
+      "baseline_code_signature_text": "def _find_shortest_cycle_in_subgraph(graph: nx.DiGraph) -> List[str]:",
+      "baseline_code_structure_hash": "c9dfe6f40da03cb1c6a45568c7e39b87f2ab86c7f76a2cdf921af556909f1267",
+      "baseline_yaml_content_hash": "6475bbcdb75627790fd4bb030191b601995f717c16e53d7bae45d4f0fe5a85db"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/graph/algo/cycles.py#detect_circular_dependencies": {
+      "baseline_code_signature_text": "def detect_circular_dependencies(graph: nx.DiGraph) -> List[Dict[str, Any]]:",
+      "baseline_code_structure_hash": "941e2dfe198e4f91d8ddbbca08ba9e18f898e761039cbb0ddbc9ca842494b579",
+      "baseline_yaml_content_hash": "01ac354f4008a75dbd7d7cbf9298fc9a71c07d8200c97c5a4a092d0e682be994"
+    },
+    "py://packages/stitcher-analysis/src/stitcher/analysis/graph/algorithms.py#__all__": {},
     "py://packages/stitcher-analysis/src/stitcher/analysis/graph/algorithms.py#detect_circular_dependencies": {
       "baseline_code_signature_text": "def detect_circular_dependencies(graph: nx.DiGraph) -> List[List[str]]:",
       "baseline_code_structure_hash": "ba1ee5b6b8e27620960925384e91df5bbf474171b569a0d0da4d4bcd5a94876d",
-      "baseline_yaml_content_hash": "0458d90a26878070f920912db032fcc5770f2f911f7d238f2bb45e10ff859f62"
+      "baseline_yaml_content_hash": "44f026a10d47113760cabbe69138fd7fc247992b58a83e20a9dbe90fa57b5362"
     },
     "py://packages/stitcher-analysis/src/stitcher/analysis/graph/algorithms.py#has_path": {
       "baseline_code_signature_text": "def has_path(graph: nx.DiGraph, source: str, target: str) -> bool:",
       "baseline_code_structure_hash": "1c0e944cbf311d22f203c57ca5c1af6dc15bb595f9fc5303008f8c011a8a9aea",
-      "baseline_yaml_content_hash": "968b7728f56b8f1317a789dde13abf82223ba405f4cb8d0a862a2673480904bc"
+      "baseline_yaml_content_hash": "fc80385771f97007021b6d0773ef26707cae558f04d88ddcb0281e57bbf54924"
     },
     "py://packages/stitcher-analysis/src/stitcher/analysis/graph/builder.py#GraphBuilder": {
       "baseline_code_signature_text": "class GraphBuilder:",

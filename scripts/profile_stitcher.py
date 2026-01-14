@@ -98,7 +98,7 @@ def main():
     print("-" * 27)
 
     profiler = Profiler(interval=0.001)
-    
+
     print(f"🚀 Profiling 'stitcher {args.command}'...")
     profiler.start()
     try:

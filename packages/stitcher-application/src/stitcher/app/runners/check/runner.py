@@ -13,6 +13,7 @@ from stitcher.spec import (
 from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.spec.interaction import InteractionContext
 from stitcher.analysis.schema import FileCheckResult as AnalysisFileCheckResult
+from stitcher.analysis.schema import Violation
 
 from .resolver import CheckResolver
 from .reporter import CheckReporter
@@ -137,5 +138,9 @@ class CheckRunner:
     def reformat_all(self, modules: List[ModuleDef]):
         self.resolver.reformat_all(modules)
 
-    def report(self, results: List[AnalysisFileCheckResult]) -> bool:
-        return self.reporter.report(results)
+    def report(
+        self,
+        file_results: List[AnalysisFileCheckResult],
+        arch_violations: List[Violation],
+    ) -> bool:
+        return self.reporter.report(file_results, arch_violations)

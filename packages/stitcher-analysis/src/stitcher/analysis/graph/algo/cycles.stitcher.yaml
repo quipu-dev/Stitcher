@@ -1,0 +1,2 @@
+_find_shortest_cycle_in_subgraph: "Finds the shortest cycle in the graph by iterating over all edges (u, v)\nand finding the shortest path from v to u.\nReturns the list of nodes in the cycle: [n1, n2, ... nk]."
+detect_circular_dependencies: "Detects circular dependencies using an \"Iterative Shortest Cycle Removal\" strategy.\n\nReturns a list of dictionaries, where each dictionary represents a\nStrongly Connected Component (SCC) and contains:\n- 'scc': A set of file paths in the component.\n- 'cycles': A list of prioritized cycles (node lists) within that component."

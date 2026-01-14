@@ -19,12 +19,20 @@ def test_detect_circular_dependencies():
     )
 
     # 2. Act
-    cycles = detect_circular_dependencies(graph)
+    scc_results = detect_circular_dependencies(graph)
 
     # 3. Assert
-    assert len(cycles) == 1
+    # We expect one SCC with cycles
+    assert len(scc_results) == 1
+    result = scc_results[0]
+
+    # Check the identified SCC nodes
+    assert sorted(list(result["scc"])) == ["a.py", "b.py", "c.py"]
+
+    # Check the cycles found within that SCC
+    assert len(result["cycles"]) == 1
     # networkx can start the cycle from any node, so we sort to have a stable check
-    assert sorted(cycles[0]) == ["a.py", "b.py", "c.py"]
+    assert sorted(result["cycles"][0]) == ["a.py", "b.py", "c.py"]
 
 
 def test_detect_circular_dependencies_no_cycles():

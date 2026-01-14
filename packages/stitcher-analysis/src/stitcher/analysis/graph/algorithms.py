@@ -1,10 +1,10 @@
-from typing import List
 import networkx as nx
-
-
-def detect_circular_dependencies(graph: nx.DiGraph) -> List[List[str]]:
-    return [list(cycle) for cycle in nx.simple_cycles(graph)]
+from .algo.cycles import detect_circular_dependencies
 
 
 def has_path(graph: nx.DiGraph, source: str, target: str) -> bool:
     return nx.has_path(graph, source, target)
+
+
+# Re-export for compatibility
+__all__ = ["detect_circular_dependencies", "has_path"]
