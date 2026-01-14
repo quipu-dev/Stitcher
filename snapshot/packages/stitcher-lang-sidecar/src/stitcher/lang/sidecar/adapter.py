@@ -188,7 +188,7 @@ class SidecarAdapter(LanguageAdapter):
             if not isinstance(raw_data, dict):
                 return {}
 
-            return {fqn: serializer.from_yaml(val) for fqn, val in raw_data.items()}
+            return {fqn: serializer.from_yaml_object(val) for fqn, val in raw_data.items()}
         except Exception:
             return {}
 
@@ -219,7 +219,7 @@ class SidecarAdapter(LanguageAdapter):
             # NO SORTING is applied to preserve original key order.
             # New keys will be appended by ruamel.yaml.
             for fqn, ir in irs.items():
-                yaml_val = serializer.to_yaml(ir)
+                yaml_val = serializer.to_yaml_object(ir)
                 if isinstance(yaml_val, str):
                     formatted_val = LiteralScalarString(yaml_val)
                 elif isinstance(yaml_val, dict):
@@ -240,7 +240,7 @@ class SidecarAdapter(LanguageAdapter):
             # --- CREATE PATH ---
             # For new files, create a clean, sorted baseline for predictability.
             sorted_irs = dict(sorted(irs.items()))
-            yaml_data = {fqn: serializer.to_yaml(ir) for fqn, ir in sorted_irs.items()}
+            yaml_data = {fqn: serializer.to_yaml_object(ir) for fqn, ir in sorted_irs.items()}
             formatted_data = self._to_literal_strings(yaml_data)
             string_stream = io.StringIO()
             self._yaml.dump(formatted_data, string_stream)

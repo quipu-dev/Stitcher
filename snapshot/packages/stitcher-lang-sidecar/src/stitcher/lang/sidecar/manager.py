@@ -41,7 +41,7 @@ class DocumentManager:
         return self._sidecar_adapter.serialize_ir(ir, self.serializer)
 
     def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
-        return self.serializer.from_yaml(data)
+        return self.serializer.from_yaml_object(data)
 
     def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
         return self._serialize_ir(ir)
