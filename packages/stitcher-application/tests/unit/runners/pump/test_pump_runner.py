@@ -11,7 +11,7 @@ from stitcher.spec import (
 )
 from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
-from stitcher.config import StitcherConfig
+from stitcher.workspace import StitcherConfig
 from stitcher.workspace import Workspace
 from stitcher.common.transaction import TransactionManager
 from stitcher.analysis.engines import PumpEngine

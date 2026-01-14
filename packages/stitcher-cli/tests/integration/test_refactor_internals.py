@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from stitcher.test_utils import WorkspaceFactory, create_populated_index
-from stitcher.config import load_config_from_path
+from stitcher.workspace import load_config_from_path
 from stitcher.workspace import Workspace
 from stitcher.refactor.engine import SemanticGraph
 

@@ -8,7 +8,7 @@ from stitcher.spec import (
     DocstringRendererProtocol,
     LanguageTransformerProtocol,
 )
-from stitcher.config import StitcherConfig
+from stitcher.workspace import StitcherConfig
 from stitcher.common.transaction import TransactionManager
 from stitcher.services import (
     ScannerService,

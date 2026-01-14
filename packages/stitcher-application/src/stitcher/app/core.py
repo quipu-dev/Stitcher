@@ -10,7 +10,7 @@ from stitcher.spec import (
     ModuleDef,
 )
 from stitcher.stubgen import StubgenService
-from stitcher.config import load_config_from_path, StitcherConfig
+from stitcher.workspace import load_config_from_path, StitcherConfig
 from stitcher.services import (
     DocumentManager,
     ScannerService,

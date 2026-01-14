@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Callable, Optional
-from stitcher.config import StitcherConfig
+from stitcher.workspace import StitcherConfig
 
 from stitcher.common import bus
 from needle.pointer import L

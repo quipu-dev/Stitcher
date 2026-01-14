@@ -1,7 +1,7 @@
 import sys
 
 from stitcher.test_utils import create_test_app
-from stitcher.config import StitcherConfig
+from stitcher.workspace import StitcherConfig
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 from stitcher.common.transaction import TransactionManager

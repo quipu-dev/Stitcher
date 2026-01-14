@@ -10,7 +10,7 @@ requires-python = ">=3.10"
 dependencies = [
     "stitcher-spec",
     "stitcher-common",
-    "stitcher-config",
+    "stitcher-workspace",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -19,5 +19,5 @@ packages = ["src/stitcher"]
 [tool.uv.sources]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
-stitcher-config = { workspace = true }
+stitcher-workspace = { workspace = true }
 stitcher-test-utils = { workspace = true }

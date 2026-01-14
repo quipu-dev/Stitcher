@@ -11,7 +11,6 @@ dependencies = [
     "stitcher-spec",
     "stitcher-common",
     "stitcher-index",
-    "stitcher-config",
     "stitcher-workspace",
     "pyneedle-pointer",
     "griffe",
@@ -25,6 +24,5 @@ packages = ["src/stitcher"]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-index = { workspace = true }
-stitcher-config = { workspace = true }
 pyneedle-pointer = { workspace = true }
 stitcher-workspace = { workspace = true }

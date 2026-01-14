@@ -13,7 +13,7 @@ from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.spec.interaction import InteractionHandler
 from stitcher.app.handlers.noop_handler import NoOpInteractionHandler
 from stitcher.app.types import PumpResult
-from stitcher.config import StitcherConfig
+from stitcher.workspace import StitcherConfig
 from stitcher.common.transaction import TransactionManager
 from stitcher.analysis.engines import PumpEngine
 from .protocols import PumpExecutorProtocol

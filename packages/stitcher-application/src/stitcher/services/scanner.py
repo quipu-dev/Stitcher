@@ -5,7 +5,7 @@ from collections import defaultdict
 from stitcher.common import bus
 from needle.pointer import L
 from stitcher.spec import ModuleDef, LanguageParserProtocol
-from stitcher.config import StitcherConfig
+from stitcher.workspace import StitcherConfig
 from stitcher.lang.python import parse_plugin_entry, InspectionError
 
 
