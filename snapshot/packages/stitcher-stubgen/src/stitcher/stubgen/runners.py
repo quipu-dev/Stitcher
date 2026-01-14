@@ -13,9 +13,9 @@ from stitcher.spec import (
     DocstringRendererProtocol,
 )
 from stitcher.services import (
-    DocumentManager,
     ScannerService,
 )
+from stitcher.lang.sidecar import DocumentManager
 from stitcher.common.transaction import TransactionManager
 from .services import StubPackageManager
 

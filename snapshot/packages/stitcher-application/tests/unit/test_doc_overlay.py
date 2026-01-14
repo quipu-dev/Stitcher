@@ -1,7 +1,7 @@
 from pathlib import Path
 from stitcher.lang.python.uri import PythonURIGenerator
 
-from stitcher.services import DocumentManager
+from stitcher.lang.sidecar import DocumentManager
 from stitcher.lang.sidecar import SidecarAdapter
 from stitcher.lang.python.docstring import RawSerializer, RawDocstringParser
 from stitcher.spec import ModuleDef, FunctionDef, DocstringIR

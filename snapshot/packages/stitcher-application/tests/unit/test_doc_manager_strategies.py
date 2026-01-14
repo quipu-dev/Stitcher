@@ -1,6 +1,6 @@
 import pytest
 from stitcher.lang.python.uri import PythonURIGenerator
-from stitcher.services import DocumentManager
+from stitcher.lang.sidecar import DocumentManager
 from stitcher.spec import (
     DocstringIR,
     DocstringItem,

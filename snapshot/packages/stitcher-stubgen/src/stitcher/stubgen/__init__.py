@@ -12,8 +12,8 @@ from stitcher.workspace import StitcherConfig
 from stitcher.common.transaction import TransactionManager
 from stitcher.services import (
     ScannerService,
-    DocumentManager,
 )
+from stitcher.lang.sidecar import DocumentManager
 from .runners import GenerateRunner
 from .services import StubPackageManager
 from .generator import PythonStubGenerator

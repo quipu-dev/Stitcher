@@ -2,7 +2,7 @@ import pytest
 from stitcher.lang.python.uri import PythonURIGenerator
 from unittest.mock import MagicMock
 from stitcher.app.runners.pump.executor import PumpExecutor
-from stitcher.services import DocumentManager, DocstringMerger
+from stitcher.lang.sidecar import DocumentManager, DocstringMerger
 from stitcher.spec import (
     ModuleDef,
     FunctionDef,
