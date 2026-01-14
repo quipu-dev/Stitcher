@@ -92,7 +92,9 @@ class StitcherApp:
         # Sidecar Adapter (NEW)
         sidecar_uri_generator = SidecarURIGenerator()
         sidecar_adapter = SidecarIndexerAdapter(root_path, sidecar_uri_generator)
-        self.file_indexer.register_adapter(".stitcher.yaml", sidecar_adapter)
+        # Register for .yaml because FileIndexer uses path.suffix.
+        # The adapter itself filters for .stitcher.yaml files.
+        self.file_indexer.register_adapter(".yaml", sidecar_adapter)
 
         # 4. Runners (Command Handlers)
         check_resolver = CheckResolver(

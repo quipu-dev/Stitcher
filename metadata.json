@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: Centralize DB initialization in StitcherApp constructor", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768386265.8183837, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 将 Sidecar 适配器注册到 .yaml 后缀以确保正确索引", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768386440.3013082, "duration_ms": 0}}

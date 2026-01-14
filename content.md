@@ -1,98 +1,57 @@
-My apologies. It seems my previous fix was incomplete. The error is still occurring, but now only in two specific test files within the `stitcher-cli` package.
+这是关于将 Sidecar 提升为索引一等公民的重构计划的最后一步。
 
-This pattern strongly indicates that these tests are not using the test helpers I previously patched and are instead instantiating the application in a way that bypasses the database initialization. I will now implement a more robust and centralized fix to resolve this permanently.
-
-## [WIP] fix: Centralize DB initialization in StitcherApp constructor
-
-### 错误分析
-The remaining `sqlite3.OperationalError: no such table: symbols` failures are isolated to tests in `stitcher-cli`. These tests import and use a global `StitcherApp` instance. My previous fix correctly added database initialization to a test helper (`create_test_app`), but these failing tests do not use that helper. The root cause is that the `StitcherApp` constructor itself does not guarantee that the database is initialized, making its instances unreliable without an explicit, external call to `initialize()`.
+## [WIP] fix: 将 Sidecar 适配器注册到 .yaml 后缀以确保正确索引
 
 ### 用户需求
-Fix the final two test failures by ensuring any instance of `StitcherApp` is created with a fully initialized database, making the test environment and production behavior consistent and robust.
+确保 `IndexRunner` 能够正确识别并索引 `.stitcher.yaml` 文件。由于 `pathlib` 的后缀处理机制，直接注册 `.stitcher.yaml` 会导致 `FileIndexer` 无法匹配到文件（因为它看到的后缀是 `.yaml`），从而导致 Sidecar 文件被跳过，无法进入索引。
 
 ### 评论
-This is the definitive fix for this class of errors. By moving the initialization logic into the `StitcherApp` constructor, we establish a class invariant: any `StitcherApp` object is guaranteed to have a ready-to-use database. This is a cleaner, more reliable design that prevents similar errors in the future, regardless of how the application is instantiated in tests or production.
+这是一个关键的配置修正。虽然我们创建了专门的 `SidecarIndexerAdapter`，但如果它没有被正确地钩挂到文件索引流程中，整个架构升级就无法生效。将适配器注册到 `.yaml` 后缀，并依赖适配器内部的逻辑来过滤非 Sidecar 文件，是目前最稳妥的集成方式。
 
 ### 目标
-1.  Modify `StitcherApp.__init__` to call `self.db_manager.initialize()` immediately after the database manager is created.
-2.  Remove the now-redundant `initialize()` call from the `create_test_app` test helper to avoid duplication.
+1.  修改 `StitcherApp` 的初始化逻辑，将 `SidecarIndexerAdapter` 注册到 `.yaml` 扩展名，而不是 `.stitcher.yaml`。
 
 ### 基本原理
-By making database initialization a responsibility of the `StitcherApp` constructor, we ensure that every instance of the application is created in a valid, usable state. The `initialize` method is idempotent (`CREATE TABLE IF NOT EXISTS`), so this change is safe and has negligible performance impact. This change centralizes the setup logic and makes the system more predictable.
+`FileIndexer` 使用 `path.suffix` 来查找适配器。对于 `module.stitcher.yaml`，其 suffix 是 `.yaml`。因此，必须将适配器注册为 `.yaml` 处理程序。适配器内部已经包含了 `if not file_path.name.endswith(".stitcher.yaml"): return` 的守卫逻辑，因此这不会导致处理错误的 YAML 文件。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/application #comp/tests #concept/state #scope/core #ai/instruct #task/domain/testing #task/object/database #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/application #comp/indexer #concept/config #scope/core #ai/instruct #task/domain/indexing #task/object/adapter #task/action/register #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: Centralize database initialization in the application core
-I will add the `initialize()` call to `StitcherApp.__init__`, ensuring every instance is created with a valid database schema.
+#### Acts 1: Correct Adapter Registration in StitcherApp
+I will modify `packages/stitcher-application/src/stitcher/app/core.py` to register the adapter with the correct file extension key.
 
 ~~~~~act
 patch_file
 packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
 ~~~~~python.old
-        # 1. Indexing Subsystem (Promoted to Priority 1 initialization)
-        index_db_path = root_path / ".stitcher" / "index" / "index.db"
-        self.db_manager = DatabaseManager(index_db_path)
-        self.index_store = IndexStore(self.db_manager)
-        self.file_indexer = FileIndexer(root_path, self.index_store)
+        # Sidecar Adapter (NEW)
+        sidecar_uri_generator = SidecarURIGenerator()
+        sidecar_adapter = SidecarIndexerAdapter(root_path, sidecar_uri_generator)
+        self.file_indexer.register_adapter(".stitcher.yaml", sidecar_adapter)
+
+        # 4. Runners (Command Handlers)
 ~~~~~
 ~~~~~python.new
-        # 1. Indexing Subsystem (Promoted to Priority 1 initialization)
-        index_db_path = root_path / ".stitcher" / "index" / "index.db"
-        self.db_manager = DatabaseManager(index_db_path)
-        self.db_manager.initialize()
-        self.index_store = IndexStore(self.db_manager)
-        self.file_indexer = FileIndexer(root_path, self.index_store)
-~~~~~
+        # Sidecar Adapter (NEW)
+        sidecar_uri_generator = SidecarURIGenerator()
+        sidecar_adapter = SidecarIndexerAdapter(root_path, sidecar_uri_generator)
+        # Register for .yaml because FileIndexer uses path.suffix.
+        # The adapter itself filters for .stitcher.yaml files.
+        self.file_indexer.register_adapter(".yaml", sidecar_adapter)
 
-#### Acts 2: Remove redundant initialization from test helper
-Now that the constructor handles initialization, I will clean up the `create_test_app` helper to remove the duplicate call.
-
-~~~~~act
-patch_file
-packages/stitcher-test-utils/src/stitcher/test_utils/helpers.py
-~~~~~
-~~~~~python.old
-def create_test_app(
-    root_path: Path, interaction_handler: Optional[InteractionHandler] = None
-) -> StitcherApp:
-    parser = GriffePythonParser()
-    transformer = PythonTransformer()
-    strategy = PythonFingerprintStrategy()
-    app = StitcherApp(
-        root_path=root_path,
-        parser=parser,
-        transformer=transformer,
-        fingerprint_strategy=strategy,
-        interaction_handler=interaction_handler,
-    )
-    # Eagerly initialize the database for test reliability.
-    # It's idempotent (CREATE TABLE IF NOT EXISTS), so it's safe to call.
-    app.db_manager.initialize()
-    return app
-~~~~~
-~~~~~python.new
-def create_test_app(
-    root_path: Path, interaction_handler: Optional[InteractionHandler] = None
-) -> StitcherApp:
-    parser = GriffePythonParser()
-    transformer = PythonTransformer()
-    strategy = PythonFingerprintStrategy()
-    app = StitcherApp(
-        root_path=root_path,
-        parser=parser,
-        transformer=transformer,
-        fingerprint_strategy=strategy,
-        interaction_handler=interaction_handler,
-    )
-    # Database is now initialized in StitcherApp constructor.
-    return app
+        # 4. Runners (Command Handlers)
 ~~~~~
 
 ### 下一步建议
-This should resolve all database-related test failures. After confirming the test suite passes, we can finally proceed to the last step of the architectural refactor: modifying the `CheckRunner` to consume data from the index, which will fully realize the planned performance improvements.
+至此，架构重构的“连线”工作已全部完成：
+1.  **Index**: Sidecar 文件被索引器识别（通过 `.yaml` 后缀）。
+2.  **Adapter**: `SidecarIndexerAdapter` 解析文件并存入 DB。
+3.  **Consumption**: `DocumentManager` 优先从 DB 读取文档数据。
+4.  **Application**: `CheckRunner` 等组件通过 `DocumentManager` 间接受益于索引加速。
+
+建议运行完整的测试套件（特别是集成测试），验证整个流程是否通畅，以及是否有性能回归。
