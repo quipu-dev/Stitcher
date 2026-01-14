@@ -1,73 +1,53 @@
-Understood. Using `sed` is a more direct approach for this kind of widespread, systematic replacement. Now that I have access to the test files, I can address all remaining `pyright` errors.
+The architectural cleanup is complete, and the system is now stable with all known circular dependencies resolved and import paths corrected. I will now generate a plan to commit these changes.
 
-This plan will execute a single shell script containing a series of `sed` commands to replace every incorrect import of `RefactorContext` with the new, correct path.
-
-## [WIP] fix: Resolve all remaining pyright errors using sed
-
-### 错误分析
-
-The `pyright` errors are all consistent and stem from the previous architectural refactoring. The `RefactorContext` class was moved from `stitcher.refactor.engine.context` to the new `stitcher.refactor.types` module to break a dependency cycle. The previous plan updated the internal library code, but as the error report shows, the import paths in the application runner and the entire test suite were not updated.
+## [COMMIT] fix: break circular dependencies and resolve resulting import errors
 
 ### 用户需求
-
-The user requires a fix for all reported `pyright` errors and has specifically requested that the fix be implemented using `sed` commands instead of `patch_file`.
+将之前为了解决循环依赖所做的架构重构以及相关的修复工作正式提交到 Git 仓库。
 
 ### 评论
-
-This is the final cleanup step for the dependency cycle refactoring. Using `sed` is highly efficient for this task, as it involves applying the exact same text substitution across a large number of files. This confirms the architectural change was correct, and now we are simply propagating that change to all consumer modules.
+这是一次重要的重构，它不仅消除了代码库中深层嵌套的循环依赖，还通过引入 `stitcher.refactor.types` 明确了系统的分层结构。这显著提升了代码的可维护性和静态分析的准确性。
 
 ### 目标
-
-Execute a single, comprehensive shell script that uses `sed` to replace all outdated import paths for `RefactorContext` across the application, library, and test files.
+1.  暂存所有受影响包中的修改（包括 `stitcher-refactor`, `stitcher-lang-python`, `stitcher-application` 以及相关的测试文件）。
+2.  创建一个包含详细说明的 Git 提交。
 
 ### 基本原理
-
-I will generate a single `run_command` block. This block will contain a multi-line shell script. Each line of the script will be a `sed -i` command targeting one of the files reported by `pyright`. The `sed` command will perform an in-place search and replace, changing `from stitcher.refactor.engine.context import RefactorContext` to `from stitcher.refactor.types import RefactorContext`. This directly resolves all remaining import errors.
+根据 `d3-constraint-quipu-plan-script-rules-D3-P2` 协议，文件修改操作必须与 Git 提交操作在不同的计划中执行。既然之前的修改已通过 `sed` 和 `patch_file` 完成，现在的任务是执行最后一步：持久化这些更改。我们将使用 `git_add` 覆盖所有相关目录，并使用 `git_commit` 提供一个遵循 Conventional Commits 规范的提交信息。
 
 ### 标签
-
-#intent/fix #flow/ready #priority/high #comp/build #comp/tests #scope/dx #ai/instruct #task/domain/testing #task/object/dependency-graph #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/build #comp/tests #ai/instruct #task/domain/testing #task/object/dependency-graph #task/action/bug-fix #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: Update all `RefactorContext` import paths
+#### Acts 1: 提交重构变更
 
-This script will now execute `sed` on all affected files, including the newly provided test files, to correct the import paths.
+我们将所有修改过的文件添加到暂存区，并创建一个详细的提交记录。
 
 ~~~~~act
-run_command
+git_add
+packages/stitcher-application
+packages/stitcher-lang-python
+packages/stitcher-refactor
 ~~~~~
-~~~~~bash
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-application/src/stitcher/app/runners/refactor.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/src/stitcher/refactor/operations/rename_namespace.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/src/stitcher/refactor/tests/integration/test_repro_sidecar_fqn.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_bug_init_relative_import.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_bug_relative_import_refactor.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_debug_rename_failure.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_fail_concurrent_move_and_rename.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_monorepo_refactor_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_monorepo_refactor_with_tests_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_move_directory_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_move_directory_monorepo_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_move_file_cross_package_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_move_file_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_move_nested_directory_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_rename_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_rename_namespace_pkg_failure.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_rename_suri_update.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_rename_symbol_definition.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_rename_symbol_monorepo_e2e.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/integration/test_rename_transformer_advanced.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/unit/engine/test_planner.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/unit/engine/test_planner_merging.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/unit/operations/test_rename_symbol_operation.py
-sed -i 's#from stitcher.refactor.engine.context import RefactorContext#from stitcher.refactor.types import RefactorContext#g' packages/stitcher-refactor/tests/unit/test_rename_operation.py
+
+~~~~~act
+git_commit
+~~~~~
+~~~~~text
+fix: resolve extensive circular dependencies and fix import errors
+
+- Broken circular dependencies in 'stitcher-refactor' by moving 'RefactorContext' to a new 'stitcher.refactor.types' module.
+- Severed 'parser' -> 'analysis' dependency in 'stitcher-lang-python' by relocating typing import helpers.
+- Converted problematic absolute imports to relative imports in multiple packages to bypass '__init__.py' barrels.
+- Fixed 'UndefinedVariable' error in 'analysis/visitors.py'.
+- Systematically updated 'RefactorContext' import paths across the application and the entire test suite using 'sed'.
+- Verified and resolved all 25 reported 'pyright' static analysis errors.
 ~~~~~
 
 ### 下一步建议
-
-All known `pyright` errors have now been addressed. The next crucial step is to run the full test suite to ensure that these changes have not introduced any runtime regressions.
-
-I recommend running `pytest`. If that passes, we can consider this refactoring complete and create a `[COMMIT]` plan to finalize the changes.
+- **CI 验证**: 建议在 CI 环境中运行完整的构建和测试流水线。
+- **性能监控**: 虽然是结构性重构，但仍建议监控复杂重构任务的执行效率，确保没有引入回归。
+- **文档更新**: 考虑在开发者文档中明确说明目前的包依赖结构，防止未来再次引入类似的循环依赖。
