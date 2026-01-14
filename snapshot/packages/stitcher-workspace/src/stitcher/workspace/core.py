@@ -10,7 +10,7 @@ try:
 except ImportError:
     import tomli as tomllib  # type: ignore
 
-from stitcher.workspace import StitcherConfig
+from .config import StitcherConfig
 from .exceptions import WorkspaceNotFoundError
 
 log = logging.getLogger(__name__)

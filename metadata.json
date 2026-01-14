@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: Correct remaining stitcher.config imports", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768373287.7734337, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: Resolve circular import in stitcher-workspace package", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768373420.4736643, "duration_ms": 0}}
