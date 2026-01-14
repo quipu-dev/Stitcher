@@ -43,7 +43,7 @@ from stitcher.lang.python.docstring import (
 )
 from stitcher.spec.interaction import InteractionContext
 from stitcher.spec.protocols import URIGeneratorProtocol
-from stitcher.lang.sidecar import LockFileManager
+from stitcher.lang.sidecar import LockFileManager, SidecarIndexerAdapter, SidecarURIGenerator
 from stitcher.lang.python import PythonURIGenerator
 
 
@@ -60,10 +60,18 @@ class StitcherApp:
         self.workspace = Workspace(root_path)
         self.fingerprint_strategy = fingerprint_strategy
         self.uri_generator: URIGeneratorProtocol = PythonURIGenerator()
-        # 1. Core Services
-        self.doc_manager = DocumentManager(root_path, self.uri_generator)
+
+        # 1. Indexing Subsystem (Promoted to Priority 1 initialization)
+        index_db_path = root_path / ".stitcher" / "index" / "index.db"
+        self.db_manager = DatabaseManager(index_db_path)
+        self.index_store = IndexStore(self.db_manager)
+        self.file_indexer = FileIndexer(root_path, self.index_store)
+
+        # 2. Core Services
+        # DocumentManager now depends on IndexStore
+        self.doc_manager = DocumentManager(root_path, self.uri_generator, self.index_store)
         self.lock_manager = LockFileManager()
-        self.uri_generator: URIGeneratorProtocol = PythonURIGenerator()
+        # self.uri_generator instantiated above
         self.scanner = ScannerService(root_path, parser)
         self.differ = Differ()
         self.merger = DocstringMerger()
@@ -71,20 +79,21 @@ class StitcherApp:
             root_path, self.scanner, self.doc_manager, transformer
         )
 
-        # 2. Indexing Subsystem (Must be initialized before runners that use it)
-        index_db_path = root_path / ".stitcher" / "index" / "index.db"
-        self.db_manager = DatabaseManager(index_db_path)
-        self.index_store = IndexStore(self.db_manager)
-        self.file_indexer = FileIndexer(root_path, self.index_store)
-
-        # Register Adapters
+        # 3. Register Adapters
         search_paths = self.workspace.get_search_paths()
+        
+        # Python Adapter
         python_adapter = PythonAdapter(
             root_path, search_paths, uri_generator=self.uri_generator
         )
         self.file_indexer.register_adapter(".py", python_adapter)
 
-        # 3. Runners (Command Handlers)
+        # Sidecar Adapter (NEW)
+        sidecar_uri_generator = SidecarURIGenerator()
+        sidecar_adapter = SidecarIndexerAdapter(root_path, sidecar_uri_generator)
+        self.file_indexer.register_adapter(".stitcher.yaml", sidecar_adapter)
+
+        # 4. Runners (Command Handlers)
         check_resolver = CheckResolver(
             root_path,
             self.workspace,

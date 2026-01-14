@@ -14,6 +14,7 @@ from stitcher.spec import (
     DocstringParserProtocol,
     DocstringSerializerProtocol,
     URIGeneratorProtocol,
+    IndexStoreProtocol,
 )
 from stitcher.lang.python.docstring import RawDocstringParser, RawSerializer
 from stitcher.common.services import AssetPathResolver
@@ -21,10 +22,16 @@ from .adapter import SidecarAdapter
 
 
 class DocumentManager:
-    def __init__(self, root_path: Path, uri_generator: URIGeneratorProtocol):
+    def __init__(
+        self,
+        root_path: Path,
+        uri_generator: URIGeneratorProtocol,
+        index_store: Optional[IndexStoreProtocol] = None,
+    ):
         self.root_path = root_path
         self.resolver = AssetPathResolver(root_path)
         self._sidecar_adapter = SidecarAdapter(root_path, uri_generator)
+        self.index_store = index_store
         # Defaults to Raw mode for backward compatibility
         self.parser: DocstringParserProtocol = RawDocstringParser()
         self.serializer: DocstringSerializerProtocol = RawSerializer()
@@ -115,7 +122,44 @@ class DocumentManager:
             return {}
         module_path = self.root_path / file_path
         doc_path = self.resolver.get_doc_path(module_path)
+
+        # 1. Try loading from Index (Unified Data Model)
+        if self.index_store:
+            try:
+                rel_doc_path = doc_path.relative_to(self.root_path).as_posix()
+                symbols = self.index_store.get_symbols_by_file_path(rel_doc_path)
+                # If we have symbols (even if empty list, meaning file tracked but empty), we trust index.
+                # However, if the file is not in index (get_symbols returns []), it might be untracked or new.
+                # For robustness, if symbols is empty list, we double check if file exists on disk?
+                # Actually, StitcherApp ensures index freshness.
+                if symbols:
+                    return self._hydrate_from_symbols(symbols)
+            except ValueError:
+                # Path issue (e.g. peripheral), fallback to IO
+                pass
+
+        # 2. Fallback to File IO (Legacy/No-Index mode)
         return self._sidecar_adapter.load_doc_irs(doc_path, self.serializer)
+
+    def _hydrate_from_symbols(
+        self, symbols: List["SymbolRecord"]
+    ) -> Dict[str, DocstringIR]:
+        docs = {}
+        for sym in symbols:
+            # We only care about doc fragments here
+            if sym.kind != "doc_fragment" or not sym.docstring_content:
+                continue
+
+            try:
+                # The content in DB is JSON-serialized View Data (from SidecarIndexerAdapter)
+                view_data = json.loads(sym.docstring_content)
+                # Convert View Data -> IR using the current configured strategy
+                ir = self.serializer.from_view_data(view_data)
+                docs[sym.name] = ir
+            except Exception:
+                # If data is corrupt, skip
+                continue
+        return docs
 
     def load_docs_for_module(self, module: ModuleDef) -> Dict[str, DocstringIR]:
         return self.load_docs_for_path(module.file_path)

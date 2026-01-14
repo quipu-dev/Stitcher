@@ -1,71 +1,33 @@
-这是一个架构重构的计划，旨在通过将 Sidecar 提升为一等索引公民来解决 `DocumentManager` 的性能瓶颈。
-
-## [WIP] feat: 将 Sidecar 提升为索引中的一等公民
+## [WIP] feat: 注册 Sidecar 索引器并接入 DocumentManager
 
 ### 用户需求
-解决 `DocumentManager` 在每次检查规则时重复进行昂贵的 IO 和 YAML 解析导致的性能问题。实施方案是将 `.stitcher.yaml` 文件视为源代码进行索引，存入数据库，从而将 O(N) 的 IO 操作转变为 O(1) 的数据库查询。
+将 Sidecar 提升为一等索引公民。上一阶段已创建适配器，本阶段需完成注册和消费逻辑，实现从索引读取 Sidecar 数据，替代文件系统读取。
 
 ### 评论
-这是一个架构级的重构，将 Sidecar 从“元数据”提升为“代码”。这不仅解决了性能问题，还为未来的文档重构（如自动重命名文档引用）奠定了基础。
+本计划执行核心的“连线”工作。
+1.  **简化适配器**: 决定将 Sidecar 数据以“View Data (JSON)”形式直接存储在索引中，避免在索引阶段进行提前序列化（因为此时不知道针对该文件的具体 docstring_style 配置）。
+2.  **重构 DocumentManager**: 增加 `load_docs_from_index` 逻辑，优先查库。
+3.  **重组 StitcherApp**: 调整初始化顺序，确保 IndexStore 在 DocumentManager 之前就绪，并注册新的 Adapter。
 
 ### 目标
-1.  创建 `SidecarURIGenerator`，用于生成 `yaml://` 协议的 URI。
-2.  创建 `SidecarIndexerAdapter`，实现 `LanguageAdapter` 协议，用于解析 Sidecar 文件并生成 `SymbolRecord` 和 `ReferenceRecord`。
-3.  确保新的 Adapter 能够正确解析 YAML 内容为 `DocstringIR` 并序列化为 JSON 存入索引。
+1.  修改 `SidecarIndexerAdapter`，移除对 `serializer` 的依赖，直接存储 JSON 化的 YAML 值。
+2.  修改 `DocumentManager`，注入 `IndexStore`，并实现从索引符号反序列化文档的逻辑。
+3.  在 `StitcherApp` 中注册 `.stitcher.yaml` 的索引适配器。
 
 ### 基本原理
-通过实现 `LanguageAdapter` 协议，我们可以利用 Stitcher 现有的增量索引机制（`FileIndexer`）来自动处理 Sidecar 文件的变更检测和解析。将解析后的数据存入 SQLite 数据库后，后续的读取操作将直接查询数据库，大幅减少 IO 开销。
+**View Data Storage Strategy**:
+Sidecar 文件本质上是结构化数据（YAML）。由于不同的文件可能对应不同的 Docstring Style (Google/Numpy/Raw)，且该配置是在 Runtime 通过 `pyproject.toml` 决定的，而索引是全局且预先构建的。因此，索引器不应尝试解析 IR，而应原样存储 YAML 数据结构（View Data）。
+`DocumentManager` 在读取时，已知晓当前的 Style 配置，此时再将 View Data 反序列化为 IR 是最安全、灵活的做法。
 
 ### 标签
-#intent/architect #intent/build #flow/draft #priority/high #comp/indexer #comp/sidecar #concept/state #scope/core #ai/instruct #task/domain/indexing #task/object/sidecar #task/action/promote-to-first-class #task/state/begin
+#intent/refine #intent/architect #flow/draft #priority/high #comp/indexer #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/indexing #task/object/sidecar #task/action/integrate
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 `SidecarURIGenerator`
-我们需要一种生成 `yaml://` URI 的机制，以便在索引中唯一标识 Sidecar 文件中的符号。
-
-~~~~~act
-write_file
-packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/uri.py
-~~~~~
-~~~~~python
-from typing import Optional
-
-from stitcher.spec import URIGeneratorProtocol
-
-
-class SidecarURIGenerator(URIGeneratorProtocol):
-    @property
-    def scheme(self) -> str:
-        return "yaml"
-
-    def generate_file_uri(self, workspace_rel_path: str) -> str:
-        return f"{self.scheme}://{workspace_rel_path}"
-
-    def generate_symbol_uri(self, workspace_rel_path: str, fragment: str) -> str:
-        return f"{self.scheme}://{workspace_rel_path}#{fragment}"
-
-    @staticmethod
-    def parse(suri: str) -> tuple[str, Optional[str]]:
-        scheme_prefix = "yaml://"
-        if not suri.startswith(scheme_prefix):
-            raise ValueError(f"Invalid Sidecar SURI: {suri}")
-
-        content = suri[len(scheme_prefix) :]
-        if "#" in content:
-            path, fragment = content.split("#", 1)
-            return path, fragment
-        return content, None
-~~~~~
-
-#### Acts 2: 创建 `SidecarIndexerAdapter`
-这是核心组件，负责解析 YAML 文件，将其转换为 Symbols (文档片段) 和 References (指向 Python 代码的引用)。
-
-我们将使用 `RawSerializer` 作为默认的回退序列化器，但也允许传入更高级的序列化器。为了简化，我们暂时在内部导入并使用 `RawSerializer`，但在构造函数中允许覆盖。
-
-我们还需要复用 `stitcher.lang.sidecar.parser` 中的解析逻辑来获取行号。
+#### Acts 1: 简化 `SidecarIndexerAdapter`
+移除序列化逻辑，改为直接存储 View Data。
 
 ~~~~~act
 write_file
@@ -82,7 +44,6 @@ from ruamel.yaml import YAML
 from stitcher.spec import URIGeneratorProtocol, DocstringSerializerProtocol
 from stitcher.spec.registry import LanguageAdapter
 from stitcher.spec.index import SymbolRecord, ReferenceRecord
-from stitcher.lang.python.docstring import RawSerializer, GoogleSerializer, NumpySerializer
 from stitcher.lang.sidecar.parser import parse_doc_references
 from stitcher.lang.python.analysis.models import ReferenceType
 
@@ -92,15 +53,9 @@ class SidecarIndexerAdapter(LanguageAdapter):
         self,
         root_path: Path,
         uri_generator: URIGeneratorProtocol,
-        serializer: Optional[DocstringSerializerProtocol] = None,
     ):
         self.root_path = root_path
         self.uri_generator = uri_generator
-        # Default to RawSerializer if none provided, though ideally the app should inject the configured one.
-        # However, for indexing, we need to handle whatever is in the file.
-        # Since we don't know the style per file, we might need a robust way to deserialize.
-        # For now, we use the injected serializer or Raw.
-        self.serializer = serializer or RawSerializer()
         self._yaml = YAML()
         self._yaml.preserve_quotes = True
 
@@ -129,12 +84,7 @@ class SidecarIndexerAdapter(LanguageAdapter):
         py_name = file_path.name.replace(".stitcher.yaml", ".py")
         py_path_rel = file_path.with_name(py_name)
         
-        # Note: We don't check if py_path exists on disk here, because we are indexing the sidecar itself.
-        # The reference is valid intent even if the python file is missing (dangling reference).
-        
         # 3. Parse references with location info using the helper
-        # parse_doc_references returns list of (fragment, lineno, col_offset)
-        # We use this to get accurate location info for symbols
         loc_map = {frag: (line, col) for frag, line, col in parse_doc_references(content)}
 
         for fragment, value in data.items():
@@ -143,22 +93,16 @@ class SidecarIndexerAdapter(LanguageAdapter):
                 continue
             
             # --- Build Symbol ---
-            # 1. URI
             suri = self.uri_generator.generate_symbol_uri(str(file_path), fragment)
-            
-            # 2. Location
             lineno, col_offset = loc_map.get(fragment, (0, 0))
             
-            # 3. Content (DocstringIR -> JSON)
-            # Use the serializer to convert the YAML value (view data) to IR
-            # Then convert IR to transfer data (JSON-safe dict) for storage
+            # STORE STRATEGY: Store raw View Data as JSON.
+            # We don't convert to IR here because we don't know the docstring style yet.
             try:
-                ir = self.serializer.from_view_data(value)
-                transfer_data = self.serializer.to_transfer_data(ir)
-                docstring_content_json = json.dumps(transfer_data, sort_keys=True)
+                # Value is the ruamel object (str or dict/map), json dump it to store
+                docstring_content_json = json.dumps(value, default=str, sort_keys=True)
                 docstring_hash = hashlib.sha256(docstring_content_json.encode("utf-8")).hexdigest()
             except Exception:
-                # Fallback for malformed data
                 docstring_content_json = "{}"
                 docstring_hash = "0" * 64
 
@@ -168,13 +112,12 @@ class SidecarIndexerAdapter(LanguageAdapter):
                 kind="doc_fragment",
                 lineno=lineno,
                 col_offset=col_offset,
-                end_lineno=lineno, # Approximation
-                end_col_offset=col_offset, # Approximation
+                end_lineno=lineno,
+                end_col_offset=col_offset,
                 logical_path=fragment,
-                canonical_fqn=fragment, # In sidecar context, fragment is the key
+                canonical_fqn=fragment, 
                 docstring_content=docstring_content_json,
                 docstring_hash=docstring_hash,
-                # Fields not relevant for sidecar symbols:
                 signature_hash=None,
                 signature_text=None,
                 alias_target_fqn=None,
@@ -183,27 +126,13 @@ class SidecarIndexerAdapter(LanguageAdapter):
             symbols.append(symbol)
 
             # --- Build Reference (Binding to Python) ---
-            # Generate the Python SURI. Note: This requires PythonURIGenerator logic ideally.
-            # But here we construct a cross-reference.
-            # The target_id should be the Python SURI.
-            # We assume standard python scheme "py://"
-            
             python_suri = f"py://{py_path_rel}#{fragment}"
-            
-            # Special handling for module docstring
             if fragment == "__doc__":
-                # Module docstring usually maps to the module symbol itself or __doc__?
-                # In PythonAdapter, module symbol is the file itself (py://path/to/file.py) without fragment
-                # BUT, PythonAdapter also emits "__doc__" as attribute? No.
-                # PythonAdapter: 
-                #   Module symbol: id=py://path/to/file.py, name=module_name
-                #   Attributes...
-                # So "__doc__" in sidecar should point to the module symbol `py://path/to/file.py`
                 python_suri = f"py://{py_path_rel}"
             
             ref = ReferenceRecord(
-                source_file_id=None, # Filled by storage
-                target_fqn=None, # We use strong ID binding
+                source_file_id=None,
+                target_fqn=None,
                 target_id=python_suri,
                 kind="doc_binding",
                 lineno=lineno,
@@ -216,57 +145,247 @@ class SidecarIndexerAdapter(LanguageAdapter):
         return symbols, references
 ~~~~~
 
-#### Acts 3: 导出新组件
-更新 `__init__.py` 以导出新的 Adapter 和 Generator。
+#### Acts 2: 更新 `DocumentManager`
+使其依赖 `IndexStore` 并实现从索引读取逻辑。
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/__init__.py
+packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/manager.py
 ~~~~~
 ~~~~~python.old
-from .adapter import SidecarAdapter
-from .lock_manager import LockFileManager
-from .parser import parse_doc_references, parse_signature_references
-from .transform import SidecarTransformContext, SidecarTransformer
-from .manager import DocumentManager
-from .merger import DocstringMerger
+import hashlib
+import json
+from pathlib import Path
+from typing import Dict, Optional, Any, Union, List, TYPE_CHECKING
 
-__all__ = [
-    "SidecarAdapter",
-    "LockFileManager",
-    "parse_doc_references",
-    "parse_signature_references",
-    "SidecarTransformContext",
-    "SidecarTransformer",
-    "DocumentManager",
-    "DocstringMerger",
-]
+if TYPE_CHECKING:
+    from stitcher.spec.index import SymbolRecord
+
+from stitcher.spec import (
+    ModuleDef,
+    ClassDef,
+    FunctionDef,
+    DocstringIR,
+    DocstringParserProtocol,
+    DocstringSerializerProtocol,
+    URIGeneratorProtocol,
+)
+from stitcher.lang.python.docstring import RawDocstringParser, RawSerializer
+from stitcher.common.services import AssetPathResolver
+from .adapter import SidecarAdapter
+
+
+class DocumentManager:
+    def __init__(self, root_path: Path, uri_generator: URIGeneratorProtocol):
+        self.root_path = root_path
+        self.resolver = AssetPathResolver(root_path)
+        self._sidecar_adapter = SidecarAdapter(root_path, uri_generator)
+        # Defaults to Raw mode for backward compatibility
+        self.parser: DocstringParserProtocol = RawDocstringParser()
+        self.serializer: DocstringSerializerProtocol = RawSerializer()
 ~~~~~
 ~~~~~python.new
-from .adapter import SidecarAdapter
-from .indexer import SidecarIndexerAdapter
-from .uri import SidecarURIGenerator
-from .lock_manager import LockFileManager
-from .parser import parse_doc_references, parse_signature_references
-from .transform import SidecarTransformContext, SidecarTransformer
-from .manager import DocumentManager
-from .merger import DocstringMerger
+import hashlib
+import json
+from pathlib import Path
+from typing import Dict, Optional, Any, Union, List, TYPE_CHECKING
 
-__all__ = [
-    "SidecarAdapter",
-    "SidecarIndexerAdapter",
-    "SidecarURIGenerator",
-    "LockFileManager",
-    "parse_doc_references",
-    "parse_signature_references",
-    "SidecarTransformContext",
-    "SidecarTransformer",
-    "DocumentManager",
-    "DocstringMerger",
-]
+if TYPE_CHECKING:
+    from stitcher.spec.index import SymbolRecord
+
+from stitcher.spec import (
+    ModuleDef,
+    ClassDef,
+    FunctionDef,
+    DocstringIR,
+    DocstringParserProtocol,
+    DocstringSerializerProtocol,
+    URIGeneratorProtocol,
+    IndexStoreProtocol,
+)
+from stitcher.lang.python.docstring import RawDocstringParser, RawSerializer
+from stitcher.common.services import AssetPathResolver
+from .adapter import SidecarAdapter
+
+
+class DocumentManager:
+    def __init__(
+        self,
+        root_path: Path,
+        uri_generator: URIGeneratorProtocol,
+        index_store: Optional[IndexStoreProtocol] = None,
+    ):
+        self.root_path = root_path
+        self.resolver = AssetPathResolver(root_path)
+        self._sidecar_adapter = SidecarAdapter(root_path, uri_generator)
+        self.index_store = index_store
+        # Defaults to Raw mode for backward compatibility
+        self.parser: DocstringParserProtocol = RawDocstringParser()
+        self.serializer: DocstringSerializerProtocol = RawSerializer()
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/manager.py
+~~~~~
+~~~~~python.old
+    def load_docs_for_path(self, file_path: str) -> Dict[str, DocstringIR]:
+        if not file_path:
+            return {}
+        module_path = self.root_path / file_path
+        doc_path = self.resolver.get_doc_path(module_path)
+        return self._sidecar_adapter.load_doc_irs(doc_path, self.serializer)
+~~~~~
+~~~~~python.new
+    def load_docs_for_path(self, file_path: str) -> Dict[str, DocstringIR]:
+        if not file_path:
+            return {}
+        module_path = self.root_path / file_path
+        doc_path = self.resolver.get_doc_path(module_path)
+
+        # 1. Try loading from Index (Unified Data Model)
+        if self.index_store:
+            try:
+                rel_doc_path = doc_path.relative_to(self.root_path).as_posix()
+                symbols = self.index_store.get_symbols_by_file_path(rel_doc_path)
+                # If we have symbols (even if empty list, meaning file tracked but empty), we trust index.
+                # However, if the file is not in index (get_symbols returns []), it might be untracked or new.
+                # For robustness, if symbols is empty list, we double check if file exists on disk?
+                # Actually, StitcherApp ensures index freshness.
+                if symbols:
+                    return self._hydrate_from_symbols(symbols)
+            except ValueError:
+                # Path issue (e.g. peripheral), fallback to IO
+                pass
+
+        # 2. Fallback to File IO (Legacy/No-Index mode)
+        return self._sidecar_adapter.load_doc_irs(doc_path, self.serializer)
+
+    def _hydrate_from_symbols(
+        self, symbols: List["SymbolRecord"]
+    ) -> Dict[str, DocstringIR]:
+        docs = {}
+        for sym in symbols:
+            # We only care about doc fragments here
+            if sym.kind != "doc_fragment" or not sym.docstring_content:
+                continue
+
+            try:
+                # The content in DB is JSON-serialized View Data (from SidecarIndexerAdapter)
+                view_data = json.loads(sym.docstring_content)
+                # Convert View Data -> IR using the current configured strategy
+                ir = self.serializer.from_view_data(view_data)
+                docs[sym.name] = ir
+            except Exception:
+                # If data is corrupt, skip
+                continue
+        return docs
+~~~~~
+
+#### Acts 3: 重组 `StitcherApp` 初始化逻辑
+调整 `packages/stitcher-application/src/stitcher/app/core.py`，改变初始化顺序并注册 Adapter。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+from stitcher.lang.sidecar import LockFileManager
+from stitcher.lang.python import PythonURIGenerator
+
+
+class StitcherApp:
+    def __init__(
+        self,
+        root_path: Path,
+        parser: LanguageParserProtocol,
+        transformer: LanguageTransformerProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
+        interaction_handler: Optional[InteractionHandler] = None,
+    ):
+        self.root_path = root_path
+        self.workspace = Workspace(root_path)
+        self.fingerprint_strategy = fingerprint_strategy
+        self.uri_generator: URIGeneratorProtocol = PythonURIGenerator()
+        # 1. Core Services
+        self.doc_manager = DocumentManager(root_path, self.uri_generator)
+        self.lock_manager = LockFileManager()
+        self.uri_generator: URIGeneratorProtocol = PythonURIGenerator()
+        self.scanner = ScannerService(root_path, parser)
+        self.differ = Differ()
+        self.merger = DocstringMerger()
+        self.stubgen_service = StubgenService(
+            root_path, self.scanner, self.doc_manager, transformer
+        )
+
+        # 2. Indexing Subsystem (Must be initialized before runners that use it)
+        index_db_path = root_path / ".stitcher" / "index" / "index.db"
+        self.db_manager = DatabaseManager(index_db_path)
+        self.index_store = IndexStore(self.db_manager)
+        self.file_indexer = FileIndexer(root_path, self.index_store)
+
+        # Register Adapters
+        search_paths = self.workspace.get_search_paths()
+        python_adapter = PythonAdapter(
+            root_path, search_paths, uri_generator=self.uri_generator
+        )
+        self.file_indexer.register_adapter(".py", python_adapter)
+
+        # 3. Runners (Command Handlers)
+~~~~~
+~~~~~python.new
+from stitcher.lang.sidecar import LockFileManager, SidecarIndexerAdapter, SidecarURIGenerator
+from stitcher.lang.python import PythonURIGenerator
+
+
+class StitcherApp:
+    def __init__(
+        self,
+        root_path: Path,
+        parser: LanguageParserProtocol,
+        transformer: LanguageTransformerProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
+        interaction_handler: Optional[InteractionHandler] = None,
+    ):
+        self.root_path = root_path
+        self.workspace = Workspace(root_path)
+        self.fingerprint_strategy = fingerprint_strategy
+        self.uri_generator: URIGeneratorProtocol = PythonURIGenerator()
+
+        # 1. Indexing Subsystem (Promoted to Priority 1 initialization)
+        index_db_path = root_path / ".stitcher" / "index" / "index.db"
+        self.db_manager = DatabaseManager(index_db_path)
+        self.index_store = IndexStore(self.db_manager)
+        self.file_indexer = FileIndexer(root_path, self.index_store)
+
+        # 2. Core Services
+        # DocumentManager now depends on IndexStore
+        self.doc_manager = DocumentManager(root_path, self.uri_generator, self.index_store)
+        self.lock_manager = LockFileManager()
+        # self.uri_generator instantiated above
+        self.scanner = ScannerService(root_path, parser)
+        self.differ = Differ()
+        self.merger = DocstringMerger()
+        self.stubgen_service = StubgenService(
+            root_path, self.scanner, self.doc_manager, transformer
+        )
+
+        # 3. Register Adapters
+        search_paths = self.workspace.get_search_paths()
+        
+        # Python Adapter
+        python_adapter = PythonAdapter(
+            root_path, search_paths, uri_generator=self.uri_generator
+        )
+        self.file_indexer.register_adapter(".py", python_adapter)
+
+        # Sidecar Adapter (NEW)
+        sidecar_uri_generator = SidecarURIGenerator()
+        sidecar_adapter = SidecarIndexerAdapter(root_path, sidecar_uri_generator)
+        self.file_indexer.register_adapter(".stitcher.yaml", sidecar_adapter)
+
+        # 4. Runners (Command Handlers)
 ~~~~~
 
 ### 下一步建议
-1.  **注册**: 在 `stitcher-application` 中配置 `FileIndexer` 以使用 `SidecarIndexerAdapter` 处理 `.stitcher.yaml` 文件。
-2.  **消费**: 更新 `DocumentManager` 以支持从 `IndexStore` 读取文档，而不是直接读取文件系统。
-3.  **测试**: 添加集成测试，验证 `.stitcher.yaml` 文件被正确索引，且 Symbols 出现在数据库中。
+我们已经完成了 Sidecar 到索引的集成。为了验证架构的正确性，我们需要添加一个端到端测试，模拟一个包含 `.stitcher.yaml` 的项目，运行 `check` 命令，并验证 `DocumentManager` 能够正确地从索引中读取文档数据。
