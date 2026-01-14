@@ -4,6 +4,8 @@ from .adapter import SidecarAdapter
 from .lock_manager import LockFileManager
 from .parser import parse_doc_references, parse_signature_references
 from .transform import SidecarTransformContext, SidecarTransformer
+from .manager import DocumentManager
+from .merger import DocstringMerger
 
 __all__ = [
     "SidecarAdapter",
@@ -12,4 +14,6 @@ __all__ = [
     "parse_signature_references",
     "SidecarTransformContext",
     "SidecarTransformer",
+    "DocumentManager",
+    "DocstringMerger",
 ]

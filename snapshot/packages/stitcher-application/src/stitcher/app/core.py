@@ -12,10 +12,9 @@ from stitcher.spec import (
 from stitcher.stubgen import StubgenService
 from stitcher.workspace import load_config_from_path, StitcherConfig
 from stitcher.services import (
-    DocumentManager,
     ScannerService,
-    DocstringMerger,
 )
+from stitcher.lang.sidecar import DocumentManager, DocstringMerger
 from stitcher.common.services import Differ
 from stitcher.spec.interaction import InteractionHandler
 from .runners.check.runner import CheckRunner
