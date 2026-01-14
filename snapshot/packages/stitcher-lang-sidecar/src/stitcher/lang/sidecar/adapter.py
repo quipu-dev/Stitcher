@@ -9,7 +9,8 @@ from stitcher.spec import DocstringIR, URIGeneratorProtocol
 from stitcher.spec.protocols import DocstringSerializerProtocol
 from stitcher.spec.registry import LanguageAdapter
 from stitcher.spec.index import SymbolRecord, ReferenceRecord
-from stitcher.lang.sidecar.parser import (
+
+from .parser import (
     parse_doc_references,
     parse_signature_references,
 )

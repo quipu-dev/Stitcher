@@ -1,14 +1,6 @@
-from typing import List, Dict, TypeAlias
+from typing import List, Dict
 
 from stitcher.refactor.operations.base import AbstractOperation
-from stitcher.refactor.operations.rename_symbol import RenameSymbolOperation
-from stitcher.refactor.operations.move_file import MoveFileOperation
-from stitcher.refactor.operations.move_directory import MoveDirectoryOperation
-
-# --- Aliases for better DX in migration scripts ---
-Rename: TypeAlias = RenameSymbolOperation
-Move: TypeAlias = MoveFileOperation
-MoveDir: TypeAlias = MoveDirectoryOperation
 
 
 class MigrationSpec:

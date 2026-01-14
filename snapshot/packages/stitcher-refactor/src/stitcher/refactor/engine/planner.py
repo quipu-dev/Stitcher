@@ -23,7 +23,7 @@ from stitcher.refactor.intent import (
     LockSymbolUpdateIntent,
     LockPathUpdateIntent,
 )
-from stitcher.refactor.engine.renamer import GlobalBatchRenamer
+from .renamer import GlobalBatchRenamer
 from stitcher.lang.sidecar import (
     SidecarTransformer,
     SidecarTransformContext,
