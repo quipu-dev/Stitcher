@@ -10,7 +10,6 @@ requires-python = ">=3.10"
 dependencies = [
     "stitcher-spec",
     "stitcher-common",
-    "stitcher-config",
     "stitcher-lang-python",
     "stitcher-stubgen",
     "stitcher-workspace",
