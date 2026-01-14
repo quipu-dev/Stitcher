@@ -1,5 +1,4 @@
 from stitcher.common.transaction import TransactionManager
-from .context import RefactorContext
 from stitcher.analysis.semantic import SemanticGraph
 from .planner import Planner
 from .intent import (
@@ -15,7 +14,6 @@ from .intent import (
 
 __all__ = [
     "TransactionManager",
-    "RefactorContext",
     "SemanticGraph",
     "Planner",
     "RefactorIntent",

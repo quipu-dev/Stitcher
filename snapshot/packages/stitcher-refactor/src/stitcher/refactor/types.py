@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from stitcher.refactor.sidecar.manager import SidecarManager
-from stitcher.workspace import Workspace
-from stitcher.spec import IndexStoreProtocol, LockManagerProtocol, URIGeneratorProtocol
 from stitcher.analysis.semantic import SemanticGraph
+from stitcher.refactor.sidecar.manager import SidecarManager
+from stitcher.spec import IndexStoreProtocol, LockManagerProtocol, URIGeneratorProtocol
+from stitcher.workspace import Workspace
 
 
 @dataclass

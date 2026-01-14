@@ -6,12 +6,13 @@ from stitcher.spec.registry import LanguageAdapter
 from stitcher.spec.index import SymbolRecord, ReferenceRecord
 
 import libcst as cst
-from stitcher.lang.python.parser.griffe import GriffePythonParser
-from stitcher.lang.python.fingerprint import PythonFingerprintStrategy
-from stitcher.lang.python.analysis.usage_visitor import UsageScanVisitor, UsageRegistry
-from stitcher.lang.python.analysis.scope import ScopeAnalyzer
 from stitcher.spec import URIGeneratorProtocol
-from stitcher.lang.python.analysis.utils import path_to_logical_fqn
+
+from .analysis.scope import ScopeAnalyzer
+from .analysis.usage_visitor import UsageRegistry, UsageScanVisitor
+from .analysis.utils import path_to_logical_fqn
+from .fingerprint import PythonFingerprintStrategy
+from .parser.griffe import GriffePythonParser
 
 
 class PythonAdapter(LanguageAdapter):

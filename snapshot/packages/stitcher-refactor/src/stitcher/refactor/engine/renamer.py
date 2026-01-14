@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import List, Dict
 from pathlib import Path
 
-from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.types import RefactorContext
 from stitcher.common.transaction import WriteFileOp
 from stitcher.lang.python.analysis.models import UsageLocation
 from stitcher.refactor.operations.transforms.rename_transformer import (

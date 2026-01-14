@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List
 
-from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.types import RefactorContext
 from stitcher.refactor.operations.base import AbstractOperation
 from stitcher.refactor.engine.utils import path_to_fqn
 from stitcher.refactor.engine.intent import (

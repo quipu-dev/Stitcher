@@ -7,8 +7,8 @@ from stitcher.spec import (
     RefactoringStrategyProtocol,
     RefactorUsage,
 )
-from stitcher.lang.python.analysis.models import UsageLocation, ReferenceType
-from stitcher.lang.python.transform.rename import SymbolRenamerTransformer
+from .analysis.models import ReferenceType, UsageLocation
+from .transform.rename import SymbolRenamerTransformer
 
 
 class PythonRefactoringStrategy(RefactoringStrategyProtocol):

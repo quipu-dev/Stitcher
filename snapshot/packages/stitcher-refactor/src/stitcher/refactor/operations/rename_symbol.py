@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from .base import AbstractOperation
 from ..engine.utils import path_to_fqn
-from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.types import RefactorContext
 from stitcher.analysis.semantic import SymbolNode
 from stitcher.refactor.engine.intent import (
     RefactorIntent,
