@@ -82,7 +82,9 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
         == initial_hashes["func"]["baseline_code_structure_hash"]
     )
 
-    expected_hash = app.doc_manager.compute_ir_hash(DocstringIR(summary=new_doc_content))
+    expected_hash = app.doc_manager.compute_ir_hash(
+        DocstringIR(summary=new_doc_content)
+    )
     assert final_hashes["func"]["baseline_yaml_content_hash"] == expected_hash
 
 

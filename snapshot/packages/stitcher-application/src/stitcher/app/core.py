@@ -43,7 +43,11 @@ from stitcher.lang.python.docstring import (
 )
 from stitcher.spec.interaction import InteractionContext
 from stitcher.spec.protocols import URIGeneratorProtocol
-from stitcher.lang.sidecar import LockFileManager, SidecarIndexerAdapter, SidecarURIGenerator
+from stitcher.lang.sidecar import (
+    LockFileManager,
+    SidecarIndexerAdapter,
+    SidecarURIGenerator,
+)
 from stitcher.lang.python import PythonURIGenerator
 
 
@@ -70,7 +74,9 @@ class StitcherApp:
 
         # 2. Core Services
         # DocumentManager now depends on IndexStore
-        self.doc_manager = DocumentManager(root_path, self.uri_generator, self.index_store)
+        self.doc_manager = DocumentManager(
+            root_path, self.uri_generator, self.index_store
+        )
         self.lock_manager = LockFileManager()
         # self.uri_generator instantiated above
         self.scanner = ScannerService(root_path, parser)
@@ -82,7 +88,7 @@ class StitcherApp:
 
         # 3. Register Adapters
         search_paths = self.workspace.get_search_paths()
-        
+
         # Python Adapter
         python_adapter = PythonAdapter(
             root_path, search_paths, uri_generator=self.uri_generator

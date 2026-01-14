@@ -1,4 +1,4 @@
-from typing import Dict, Any, Union
+from typing import Dict, Any
 from stitcher.spec import (
     DocstringIR,
     DocstringSection,
