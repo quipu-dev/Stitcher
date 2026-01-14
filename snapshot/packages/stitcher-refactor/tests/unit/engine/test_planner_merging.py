@@ -2,7 +2,7 @@ from unittest.mock import Mock, MagicMock
 from pathlib import Path
 import pytest
 
-from stitcher.refactor.engine.context import RefactorContext
+from stitcher.refactor.types import RefactorContext
 from stitcher.analysis.semantic import SemanticGraph
 from stitcher.index.store import IndexStore
 from stitcher.spec import LockManagerProtocol
