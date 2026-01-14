@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(sidecar): 修正 manager 中错误的序列化方法调用", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768383206.4939878, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): Adapt test suite to new serializer protocol", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768383424.262356, "duration_ms": 0}}

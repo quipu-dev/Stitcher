@@ -7,14 +7,14 @@ def test_hybrid_mode_serialization(tmp_path):
     """Verify that addons trigger dictionary format serialization."""
     manager = DocumentManager(tmp_path, uri_generator=PythonURIGenerator())
 
-    # Case 1: Simple IR (summary only) -> String
+    # Case 1: Simple IR (summary only) -> String (View Path)
     ir_simple = DocstringIR(summary="Simple doc.")
-    serialized = manager._serialize_ir(ir_simple)
+    serialized = manager.serializer.to_view_data(ir_simple)
     assert serialized == "Simple doc."
 
-    # Case 2: Hybrid IR (summary + addons) -> Dict
+    # Case 2: Hybrid IR (summary + addons) -> Dict (View Path)
     ir_hybrid = DocstringIR(summary="Hybrid doc.", addons={"Addon.Test": "Data"})
-    serialized_hybrid = manager._serialize_ir(ir_hybrid)
+    serialized_hybrid = manager.serializer.to_view_data(ir_hybrid)
     assert isinstance(serialized_hybrid, dict)
     assert serialized_hybrid["Raw"] == "Hybrid doc."
     assert serialized_hybrid["Addon.Test"] == "Data"
@@ -25,13 +25,13 @@ def test_hybrid_mode_deserialization(tmp_path):
     manager = DocumentManager(tmp_path, uri_generator=PythonURIGenerator())
 
     # Case 1: String -> Simple IR
-    ir_simple = manager._deserialize_ir("Simple doc.")
+    ir_simple = manager.serializer.from_view_data("Simple doc.")
     assert ir_simple.summary == "Simple doc."
     assert not ir_simple.addons
 
     # Case 2: Dict -> Hybrid IR
     data = {"Raw": "Hybrid doc.", "Addon.Test": "Data", "Other": "Ignored"}
-    ir_hybrid = manager._deserialize_ir(data)
+    ir_hybrid = manager.serializer.from_view_data(data)
     assert ir_hybrid.summary == "Hybrid doc."
     assert ir_hybrid.addons == {"Addon.Test": "Data"}
 

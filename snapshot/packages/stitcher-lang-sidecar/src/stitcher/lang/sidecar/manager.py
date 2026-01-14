@@ -46,6 +46,9 @@ class DocumentManager:
         # It's now explicitly for transfer data.
         return self._serialize_ir_for_transfer(ir)
 
+    def serialize_ir_for_view(self, ir: DocstringIR) -> Any:
+        return self.serializer.to_view_data(ir)
+
     def compute_ir_hash(self, ir: DocstringIR) -> str:
         serialized = self._serialize_ir_for_transfer(ir)
         return self.compute_yaml_content_hash(serialized)

@@ -3,7 +3,7 @@ import yaml
 from typing import List
 from stitcher.test_utils import create_test_app
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
-from stitcher.spec import ResolutionAction
+from stitcher.spec import ResolutionAction, DocstringIR
 from stitcher.test_utils import WorkspaceFactory, SpyBus, get_stored_hashes
 from needle.pointer import L
 
@@ -95,7 +95,8 @@ def func_b(x: str): # int -> str
     final_hashes = get_stored_hashes(project_root, "src/app.py")
 
     # func_a should have updated yaml hash
-    expected_doc_a_hash = app.doc_manager.compute_yaml_content_hash("New Doc A.")
+    ir_a = DocstringIR(summary="New Doc A.")
+    expected_doc_a_hash = app.doc_manager.compute_ir_hash(ir_a)
     assert final_hashes["func_a"]["baseline_yaml_content_hash"] == expected_doc_a_hash
 
     # func_b should have updated code hash due to RELINK
