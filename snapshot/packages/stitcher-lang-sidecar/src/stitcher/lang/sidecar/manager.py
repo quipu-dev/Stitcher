@@ -47,7 +47,7 @@ class DocumentManager:
         return self._serialize_ir_for_transfer(ir)
 
     def compute_ir_hash(self, ir: DocstringIR) -> str:
-        serialized = self._serialize_ir(ir)
+        serialized = self._serialize_ir_for_transfer(ir)
         return self.compute_yaml_content_hash(serialized)
 
     def dump_data(self, data: Dict[str, Any]) -> str:
