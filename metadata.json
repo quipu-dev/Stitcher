@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M factories.py, M test_workspace.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768374836.934886, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(workspace): 放宽工作区根发现条件以修复测试回归", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768374838.2881181, "duration_ms": 0}}

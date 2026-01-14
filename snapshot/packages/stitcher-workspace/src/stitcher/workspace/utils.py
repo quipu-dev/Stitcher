@@ -21,7 +21,7 @@ def find_workspace_root(start_path: Path) -> Path:
         if (parent / ".git").exists():
             return parent
 
-        # 2. Check for pyproject.toml with workspace definition
+        # 2. Check for pyproject.toml with workspace definition (stronger indicator)
         pyproject = parent / "pyproject.toml"
         if pyproject.exists():
             try:
@@ -35,7 +35,11 @@ def find_workspace_root(start_path: Path) -> Path:
                 ):
                     return parent
             except Exception:
-                pass
+                pass  # Ignore malformed toml files, let the third check handle it
+
+        # 3. Fallback to any pyproject.toml as a root indicator (for simple projects/tests)
+        if pyproject.exists():
+            return parent
 
     # No root found in the entire hierarchy
     raise WorkspaceNotFoundError(str(start_path))
