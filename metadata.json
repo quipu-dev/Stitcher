@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(serializer): 在协议层分离数据传输与视图序列化", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768383521.306885, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 将 Sidecar 提升为索引中的一等公民", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768385755.251466, "duration_ms": 0}}
