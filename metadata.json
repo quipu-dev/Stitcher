@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix: resolve circular dependencies and architectural violations", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768366530.7717898, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M stitcher.lock", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768366717.6449776, "duration_ms": 0}}
