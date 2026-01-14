@@ -14,8 +14,8 @@ from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.spec.interaction import InteractionContext
 from stitcher.analysis.schema import FileCheckResult as AnalysisFileCheckResult
 
-from stitcher.app.runners.check.resolver import CheckResolver
-from stitcher.app.runners.check.reporter import CheckReporter
+from .resolver import CheckResolver
+from .reporter import CheckReporter
 from .subject import IndexCheckSubjectAdapter, ASTCheckSubjectAdapter
 from stitcher.analysis.engines.consistency.engine import create_consistency_engine
 from stitcher.workspace import Workspace

@@ -18,15 +18,13 @@ from stitcher.services import (
 )
 from stitcher.common.services import Differ
 from stitcher.spec.interaction import InteractionHandler
-from .runners import (
-    CheckRunner,
-    InitRunner,
-    PumpRunner,
-    TransformRunner,
-    CoverageRunner,
-    RefactorRunner,
-    IndexRunner,
-)
+from .runners.check.runner import CheckRunner
+from .runners.init import InitRunner
+from .runners.pump.runner import PumpRunner
+from .runners.transform import TransformRunner
+from .runners.coverage import CoverageRunner
+from .runners.refactor import RefactorRunner
+from .runners.index import IndexRunner
 from .runners.check.resolver import CheckResolver
 from .runners.check.reporter import CheckReporter
 from .runners.pump.executor import PumpExecutor
