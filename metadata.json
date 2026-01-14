@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(analysis): 将架构报告与文件报告分离以避免摘要重复", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768394978.317393, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M runner.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768395070.4881878, "duration_ms": 0}}

@@ -13,6 +13,7 @@ from stitcher.spec import (
 from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.spec.interaction import InteractionContext
 from stitcher.analysis.schema import FileCheckResult as AnalysisFileCheckResult
+from stitcher.analysis.schema import Violation
 
 from .resolver import CheckResolver
 from .reporter import CheckReporter
