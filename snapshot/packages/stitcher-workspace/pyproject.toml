@@ -8,7 +8,8 @@ version = "0.1.0"
 description = "Workspace discovery and layout analysis for Stitcher."
 requires-python = ">=3.10"
 dependencies = [
-    "stitcher-config",
+    "stitcher-spec",
+    "stitcher-common",
     "tomli>=2.0.1; python_version < '3.11'",
 ]
 
@@ -16,4 +17,5 @@ dependencies = [
 packages = ["src/stitcher"]
 
 [tool.uv.sources]
-stitcher-config = { workspace = true }
+stitcher-spec = { workspace = true }
+stitcher-common = { workspace = true }

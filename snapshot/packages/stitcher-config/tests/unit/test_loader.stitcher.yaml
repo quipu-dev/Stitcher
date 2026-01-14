@@ -1,5 +1,0 @@
-"test_load_config_discovers_plugins": |-
-  Verify that load_config_from_path correctly finds and parses
-  stitcher.plugins entry points from all pyproject.toml files.
-"workspace": |-
-  Creates a mock workspace with plugins.

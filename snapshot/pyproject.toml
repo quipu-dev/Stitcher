@@ -43,7 +43,6 @@ pyneedle-pointer = { workspace = true }
 pyneedle-spec = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
-stitcher-config = { workspace = true }
 stitcher-application = { workspace = true }
 stitcher-cli = { workspace = true }
 stitcher-stubgen = { workspace = true }
@@ -63,7 +62,6 @@ pythonpath = [
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
     "packages/stitcher-common/src",
-    "packages/stitcher-config/src",
     "packages/stitcher-index/src",
     "packages/stitcher-refactor/src",
     "packages/stitcher-spec/src",
@@ -107,7 +105,6 @@ include = ["packages", "tests"]
 extraPaths = [
     "packages/stitcher-spec/src",
     "packages/stitcher-common/src",
-    "packages/stitcher-config/src",
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
     "packages/stitcher-test-utils/src",

@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 from textwrap import dedent
 
-from stitcher.config import load_config_from_path
+from stitcher.workspace.config import load_config_from_path
 
 
 @pytest.fixture
