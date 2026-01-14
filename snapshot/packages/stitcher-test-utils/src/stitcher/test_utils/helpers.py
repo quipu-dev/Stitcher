@@ -48,13 +48,17 @@ def create_test_app(
     parser = GriffePythonParser()
     transformer = PythonTransformer()
     strategy = PythonFingerprintStrategy()
-    return StitcherApp(
+    app = StitcherApp(
         root_path=root_path,
         parser=parser,
         transformer=transformer,
         fingerprint_strategy=strategy,
         interaction_handler=interaction_handler,
     )
+    # Eagerly initialize the database for test reliability.
+    # It's idempotent (CREATE TABLE IF NOT EXISTS), so it's safe to call.
+    app.db_manager.initialize()
+    return app
 
 
 def get_stored_hashes(project_root: Path, file_path: str) -> Dict[str, dict]:
