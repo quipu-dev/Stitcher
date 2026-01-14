@@ -110,6 +110,66 @@
       "baseline_code_signature_text": "def path_to_fqn(path: Path, search_paths: List[Path]) -> Optional[str]:",
       "baseline_code_structure_hash": "61b6931b7515de1fb6be37384c4585f99bc1bdeb64f3b15afa5def2ca0f07d8e"
     },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#DeleteDirectoryIntent": {
+      "baseline_code_signature_text": "class DeleteDirectoryIntent(FileSystemIntent):",
+      "baseline_code_structure_hash": "d9c0ec01693263b813da3bb21303da7293d74023c9b91f641dd2b9f0fe3f655e"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#DeleteDirectoryIntent.path": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#DeleteFileIntent": {
+      "baseline_code_signature_text": "class DeleteFileIntent(FileSystemIntent):",
+      "baseline_code_structure_hash": "65f93ef48e32944ebe0aca722699c32c5b0ed8e9caa9837a7eaf9af424595b8c"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#DeleteFileIntent.path": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#FileSystemIntent": {
+      "baseline_code_signature_text": "class FileSystemIntent(RefactorIntent):",
+      "baseline_code_structure_hash": "e6a8b8327b44560f2e9ed6e19411b925ac2f794cc8c7be4a5d166a64a328b0d8"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#LockPathUpdateIntent": {
+      "baseline_code_signature_text": "class LockPathUpdateIntent(RefactorIntent):",
+      "baseline_code_structure_hash": "bdd5745ad23db46d29f4c42752c368ef41221be0ee1359c488a25dde64911a62"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#LockPathUpdateIntent.new_path_prefix": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#LockPathUpdateIntent.old_path_prefix": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#LockPathUpdateIntent.package_root": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#LockSymbolUpdateIntent": {
+      "baseline_code_signature_text": "class LockSymbolUpdateIntent(RefactorIntent):",
+      "baseline_code_structure_hash": "c92d2d734c837518e4f00d55b441ad0f338b27b47db706ff0c37064a9089066e"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#LockSymbolUpdateIntent.new_suri": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#LockSymbolUpdateIntent.old_suri": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#LockSymbolUpdateIntent.package_root": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#MoveFileIntent": {
+      "baseline_code_signature_text": "class MoveFileIntent(FileSystemIntent):",
+      "baseline_code_structure_hash": "0bd4061fefba168c47b7115dd7eb626a8989defb5098b5f833f1f25369c051b5"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#MoveFileIntent.dest_path": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#MoveFileIntent.src_path": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#RefactorIntent": {
+      "baseline_code_signature_text": "class RefactorIntent:",
+      "baseline_code_structure_hash": "74bd76c16de8f53d7b2e8b676082e8cac7ac1b80b541bd6d9dc2a28f42ef1084"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#RenameIntent": {
+      "baseline_code_signature_text": "class RenameIntent(RefactorIntent):",
+      "baseline_code_structure_hash": "c2e0e30a10ed1cba8d294205163a0b49f61e7e1e84dcd3d883f86451a09b9c5a"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#RenameIntent.new_fqn": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#RenameIntent.old_fqn": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#ScaffoldIntent": {
+      "baseline_code_signature_text": "class ScaffoldIntent(FileSystemIntent):",
+      "baseline_code_structure_hash": "aa9866f6ad12fbef303204b220ebaf04bf3c6d5238e33d9e6c932a105636d8d7"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#ScaffoldIntent.content": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#ScaffoldIntent.path": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent": {
+      "baseline_code_signature_text": "class SidecarUpdateIntent(RefactorIntent):",
+      "baseline_code_structure_hash": "bc2f990b8e58942cdeae5f34094e1cac342b34081f2d7182f901ac67e2d00c9f"
+    },
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.module_fqn": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.new_file_path": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.new_fqn": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.old_file_path": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.old_fqn": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.sidecar_path": {},
     "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#__all__": {},
     "py://packages/stitcher-refactor/src/stitcher/refactor/migration/exceptions.py#MigrationError": {
       "baseline_code_signature_text": "class MigrationError(Exception):",
