@@ -65,9 +65,8 @@ class CircularDependencyRule(ArchitectureRule):
                             except Exception:
                                 snippet = "    <Could not read source file>"
 
-                        details.append(f"\n  - In `{u}`:")
                         details.append(
-                            f"    - Causes dependency on `{v}` via import of `{first_reason}`"
+                            f"\n   - Causes dependency on `{v}` via import of `{first_reason}`"
                         )
                         if snippet:
                             details.append(f"\n{snippet}")
