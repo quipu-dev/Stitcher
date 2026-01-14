@@ -180,6 +180,9 @@
     "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.old_file_path": {},
     "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.old_fqn": {},
     "py://packages/stitcher-refactor/src/stitcher/refactor/intent.py#SidecarUpdateIntent.sidecar_path": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#Move": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#MoveDir": {},
+    "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#Rename": {},
     "py://packages/stitcher-refactor/src/stitcher/refactor/migration/__init__.py#__all__": {},
     "py://packages/stitcher-refactor/src/stitcher/refactor/migration/exceptions.py#MigrationError": {
       "baseline_code_signature_text": "class MigrationError(Exception):",
