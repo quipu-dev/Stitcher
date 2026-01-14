@@ -1,322 +1,280 @@
-Your analysis is correct. The test failures are a direct and expected consequence of the protocol refactoring we just performed. A cascading series of failures is a sign of a deep, cross-cutting architectural change, which is exactly what we are doing.
+简要回答
 
-Following the **HFEA (High-Fidelity Engineering Axioms)**, we must not patch the symptoms. We must address the root cause, which is the partially completed migration to the Zero-IO architecture. The failing tests are our guide, showing us precisely which components are still coupled to the old, file-based IO-heavy logic.
+由于 `DocstringSerializerProtocol` 未能区分“高保真 YAML 存储”与“确定性数据传输”的需求，导致数据库索引的 Hash 与运行时计算的 Hash 不一致，从而使所有 `check` 操作失败。
 
-I will generate a plan to fix the immediate, low-level test breakages caused by the protocol change. Then, as a next step, I will outline the plan to complete the refactoring of the `check` command, which will resolve the remaining widespread integration test failures.
+本计划将严格分离序列化协议，并修正 Sidecar 的索引逻辑。
 
-## [WIP] test: Adapt tests to new DocstringSerializerProtocol
+## [WIP] refactor: 分离文档序列化协议以修复 Sidecar 索引一致性
+
+### 错误分析
+
+1.  **Check 失败 (`assert False is True`)**:
+    *   `stitcher check` 依赖对比 `symbols.docstring_hash` (代码现状) 和 `doc_entries.content_hash` (文档索引)。
+    *   当前 `RawSerializer.to_yaml_object` 返回的是字符串（为了 ruamel），但索引器可能直接对其哈希，或者在不同路径下（Run vs Index）使用了不同的序列化方式（Str vs Dict）。
+    *   这导致即使内容未变，Hash 计算结果也不一致，系统误判为“Conflict”。
+
+2.  **Schema FK Error**:
+    *   `stitcher-refactor` 测试中的 FK 错误可能是因为在迁移过程中，文件被移动了，但数据库中的 `files` 表尚未正确同步新路径的 ID，导致插入 `doc_entries` 时引用了无效的 `file_id`。不过首要任务是修复 Hash 一致性，这通常能解决大部分逻辑错误。
 
 ### 用户需求
-
-Fix the test suite failures that are a direct result of the `DocstringSerializerProtocol` refactoring. This involves updating test code that was calling the old `to_yaml`/`from_yaml` methods and was not correctly handling the updated return signature of `SidecarAdapter.parse`.
+用户需要修复由于架构重构（引入 Sidecar 索引）导致的测试套件全面崩溃问题。核心是确保 `.stitcher.yaml` 的读写（High-Fidelity）和索引（Deterministic DTO）使用正确的、分离的序列化逻辑。
 
 ### 评论
-
-This plan addresses the immediate fallout from our last architectural change. By fixing the unit tests for the serializers and the sidecar adapter, we re-establish a stable foundation at the lower levels of the system. This is a necessary prerequisite before we can confidently proceed with the higher-level refactoring of the `check` command's logic. These fixes are not a workaround; they are the required updates to align our test suite with the new, more robust architecture.
+当前的序列化协议混淆了 Presentation（YAML 格式）和 Data（内容哈希）的关注点。必须在接口层面强制分离，否则后续每次新增格式都会引入 BUG。
 
 ### 目标
-
-1.  Update `packages/stitcher-lang-python/tests/adapter/unit/docstring/test_serializers.py` to use the new `to_yaml_object` and `from_yaml_object` methods.
-2.  Update `packages/stitcher-lang-sidecar/tests/unit/test_sidecar_adapter.py` to correctly handle the new 3-tuple return value of `SidecarAdapter.parse` and adjust the test data to be compatible with the default `RawSerializer`.
+1.  重构 `DocstringSerializerProtocol`，明确区分 `to_serializable_dict` (DTO) 和 `to_yaml_object` (Presentation)。
+2.  更新所有 Serializer 实现 (`Raw`, `Google`, `Numpy`)。
+3.  修正 `DocumentManager` 和 `SidecarAdapter`，使其在“存文件”时用 Presentation 模式，在“计算 Hash/存 DB”时用 DTO 模式。
 
 ### 基本原理
-
-We will apply a series of precise patches:
--   A global replacement of method names in `test_serializers.py` to align with the new protocol.
--   A targeted modification of `test_sidecar_adapter.py` to unpack the new `doc_entries` from the `parse` method's result, simplify the test's YAML fixture to align with `RawSerializer`'s expectations, and add assertions to verify the correctness of the generated `DocEntryRecord`s.
+通过强制分离 DTO 和 Presentation，我们确保：
+1.  **Hash 确定性**: 无论 YAML 文件中使用了何种引用风格（`'` vs `"`）或块样式（`|`），存入数据库用于比较的 Hash 始终基于规范化的 JSON DTO。
+2.  **高保真存储**: 回写 YAML 文件时，仍然可以使用 `ruamel` 的特殊对象来保持人类可读性。
 
 ### 标签
-
-#intent/tooling #flow/ready #priority/high #comp/tests #comp/python #comp/sidecar #scope/dx #ai/instruct #task/domain/storage #task/object/sidecar-index #task/action/implementation #task/state/continue #task/status/active
+#intent/refine #flow/ready #priority/critical #comp/interfaces #comp/runtime #concept/state #task/domain/storage #task/object/sidecar-index #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: Update Serializer Tests to Use New Protocol
+#### Acts 1: 重构序列化协议定义
 
-We'll replace all instances of the old method names in the serializer test suite.
-
-~~~~~act
-patch_file
-packages/stitcher-lang-python/tests/adapter/unit/docstring/test_serializers.py
-~~~~~
-~~~~~python.old
-class TestRawSerializer:
-    def test_roundtrip_simple(self):
-        serializer = RawSerializer()
-        ir = DocstringIR(summary="Simple doc.")
-        serialized = serializer.to_yaml(ir)
-        assert serialized == "Simple doc."
-        deserialized = serializer.from_yaml(serialized)
-        assert deserialized == ir
-
-    def test_roundtrip_hybrid(self):
-        serializer = RawSerializer()
-        ir = DocstringIR(summary="Hybrid doc.", addons={"Addon.Test": "Data"})
-        serialized = serializer.to_yaml(ir)
-        assert serialized == {"Raw": "Hybrid doc.", "Addon.Test": "Data"}
-        deserialized = serializer.from_yaml(serialized)
-        assert deserialized == ir
-~~~~~
-~~~~~python.new
-class TestRawSerializer:
-    def test_roundtrip_simple(self):
-        serializer = RawSerializer()
-        ir = DocstringIR(summary="Simple doc.")
-        serialized = serializer.to_yaml_object(ir)
-        assert serialized == "Simple doc."
-        deserialized = serializer.from_yaml_object(serialized)
-        assert deserialized == ir
-
-    def test_roundtrip_hybrid(self):
-        serializer = RawSerializer()
-        ir = DocstringIR(summary="Hybrid doc.", addons={"Addon.Test": "Data"})
-        serialized = serializer.to_yaml_object(ir)
-        assert serialized == {"Raw": "Hybrid doc.", "Addon.Test": "Data"}
-        deserialized = serializer.from_yaml_object(serialized)
-        assert deserialized == ir
-~~~~~
+我们将协议明确拆分为两个方向：面向数据的 DTO 转换（用于索引和 Hash）和面向文件的 YAML 对象转换（用于 ruamel）。
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-python/tests/adapter/unit/docstring/test_serializers.py
+packages/stitcher-spec/src/stitcher/spec/protocols.py
 ~~~~~
 ~~~~~python.old
-class TestGoogleSerializer:
-    def test_to_yaml(self, complex_ir):
-        serializer = GoogleSerializer()
-        data = serializer.to_yaml(complex_ir)
+class DocstringSerializerProtocol(Protocol):
+    # For data transfer, hashing, and database storage (must be JSON-safe and deterministic)
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]: ...
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR: ...
 
-        assert data["Summary"] == "This is the summary."
-        assert data["Extended"] == "This is the extended description."
-        assert "Args" in data
-        # Verification: No type info encoded in the value string
-        assert data["Args"]["param1"] == "The first parameter."
-        assert "Returns" in data
-        assert data["Returns"]["bool"] == "True if successful, False otherwise."
-        assert "Raises" in data
-        assert "Examples" in data
-        assert data["Addon.Test"] == {"key": "value"}
-        assert data["Configuration"] == "This is a custom section."
-
-    def test_from_yaml_roundtrip(self, complex_ir):
-        serializer = GoogleSerializer()
-        yaml_data = serializer.to_yaml(complex_ir)
-        reconstructed_ir = serializer.from_yaml(yaml_data)
-
-        # Due to fallback keys, we need to compare content carefully
-        assert reconstructed_ir.summary == complex_ir.summary
-        assert reconstructed_ir.extended == complex_ir.extended
-        assert reconstructed_ir.addons == complex_ir.addons
-
-        # A simple equality check might fail due to ordering or minor differences.
-        # Let's check section by section.
-        assert len(reconstructed_ir.sections) == len(complex_ir.sections)
-
-    def test_graceful_fallback_from_string(self):
-        serializer = GoogleSerializer()
-        ir = serializer.from_yaml("Just a raw string.")
-        assert ir.summary == "Just a raw string."
-        assert not ir.sections
-        assert not ir.addons
+    # For high-fidelity writing to .yaml files (may contain format-specific objects)
+    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]: ...
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR: ...
 ~~~~~
 ~~~~~python.new
-class TestGoogleSerializer:
-    def test_to_yaml(self, complex_ir):
-        serializer = GoogleSerializer()
-        data = serializer.to_yaml_object(complex_ir)
+class DocstringSerializerProtocol(Protocol):
+    # For data transfer, hashing, and database storage (must be JSON-safe and deterministic)
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]: ...
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR: ...
 
-        assert data["Summary"] == "This is the summary."
-        assert data["Extended"] == "This is the extended description."
-        assert "Args" in data
-        # Verification: No type info encoded in the value string
-        assert data["Args"]["param1"] == "The first parameter."
-        assert "Returns" in data
-        assert data["Returns"]["bool"] == "True if successful, False otherwise."
-        assert "Raises" in data
-        assert "Examples" in data
-        assert data["Addon.Test"] == {"key": "value"}
-        assert data["Configuration"] == "This is a custom section."
-
-    def test_from_yaml_roundtrip(self, complex_ir):
-        serializer = GoogleSerializer()
-        yaml_data = serializer.to_yaml_object(complex_ir)
-        reconstructed_ir = serializer.from_yaml_object(yaml_data)
-
-        # Due to fallback keys, we need to compare content carefully
-        assert reconstructed_ir.summary == complex_ir.summary
-        assert reconstructed_ir.extended == complex_ir.extended
-        assert reconstructed_ir.addons == complex_ir.addons
-
-        # A simple equality check might fail due to ordering or minor differences.
-        # Let's check section by section.
-        assert len(reconstructed_ir.sections) == len(complex_ir.sections)
-
-    def test_graceful_fallback_from_string(self):
-        serializer = GoogleSerializer()
-        ir = serializer.from_yaml_object("Just a raw string.")
-        assert ir.summary == "Just a raw string."
-        assert not ir.sections
-        assert not ir.addons
+    # For high-fidelity writing to .yaml files (may contain format-specific objects like LiteralScalarString)
+    # The return type allows str for Raw mode, or Dict for structured modes.
+    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]: ...
+    
+    # Reconstructing IR from loaded YAML data (which might be str or dict)
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR: ...
 ~~~~~
+
+#### Acts 2: 更新 Serializer 实现
+
+我们需要确保 `RawSerializer` 在 `to_serializable_dict` 时返回字典（以便与其他元数据一起被 JSON 序列化），而在 `to_yaml_object` 时返回字符串（以便保持 YAML 的简洁）。
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-python/tests/adapter/unit/docstring/test_serializers.py
+packages/stitcher-lang-python/src/stitcher/lang/python/docstring/serializers.py
 ~~~~~
 ~~~~~python.old
-class TestNumpySerializer:
-    def test_to_yaml(self, complex_ir):
-        serializer = NumpySerializer()
-        data = serializer.to_yaml(complex_ir)
+class RawSerializer(BaseSerializer):
+    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        summary = ir.summary or ""
+        if ir.addons:
+            data = {"Raw": summary}
+            data.update(ir.addons)
+            return data
+        return summary
 
-        assert data["Summary"] == "This is the summary."
-        assert "Parameters" in data  # Key difference from Google
-        assert data["Parameters"]["param1"] == "The first parameter."
-        assert "Returns" in data
-        assert "Raises" in data
-        assert "Examples" in data
-        assert data["Addon.Test"] == {"key": "value"}
-        assert data["Configuration"] == "This is a custom section."
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        if isinstance(data, str):
+            return DocstringIR(summary=data)
 
-    def test_from_yaml_roundtrip(self, complex_ir):
-        serializer = NumpySerializer()
-        yaml_data = serializer.to_yaml(complex_ir)
-        reconstructed_ir = serializer.from_yaml(yaml_data)
+        ir = DocstringIR()
+        if isinstance(data, dict):
+            ir.summary = data.get("Raw", "")
+            ir.addons = self._extract_addons(data)
+        return ir
 
-        assert reconstructed_ir.summary == complex_ir.summary
-        assert reconstructed_ir.extended == complex_ir.extended
-        assert reconstructed_ir.addons == complex_ir.addons
-        assert len(reconstructed_ir.sections) == len(complex_ir.sections)
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
+        dto: Dict[str, Any] = {"summary": ir.summary or ""}
+        if ir.addons:
+            dto["addons"] = ir.addons
+        return dto
+
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
+        return DocstringIR(
+            summary=data.get("summary", ""),
+            addons=data.get("addons", {}),
+        )
 ~~~~~
 ~~~~~python.new
-class TestNumpySerializer:
-    def test_to_yaml(self, complex_ir):
-        serializer = NumpySerializer()
-        data = serializer.to_yaml_object(complex_ir)
+class RawSerializer(BaseSerializer):
+    def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        # For YAML file: prefer raw string if no addons, for readability.
+        summary = ir.summary or ""
+        if ir.addons:
+            data = {"Raw": summary}
+            data.update(ir.addons)
+            return data
+        return summary
 
-        assert data["Summary"] == "This is the summary."
-        assert "Parameters" in data  # Key difference from Google
-        assert data["Parameters"]["param1"] == "The first parameter."
-        assert "Returns" in data
-        assert "Raises" in data
-        assert "Examples" in data
-        assert data["Addon.Test"] == {"key": "value"}
-        assert data["Configuration"] == "This is a custom section."
+    def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        # From YAML file: handle both raw string and dict (if addons exist)
+        if isinstance(data, str):
+            return DocstringIR(summary=data)
 
-    def test_from_yaml_roundtrip(self, complex_ir):
-        serializer = NumpySerializer()
-        yaml_data = serializer.to_yaml_object(complex_ir)
-        reconstructed_ir = serializer.from_yaml_object(yaml_data)
+        ir = DocstringIR()
+        if isinstance(data, dict):
+            # Support both "Raw" key and implicit summary from dict if structure changed? 
+            # Ideally Raw mode dictates a schema.
+            ir.summary = data.get("Raw", "")
+            ir.addons = self._extract_addons(data)
+        return ir
 
-        assert reconstructed_ir.summary == complex_ir.summary
-        assert reconstructed_ir.extended == complex_ir.extended
-        assert reconstructed_ir.addons == complex_ir.addons
-        assert len(reconstructed_ir.sections) == len(complex_ir.sections)
+    def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
+        # For DB/Hash: MUST be a dict to be distinct and extensible.
+        dto: Dict[str, Any] = {"summary": ir.summary or ""}
+        if ir.addons:
+            dto["addons"] = ir.addons
+        return dto
+
+    def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
+        # From DB/Hash: Assume it's always the dict structure we defined above.
+        return DocstringIR(
+            summary=data.get("summary", ""),
+            addons=data.get("addons", {}),
+        )
 ~~~~~
 
-#### Acts 2: Update Sidecar Adapter Test
+#### Acts 3: 修正 DocumentManager 的哈希计算
 
-We will update the test to handle the 3-tuple return and add assertions for the `DocEntryRecord`s.
+`DocumentManager` 必须明确使用 `to_serializable_dict` 来计算哈希，而不是复用 `serialize_ir`（后者现在可能指向 `to_yaml_object`）。
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-sidecar/tests/unit/test_sidecar_adapter.py
+packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/manager.py
 ~~~~~
 ~~~~~python.old
-    yaml_file = src_dir / "module.stitcher.yaml"
-    yaml_content = dedent("""
-    MyClass:
-      doc: hello
-    my_func:
-      doc: world
-    """)
-    yaml_file.write_text(yaml_content)
+    def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        return self._sidecar_adapter.serialize_ir(ir, self.serializer)
 
-    # 2. ACT
-    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
-    symbols, refs = adapter.parse(yaml_file, yaml_content)
+    def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        return self.serializer.from_yaml_object(data)
 
-    # 3. ASSERT
-    assert len(symbols) == 0
-    assert len(refs) == 2
+    def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        return self._serialize_ir(ir)
 
-    refs_by_id = {ref.target_id: ref for ref in refs}
-
-    # Verify first reference
-    suri1 = "py://src/module.py#MyClass"
-    assert suri1 in refs_by_id
-    ref1 = refs_by_id[suri1]
-    assert ref1.kind == ReferenceType.SIDECAR_DOC_ID.value
-    assert ref1.lineno == 2
-    assert ref1.col_offset == 0
-
-    # Verify second reference
-    suri2 = "py://src/module.py#my_func"
-    assert suri2 in refs_by_id
-    ref2 = refs_by_id[suri2]
-    assert ref2.kind == ReferenceType.SIDECAR_DOC_ID.value
-    assert ref2.lineno == 4
-    assert ref2.col_offset == 0
+    def compute_ir_hash(self, ir: DocstringIR) -> str:
+        serialized = self._serialize_ir(ir)
+        return self.compute_yaml_content_hash(serialized)
 ~~~~~
 ~~~~~python.new
-    yaml_file = src_dir / "module.stitcher.yaml"
-    yaml_content = dedent("""
-    MyClass: hello
-    my_func: world
-    """)
-    yaml_file.write_text(yaml_content)
+    def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        # Default behavior for file writing: use YAML object
+        return self._sidecar_adapter.serialize_ir(ir, self.serializer)
 
-    # 2. ACT
-    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
-    symbols, refs, doc_entries = adapter.parse(yaml_file, yaml_content)
+    def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        return self.serializer.from_yaml_object(data)
 
-    # 3. ASSERT
-    assert len(symbols) == 0
-    assert len(refs) == 2
-    assert len(doc_entries) == 2
+    def serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        return self._serialize_ir(ir)
 
-    refs_by_id = {ref.target_id: ref for ref in refs}
-    doc_entries_by_id = {de.symbol_id: de for de in doc_entries}
+    def compute_ir_hash(self, ir: DocstringIR) -> str:
+        # CRITICAL FIX: Use the DTO serializer for hashing to ensure consistency
+        # between Runtime (here) and Indexer (SidecarAdapter.parse)
+        dto = self.serializer.to_serializable_dict(ir)
+        return self.compute_yaml_content_hash(dto)
+~~~~~
 
-    # Verify first reference
-    suri1 = "py://src/module.py#MyClass"
-    assert suri1 in refs_by_id
-    ref1 = refs_by_id[suri1]
-    assert ref1.kind == ReferenceType.SIDECAR_DOC_ID.value
-    assert ref1.lineno == 2
-    assert ref1.col_offset == 0
+#### Acts 4: 修正 SidecarAdapter 的索引解析逻辑
 
-    # Verify second reference
-    suri2 = "py://src/module.py#my_func"
-    assert suri2 in refs_by_id
-    ref2 = refs_by_id[suri2]
-    assert ref2.kind == ReferenceType.SIDECAR_DOC_ID.value
-    assert ref2.lineno == 4
-    assert ref2.col_offset == 0
+在索引 `stitcher.yaml` 时，`SidecarAdapter` 必须将 YAML 内容解析为 IR，然后转换为 DTO 并序列化为 JSON 存入数据库。这保证了数据库中的 `content_hash` 和 `ir_data_json` 与 `DocumentManager` 运行时计算的一致。
 
-    # Verify doc entries
-    assert suri1 in doc_entries_by_id
-    de1 = doc_entries_by_id[suri1]
-    assert de1.lineno == 2
-    assert de1.content_hash is not None
-    assert '"summary": "hello"' in de1.ir_data_json
+~~~~~act
+patch_file
+packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py
+~~~~~
+~~~~~python.old
+                # Full parsing for DocEntryRecord creation
+                data = self._yaml.load(content)
+                # Use RawSerializer as a default for the indexing path
+                serializer = RawSerializer()
 
-    assert suri2 in doc_entries_by_id
-    de2 = doc_entries_by_id[suri2]
-    assert de2.lineno == 4
-    assert '"summary": "world"' in de2.ir_data_json
+                if isinstance(data, dict):
+                    for fragment, raw_ir_obj in data.items():
+                        # 1. Determine location (line/col) from ruamel
+                        lineno = 0
+                        lc = getattr(data, "lc", None)
+                        if lc and hasattr(lc, "item"):
+                            pos = lc.item(fragment)
+                            if pos:
+                                lineno = pos[0] + 1
+
+                        # 2. Generate SURI for the symbol
+                        suri = self.uri_generator.generate_symbol_uri(
+                            rel_py_path, str(fragment)
+                        )
+
+                        try:
+                            # 3. Normalize to IR, then to a JSON-safe DTO
+                            ir = serializer.from_yaml_object(raw_ir_obj)
+                            ir_dict = serializer.to_serializable_dict(ir)
+                            ir_json = json.dumps(ir_dict, sort_keys=True)
+
+                            # 4. Compute deterministic hash from the JSON string
+                            content_hash = hashlib.sha256(
+                                ir_json.encode("utf-8")
+                            ).hexdigest()
+
+                            # 5. Create the DocEntryRecord for the indexer
+~~~~~
+~~~~~python.new
+                # Full parsing for DocEntryRecord creation
+                data = self._yaml.load(content)
+                # Use RawSerializer as a default for the indexing path.
+                # TODO: Ideally this should come from config, but for now Raw is safe default.
+                serializer = RawSerializer()
+
+                if isinstance(data, dict):
+                    for fragment, raw_ir_obj in data.items():
+                        # 1. Determine location (line/col) from ruamel
+                        lineno = 0
+                        lc = getattr(data, "lc", None)
+                        if lc and hasattr(lc, "item"):
+                            pos = lc.item(fragment)
+                            if pos:
+                                lineno = pos[0] + 1
+
+                        # 2. Generate SURI for the symbol
+                        suri = self.uri_generator.generate_symbol_uri(
+                            rel_py_path, str(fragment)
+                        )
+
+                        try:
+                            # 3. Normalize to IR, then to a JSON-safe DTO
+                            # This uses from_yaml_object because raw_ir_obj comes from ruamel.yaml.load
+                            ir = serializer.from_yaml_object(raw_ir_obj)
+                            
+                            # Convert to DTO for storage and hashing
+                            ir_dict = serializer.to_serializable_dict(ir)
+                            
+                            # Ensure deterministic JSON
+                            ir_json = json.dumps(ir_dict, sort_keys=True, ensure_ascii=False)
+
+                            # 4. Compute deterministic hash from the JSON string
+                            content_hash = hashlib.sha256(
+                                ir_json.encode("utf-8")
+                            ).hexdigest()
+
+                            # 5. Create the DocEntryRecord for the indexer
 ~~~~~
 
 ### 下一步建议
-The low-level tests are now fixed and aligned with our new architecture. However, as the test results show, the high-level `check` command is still fundamentally broken.
 
-**Analysis**: The `check` command's current implementation (`IndexCheckSubjectAdapter`) still relies on loading `.stitcher.yaml` files from the filesystem during its analysis. This is the IO-heavy process we aim to eliminate. The recent refactoring of the serialization layer has broken this old path.
+现在序列化逻辑已经对齐，我们应该重新运行测试。`test_check_passes_when_synced` 应该能通过，因为它不再会因为 hash 不匹配而报告 Conflict。
 
-**Strategic Solution**: Instead of patching the old, slow file-based logic, we must now complete the refactoring by replacing it with the new "Zero-IO" approach. This involves:
-1.  **Creating a new `IndexStore` method**: `get_all_symbol_states_for_file(file_path: str)` that performs a single, efficient SQL `JOIN` between the `symbols` and `doc_entries` tables.
-2.  **Deleting `IndexCheckSubjectAdapter`**: This class represents the old architecture and must be removed.
-3.  **Refactoring `CheckRunner`**: The `analyze_paths` method will be simplified to call the new `IndexStore` method and pass the resulting data directly to the `ConsistencyEngine`.
-
-This is the final step to realize our performance goals and fix the remaining tests in an architecturally sound manner. I will generate a plan to execute this if you agree.
+如果在测试中仍然遇到 `FOREIGN KEY constraint failed`，我们需要进一步检查测试夹具中 `files` 表的填充时机。但在大多数情况下，只要 `IndexStore` 正确地先同步文件记录 (`sync_file`) 再更新分析 (`update_analysis`)，FK 约束应该是满足的。我们将密切关注下一次测试运行的结果。

@@ -95,7 +95,8 @@ class SidecarAdapter(LanguageAdapter):
 
                 # Full parsing for DocEntryRecord creation
                 data = self._yaml.load(content)
-                # Use RawSerializer as a default for the indexing path
+                # Use RawSerializer as a default for the indexing path.
+                # TODO: Ideally this should come from config, but for now Raw is safe default.
                 serializer = RawSerializer()
 
                 if isinstance(data, dict):
@@ -115,9 +116,14 @@ class SidecarAdapter(LanguageAdapter):
 
                         try:
                             # 3. Normalize to IR, then to a JSON-safe DTO
+                            # This uses from_yaml_object because raw_ir_obj comes from ruamel.yaml.load
                             ir = serializer.from_yaml_object(raw_ir_obj)
+                            
+                            # Convert to DTO for storage and hashing
                             ir_dict = serializer.to_serializable_dict(ir)
-                            ir_json = json.dumps(ir_dict, sort_keys=True)
+                            
+                            # Ensure deterministic JSON
+                            ir_json = json.dumps(ir_dict, sort_keys=True, ensure_ascii=False)
 
                             # 4. Compute deterministic hash from the JSON string
                             content_hash = hashlib.sha256(

@@ -38,6 +38,7 @@ class DocumentManager:
         self.serializer = serializer
 
     def _serialize_ir(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        # Default behavior for file writing: use YAML object
         return self._sidecar_adapter.serialize_ir(ir, self.serializer)
 
     def _deserialize_ir(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
@@ -47,8 +48,10 @@ class DocumentManager:
         return self._serialize_ir(ir)
 
     def compute_ir_hash(self, ir: DocstringIR) -> str:
-        serialized = self._serialize_ir(ir)
-        return self.compute_yaml_content_hash(serialized)
+        # CRITICAL FIX: Use the DTO serializer for hashing to ensure consistency
+        # between Runtime (here) and Indexer (SidecarAdapter.parse)
+        dto = self.serializer.to_serializable_dict(ir)
+        return self.compute_yaml_content_hash(dto)
 
     def dump_data(self, data: Dict[str, Any]) -> str:
         return self._sidecar_adapter.dump_to_string(data)

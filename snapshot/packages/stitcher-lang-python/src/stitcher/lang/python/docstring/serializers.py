@@ -33,6 +33,7 @@ class BaseSerializer(DocstringSerializerProtocol):
 
 class RawSerializer(BaseSerializer):
     def to_yaml_object(self, ir: DocstringIR) -> Union[str, Dict[str, Any]]:
+        # For YAML file: prefer raw string if no addons, for readability.
         summary = ir.summary or ""
         if ir.addons:
             data = {"Raw": summary}
@@ -41,22 +42,27 @@ class RawSerializer(BaseSerializer):
         return summary
 
     def from_yaml_object(self, data: Union[str, Dict[str, Any]]) -> DocstringIR:
+        # From YAML file: handle both raw string and dict (if addons exist)
         if isinstance(data, str):
             return DocstringIR(summary=data)
 
         ir = DocstringIR()
         if isinstance(data, dict):
+            # Support both "Raw" key and implicit summary from dict if structure changed? 
+            # Ideally Raw mode dictates a schema.
             ir.summary = data.get("Raw", "")
             ir.addons = self._extract_addons(data)
         return ir
 
     def to_serializable_dict(self, ir: DocstringIR) -> Dict[str, Any]:
+        # For DB/Hash: MUST be a dict to be distinct and extensible.
         dto: Dict[str, Any] = {"summary": ir.summary or ""}
         if ir.addons:
             dto["addons"] = ir.addons
         return dto
 
     def from_serializable_dict(self, data: Dict[str, Any]) -> DocstringIR:
+        # From DB/Hash: Assume it's always the dict structure we defined above.
         return DocstringIR(
             summary=data.get("summary", ""),
             addons=data.get("addons", {}),
