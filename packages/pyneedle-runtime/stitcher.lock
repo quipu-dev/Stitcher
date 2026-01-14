@@ -5,17 +5,17 @@
     "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#DictOperator": {
       "baseline_code_signature_text": "class DictOperator(OperatorProtocol):",
       "baseline_code_structure_hash": "2423c63b00b3558e4658c8b478b31364bfb7d9c6c1f049fde1edf628e764182d",
-      "baseline_yaml_content_hash": "3c74f048245884bbf68e3cc95a578dcefe6a946626b114e9dd7283c8da02c5e5"
+      "baseline_yaml_content_hash": "712e6c86ce8a55d4a1ac465053baad40cb2440df72f00b69660b68c14fea9301"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#DictOperator.__call__": {
       "baseline_code_signature_text": "def __call__(self, key: Union[str, SemanticPointerProtocol]) -> Any:",
       "baseline_code_structure_hash": "c4bad9b93e0092ccefc49e0059e05bb4e11c65389b146fb989648fd2a4ab1c17",
-      "baseline_yaml_content_hash": "23548e48643c89343fb4ef8b2a38c72d80205910c8154b2c7c79c154a6db8ed6"
+      "baseline_yaml_content_hash": "6428f35b2af284b1058c98af0639c1d6b5ca3a06aefe8bcf28040c12f3fe6d34"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#DictOperator.__init__": {
       "baseline_code_signature_text": "def __init__(self, data: Dict[str, Any]):",
       "baseline_code_structure_hash": "7667fe2bf3cb929e3f978bc9518e8dd45bc09043dbd27b11afc3b7950dad4e33",
-      "baseline_yaml_content_hash": "36246a2c38121928317173492c7ab545e20b1ff96b6194d770adc35103ba194c"
+      "baseline_yaml_content_hash": "724589bf6d064b438b1022d1b0517ff2f93cb0b82da58d33c7e693c27cb7d3db"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#DictOperator._data": {},
     "py://packages/pyneedle-runtime/src/needle/operators/dict_operator.py#DictOperator._flatten": {
@@ -25,17 +25,17 @@
     "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator": {
       "baseline_code_signature_text": "class FileSystemOperator(OperatorProtocol):",
       "baseline_code_structure_hash": "3dd024de64043e1862c5c3d238a4d93750c877292125bb8264d0530767cfea64",
-      "baseline_yaml_content_hash": "4742e47b9eae2db18de72d278fbc548742abf4a1f12878261b9c6d6b54e5d0bb"
+      "baseline_yaml_content_hash": "8c1a8f0e884675646989c4baf50a53ea189ea37d9115d8824c1cfa7d34e6f257"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator.__call__": {
       "baseline_code_signature_text": "def __call__(self, pointer: Union[str, SemanticPointerProtocol]) -> Optional[str]:",
       "baseline_code_structure_hash": "808a28242b6833ee5c35c24b5f17b2c379243e436d29399e73756bd693c43660",
-      "baseline_yaml_content_hash": "f9486ef5bdc0808cd652454239456966543e50c85e3081dd73202cea76513000"
+      "baseline_yaml_content_hash": "8298b3ae83e3474181d5743f042d60677d4d2c40373fcdb60172fe3197fbe0ed"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator.__init__": {
       "baseline_code_signature_text": "def __init__(self, root: Union[str, Path]):",
       "baseline_code_structure_hash": "858994c8e62417b1b579d2aa5c2030fcf5ac5c1c68647dd238e507d4316e7622",
-      "baseline_yaml_content_hash": "7ff0d5a4200e5a3168565565539c0271ed76bf5311fc804d5e81432b983f9745"
+      "baseline_yaml_content_hash": "7cf64498029d79b6cb144a440f3249f0c35ad405b881a083856349c194944539"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/fs_operator.py#FileSystemOperator._calculate_prefix": {
       "baseline_code_signature_text": "def _calculate_prefix(self, file_path: Path, root_path: Path) -> str:",
@@ -91,33 +91,33 @@
     "py://packages/pyneedle-runtime/src/needle/operators/i18n_factory.py#I18NFactoryOperator": {
       "baseline_code_signature_text": "class I18NFactoryOperator(OperatorProtocol):",
       "baseline_code_structure_hash": "a7a1ad9f0e1967addc6ca34c27b6d6284a24127613851dc2f3293930467d6628",
-      "baseline_yaml_content_hash": "7fe490754ed1396bba8ae9aabd2c89c8a7694e3659d0660a5773427e2334b2d9"
+      "baseline_yaml_content_hash": "129c616738be9e9a352f018a166cc6c925ed9215df8d04bbdc11f87aa8bed464"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/i18n_factory.py#I18NFactoryOperator.__call__": {
       "baseline_code_signature_text": "def __call__(self, lang_pointer: Union[str, SemanticPointerProtocol]) -> FileSystemOperator:",
       "baseline_code_structure_hash": "a0598d1c5e23273552723e6a72eaa3b6a8530faf24b89dc88f84a1cad24664ad",
-      "baseline_yaml_content_hash": "b3ff889b5f2a84b7d4cd2b1474041353b9afbd39c27f0d60dcd040a5c04540f3"
+      "baseline_yaml_content_hash": "a8b4458b5c88c365493393750d46d2c1ad93e456115f9b171c005c2cf341a8cf"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/i18n_factory.py#I18NFactoryOperator.__init__": {
       "baseline_code_signature_text": "def __init__(self, assets_root: Union[str, Path]):",
       "baseline_code_structure_hash": "8f9fc74d038585ffd10ac7ef2746c50ed1d900bcef571916d7548ad16e0eecb8",
-      "baseline_yaml_content_hash": "7032146d618fc45a99e2f8786f420005e344b9a4030fc6488d43a412630cb5ec"
+      "baseline_yaml_content_hash": "49656fd9c460c9910fcebafff3c82380c560e964e68743085d8d32eca280052f"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/i18n_factory.py#I18NFactoryOperator.assets_root": {},
     "py://packages/pyneedle-runtime/src/needle/operators/overlay_operator.py#OverlayOperator": {
       "baseline_code_signature_text": "class OverlayOperator(OperatorProtocol):",
       "baseline_code_structure_hash": "25827baf9b05a868c15451ac13a8ae1446a9fb71e20d35ebe1a858ecd239ca28",
-      "baseline_yaml_content_hash": "2a0fa91d29f459031f6dec043c678f661e7dce4ff7a585ec964b44104e03c1c7"
+      "baseline_yaml_content_hash": "f04c12c2e95ee46d9111a97b9b4a4addfa272689fa3d3b6368f80776509d26f7"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/overlay_operator.py#OverlayOperator.__call__": {
       "baseline_code_signature_text": "def __call__(self, key: Union[str, SemanticPointerProtocol]) -> Any:",
       "baseline_code_structure_hash": "c4bad9b93e0092ccefc49e0059e05bb4e11c65389b146fb989648fd2a4ab1c17",
-      "baseline_yaml_content_hash": "eb3ea019ee2f68ebb487ba7f6e14a542836b6bda9a45520245ba06efff25879b"
+      "baseline_yaml_content_hash": "3514ab446f74588ee21f3faaa40be0667757b814ec08c36028da386ebf93484c"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/overlay_operator.py#OverlayOperator.__init__": {
       "baseline_code_signature_text": "def __init__(self, operators: List[OperatorProtocol]):",
       "baseline_code_structure_hash": "b31ecdaf387f76bc9010d3f3c7f405432e5e537a1733bace4ebd5878c058089f",
-      "baseline_yaml_content_hash": "0ab977891b65d44ad66d1d2fa25b14af130260527bb7cce07d12226828af8c76"
+      "baseline_yaml_content_hash": "1c58425f8b15813232bd2841e27a9682e75f19ce6467104209f8ead0ac83ef54"
     },
     "py://packages/pyneedle-runtime/src/needle/operators/overlay_operator.py#OverlayOperator.operators": {},
     "py://packages/pyneedle-runtime/src/needle/runtime.py#__all__": {},
@@ -126,7 +126,7 @@
       "baseline_code_structure_hash": "774c9201a944c4e1df2825aec9ec24922659c213887a8af44bc5436800682e62"
     },
     "py://packages/pyneedle-runtime/src/needle/runtime.py#nexus": {
-      "baseline_yaml_content_hash": "0f3081e4b468e163bce5fc63f71c26ba37660fe63308d927a625268bd12fb0ee"
+      "baseline_yaml_content_hash": "ebb8761b386fea2b15efa2ceae2243c5333937d1e3b6b68f50e94f6b3befe2c0"
     }
   },
   "version": "1.0"

@@ -35,3 +35,4 @@
   Generate the content of a type stub file (e.g. .pyi) from the ModuleDef IR.
 LockManagerProtocol: "Protocol for managing the stitcher.lock file, which serves as the distributed\npersistence layer for fingerprints."
 URIGeneratorProtocol: "Protocol for generating Stitcher Uniform Resource Identifiers (SURIs).\nSURIs must be anchored to the workspace root to ensure global uniqueness."
+DocstringSerializerProtocol: "负责 DocstringIR 的序列化与反序列化。\n区分“数据传输(DTO)”与“人类视图(View)”两种场景。"

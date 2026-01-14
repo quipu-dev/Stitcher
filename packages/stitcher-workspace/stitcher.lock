@@ -82,12 +82,12 @@
     "py://packages/stitcher-workspace/src/stitcher/workspace/exceptions.py#WorkspaceError": {
       "baseline_code_signature_text": "class WorkspaceError(Exception):",
       "baseline_code_structure_hash": "07c9f8b81bc465749f26a50bd159fc5ae04e9a38f65dd1eaa33754865274271e",
-      "baseline_yaml_content_hash": "9ac3abb293307a3d32537276f4684c355287c966891c79c5c6d58419a55100e8"
+      "baseline_yaml_content_hash": "222ad69c6c3c7f63bd63d4c89acd1d0b7d821ba5a91b1ff599b93d5ca3b22da9"
     },
     "py://packages/stitcher-workspace/src/stitcher/workspace/exceptions.py#WorkspaceNotFoundError": {
       "baseline_code_signature_text": "class WorkspaceNotFoundError(WorkspaceError):",
       "baseline_code_structure_hash": "b51b3870f7e370ce52a009915a60b3ce775aeda14a2de557a51daad82adea637",
-      "baseline_yaml_content_hash": "b82aa4c0e1bf9229462132b66c2c323f4e0192df5c4eca48d43b5d6b26ef94d2"
+      "baseline_yaml_content_hash": "1494d6ad989b5f2cd9a454731b82827a2255f6a9c3a137186eeeacdb3a74228a"
     },
     "py://packages/stitcher-workspace/src/stitcher/workspace/exceptions.py#WorkspaceNotFoundError.__init__": {
       "baseline_code_signature_text": "def __init__(self, start_path: str):",

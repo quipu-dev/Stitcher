@@ -48,13 +48,15 @@ def create_test_app(
     parser = GriffePythonParser()
     transformer = PythonTransformer()
     strategy = PythonFingerprintStrategy()
-    return StitcherApp(
+    app = StitcherApp(
         root_path=root_path,
         parser=parser,
         transformer=transformer,
         fingerprint_strategy=strategy,
         interaction_handler=interaction_handler,
     )
+    # Database is now initialized in StitcherApp constructor.
+    return app
 
 
 def get_stored_hashes(project_root: Path, file_path: str) -> Dict[str, dict]:

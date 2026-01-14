@@ -1,6 +1,6 @@
 import io
 from pathlib import Path
-from typing import List, Tuple, Dict, Union, Any
+from typing import List, Tuple, Dict, Any
 
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString

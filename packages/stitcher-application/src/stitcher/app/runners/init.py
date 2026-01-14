@@ -70,8 +70,15 @@ class InitRunner:
                 module_abs_path = self.root_path / module.file_path
                 module_ws_rel = self.workspace.to_workspace_relative(module_abs_path)
 
+                # Generate IRs from source code; this is the source of truth for init.
+                ir_map = self.doc_manager.flatten_module_docs(module)
+
                 computed_fingerprints = self._compute_fingerprints(module)
-                yaml_hashes = self.doc_manager.compute_yaml_content_hashes(module)
+                # CRITICAL FIX: Compute hashes from the in-memory IR map, NOT from the index.
+                yaml_hashes = {
+                    fqn: self.doc_manager.compute_ir_hash(ir)
+                    for fqn, ir in ir_map.items()
+                }
 
                 all_fqns = set(computed_fingerprints.keys()) | set(yaml_hashes.keys())
 

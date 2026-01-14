@@ -33,6 +33,7 @@ class IndexCheckSubjectAdapter(CheckSubject):
         self._uri_generator = uri_generator
         self._workspace = workspace
         self._root_path = root_path
+        self._cached_states: Optional[Dict[str, SymbolState]] = None
 
     @property
     def file_path(self) -> str:
@@ -62,6 +63,9 @@ class IndexCheckSubjectAdapter(CheckSubject):
         return False
 
     def get_all_symbol_states(self) -> Dict[str, SymbolState]:
+        if self._cached_states is not None:
+            return self._cached_states
+
         # 1. Load data from all sources
         symbols_from_db = self._index_store.get_symbols_by_file_path(self.file_path)
         yaml_docs = self._doc_manager.load_docs_for_path(self.file_path)
@@ -129,6 +133,7 @@ class IndexCheckSubjectAdapter(CheckSubject):
                 baseline_yaml_content_hash=stored_fp.get("baseline_yaml_content_hash"),
             )
 
+        self._cached_states = states
         return states
 
 
@@ -150,6 +155,7 @@ class ASTCheckSubjectAdapter(CheckSubject):
         self._workspace = workspace
         self._fingerprint_strategy = fingerprint_strategy
         self._root_path = root_path
+        self._cached_states: Optional[Dict[str, SymbolState]] = None
 
     @property
     def file_path(self) -> str:
@@ -177,6 +183,9 @@ class ASTCheckSubjectAdapter(CheckSubject):
         return self._module.is_documentable()
 
     def get_all_symbol_states(self) -> Dict[str, SymbolState]:
+        if self._cached_states is not None:
+            return self._cached_states
+
         # 1. Load all necessary data from various sources
         source_docs = self._doc_manager.flatten_module_docs(self._module)
         yaml_docs = self._doc_manager.load_docs_for_module(self._module)
@@ -231,4 +240,5 @@ class ASTCheckSubjectAdapter(CheckSubject):
                 baseline_yaml_content_hash=stored_fp.get("baseline_yaml_content_hash"),
             )
 
+        self._cached_states = states
         return states

@@ -48,11 +48,6 @@ class DocstringRendererProtocol(Protocol):
 
 
 class DocstringSerializerProtocol(Protocol):
-    """
-    负责 DocstringIR 的序列化与反序列化。
-    区分“数据传输(DTO)”与“人类视图(View)”两种场景。
-    """
-
     # --- 数据传输层 (Data Transfer Layer) ---
     # 用于：Database Storage, Hashing, Inter-process Communication
     # 约束：必须返回 JSON-safe 的原生类型 (dict, list, str, int, bool)。严禁自定义对象。

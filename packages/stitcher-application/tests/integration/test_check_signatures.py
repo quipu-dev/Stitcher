@@ -58,8 +58,7 @@ def test_generate_does_not_update_signatures(tmp_path, monkeypatch):
     factory = WorkspaceFactory(tmp_path)
     project_root = (
         factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/main.py", "def func(a: int): ...")
-        .with_docs("src/main.stitcher.yaml", {"func": "doc"})
+        .with_source("src/main.py", 'def func(a: int):\n    """doc"""\n    ...')
         .build()
     )
     app = create_test_app(root_path=project_root)
