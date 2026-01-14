@@ -18,6 +18,10 @@ from .parser import (
 )
 from stitcher.common.services import AssetPathResolver
 from stitcher.lang.python.analysis.models import ReferenceType
+
+# For the indexing path, we need a default serializer.
+# The `DocumentManager` is responsible for setting the correct one based on config,
+# but the indexer operates at a lower level. RawSerializer is a safe default.
 from stitcher.lang.python.docstring import RawSerializer
 
 
@@ -57,6 +61,7 @@ class SidecarAdapter(LanguageAdapter):
         references: List[ReferenceRecord] = []
         doc_entries: List[DocEntryRecord] = []
 
+        # This adapter handles both .json (signatures) and .yaml (docs)
         if file_path.suffix == ".json":
             refs = parse_signature_references(content)
             for suri, line, col in refs:
@@ -78,22 +83,24 @@ class SidecarAdapter(LanguageAdapter):
                 if not file_path.name.endswith(".stitcher.yaml"):
                     return symbols, references
 
+                # Derive the associated source Python file path
                 py_name = file_path.name.replace(".stitcher.yaml", ".py")
                 py_path = file_path.with_name(py_name)
 
                 if not py_path.exists():
                     return symbols, references
 
+                # For SURI generation, we need the workspace-relative path of the source file
                 rel_py_path = py_path.relative_to(self.root_path).as_posix()
 
-                # Full parsing for DocEntryRecord
-                # We use ruamel.yaml to load the structure, then serialize to JSON
+                # Full parsing for DocEntryRecord creation
                 data = self._yaml.load(content)
+                # Use RawSerializer as a default for the indexing path
                 serializer = RawSerializer()
 
                 if isinstance(data, dict):
-                    for fragment, raw_ir in data.items():
-                        # 1. Determine location (line/col)
+                    for fragment, raw_ir_obj in data.items():
+                        # 1. Determine location (line/col) from ruamel
                         lineno = 0
                         lc = getattr(data, "lc", None)
                         if lc and hasattr(lc, "item"):
@@ -101,51 +108,23 @@ class SidecarAdapter(LanguageAdapter):
                             if pos:
                                 lineno = pos[0] + 1
 
-                        # 2. Generate SURI
+                        # 2. Generate SURI for the symbol
                         suri = self.uri_generator.generate_symbol_uri(
                             rel_py_path, str(fragment)
                         )
 
-                        # 3. Create DocstringIR and serialize to JSON
                         try:
-                            ir = serializer.from_yaml(raw_ir)
-                            # Serialize to dict first using serializer (which handles IR structure)
-                            # RawSerializer.to_yaml returns a dict or str suitable for YAML
-                            # We want a standard JSON representation for the DB
-                            # Since from_yaml/to_yaml are isomorphic for RawSerializer,
-                            # we can re-use the raw_ir or re-serialize.
-                            # To be safe and canonical (e.g. if we change serializer later),
-                            # let's re-serialize to a clean dict.
-                            # Actually, ir is a dataclass. Let's dump it as json directly?
-                            # No, IR might contain objects. Better to use serializer.to_yaml output
-                            # but ensure it's JSON serializable (literal strings etc).
-                            # Since we use RawSerializer, to_yaml returns simple dicts/strings.
-                            # We need to be careful with Ruamel's ScalarString in raw_ir.
-                            # It's better to reconstruct IR then dump.
-                            
-                            # However, for the DB `ir_data_json`, we want a format that we can
-                            # easily load back into DocstringIR. 
-                            # stitcher.spec doesn't enforce JSON schema, but assumes serializer handles it.
-                            # Let's store the dict form produced by serializer.
-                            ir_dict = serializer.to_yaml(ir)
-                            
-                            # Use a custom encoder if necessary, or just rely on json.dumps
-                            # assuming serializer output is simple.
-                            # Note: to_yaml might return LiteralScalarString which json doesn't like.
-                            # We need to stringify them.
-                            def json_safe(obj):
-                                if hasattr(obj, "__str__"):
-                                    return str(obj)
-                                return obj
-                            
-                            ir_json = json.dumps(ir_dict, default=json_safe, sort_keys=True)
-                            
-                            # 4. Compute Hash (Consistency Check)
-                            # We use the JSON string for hashing to be consistent with DB
+                            # 3. Normalize to IR, then to a JSON-safe DTO
+                            ir = serializer.from_yaml_object(raw_ir_obj)
+                            ir_dict = serializer.to_serializable_dict(ir)
+                            ir_json = json.dumps(ir_dict, sort_keys=True)
+
+                            # 4. Compute deterministic hash from the JSON string
                             content_hash = hashlib.sha256(
                                 ir_json.encode("utf-8")
                             ).hexdigest()
 
+                            # 5. Create the DocEntryRecord for the indexer
                             doc_entries.append(
                                 DocEntryRecord(
                                     symbol_id=suri,
@@ -155,23 +134,24 @@ class SidecarAdapter(LanguageAdapter):
                                 )
                             )
 
-                            # 5. Add Reference (for backward compat / linking graph)
+                            # 6. Also create a ReferenceRecord for graph analysis
                             references.append(
                                 ReferenceRecord(
                                     target_id=suri,
                                     kind=ReferenceType.SIDECAR_DOC_ID.value,
                                     lineno=lineno,
-                                    col_offset=0,
+                                    col_offset=0,  # Col is less precise for YAML keys
                                     end_lineno=lineno,
                                     end_col_offset=len(str(fragment)),
                                 )
                             )
 
                         except Exception:
-                            # Skip malformed entries
+                            # Skip malformed entries within the YAML file
                             continue
 
             except (ValueError, FileNotFoundError, Exception):
+                # If the whole file is malformed or paths are wrong, return empty
                 pass
 
         return symbols, references, doc_entries
@@ -272,4 +252,4 @@ class SidecarAdapter(LanguageAdapter):
     def serialize_ir(
         self, ir: DocstringIR, serializer: DocstringSerializerProtocol
     ) -> Union[str, Dict[str, Any]]:
-        return serializer.to_yaml(ir)
+        return serializer.to_yaml_object(ir)

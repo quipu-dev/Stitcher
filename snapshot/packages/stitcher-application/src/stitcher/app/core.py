@@ -36,6 +36,7 @@ from stitcher.index.db import DatabaseManager
 from stitcher.index.store import IndexStore
 from stitcher.index.indexer import FileIndexer
 from stitcher.lang.python import PythonAdapter
+from stitcher.lang.sidecar import SidecarAdapter
 from stitcher.workspace import Workspace
 from stitcher.lang.python.docstring import (
     get_docstring_codec,
@@ -82,7 +83,11 @@ class StitcherApp:
         python_adapter = PythonAdapter(
             root_path, search_paths, uri_generator=self.uri_generator
         )
+        sidecar_adapter = SidecarAdapter(root_path, uri_generator=self.uri_generator)
+
         self.file_indexer.register_adapter(".py", python_adapter)
+        self.file_indexer.register_adapter(".yaml", sidecar_adapter)
+        self.file_indexer.register_adapter(".yml", sidecar_adapter)
 
         # 3. Runners (Command Handlers)
         check_resolver = CheckResolver(
