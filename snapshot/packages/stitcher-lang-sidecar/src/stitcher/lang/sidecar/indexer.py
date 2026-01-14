@@ -10,6 +10,7 @@ from stitcher.spec.registry import LanguageAdapter
 from stitcher.spec.index import SymbolRecord, ReferenceRecord
 from stitcher.lang.sidecar.parser import parse_doc_references
 from stitcher.lang.python.analysis.models import ReferenceType
+from stitcher.lang.python.analysis.utils import path_to_logical_fqn
 
 
 class SidecarIndexerAdapter(LanguageAdapter):
@@ -48,6 +49,9 @@ class SidecarIndexerAdapter(LanguageAdapter):
         py_name = file_path.name.replace(".stitcher.yaml", ".py")
         py_path_rel = file_path.with_name(py_name)
         
+        # Pre-calculate logical module FQN for linking
+        logical_module_fqn = path_to_logical_fqn(py_path_rel.as_posix())
+
         # 3. Parse references with location info using the helper
         loc_map = {frag: (line, col) for frag, line, col in parse_doc_references(content)}
 
@@ -90,14 +94,16 @@ class SidecarIndexerAdapter(LanguageAdapter):
             symbols.append(symbol)
 
             # --- Build Reference (Binding to Python) ---
-            python_suri = f"py://{py_path_rel}#{fragment}"
+            # Use Late Binding (FQN) instead of Early Binding (ID) to avoid Foreign Key constraint violations
+            # if the Python file hasn't been indexed yet.
+            target_fqn = f"{logical_module_fqn}.{fragment}"
             if fragment == "__doc__":
-                python_suri = f"py://{py_path_rel}"
+                target_fqn = logical_module_fqn
             
             ref = ReferenceRecord(
                 source_file_id=None,
-                target_fqn=None,
-                target_id=python_suri,
+                target_fqn=target_fqn,
+                target_id=None, # Leave NULL, let Linker resolve it
                 kind="doc_binding",
                 lineno=lineno,
                 col_offset=col_offset,
