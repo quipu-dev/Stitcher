@@ -17,7 +17,7 @@ from stitcher.spec import (
 )
 from stitcher.lang.python.docstring import RawDocstringParser, RawSerializer
 from stitcher.common.services import AssetPathResolver
-from stitcher.lang.sidecar import SidecarAdapter
+from .adapter import SidecarAdapter
 
 
 class DocumentManager:
