@@ -2,9 +2,9 @@ import sys
 import time
 import argparse
 from pathlib import Path
-from stitcher.app import StitcherApp
+from stitcher.app.core import StitcherApp
 from stitcher.lang.python.parser.griffe import GriffePythonParser
-from stitcher.adapter.python import PythonTransformer, PythonFingerprintStrategy
+from stitcher.lang.python import PythonTransformer, PythonFingerprintStrategy
 
 # --- 1. 自动路径注入 (Automation of sys.path) ---
 project_root = Path(__file__).parent.parent.resolve()
