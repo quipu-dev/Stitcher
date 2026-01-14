@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Union
 from needle.spec import OperatorProtocol, SemanticPointerProtocol
-from needle.operators import FileSystemOperator
+from .fs_operator import FileSystemOperator
 
 
 class I18NFactoryOperator(OperatorProtocol):

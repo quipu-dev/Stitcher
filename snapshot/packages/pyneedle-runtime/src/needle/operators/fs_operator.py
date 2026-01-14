@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Optional, Union, Dict
 from needle.spec import OperatorProtocol, SemanticPointerProtocol
-from needle.operators.helpers.json_handler import JsonHandler
+from .helpers.json_handler import JsonHandler
 
 
 class FileSystemOperator(OperatorProtocol):
