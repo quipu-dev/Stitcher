@@ -20,14 +20,8 @@ class StitcherConfig:
     peripheral_paths: List[str] = field(default_factory=list)
 
 
-def _find_pyproject_toml(search_path: Path) -> Path:
-    current_dir = search_path.resolve()
-    while current_dir.parent != current_dir:
-        pyproject_path = current_dir / "pyproject.toml"
-        if pyproject_path.is_file():
-            return pyproject_path
-        current_dir = current_dir.parent
-    raise FileNotFoundError("Could not find pyproject.toml in any parent directory.")
+from .core import find_workspace_root
+from .exceptions import WorkspaceNotFoundError
 
 
 def _find_plugins(workspace_root: Path) -> Dict[str, str]:
@@ -50,21 +44,24 @@ def _find_plugins(workspace_root: Path) -> Dict[str, str]:
 def load_config_from_path(
     search_path: Path,
 ) -> Tuple[List[StitcherConfig], Optional[str]]:
-    plugins = _find_plugins(search_path)
     project_name: Optional[str] = None
     stitcher_data: Dict[str, Any] = {}
 
     try:
-        config_path = _find_pyproject_toml(search_path)
+        workspace_root = find_workspace_root(search_path)
+        plugins = _find_plugins(workspace_root)
+        config_path = workspace_root / "pyproject.toml"
+
         with open(config_path, "rb") as f:
             data = tomllib.load(f)
 
         project_name = data.get("project", {}).get("name")
         stitcher_data = data.get("tool", {}).get("stitcher", {})
 
-    except FileNotFoundError:
-        # If no root config file, return default config with discovered plugins
-        return [StitcherConfig(plugins=plugins)], None
+    except (FileNotFoundError, WorkspaceNotFoundError):
+        # In case of no root, we can't reliably find plugins.
+        # This behavior is now more correct. We return an empty plugin dict.
+        return [StitcherConfig(plugins={})], None
 
     configs: List[StitcherConfig] = []
     targets = stitcher_data.get("targets", {})
