@@ -43,23 +43,27 @@ class CircularDependencyRule(ArchitectureRule):
                         if not reasons:
                             details.append(f"\n  {u} -> {v} (reason unavailable)")
                             continue
-                        
+
                         first_reason = reasons[0]
                         line_match = re.search(r"\(L(\d+)\)", first_reason)
                         line_number = int(line_match.group(1)) if line_match else -1
-                        
+
                         snippet = ""
                         if line_number > 0:
                             try:
                                 source_path = Path(u)
                                 if source_path.exists():
-                                    lines = source_path.read_text(encoding="utf-8").splitlines()
+                                    lines = source_path.read_text(
+                                        encoding="utf-8"
+                                    ).splitlines()
                                     start = max(0, line_number - 3)
                                     end = min(len(lines), line_number + 2)
-                                    
+
                                     snippet_lines = [
                                         f"    {idx:4d} | {'> ' if idx == line_number else '  '}{line}"
-                                        for idx, line in enumerate(lines[start:end], start=start + 1)
+                                        for idx, line in enumerate(
+                                            lines[start:end], start=start + 1
+                                        )
                                     ]
                                     snippet = "\n".join(snippet_lines)
                             except Exception:

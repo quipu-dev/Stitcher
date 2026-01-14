@@ -114,13 +114,25 @@
       "baseline_code_signature_text": "class CheckReporter:",
       "baseline_code_structure_hash": "a020121feb6c8ba194e37a02119b71a6f4b34fe3eca53cff10c476bfd864d263"
     },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter._report_architecture_issues": {
+      "baseline_code_signature_text": "def _report_architecture_issues(self, arch_violations: List[Violation]) -> bool:",
+      "baseline_code_structure_hash": "50f37a7ef267319e3041a3fe3ef30ae261660ddc885aaedf6a6090f381dcd094"
+    },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter._report_file_issues": {
+      "baseline_code_signature_text": "def _report_file_issues(self, res: FileCheckResult) -> None:",
+      "baseline_code_structure_hash": "c91bbde645dbfbd57b798d65364a7292887896aedc6aebaef2269272b1f3c80c"
+    },
     "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter._report_issues": {
       "baseline_code_signature_text": "def _report_issues(self, res: FileCheckResult) -> None:",
       "baseline_code_structure_hash": "f568e55e3ef0b1383125c2f3c51f0b8917204cf36185aa423bc17293f1c981c9"
     },
+    "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter._report_reconciled_and_info": {
+      "baseline_code_signature_text": "def _report_reconciled_and_info(self, res: FileCheckResult):",
+      "baseline_code_structure_hash": "fe35476757f1aa44f0a2899253f6a8e6a7aeb60c07378eedf527158fbb38bf22"
+    },
     "py://packages/stitcher-application/src/stitcher/app/runners/check/reporter.py#CheckReporter.report": {
-      "baseline_code_signature_text": "def report(self, results: List[FileCheckResult]) -> bool:",
-      "baseline_code_structure_hash": "3b154b57774cb70599d76bad8a376720541936fda6490637a561551c556354f4"
+      "baseline_code_signature_text": "def report(self, file_results: List[FileCheckResult], arch_violations: List[Violation]) -> bool:",
+      "baseline_code_structure_hash": "5be7eba6a6d1a3068399c930bf87da19514337b498e926f809dc8185a173d46f"
     },
     "py://packages/stitcher-application/src/stitcher/app/runners/check/resolver.py#CheckResolver": {
       "baseline_code_signature_text": "class CheckResolver:",
@@ -204,8 +216,8 @@
       "baseline_code_structure_hash": "1ffd9769c49297ddeaccf6ce1061dfa70a81478a8bbd6e4d5720439f020f4f7a"
     },
     "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.report": {
-      "baseline_code_signature_text": "def report(self, results: List[AnalysisFileCheckResult]) -> bool:",
-      "baseline_code_structure_hash": "3ece68e1827b99251cd5ddafbad08172af7e90e53ea01694ca7250176ac100b5"
+      "baseline_code_signature_text": "def report(self, file_results: List[AnalysisFileCheckResult], arch_violations: List[Violation]) -> bool:",
+      "baseline_code_structure_hash": "5de9bd2a46d9d55925b7ebf28469bc085d7407eb350da18149ce04cde4cba0e4"
     },
     "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.reporter": {},
     "py://packages/stitcher-application/src/stitcher/app/runners/check/runner.py#CheckRunner.resolve_conflicts": {

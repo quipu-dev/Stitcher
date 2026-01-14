@@ -1,2 +1,11 @@
-detect_circular_dependencies: "Detects circular dependencies by finding strongly connected components (SCCs)\nand then sampling one cycle from each non-trivial SCC. This is significantly\nmore performant than enumerating all simple cycles."
-has_path: "Checks if a path exists between two nodes in the graph.\n\nArgs:\n    graph: The directed graph to check.\n    source: The starting node.\n    target: The ending node.\n\nReturns:\n    True if a path exists, False otherwise."
+has_path:
+  summary: |-
+    Checks if a path exists between two nodes in the graph.
+
+    Args:
+        graph: The directed graph to check.
+        source: The starting node.
+        target: The ending node.
+
+    Returns:
+        True if a path exists, False otherwise.

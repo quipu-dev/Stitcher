@@ -6,7 +6,7 @@ from needle.pointer import L
 from stitcher.analysis.schema import FileCheckResult
 
 
-from stitcher.analysis.schema import FileCheckResult, Violation
+from stitcher.analysis.schema import Violation
 
 
 class CheckReporter:
@@ -87,7 +87,7 @@ class CheckReporter:
             )
             for v in sorted(scc_violations, key=lambda x: x.context.get("index", 0)):
                 bus.error(v.kind, key=v.fqn, **v.context)
-        
+
         return True
 
     def _report_file_issues(self, res: FileCheckResult) -> None:
@@ -112,14 +112,14 @@ class CheckReporter:
                 continue
 
             violations = violations_by_kind[kind]
-            
+
             if kind == L.check.file.untracked_with_details:
                 violation = violations[0]
                 keys = violation.context.get("keys", [])
                 bus.warning(kind, path=res.path, count=len(keys))
                 for key in sorted(keys):
                     bus.warning(L.check.issue.untracked_missing_key, key=key)
-            
+
             elif kind == L.check.file.untracked:
                 bus.warning(kind, path=res.path)
 
