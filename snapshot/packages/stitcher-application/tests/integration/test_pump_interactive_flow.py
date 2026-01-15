@@ -36,7 +36,7 @@ def conflicting_workspace(tmp_path):
     )
 
 
-def test_pump_interactive_overwrite(conflicting_workspace, monkeypatch):
+def test_pump_interactive_overwrite(spy_bus: SpyBus, conflicting_workspace, monkeypatch):
     """
     Verify that choosing [F]orce-hydrate (HYDRATE_OVERWRITE) correctly
     updates the YAML file with the content from the source code.
@@ -44,7 +44,6 @@ def test_pump_interactive_overwrite(conflicting_workspace, monkeypatch):
     # 1. Arrange: Inject a handler that simulates choosing 'Force-hydrate'
     handler = MockResolutionHandler([ResolutionAction.HYDRATE_OVERWRITE])
     app = create_test_app(root_path=conflicting_workspace, interaction_handler=handler)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
