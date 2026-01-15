@@ -25,6 +25,7 @@ class FileIndexer:
             "updated": 0,
             "deleted": 0,
             "skipped": 0,
+            "sidecars": 0,
             "errors": 0,
             "error_details": [],
             "modified_paths": set(),
@@ -43,6 +44,8 @@ class FileIndexer:
 
         # --- Check and Update ---
         for rel_path_str in discovered_paths:
+            if rel_path_str.endswith(".stitcher.yaml") or rel_path_str.endswith(".stitcher.json"):
+                stats["sidecars"] += 1
             abs_path = self.root_path / rel_path_str
             try:
                 file_stat = abs_path.stat()

@@ -1,4 +1,4 @@
 {
   "start": "🔄 Starting incremental index build...",
-  "complete": "✨ Indexing complete. Added: {added}, Updated: {updated}, Deleted: {deleted}, Skipped: {skipped}"
+  "complete": "✨ Indexing complete. Added: {added}, Updated: {updated}, Deleted: {deleted}, Skipped: {skipped}, Sidecars: {sidecars}"
 }

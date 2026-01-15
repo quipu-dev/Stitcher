@@ -64,20 +64,38 @@ class InitRunner:
             lock_updated = False
 
             for module in pkg_modules:
-                output_path = self.doc_manager.save_docs_for_module(module)
+                # 1. Load existing docs (Baseline)
+                existing_docs = self.doc_manager.load_docs_for_module(module)
+                
+                # 2. Extract source docs
+                source_docs = self.doc_manager.flatten_module_docs(module)
+
+                # 3. Merge: Existing wins. Source only contributes missing keys.
+                final_docs = existing_docs.copy()
+                docs_to_save = {}
+
+                for fqn, ir in source_docs.items():
+                    if fqn not in final_docs:
+                        final_docs[fqn] = ir
+                        docs_to_save[fqn] = ir
+                
+                output_path = None
+                if docs_to_save:
+                    output_path = self.doc_manager.save_irs(module.file_path, docs_to_save)
+                elif not existing_docs and not docs_to_save:
+                    pass
+                else:
+                    output_path = self.doc_manager.resolver.get_doc_path(self.root_path / module.file_path)
 
                 # Compute logical/relative paths for SURI generation
                 module_abs_path = self.root_path / module.file_path
                 module_ws_rel = self.workspace.to_workspace_relative(module_abs_path)
 
-                # Generate IRs from source code; this is the source of truth for init.
-                ir_map = self.doc_manager.flatten_module_docs(module)
-
                 computed_fingerprints = self._compute_fingerprints(module)
-                # CRITICAL FIX: Compute hashes from the in-memory IR map, NOT from the index.
+                # Compute hashes from the FINAL merged state.
                 yaml_hashes = {
                     fqn: self.doc_manager.compute_ir_hash(ir)
-                    for fqn, ir in ir_map.items()
+                    for fqn, ir in final_docs.items()
                 }
 
                 all_fqns = set(computed_fingerprints.keys()) | set(yaml_hashes.keys())
@@ -107,7 +125,7 @@ class InitRunner:
                     lock_data[suri] = fp
                     lock_updated = True
 
-                if output_path and output_path.name:
+                if output_path and output_path.name and docs_to_save:
                     relative_path = output_path.relative_to(self.root_path)
                     bus.success(L.init.file.created, path=relative_path)
                     created_files.append(output_path)
