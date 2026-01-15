@@ -1,5 +1,4 @@
 import sys
-import os
 from pathlib import Path
 
 # --- 1. 环境准备 (Monorepo 开发环境) ---
@@ -20,7 +19,9 @@ if packages_dir.exists():
 try:
     from pyinstrument import Profiler
 except ImportError:
-    print("❌ 错误: 未找到 'pyinstrument'。请通过以下命令安装: pip install pyinstrument")
+    print(
+        "❌ 错误: 未找到 'pyinstrument'。请通过以下命令安装: pip install pyinstrument"
+    )
     sys.exit(1)
 
 # --- 3. 导入 CLI 入口 ---
@@ -59,6 +60,7 @@ def main():
     except Exception as e:
         print(f"\n❌ 执行过程中发生意外错误: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         profiler.stop()
