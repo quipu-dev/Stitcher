@@ -117,6 +117,15 @@ class DocumentManager:
         self._sidecar_adapter.save_doc_irs(output_path, ir_map, self.serializer)
         return output_path
 
+    def save_irs(self, file_path: str, ir_map: Dict[str, DocstringIR]) -> Path:
+        """
+        Save a dictionary of DocstringIRs directly to the sidecar file for the given source file path.
+        """
+        module_path = self.root_path / file_path
+        output_path = self.resolver.get_doc_path(module_path)
+        self._sidecar_adapter.save_doc_irs(output_path, ir_map, self.serializer)
+        return output_path
+
     def load_docs_for_path(self, file_path: str) -> Dict[str, DocstringIR]:
         if not file_path:
             return {}

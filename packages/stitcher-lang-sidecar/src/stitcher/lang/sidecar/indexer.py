@@ -43,10 +43,18 @@ class SidecarIndexerAdapter(LanguageAdapter):
             return symbols, references
 
         # 2. Determine paths
-        # file_path passed here is relative to project root (physical path)
-        # We need to determine the companion Python file path for references
-        py_name = file_path.name.replace(".stitcher.yaml", ".py")
-        py_path_rel = file_path.with_name(py_name)
+        # file_path passed here might be absolute (from FileIndexer), ensure relative
+        if file_path.is_absolute():
+            try:
+                rel_path = file_path.relative_to(self.root_path)
+            except ValueError:
+                # Fallback if path is outside root (unlikely given discovery logic)
+                rel_path = file_path
+        else:
+            rel_path = file_path
+
+        py_name = rel_path.name.replace(".stitcher.yaml", ".py")
+        py_path_rel = rel_path.with_name(py_name)
 
         # Pre-calculate logical module FQN for linking
         logical_module_fqn = path_to_logical_fqn(py_path_rel.as_posix())
@@ -62,7 +70,7 @@ class SidecarIndexerAdapter(LanguageAdapter):
                 continue
 
             # --- Build Symbol ---
-            suri = self.uri_generator.generate_symbol_uri(str(file_path), fragment)
+            suri = self.uri_generator.generate_symbol_uri(str(rel_path), fragment)
             lineno, col_offset = loc_map.get(fragment, (0, 0))
 
             # STORE STRATEGY: Store raw View Data as JSON.

@@ -43,11 +43,19 @@ def mock_lock_manager(mocker) -> MagicMock:
 
 
 @pytest.fixture
+def mock_lock_session(mocker) -> MagicMock:
+    from stitcher.app.services.lock_session import LockSession
+
+    return mocker.create_autospec(LockSession, instance=True)
+
+
+@pytest.fixture
 def executor(
     tmp_path: Path,
     mocker,
     mock_doc_manager: DocumentManagerProtocol,
     mock_lock_manager: LockManagerProtocol,
+    mock_lock_session: MagicMock,
 ) -> PumpExecutor:
     mock_workspace = mocker.create_autospec(Workspace, instance=True)
     mock_workspace.find_owning_package.return_value = tmp_path
@@ -63,6 +71,7 @@ def executor(
         fingerprint_strategy=mocker.create_autospec(
             FingerprintStrategyProtocol, instance=True
         ),
+        lock_session=mock_lock_session,
     )
 
 
@@ -81,8 +90,8 @@ def test_executor_hydrates_new_doc(
 
     # Assert YAML file is written to the correct relative path with ANY content
     mock_tm.add_write.assert_any_call("src/main.stitcher.yaml", ANY)
-    # Assert lock file is written to the correct relative path with ANY content
-    mock_tm.add_write.assert_any_call("stitcher.lock", ANY)
+    # Assert lock session is notified
+    executor.lock_session.record_fresh_state.assert_called()
 
 
 def test_executor_overwrite_and_strip(
@@ -111,8 +120,8 @@ def test_executor_overwrite_and_strip(
 
     # Assert YAML is written
     mock_tm.add_write.assert_any_call("src/main.stitcher.yaml", ANY)
-    # Assert lock file is written
-    mock_tm.add_write.assert_any_call("stitcher.lock", ANY)
+    # Assert lock session is notified
+    executor.lock_session.record_fresh_state.assert_called()
     # Assert source file is stripped and written back
     executor.transformer.strip.assert_called_once()  # type: ignore[reportAttributeAccessIssue]
     mock_tm.add_write.assert_any_call("src/main.py", "stripped content")

@@ -34,7 +34,8 @@ def test_check_detects_signature_change(tmp_path, monkeypatch):
         app.run_init()
 
     _assert_no_errors(spy_bus)
-    spy_bus.assert_id_called(L.init.run.complete, level="success")
+    # run_init is an alias for pump --reconcile, so it emits pump messages
+    spy_bus.assert_id_called(L.pump.run.complete, level="success")
 
     # Modify Code: Change signature AND remove docstring
     modified_code = dedent("""

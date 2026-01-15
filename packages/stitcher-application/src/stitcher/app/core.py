@@ -18,7 +18,6 @@ from stitcher.lang.sidecar import DocumentManager, DocstringMerger
 from stitcher.common.services import Differ
 from stitcher.spec.interaction import InteractionHandler
 from .runners.check.runner import CheckRunner
-from .runners.init import InitRunner
 from .runners.pump.runner import PumpRunner
 from .runners.transform import TransformRunner
 from .runners.coverage import CoverageRunner
@@ -27,6 +26,7 @@ from .runners.index import IndexRunner
 from .runners.check.resolver import CheckResolver
 from .runners.check.reporter import CheckReporter
 from .runners.pump.executor import PumpExecutor
+from .services.lock_session import LockSession
 from stitcher.analysis.engines import create_pump_engine, create_architecture_engine
 from stitcher.common.transaction import TransactionManager
 from typing import Callable
@@ -86,6 +86,15 @@ class StitcherApp:
             root_path, self.scanner, self.doc_manager, transformer
         )
 
+        # 4. Application Services
+        self.lock_session = LockSession(
+            self.lock_manager,
+            self.doc_manager,
+            self.workspace,
+            self.root_path,
+            self.uri_generator,
+        )
+
         # 3. Register Adapters
         search_paths = self.workspace.get_search_paths()
 
@@ -102,7 +111,7 @@ class StitcherApp:
         # The adapter itself filters for .stitcher.yaml files.
         self.file_indexer.register_adapter(".yaml", sidecar_adapter)
 
-        # 4. Runners (Command Handlers)
+        # 5. Runners (Command Handlers)
         check_resolver = CheckResolver(
             root_path,
             self.workspace,
@@ -112,6 +121,7 @@ class StitcherApp:
             self.uri_generator,
             interaction_handler,
             self.fingerprint_strategy,
+            self.lock_session,
         )
         check_reporter = CheckReporter()
         self.check_runner = CheckRunner(
@@ -137,6 +147,7 @@ class StitcherApp:
             transformer,
             self.merger,
             self.fingerprint_strategy,
+            self.lock_session,
         )
         self.pump_runner = PumpRunner(
             pump_engine=pump_engine,
@@ -150,14 +161,6 @@ class StitcherApp:
             fingerprint_strategy=self.fingerprint_strategy,
         )
 
-        self.init_runner = InitRunner(
-            root_path,
-            self.workspace,
-            self.doc_manager,
-            self.lock_manager,
-            self.uri_generator,
-            fingerprint_strategy=self.fingerprint_strategy,
-        )
         self.transform_runner = TransformRunner(
             root_path, self.doc_manager, transformer
         )
@@ -167,7 +170,7 @@ class StitcherApp:
         self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
         self.architecture_engine = create_architecture_engine()
 
-        # 4. Refactor Runner (depends on Indexing)
+        # 6. Refactor Runner (depends on Indexing)
         self.refactor_runner = RefactorRunner(
             root_path, self.index_store, self.file_indexer, self.uri_generator
         )
@@ -229,28 +232,12 @@ class StitcherApp:
             bus.success(L.generate.run.complete, count=len(all_generated))
         return all_generated
 
-    def run_init(self) -> List[Path]:
-        configs, _ = self._load_configs()
-        all_created: List[Path] = []
-        found_any = False
-
-        for config in configs:
-            modules = self._configure_and_scan(config)
-            if not modules:
-                continue
-            found_any = True
-
-            created = self.init_runner.run_batch(modules)
-            all_created.extend(created)
-
-        if not found_any:
-            bus.info(L.init.no_docs_found)
-        elif all_created:
-            bus.success(L.init.run.complete, count=len(all_created))
-        else:
-            bus.info(L.init.no_docs_found)
-
-        return all_created
+    def run_init(self) -> None:
+        """
+        Alias for 'pump --reconcile'.
+        Initializes the project by syncing source docs to YAML, respecting existing YAML content.
+        """
+        self.run_pump(reconcile=True)
 
     def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:
         self.scanner.had_errors = False
@@ -260,6 +247,8 @@ class StitcherApp:
 
         configs, _ = self._load_configs()
         all_results: List[FileCheckResult] = []
+        # Create a single transaction for the entire check run
+        tm = TransactionManager(self.root_path)
 
         # We wrap the entire multi-target check process in a single DB session
         with self.db_manager.session():
@@ -307,16 +296,23 @@ class StitcherApp:
 
                 # 7. Resolve interactive/manual conflicts
                 if not self.check_runner.resolve_conflicts(
-                    batch_results, batch_conflicts, force_relink, reconcile
+                    batch_results, batch_conflicts, tm, force_relink, reconcile
                 ):
                     return False
 
             # --- Phase B: Architecture Check (Global) ---
             arch_violations = self.architecture_engine.analyze(self.index_store)
 
-        # 9. Final Report
-        report_success = self.check_runner.report(all_results, arch_violations)
-        return report_success and not self.scanner.had_errors
+        try:
+            # 8. Commit Lock and Doc changes
+            self.lock_session.commit_to_transaction(tm)
+            tm.commit()
+
+            # 9. Final Report
+            report_success = self.check_runner.report(all_results, arch_violations)
+            return report_success and not self.scanner.had_errors
+        finally:
+            self.lock_session.clear()
 
     def run_pump(
         self,
@@ -334,24 +330,30 @@ class StitcherApp:
         global_success = True
         all_redundant: List[Path] = []
 
-        with self.db_manager.session():
-            for config in configs:
-                modules = self._configure_and_scan(config)
-                if not modules:
-                    continue
+        try:
+            with self.db_manager.session():
+                for config in configs:
+                    modules = self._configure_and_scan(config)
+                    if not modules:
+                        continue
 
-                result = self.pump_runner.run_batch(
-                    modules, config, tm, strip, force, reconcile
-                )
-                if not result.success:
-                    global_success = False
-                all_redundant.extend(result.redundant_files)
+                    result = self.pump_runner.run_batch(
+                        modules, config, tm, strip, force, reconcile
+                    )
+                    if not result.success:
+                        global_success = False
+                    all_redundant.extend(result.redundant_files)
 
-        if self.scanner.had_errors:
-            global_success = False
+            # Commit all lock changes buffered in the session to the transaction
+            self.lock_session.commit_to_transaction(tm)
 
-        tm.commit()
-        return PumpResult(success=global_success, redundant_files=all_redundant)
+            if self.scanner.had_errors:
+                global_success = False
+
+            tm.commit()
+            return PumpResult(success=global_success, redundant_files=all_redundant)
+        finally:
+            self.lock_session.clear()
 
     def run_strip(
         self, files: Optional[List[Path]] = None, dry_run: bool = False

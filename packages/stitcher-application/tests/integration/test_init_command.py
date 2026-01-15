@@ -24,19 +24,21 @@ def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch):
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
-        created_files = app.run_init()
+        app.run_init()
 
     # 3. Assert
     expected_yaml = project_root / "src/main.stitcher.yaml"
-    assert expected_yaml in created_files
+    assert expected_yaml.exists()
 
     content = expected_yaml.read_text()
     # Check for block style. ruamel.yaml is smart and won't quote simple keys.
     assert "my_func: |-" in content
     assert "  This is a docstring." in content
 
-    spy_bus.assert_id_called(L.init.file.created, level="success")
-    spy_bus.assert_id_called(L.init.run.complete, level="success")
+    # Updated assertions for Pump behavior
+    # L.init.file.created -> L.pump.file.success (since keys were updated)
+    spy_bus.assert_id_called(L.pump.file.success, level="success")
+    spy_bus.assert_id_called(L.pump.run.complete, level="success")
 
 
 def test_init_skips_files_without_docs(tmp_path, monkeypatch):
@@ -53,8 +55,7 @@ def test_init_skips_files_without_docs(tmp_path, monkeypatch):
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
-        created_files = app.run_init()
+        app.run_init()
 
-    # 3. Assert
-    assert len(created_files) == 0
-    spy_bus.assert_id_called(L.init.no_docs_found, level="info")
+    # 3. Assert - Pump returns No Changes info
+    spy_bus.assert_id_called(L.pump.run.no_changes, level="info")

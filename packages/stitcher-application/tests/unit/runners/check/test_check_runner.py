@@ -14,6 +14,7 @@ from stitcher.spec import (
     URIGeneratorProtocol,
 )
 from stitcher.workspace import Workspace
+from stitcher.common.transaction import TransactionManager
 from stitcher.spec.interaction import InteractionContext
 from stitcher.analysis.schema import FileCheckResult as AnalysisResult, Violation
 from needle.pointer import L
@@ -41,6 +42,7 @@ def test_check_runner_orchestrates_analysis_and_resolution(mocker):
 
     # 配置 mock 模块
     mock_modules = [ModuleDef(file_path="src/main.py")]
+    mock_tm = mocker.create_autospec(TransactionManager, instance=True)
 
     # Mock Engine 行为
     mock_engine = MagicMock()
@@ -88,14 +90,14 @@ def test_check_runner_orchestrates_analysis_and_resolution(mocker):
 
     # 继续执行工作流
     runner.auto_reconcile_docs(results, mock_modules)
-    resolution_success = runner.resolve_conflicts(results, conflicts)
+    resolution_success = runner.resolve_conflicts(results, conflicts, mock_tm)
     report_success = runner.report(results, [])
 
     # 验证与 mock 的交互
     mock_engine.analyze.assert_called_once()
     mock_resolver.auto_reconcile_docs.assert_called_once_with(results, mock_modules)
     mock_resolver.resolve_conflicts.assert_called_once_with(
-        results, conflicts, force_relink=False, reconcile=False
+        results, conflicts, mock_tm, force_relink=False, reconcile=False
     )
     mock_reporter.report.assert_called_once_with(results, [])
 
@@ -109,6 +111,7 @@ def test_check_runner_passes_relink_and_reconcile_flags_to_resolver(mocker):
     """
     # Arrange
     mock_resolver = mocker.create_autospec(CheckResolver, instance=True)
+    mock_tm = mocker.create_autospec(TransactionManager, instance=True)
     runner = CheckRunner(
         doc_manager=mocker.create_autospec(DocumentManagerProtocol, instance=True),
         lock_manager=mocker.create_autospec(LockManagerProtocol, instance=True),
@@ -135,10 +138,10 @@ def test_check_runner_passes_relink_and_reconcile_flags_to_resolver(mocker):
 
     # Act
     runner.resolve_conflicts(
-        mock_results, mock_conflicts, force_relink=True, reconcile=True
+        mock_results, mock_conflicts, mock_tm, force_relink=True, reconcile=True
     )
 
     # Assert
     mock_resolver.resolve_conflicts.assert_called_once_with(
-        mock_results, mock_conflicts, force_relink=True, reconcile=True
+        mock_results, mock_conflicts, mock_tm, force_relink=True, reconcile=True
     )

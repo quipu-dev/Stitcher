@@ -15,6 +15,8 @@ from stitcher.spec.interaction import InteractionContext
 from stitcher.analysis.schema import FileCheckResult as AnalysisFileCheckResult
 from stitcher.analysis.schema import Violation
 
+from stitcher.common.transaction import TransactionManager
+
 from .resolver import CheckResolver
 from .reporter import CheckReporter
 from .subject import IndexCheckSubjectAdapter, ASTCheckSubjectAdapter
@@ -128,11 +130,12 @@ class CheckRunner:
         self,
         results: List[AnalysisFileCheckResult],
         conflicts: List[InteractionContext],
+        tm: "TransactionManager",
         force_relink: bool = False,
         reconcile: bool = False,
     ) -> bool:
         return self.resolver.resolve_conflicts(
-            results, conflicts, force_relink, reconcile
+            results, conflicts, tm, force_relink, reconcile
         )
 
     def reformat_all(self, modules: List[ModuleDef]):

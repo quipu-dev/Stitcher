@@ -27,6 +27,7 @@ class IndexRunner:
             updated=stats["updated"],
             deleted=stats["deleted"],
             skipped=stats["skipped"],
+            sidecars=stats.get("sidecars", 0),
         )
 
         if stats.get("errors", 0) > 0:
