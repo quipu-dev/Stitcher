@@ -1,10 +1,11 @@
 from needle.pointer import L
-from pathlib import Path
 
 from stitcher.test_utils import WorkspaceFactory, SpyBus, create_test_app
 
 
-def test_check_does_not_report_imports_as_missing_docs(workspace_factory: WorkspaceFactory, monkeypatch):
+def test_check_does_not_report_imports_as_missing_docs(
+    workspace_factory: WorkspaceFactory, monkeypatch
+):
     """
     Verifies that 'stitcher check' does not incorrectly flag imported symbols
     as missing documentation. It should only flag symbols defined within the

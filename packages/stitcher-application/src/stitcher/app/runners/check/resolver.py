@@ -59,11 +59,6 @@ class CheckResolver:
     def auto_reconcile_docs(
         self, results: List[FileCheckResult], modules: List[ModuleDef]
     ):
-        """
-        Automatically reconciles documentation improvements by updating the lock session.
-        This handles cases where the doc IR changed in YAML but is considered an 'improvement'
-        rather than a conflict (e.g., when YAML is newer but code has no doc).
-        """
         for res in results:
             doc_update_violations = [
                 v for v in res.info_violations if v.kind == L.check.state.doc_updated
@@ -218,14 +213,11 @@ class CheckResolver:
                     if code_fp:
                         self.lock_session.record_relink(module_stub, fqn, code_fp)
 
-                elif (
-                    action
-                    in [
-                        ResolutionAction.RECONCILE,
-                        ResolutionAction.HYDRATE_OVERWRITE,
-                        ResolutionAction.HYDRATE_KEEP_EXISTING,
-                    ]
-                ):
+                elif action in [
+                    ResolutionAction.RECONCILE,
+                    ResolutionAction.HYDRATE_OVERWRITE,
+                    ResolutionAction.HYDRATE_KEEP_EXISTING,
+                ]:
                     self.lock_session.record_fresh_state(
                         module_stub,
                         fqn,

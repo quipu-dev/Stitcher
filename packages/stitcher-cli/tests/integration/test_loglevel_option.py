@@ -1,4 +1,3 @@
-import pytest
 from typer.testing import CliRunner
 
 from stitcher.cli.main import app
@@ -6,6 +5,7 @@ from stitcher.test_utils import SpyBus
 from needle.pointer import L, SemanticPointer
 
 runner = CliRunner()
+
 
 def assert_id_not_called(spy_bus: SpyBus, msg_id: SemanticPointer):
     """Helper to assert that a specific message ID was NOT called."""

@@ -14,12 +14,6 @@ from stitcher.common.transaction import TransactionManager
 
 
 class LockSession:
-    """
-    Manages the state of stitcher.lock files during a transaction.
-    Acts as a Single Source of Truth for lock updates, buffering changes in memory
-    and committing them to the TransactionManager at the end of a run.
-    """
-
     def __init__(
         self,
         lock_manager: LockManagerProtocol,
@@ -39,10 +33,6 @@ class LockSession:
         self._locks: Dict[Path, Dict[str, Fingerprint]] = {}
 
     def _get_lock_data(self, abs_file_path: Path) -> Dict[str, Fingerprint]:
-        """
-        Retrieves the lock data for the package owning the given file.
-        Loads from disk if not already in memory buffer.
-        """
         pkg_root = self.workspace.find_owning_package(abs_file_path)
         if pkg_root not in self._locks:
             self._locks[pkg_root] = self.lock_manager.load(pkg_root)
@@ -60,14 +50,6 @@ class LockSession:
         doc_ir: Optional[DocstringIR] = None,
         code_fingerprint: Optional[Fingerprint] = None,
     ):
-        """
-        Record that the current Code (represented by code_fingerprint) and/or
-        current YAML (represented by doc_ir) are the new baseline.
-
-        Used by:
-        - Pump (Overwrite/Hydrate): Updates both code and doc baselines.
-        - Check (Reconcile): Updates both code and doc baselines.
-        """
         if not module.file_path:
             return
 
@@ -97,18 +79,11 @@ class LockSession:
         lock_data[suri] = fp
 
     def record_relink(self, module: ModuleDef, fqn: str, code_fingerprint: Fingerprint):
-        """
-        Update ONLY the code hash baseline to match current code, keeping doc hash as is.
-        Used by Check (Relink) to acknowledge a code change without updating docs.
-        """
         self.record_fresh_state(
             module, fqn, doc_ir=None, code_fingerprint=code_fingerprint
         )
 
     def record_purge(self, module: ModuleDef, fqn: str):
-        """
-        Remove the entry from lock file.
-        """
         if not module.file_path:
             return
 
@@ -120,10 +95,6 @@ class LockSession:
             del lock_data[suri]
 
     def commit_to_transaction(self, tm: TransactionManager):
-        """
-        Serialize all modified lock files and register write operations with the TransactionManager.
-        This ensures that lock updates respect the global dry-run setting.
-        """
         for pkg_root, lock_data in self._locks.items():
             content = self.lock_manager.serialize(lock_data)
             lock_path = pkg_root / "stitcher.lock"
@@ -136,8 +107,4 @@ class LockSession:
                 pass
 
     def clear(self):
-        """
-        Clears the internal buffer. Should be called at the end of a command execution
-        to prevent stale state from polluting subsequent runs.
-        """
         self._locks.clear()

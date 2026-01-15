@@ -5,7 +5,9 @@ from stitcher.test_utils.workspace import WorkspaceFactory
 from stitcher.workspace import Workspace
 
 
-def test_indexer_resolves_aliases_and_references(workspace_factory: WorkspaceFactory, store):
+def test_indexer_resolves_aliases_and_references(
+    workspace_factory: WorkspaceFactory, store
+):
     """
     End-to-end test for alias resolution and reference scanning.
     Verifies that:

@@ -16,9 +16,8 @@
 
   This includes scanning source files, processing plugins, and generating .pyi files.
 "StitcherApp.run_init": |-
-  Initialize Stitcher for a project by creating the first batch of .stitcher.yaml files.
-
-  This command scans the codebase and extracts existing docstrings to seed the documentation store.
+  Alias for 'pump --reconcile'.
+  Initializes the project by syncing source docs to YAML, respecting existing YAML content.
 "StitcherApp.run_inject": |-
   Inject documentation from .stitcher.yaml files back into the source code as docstrings.
 

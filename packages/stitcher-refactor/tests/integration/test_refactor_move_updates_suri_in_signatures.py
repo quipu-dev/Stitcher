@@ -1,9 +1,10 @@
 import json
-from pathlib import Path
 from stitcher.test_utils import WorkspaceFactory, create_test_app
 
 
-def test_move_file_operation_updates_suri_in_lockfile(workspace_factory: WorkspaceFactory):
+def test_move_file_operation_updates_suri_in_lockfile(
+    workspace_factory: WorkspaceFactory,
+):
     workspace_root = (
         workspace_factory.with_config({"scan_paths": ["packages/pkg-a/src"]})
         .with_pyproject("packages/pkg-a")

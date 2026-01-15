@@ -233,10 +233,6 @@ class StitcherApp:
         return all_generated
 
     def run_init(self) -> None:
-        """
-        Alias for 'pump --reconcile'.
-        Initializes the project by syncing source docs to YAML, respecting existing YAML content.
-        """
         self.run_pump(reconcile=True)
 
     def run_check(self, force_relink: bool = False, reconcile: bool = False) -> bool:

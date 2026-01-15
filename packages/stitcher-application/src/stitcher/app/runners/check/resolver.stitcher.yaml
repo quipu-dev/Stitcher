@@ -1,0 +1,1 @@
+CheckResolver.auto_reconcile_docs: "Automatically reconciles documentation improvements by updating the lock session.\nThis handles cases where the doc IR changed in YAML but is considered an 'improvement'\nrather than a conflict (e.g., when YAML is newer but code has no doc)."

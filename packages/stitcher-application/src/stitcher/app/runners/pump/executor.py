@@ -79,9 +79,8 @@ class PumpExecutor:
                     # We must update doc fingerprint even if we don't write to YAML (reconcile)
                     exec_plan.update_doc_fingerprint = True
 
-                if (
-                    decision == ResolutionAction.HYDRATE_OVERWRITE
-                    or (decision is None and has_source_doc)
+                if decision == ResolutionAction.HYDRATE_OVERWRITE or (
+                    decision is None and has_source_doc
                 ):
                     exec_plan.hydrate_yaml = True
 

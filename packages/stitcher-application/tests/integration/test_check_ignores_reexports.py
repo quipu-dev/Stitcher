@@ -1,10 +1,11 @@
 from needle.pointer import L
-from pathlib import Path
 
 from stitcher.test_utils import WorkspaceFactory, SpyBus, create_test_app
 
 
-def test_check_ignores_reexports_and_imports(workspace_factory: WorkspaceFactory, monkeypatch):
+def test_check_ignores_reexports_and_imports(
+    workspace_factory: WorkspaceFactory, monkeypatch
+):
     """
     Verifies that 'stitcher check' correctly ignores:
     1. Symbols re-exported from another module in the same package.

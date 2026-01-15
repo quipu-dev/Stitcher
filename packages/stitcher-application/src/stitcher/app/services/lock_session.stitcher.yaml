@@ -1,0 +1,7 @@
+LockSession: "Manages the state of stitcher.lock files during a transaction.\nActs as a Single Source of Truth for lock updates, buffering changes in memory\nand committing them to the TransactionManager at the end of a run."
+LockSession._get_lock_data: "Retrieves the lock data for the package owning the given file.\nLoads from disk if not already in memory buffer."
+LockSession.clear: "Clears the internal buffer. Should be called at the end of a command execution\nto prevent stale state from polluting subsequent runs."
+LockSession.commit_to_transaction: "Serialize all modified lock files and register write operations with the TransactionManager.\nThis ensures that lock updates respect the global dry-run setting."
+LockSession.record_fresh_state: "Record that the current Code (represented by code_fingerprint) and/or\ncurrent YAML (represented by doc_ir) are the new baseline.\n\nUsed by:\n- Pump (Overwrite/Hydrate): Updates both code and doc baselines.\n- Check (Reconcile): Updates both code and doc baselines."
+LockSession.record_purge: Remove the entry from lock file.
+LockSession.record_relink: "Update ONLY the code hash baseline to match current code, keeping doc hash as is.\nUsed by Check (Relink) to acknowledge a code change without updating docs."
