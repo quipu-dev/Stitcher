@@ -10,7 +10,9 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypatch):
+def test_generate_with_stub_package_creates_correct_structure(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     End-to-end test for the PEP 561 stub package generation mode.
     """
@@ -37,7 +39,6 @@ def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypa
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

@@ -5,7 +5,9 @@ from stitcher.test_utils import WorkspaceFactory, SpyBus, get_stored_hashes
 from needle.pointer import L
 
 
-def test_check_persists_updates_in_multi_target_scan(tmp_path: Path, monkeypatch):
+def test_check_persists_updates_in_multi_target_scan(
+    tmp_path: Path, monkeypatch, spy_bus: SpyBus
+):
     """
     Regression Test: Ensures that 'doc_improvement' updates are persisted for ALL files,
     not just those in the last scanned batch.
@@ -67,14 +69,13 @@ def func():
 
     # 4. Run Check
     # This should detect the improvement and update the signature file
-    spy = SpyBus()
-    with spy.patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_check()
 
     # 5. Assertions
 
     # A. Check that the bus reported the update (Phase 4 reporting works even with the bug)
-    spy.assert_id_called(L.check.state.doc_updated)
+    spy_bus.assert_id_called(L.check.state.doc_updated)
 
     # B. Check PERMANENCE (The critical part)
     # If the bug exists, this file was NOT updated because pkg1 was not in the 'modules'

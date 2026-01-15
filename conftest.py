@@ -1,5 +1,6 @@
 import pytest
 from stitcher.test_utils.workspace import WorkspaceFactory
+from stitcher.test_utils.bus import SpyBus
 
 
 @pytest.fixture
@@ -8,3 +9,8 @@ def workspace_factory(tmp_path, monkeypatch):
     factory = WorkspaceFactory(tmp_path).init_git()
     monkeypatch.chdir(tmp_path)
     return factory
+
+
+@pytest.fixture
+def spy_bus():
+    return SpyBus()

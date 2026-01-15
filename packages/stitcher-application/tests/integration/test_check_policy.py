@@ -3,7 +3,7 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_private_members_allowed_in_yaml(tmp_path, monkeypatch):
+def test_private_members_allowed_in_yaml(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Policy Test: Private members present in YAML should NOT trigger EXTRA error
     if they exist in the code. They are 'allowed extras'.
@@ -32,7 +32,6 @@ def test_private_members_allowed_in_yaml(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -53,7 +52,7 @@ def test_private_members_allowed_in_yaml(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
 
-def test_ghost_keys_trigger_extra_error(tmp_path, monkeypatch):
+def test_ghost_keys_trigger_extra_error(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Policy Test: Keys in YAML that do not exist in code (even privately)
     MUST trigger EXTRA error.
@@ -75,7 +74,6 @@ def test_ghost_keys_trigger_extra_error(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -96,7 +94,7 @@ def test_ghost_keys_trigger_extra_error(tmp_path, monkeypatch):
     assert keys == ["_ghost_private", "ghost_func"]
 
 
-def test_public_missing_triggers_warning_only(tmp_path, monkeypatch):
+def test_public_missing_triggers_warning_only(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Policy Test: Missing docs for public API should be WARNING, not ERROR.
     Exit code should be success (True).
@@ -112,7 +110,6 @@ def test_public_missing_triggers_warning_only(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

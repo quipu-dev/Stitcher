@@ -11,7 +11,7 @@ def _assert_no_errors_or_warnings(spy_bus: SpyBus):
     assert not warnings, f"Unexpected warnings: {warnings}"
 
 
-def test_state_synchronized(tmp_path, monkeypatch):
+def test_state_synchronized(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     State 1: Synchronized - Code and docs match stored hashes.
     Expected: Silent pass.
@@ -26,13 +26,12 @@ def test_state_synchronized(tmp_path, monkeypatch):
     )
     app = create_test_app(root_path=project_root)
 
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     # Remove docstring to achieve 'Synchronized' state without redundant warnings
     (project_root / "src/module.py").write_text("def func(a: int):\n    pass")
 
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
@@ -41,7 +40,7 @@ def test_state_synchronized(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
 
-def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
+def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     State 2: Documentation Improvement.
     Expected: INFO message, auto-reconcile doc hash, pass.
@@ -53,7 +52,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: int):\n    pass")
@@ -67,7 +66,6 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
 
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
@@ -88,7 +86,7 @@ def test_state_doc_improvement_auto_reconciled(tmp_path, monkeypatch):
     assert final_hashes["func"]["baseline_yaml_content_hash"] == expected_hash
 
 
-def test_state_signature_drift_error(tmp_path, monkeypatch):
+def test_state_signature_drift_error(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     State 3: Signature Drift.
     Expected: ERROR message, check fails.
@@ -100,12 +98,11 @@ def test_state_signature_drift_error(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
 
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
@@ -114,7 +111,7 @@ def test_state_signature_drift_error(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.run.fail, level="error")
 
 
-def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
+def test_state_signature_drift_force_relink(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     State 3 (Resolved): Signature Drift with force_relink.
     Expected: SUCCESS message, update signature hash, pass.
@@ -126,14 +123,13 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
 
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check(force_relink=True)
 
@@ -153,7 +149,7 @@ def test_state_signature_drift_force_relink(tmp_path, monkeypatch):
     )
 
 
-def test_state_co_evolution_error(tmp_path, monkeypatch):
+def test_state_co_evolution_error(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     State 4: Co-evolution.
     Expected: ERROR message, check fails.
@@ -165,7 +161,7 @@ def test_state_co_evolution_error(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
@@ -175,7 +171,6 @@ def test_state_co_evolution_error(tmp_path, monkeypatch):
         '__doc__: "Module Doc"\nfunc: "New YAML Doc."\n', encoding="utf-8"
     )
 
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check()
 
@@ -184,7 +179,7 @@ def test_state_co_evolution_error(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.run.fail, level="error")
 
 
-def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
+def test_state_co_evolution_reconcile(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     State 4 (Resolved): Co-evolution with reconcile.
     Expected: SUCCESS message, update both hashes, pass.
@@ -196,7 +191,7 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
         .build()
     )
     app = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_init()
 
     (project_root / "src/module.py").write_text("def func(a: str):\n    pass")
@@ -209,7 +204,6 @@ def test_state_co_evolution_reconcile(tmp_path, monkeypatch):
 
     initial_hashes = get_stored_hashes(project_root, "src/module.py")
 
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         success = app.run_check(reconcile=True)
 

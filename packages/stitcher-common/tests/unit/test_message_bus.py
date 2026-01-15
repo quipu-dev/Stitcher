@@ -1,13 +1,11 @@
 import pytest
 import stitcher.common
-from stitcher.test_utils import SpyBus
 from needle.pointer import L
 from needle.operators import DictOperator
 
 
-def test_bus_forwards_to_renderer_with_spy(monkeypatch):
+def test_bus_forwards_to_renderer_with_spy(monkeypatch, spy_bus):
     # Arrange
-    spy_bus = SpyBus()
     # For this unit test, we still need to control the message source.
     # We patch the operator of the *global singleton* bus.
     operator = DictOperator({"greeting": "Hello {name}"})
@@ -34,9 +32,8 @@ def test_bus_forwards_to_renderer_with_spy(monkeypatch):
     }
 
 
-def test_bus_identity_fallback_with_spy(monkeypatch):
+def test_bus_identity_fallback_with_spy(monkeypatch, spy_bus):
     # Arrange
-    spy_bus = SpyBus()
     # A DictOperator with a missing key will return None from the operator,
     # forcing the bus to fall back to using the key itself as the template.
     operator = DictOperator({})

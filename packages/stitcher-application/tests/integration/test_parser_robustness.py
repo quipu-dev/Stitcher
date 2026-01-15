@@ -2,7 +2,7 @@ from stitcher.test_utils import WorkspaceFactory, create_test_app, SpyBus
 from needle.pointer import L
 
 
-def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
+def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that when the parser raises an exception during scanning,
     the application handles it gracefully:
@@ -46,7 +46,6 @@ def test_check_fails_gracefully_on_local_import(tmp_path, monkeypatch):
     monkeypatch.setattr(python_adapter.parser, "parse", failing_parse)
 
     # WHEN we run the check command
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch):
         success = app.run_check()
 

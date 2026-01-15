@@ -7,7 +7,7 @@ from needle.pointer import L
 runner = CliRunner()
 
 
-def test_refactor_apply_e2e(tmp_path, monkeypatch):
+def test_refactor_apply_e2e(tmp_path, monkeypatch, spy_bus: SpyBus):
     # 1. Arrange: Create a project and a migration script
     factory = WorkspaceFactory(tmp_path)
     # Project with a symbol to be renamed
@@ -30,7 +30,6 @@ def upgrade(spec: MigrationSpec):
 
     # 2. Act
     monkeypatch.chdir(tmp_path)
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = runner.invoke(
             app,
@@ -49,7 +48,7 @@ def upgrade(spec: MigrationSpec):
     assert "from mypkg.core import New" in app_py.read_text()
 
 
-def test_refactor_apply_dry_run(tmp_path, monkeypatch):
+def test_refactor_apply_dry_run(tmp_path, monkeypatch, spy_bus: SpyBus):
     # 1. Arrange
     factory = WorkspaceFactory(tmp_path)
     (
@@ -70,7 +69,6 @@ def upgrade(spec: MigrationSpec):
 
     # 2. Act
     monkeypatch.chdir(tmp_path)
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         result = runner.invoke(
             app,

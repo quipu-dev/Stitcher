@@ -74,7 +74,9 @@ def test_pump_update_preserves_fidelity(tmp_path, monkeypatch):
     assert "Doc for New" in content
 
 
-def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
+def test_check_does_not_reformat_file_on_success(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that a successful `check` run does NOT reformat or reorder
     a .stitcher.yaml file that has custom, non-alphabetical key order.
@@ -124,7 +126,6 @@ def test_check_does_not_reformat_file_on_success(tmp_path, monkeypatch):
     content_before = yaml_path.read_text()
 
     # 2. ACT
-    spy_bus = SpyBus()
     with spy_bus.patch(monkeypatch):
         check_result = runner.invoke(app, ["check"], catch_exceptions=False)
 

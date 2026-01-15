@@ -15,10 +15,9 @@ def assert_id_not_called(spy_bus: SpyBus, msg_id: SemanticPointer):
             raise AssertionError(f"Message with ID '{key}' was unexpectedly sent.")
 
 
-def test_loglevel_default_is_info(workspace_factory, monkeypatch):
+def test_loglevel_default_is_info(workspace_factory, monkeypatch, spy_bus: SpyBus):
     """Verifies the default loglevel (info) shows INFO and above, but not DEBUG."""
     workspace_factory.with_config({"scan_paths": ["src"]}).build()
-    spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch):
         result = runner.invoke(app, ["check"], catch_exceptions=False)
@@ -29,13 +28,14 @@ def test_loglevel_default_is_info(workspace_factory, monkeypatch):
     assert_id_not_called(spy_bus, L.debug.log.scan_path)
 
 
-def test_loglevel_warning_hides_info_and_success(workspace_factory, monkeypatch):
+def test_loglevel_warning_hides_info_and_success(
+    workspace_factory, monkeypatch, spy_bus: SpyBus
+):
     """Verifies --loglevel warning hides lower level messages."""
     # Setup a project with an untracked file, which triggers a WARNING
     workspace_factory.with_config({"scan_paths": ["src"]}).with_source(
         "src/main.py", "def func(): pass"
     ).build()
-    spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch):
         result = runner.invoke(
@@ -54,10 +54,11 @@ def test_loglevel_warning_hides_info_and_success(workspace_factory, monkeypatch)
     spy_bus.assert_id_called(L.check.file.untracked_with_details, level="warning")
 
 
-def test_loglevel_debug_shows_debug_messages(workspace_factory, monkeypatch):
+def test_loglevel_debug_shows_debug_messages(
+    workspace_factory, monkeypatch, spy_bus: SpyBus
+):
     """Verifies --loglevel debug shows verbose debug messages."""
     workspace_factory.with_config({"scan_paths": ["src"]}).build()
-    spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch):
         result = runner.invoke(
@@ -69,7 +70,9 @@ def test_loglevel_debug_shows_debug_messages(workspace_factory, monkeypatch):
     spy_bus.assert_id_called(L.index.run.start, level="info")
 
 
-def test_loglevel_error_shows_only_errors(workspace_factory, monkeypatch):
+def test_loglevel_error_shows_only_errors(
+    workspace_factory, monkeypatch, spy_bus: SpyBus
+):
     """Verifies --loglevel error hides everything except errors."""
     # Setup a project with signature drift (ERROR) and an untracked file (WARNING)
     ws = workspace_factory.with_config({"scan_paths": ["src"]})
@@ -80,7 +83,6 @@ def test_loglevel_error_shows_only_errors(workspace_factory, monkeypatch):
     (ws.root_path / "src/main.py").write_text('def func(a: str): """doc"""')
     # Add an untracked file to ensure its warning is suppressed
     (ws.root_path / "src/untracked.py").write_text("pass")
-    spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch):
         result = runner.invoke(

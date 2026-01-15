@@ -3,7 +3,7 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_check_detects_content_conflict(tmp_path, monkeypatch):
+def test_check_detects_content_conflict(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that 'check' command fails if docstring content differs
     between the source code and the YAML file.
@@ -18,7 +18,6 @@ def test_check_detects_content_conflict(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

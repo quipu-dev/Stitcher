@@ -4,7 +4,7 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_pump_adds_new_docs_to_yaml(tmp_path, monkeypatch):
+def test_pump_adds_new_docs_to_yaml(tmp_path, monkeypatch, spy_bus: SpyBus):
     """Scenario 1: Normal Pumping"""
     # Arrange
     factory = WorkspaceFactory(tmp_path)
@@ -15,7 +15,6 @@ def test_pump_adds_new_docs_to_yaml(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -33,7 +32,7 @@ def test_pump_adds_new_docs_to_yaml(tmp_path, monkeypatch):
         assert data["func"] == "New doc."
 
 
-def test_pump_fails_on_conflict(tmp_path, monkeypatch):
+def test_pump_fails_on_conflict(tmp_path, monkeypatch, spy_bus: SpyBus):
     """Scenario 2: Conflict Detection"""
     # Arrange
     factory = WorkspaceFactory(tmp_path)
@@ -45,7 +44,6 @@ def test_pump_fails_on_conflict(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -63,7 +61,7 @@ def test_pump_fails_on_conflict(tmp_path, monkeypatch):
         assert data["func"] == "YAML doc"
 
 
-def test_pump_force_overwrites_conflict(tmp_path, monkeypatch):
+def test_pump_force_overwrites_conflict(tmp_path, monkeypatch, spy_bus: SpyBus):
     """Scenario 3: Force Overwrite"""
     # Arrange (same as conflict test)
     factory = WorkspaceFactory(tmp_path)
@@ -75,7 +73,6 @@ def test_pump_force_overwrites_conflict(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -92,7 +89,7 @@ def test_pump_force_overwrites_conflict(tmp_path, monkeypatch):
         assert data["func"] == "Code doc."
 
 
-def test_pump_with_strip_removes_source_doc(tmp_path, monkeypatch):
+def test_pump_with_strip_removes_source_doc(tmp_path, monkeypatch, spy_bus: SpyBus):
     """Scenario 4: Strip Integration"""
     # Arrange
     factory = WorkspaceFactory(tmp_path)
@@ -104,7 +101,6 @@ def test_pump_with_strip_removes_source_doc(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -121,7 +117,7 @@ def test_pump_with_strip_removes_source_doc(tmp_path, monkeypatch):
     assert '"""' not in final_code
 
 
-def test_pump_reconcile_ignores_source_conflict(tmp_path, monkeypatch):
+def test_pump_reconcile_ignores_source_conflict(tmp_path, monkeypatch, spy_bus: SpyBus):
     """Scenario 5: Reconcile (YAML-first) Mode"""
     # Arrange (same as conflict test)
     factory = WorkspaceFactory(tmp_path)
@@ -133,7 +129,6 @@ def test_pump_reconcile_ignores_source_conflict(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

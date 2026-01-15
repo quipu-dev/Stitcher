@@ -4,7 +4,7 @@ from stitcher.test_utils import WorkspaceFactory, SpyBus, create_test_app
 
 
 def test_check_does_not_report_imports_as_missing_docs(
-    workspace_factory: WorkspaceFactory, monkeypatch
+    workspace_factory: WorkspaceFactory, monkeypatch, spy_bus: SpyBus
 ):
     """
     Verifies that 'stitcher check' does not incorrectly flag imported symbols
@@ -12,7 +12,6 @@ def test_check_does_not_report_imports_as_missing_docs(
     scanned module.
     """
     # 1. Setup: Create a project with a file that has imports and defined symbols
-    spy_bus = SpyBus()
     ws = (
         workspace_factory.with_config({"scan_paths": ["src"]})
         .with_source(

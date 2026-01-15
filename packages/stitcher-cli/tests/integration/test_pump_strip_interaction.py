@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 from stitcher.cli.handlers import TyperInteractionHandler
 
 
-def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch):
+def test_pump_prompts_for_strip_when_redundant(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that when 'pump' extracts docstrings (making source docs redundant),
     it prompts the user to strip them, and performs the strip if confirmed.
@@ -29,7 +29,6 @@ def func():
     )
 
     runner = CliRunner()
-    spy_bus = SpyBus()
 
     # FORCE INTERACTIVE MODE:
     # Instead of fighting with sys.stdin.isatty(), we directly mock the factory
@@ -65,7 +64,7 @@ def func():
     assert "pass" in content
 
 
-def test_pump_with_strip_flag_executes_strip(tmp_path, monkeypatch):
+def test_pump_with_strip_flag_executes_strip(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that 'pump --strip' directly triggers a strip operation and
     emits the correct completion signal. This test bypasses interactive prompts.
@@ -87,7 +86,6 @@ def func():
     )
 
     runner = CliRunner()
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

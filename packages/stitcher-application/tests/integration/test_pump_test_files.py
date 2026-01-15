@@ -4,7 +4,7 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_pump_can_extract_from_test_files(tmp_path, monkeypatch):
+def test_pump_can_extract_from_test_files(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Regression Test: Verifies that stitcher does NOT ignore files starting with 'test_'
     or living in a 'tests' directory, provided they are explicitly included in scan_paths.
@@ -25,7 +25,6 @@ def test_something():
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

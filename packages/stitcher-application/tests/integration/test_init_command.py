@@ -3,7 +3,7 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch):
+def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch, spy_bus: SpyBus):
     # 1. Arrange: Use the factory to build the project
     factory = WorkspaceFactory(tmp_path)
     project_root = (
@@ -20,7 +20,6 @@ def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -41,7 +40,7 @@ def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.pump.run.complete, level="success")
 
 
-def test_init_skips_files_without_docs(tmp_path, monkeypatch):
+def test_init_skips_files_without_docs(tmp_path, monkeypatch, spy_bus: SpyBus):
     # 1. Arrange
     factory = WorkspaceFactory(tmp_path)
     project_root = (
@@ -51,7 +50,6 @@ def test_init_skips_files_without_docs(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

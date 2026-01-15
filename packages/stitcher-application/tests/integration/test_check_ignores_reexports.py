@@ -4,7 +4,7 @@ from stitcher.test_utils import WorkspaceFactory, SpyBus, create_test_app
 
 
 def test_check_ignores_reexports_and_imports(
-    workspace_factory: WorkspaceFactory, monkeypatch
+    workspace_factory: WorkspaceFactory, monkeypatch, spy_bus: SpyBus
 ):
     """
     Verifies that 'stitcher check' correctly ignores:
@@ -13,7 +13,7 @@ def test_check_ignores_reexports_and_imports(
     It should only flag symbols physically defined in the file being checked.
     """
     # 1. Setup: Create a project with a re-export structure
-    spy_bus = SpyBus()
+    spy_bus = spy_bus
     ws = (
         workspace_factory.with_config({"scan_paths": ["src"]})
         .with_source(

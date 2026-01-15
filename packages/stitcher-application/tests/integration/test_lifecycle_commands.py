@@ -4,7 +4,7 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_strip_command_removes_docstrings(tmp_path, monkeypatch):
+def test_strip_command_removes_docstrings(tmp_path, monkeypatch, spy_bus: SpyBus):
     # Arrange
     factory = WorkspaceFactory(tmp_path)
     source_path = "src/main.py"
@@ -21,7 +21,6 @@ def test_strip_command_removes_docstrings(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -37,7 +36,7 @@ def test_strip_command_removes_docstrings(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.strip.run.complete)
 
 
-def test_inject_command_injects_docstrings(tmp_path, monkeypatch):
+def test_inject_command_injects_docstrings(tmp_path, monkeypatch, spy_bus: SpyBus):
     # Arrange
     factory = WorkspaceFactory(tmp_path)
     source_path = "src/main.py"
@@ -52,7 +51,6 @@ def test_inject_command_injects_docstrings(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -66,7 +64,9 @@ def test_inject_command_injects_docstrings(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.inject.run.complete)
 
 
-def test_strip_command_removes_attribute_docstrings(tmp_path, monkeypatch):
+def test_strip_command_removes_attribute_docstrings(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     # Arrange
     factory = WorkspaceFactory(tmp_path)
     source_path = "src/main.py"
@@ -85,7 +85,6 @@ def test_strip_command_removes_attribute_docstrings(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

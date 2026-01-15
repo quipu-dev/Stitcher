@@ -5,7 +5,9 @@ from stitcher.test_utils import SpyBus
 from needle.pointer import L
 
 
-def test_command_fails_gracefully_outside_workspace(tmp_path, monkeypatch):
+def test_command_fails_gracefully_outside_workspace(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that running a command outside a valid workspace
     (no .git, no pyproject.toml) fails with a user-friendly error.
@@ -18,7 +20,6 @@ def test_command_fails_gracefully_outside_workspace(tmp_path, monkeypatch):
     # Change into the subdirectory to simulate running from a nested location
     monkeypatch.chdir(subdir)
 
-    spy_bus = SpyBus()
     runner = CliRunner()
 
     # Act

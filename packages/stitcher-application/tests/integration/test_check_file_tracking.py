@@ -3,7 +3,7 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_check_reports_untracked_with_details(tmp_path, monkeypatch):
+def test_check_reports_untracked_with_details(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that 'check' reports a detailed UNTRACKED message when a new
     file contains public APIs that are missing docstrings.
@@ -27,7 +27,6 @@ def test_check_reports_untracked_with_details(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -52,7 +51,9 @@ def test_check_reports_untracked_with_details(tmp_path, monkeypatch):
     assert not any(msg["id"] == str(L.check.file.untracked) for msg in messages)
 
 
-def test_check_reports_simple_untracked_if_all_docs_present(tmp_path, monkeypatch):
+def test_check_reports_simple_untracked_if_all_docs_present(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that 'check' falls back to the simple UNTRACKED message if
     a new file has content, but all its public APIs already have docstrings
@@ -66,7 +67,6 @@ def test_check_reports_simple_untracked_if_all_docs_present(tmp_path, monkeypatc
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_check()
@@ -80,7 +80,9 @@ def test_check_reports_simple_untracked_if_all_docs_present(tmp_path, monkeypatc
     )
 
 
-def test_check_is_silent_for_empty_untracked_file(tmp_path, monkeypatch):
+def test_check_is_silent_for_empty_untracked_file(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that 'check' does NOT report UNTRACKED for an untracked file
     that contains no documentable content (e.g., an empty __init__.py).
@@ -94,7 +96,6 @@ def test_check_is_silent_for_empty_untracked_file(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -107,7 +108,9 @@ def test_check_is_silent_for_empty_untracked_file(tmp_path, monkeypatch):
     assert not any(msg["id"] == str(L.check.file.untracked) for msg in messages)
 
 
-def test_check_is_silent_for_boilerplate_untracked_file(tmp_path, monkeypatch):
+def test_check_is_silent_for_boilerplate_untracked_file(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that 'check' also ignores untracked files that only contain
     boilerplate like __all__ or __path__.
@@ -127,7 +130,6 @@ def test_check_is_silent_for_boilerplate_untracked_file(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

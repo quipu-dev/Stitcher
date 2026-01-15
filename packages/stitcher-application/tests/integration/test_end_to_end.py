@@ -7,7 +7,7 @@ from stitcher.test_utils import SpyBus, WorkspaceFactory
 from stitcher.common.transaction import TransactionManager
 
 
-def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
+def test_app_scan_and_generate_single_file(tmp_path, monkeypatch, spy_bus: SpyBus):
     factory = WorkspaceFactory(tmp_path)
     project_root = factory.with_source(
         "greet.py",
@@ -19,7 +19,6 @@ def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
     ).build()
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
     tm = TransactionManager(root_path=project_root)
 
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -37,7 +36,7 @@ def test_app_scan_and_generate_single_file(tmp_path, monkeypatch):
     assert (project_root / "greet.pyi").exists()
 
 
-def test_app_run_from_config_with_source_files(tmp_path, monkeypatch):
+def test_app_run_from_config_with_source_files(tmp_path, monkeypatch, spy_bus: SpyBus):
     # Recreating the structure previously held in tests/fixtures/sample_project
     factory = WorkspaceFactory(tmp_path)
     project_root = (
@@ -64,7 +63,6 @@ def test_app_run_from_config_with_source_files(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app.run_from_config()
@@ -77,7 +75,7 @@ def test_app_run_from_config_with_source_files(tmp_path, monkeypatch):
     assert len(success_messages) == 4
 
 
-def test_app_run_multi_target(tmp_path, monkeypatch):
+def test_app_run_multi_target(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that StitcherApp correctly handles multiple targets defined in pyproject.toml.
     """
@@ -112,7 +110,6 @@ stub_path = "typings/pkg_b"
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -139,7 +136,9 @@ stub_path = "typings/pkg_b"
     spy_bus.assert_id_called(L.generate.run.complete, level="success")
 
 
-def test_app_generates_stubs_for_plugins_and_sources(tmp_path, monkeypatch):
+def test_app_generates_stubs_for_plugins_and_sources(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     # 1. Arrange: Setup a workspace with both source code and a plugin definition
     factory = WorkspaceFactory(tmp_path)
     project_root = (
@@ -167,7 +166,6 @@ def test_app_generates_stubs_for_plugins_and_sources(tmp_path, monkeypatch):
 
     try:
         app = create_test_app(root_path=project_root)
-        spy_bus = SpyBus()
 
         # 2. Act
         with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

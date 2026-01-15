@@ -3,7 +3,7 @@ from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
 
-def test_check_detects_matrix_states(tmp_path, monkeypatch):
+def test_check_detects_matrix_states(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that 'check' correctly identifies all 5 states:
     Missing, Pending, Redundant, Conflict, Extra.
@@ -45,7 +45,6 @@ def test_check_detects_matrix_states(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -78,7 +77,7 @@ def test_check_detects_matrix_states(tmp_path, monkeypatch):
     verify_key(L.check.issue.extra, "func_extra")
 
 
-def test_check_passes_when_synced(tmp_path, monkeypatch):
+def test_check_passes_when_synced(tmp_path, monkeypatch, spy_bus: SpyBus):
     # 1. Arrange
     factory = WorkspaceFactory(tmp_path)
     project_root = (
@@ -92,7 +91,6 @@ def test_check_passes_when_synced(tmp_path, monkeypatch):
     )
 
     app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
@@ -103,7 +101,9 @@ def test_check_passes_when_synced(tmp_path, monkeypatch):
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
 
-def test_check_command_detects_circular_dependency(tmp_path, monkeypatch):
+def test_check_command_detects_circular_dependency(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     # 1. Arrange
     # Corrected: Using tmp_path to ensure isolation and prevent root pollution
     project_dir = tmp_path / "test_project_circ"
@@ -137,7 +137,6 @@ def test_check_command_detects_circular_dependency(tmp_path, monkeypatch):
     )
     project_root = factory.build()
     app = create_test_app(project_root)
-    spy_bus = SpyBus()
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):

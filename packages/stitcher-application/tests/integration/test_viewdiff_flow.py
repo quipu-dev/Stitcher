@@ -19,7 +19,7 @@ class CapturingHandler(InteractionHandler):
         return [ResolutionAction.SKIP] * len(contexts)
 
 
-def test_check_generates_signature_diff(tmp_path, monkeypatch):
+def test_check_generates_signature_diff(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that when a signature changes, 'check' generates a unified diff
     and passes it in the InteractionContext.
@@ -34,7 +34,7 @@ def test_check_generates_signature_diff(tmp_path, monkeypatch):
 
     # Run init to save baseline signature and TEXT
     app_init = create_test_app(root_path=project_root)
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app_init.run_init()
 
     # 2. Modify code to cause signature drift
@@ -44,7 +44,7 @@ def test_check_generates_signature_diff(tmp_path, monkeypatch):
     handler = CapturingHandler()
     app_check = create_test_app(root_path=project_root, interaction_handler=handler)
 
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app_check.run_check()
 
     # 4. Assert
@@ -61,7 +61,7 @@ def test_check_generates_signature_diff(tmp_path, monkeypatch):
     assert "+def func(a: str):" in ctx.signature_diff
 
 
-def test_pump_generates_doc_diff(tmp_path, monkeypatch):
+def test_pump_generates_doc_diff(tmp_path, monkeypatch, spy_bus: SpyBus):
     """
     Verifies that when doc content conflicts, 'pump' generates a unified diff
     and passes it in the InteractionContext.
@@ -79,7 +79,7 @@ def test_pump_generates_doc_diff(tmp_path, monkeypatch):
     handler = CapturingHandler()
     app_pump = create_test_app(root_path=project_root, interaction_handler=handler)
 
-    with SpyBus().patch(monkeypatch, "stitcher.common.bus"):
+    with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
         app_pump.run_pump()
 
     # 3. Assert
