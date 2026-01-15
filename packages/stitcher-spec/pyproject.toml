@@ -15,4 +15,3 @@ dependencies = [
 packages = ["src/stitcher"]
 
 [tool.uv.sources]
-pyneedle-pointer = { workspace = true }

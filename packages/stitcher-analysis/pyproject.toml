@@ -24,5 +24,4 @@ packages = ["src/stitcher"]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-index = { workspace = true }
-pyneedle-pointer = { workspace = true }
 stitcher-workspace = { workspace = true }

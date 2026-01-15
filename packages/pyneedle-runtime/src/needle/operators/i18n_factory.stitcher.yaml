@@ -1,7 +1,0 @@
-"I18NFactoryOperator": "A Factory Operator that produces FileSystemOperators for specific\
-  \ languages.\n\nIt binds a root directory (e.g. `.../assets`) and, when called with\
-  \ a language \npointer (e.g. `L.en`), returns a FileSystemOperator rooted at `.../assets/en`."
-"I18NFactoryOperator.__call__": |-
-  Generates a FileSystemOperator for the requested language.
-"I18NFactoryOperator.__init__": |-
-  Initializes the factory with a base assets root directory.

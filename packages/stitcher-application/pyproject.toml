@@ -29,4 +29,3 @@ stitcher-lang-python = { workspace = true }
 stitcher-stubgen = { workspace = true }
 stitcher-workspace = { workspace = true }
 stitcher-index = { workspace = true }
-pyneedle = { workspace = true }

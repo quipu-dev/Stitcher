@@ -25,4 +25,3 @@ include = ["/src/stitcher/cli/assets"]
 [tool.uv.sources]
 stitcher-application = { workspace = true }
 stitcher-lang-python = { workspace = true }
-pyneedle = { workspace = true }

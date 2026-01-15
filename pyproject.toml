@@ -37,10 +37,6 @@ members = [
 ]
 
 [tool.uv.sources]
-pyneedle = { workspace = true }
-pyneedle-runtime = { workspace = true }
-pyneedle-pointer = { workspace = true }
-pyneedle-spec = { workspace = true }
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
 stitcher-application = { workspace = true }
@@ -53,9 +49,13 @@ stitcher-workspace = { workspace = true }
 stitcher-lang-python = { workspace = true }
 stitcher-lang-sidecar = { workspace = true }
 stitcher-analysis = { workspace = true }
+pyneedle = { path = "../Needle/packages/pyneedle", editable = true }
+pyneedle-pointer = { path = "../Needle/packages/pyneedle-pointer", editable = true }
+pyneedle-spec = { path = "../Needle/packages/pyneedle-spec", editable = true }
+pyneedle-runtime = { path = "../Needle/packages/pyneedle-runtime", editable = true }
 
 [tool.pytest.ini_options]
-addopts = "-ra --cov=stitcher --cov=needle --cov-report=term-missing"
+addopts = "-ra --cov=stitcher --cov-report=term-missing"
 testpaths = ["tests", "packages"]
 norecursedirs = ["tests/fixtures"]
 pythonpath = [
@@ -68,9 +68,6 @@ pythonpath = [
     "packages/stitcher-workspace/src",
     "packages/stitcher-stubgen/src",
     "packages/stitcher-test-utils/src",
-    "packages/pyneedle-pointer/src",
-    "packages/pyneedle-runtime/src",
-    "packages/pyneedle-spec/src",
     "packages/stitcher-lang-python/src",
     "packages/stitcher-analysis/src",
 ]
@@ -92,14 +89,6 @@ scan_paths = [
 ]
 stub_package = "packages/stitcher-stubs"
 
-[tool.stitcher.targets.needle]
-scan_paths = [
-    "packages/pyneedle-spec/src",
-    "packages/pyneedle-pointer/src",
-    "packages/pyneedle-runtime/src",
-]
-stub_package = "packages/needle-stubs"
-
 [tool.pyright]
 include = ["packages", "tests"]
 extraPaths = [
@@ -108,12 +97,7 @@ extraPaths = [
     "packages/stitcher-application/src",
     "packages/stitcher-cli/src",
     "packages/stitcher-test-utils/src",
-    "packages/pyneedle-spec/src",
-    "packages/pyneedle-pointer/src",
-    "packages/pyneedle-runtime/src",
-    "packages/pyneedle/src",
     "packages/stitcher-stubs/src",
-    "packages/needle-stubs/src",
     "packages/stitcher-refactor/src",
     "packages/stitcher-stubgen/src",
     "packages/stitcher-index/src",

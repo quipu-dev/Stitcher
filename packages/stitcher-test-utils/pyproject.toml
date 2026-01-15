@@ -23,7 +23,6 @@ dependencies = [
 packages = ["src/stitcher"]
 
 [tool.uv.sources]
-pyneedle = { workspace = true }
 stitcher-application = { workspace = true }
 stitcher-lang-python = { workspace = true }
 stitcher-workspace = { workspace = true }
