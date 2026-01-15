@@ -12,6 +12,7 @@ from stitcher.spec import (
     FingerprintStrategyProtocol,
     LockManagerProtocol,
     URIGeneratorProtocol,
+    DocstringIR,
 )
 from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.spec.interaction import InteractionHandler, InteractionContext
@@ -233,9 +234,7 @@ class CheckResolver:
                     abs_path.read_text("utf-8"), file_path
                 )
                 computed_fingerprints = self._compute_fingerprints(full_module_def)
-                current_doc_irs = self.doc_manager.load_docs_for_module(
-                    full_module_def
-                )
+                current_doc_irs = self.doc_manager.load_docs_for_module(full_module_def)
 
             # --- Action Execution ---
             fqns_to_purge_from_doc: list[str] = []
@@ -249,11 +248,14 @@ class CheckResolver:
                     if code_fp:
                         self.lock_session.record_relink(module_stub, fqn, code_fp)
 
-                elif action in [
-                    ResolutionAction.RECONCILE,
-                    ResolutionAction.HYDRATE_OVERWRITE,
-                    ResolutionAction.HYDRATE_KEEP_EXISTING, # In check, this is a reconcile
-                ]:
+                elif (
+                    action
+                    in [
+                        ResolutionAction.RECONCILE,
+                        ResolutionAction.HYDRATE_OVERWRITE,
+                        ResolutionAction.HYDRATE_KEEP_EXISTING,  # In check, this is a reconcile
+                    ]
+                ):
                     self.lock_session.record_fresh_state(
                         module_stub,
                         fqn,

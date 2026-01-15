@@ -44,7 +44,9 @@ class FileIndexer:
 
         # --- Check and Update ---
         for rel_path_str in discovered_paths:
-            if rel_path_str.endswith(".stitcher.yaml") or rel_path_str.endswith(".stitcher.json"):
+            if rel_path_str.endswith(".stitcher.yaml") or rel_path_str.endswith(
+                ".stitcher.json"
+            ):
                 stats["sidecars"] += 1
             abs_path = self.root_path / rel_path_str
             try:

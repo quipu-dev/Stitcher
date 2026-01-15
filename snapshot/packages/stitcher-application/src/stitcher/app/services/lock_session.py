@@ -6,7 +6,7 @@ from stitcher.spec import (
     DocstringIR,
     ModuleDef,
     Fingerprint,
-    URIGeneratorProtocol
+    URIGeneratorProtocol,
 )
 from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.workspace import Workspace
@@ -19,13 +19,14 @@ class LockSession:
     Acts as a Single Source of Truth for lock updates, buffering changes in memory
     and committing them to the TransactionManager at the end of a run.
     """
+
     def __init__(
         self,
         lock_manager: LockManagerProtocol,
         doc_manager: DocumentManagerProtocol,
         workspace: Workspace,
         root_path: Path,
-        uri_generator: URIGeneratorProtocol
+        uri_generator: URIGeneratorProtocol,
     ):
         self.lock_manager = lock_manager
         self.doc_manager = doc_manager
@@ -57,7 +58,7 @@ class LockSession:
         module: ModuleDef,
         fqn: str,
         doc_ir: Optional[DocstringIR] = None,
-        code_fingerprint: Optional[Fingerprint] = None
+        code_fingerprint: Optional[Fingerprint] = None,
     ):
         """
         Record that the current Code (represented by code_fingerprint) and/or
@@ -79,10 +80,14 @@ class LockSession:
 
         # 1. Update Code Baseline
         if code_fingerprint:
-             if "current_code_structure_hash" in code_fingerprint:
-                 fp["baseline_code_structure_hash"] = code_fingerprint["current_code_structure_hash"]
-             if "current_code_signature_text" in code_fingerprint:
-                 fp["baseline_code_signature_text"] = code_fingerprint["current_code_signature_text"]
+            if "current_code_structure_hash" in code_fingerprint:
+                fp["baseline_code_structure_hash"] = code_fingerprint[
+                    "current_code_structure_hash"
+                ]
+            if "current_code_signature_text" in code_fingerprint:
+                fp["baseline_code_signature_text"] = code_fingerprint[
+                    "current_code_signature_text"
+                ]
 
         # 2. Update Doc Baseline
         if doc_ir:
@@ -96,7 +101,9 @@ class LockSession:
         Update ONLY the code hash baseline to match current code, keeping doc hash as is.
         Used by Check (Relink) to acknowledge a code change without updating docs.
         """
-        self.record_fresh_state(module, fqn, doc_ir=None, code_fingerprint=code_fingerprint)
+        self.record_fresh_state(
+            module, fqn, doc_ir=None, code_fingerprint=code_fingerprint
+        )
 
     def record_purge(self, module: ModuleDef, fqn: str):
         """

@@ -1,6 +1,12 @@
 import hashlib
-from stitcher.test_utils import create_test_app, SpyBus, WorkspaceFactory, get_stored_hashes
+from stitcher.test_utils import (
+    create_test_app,
+    SpyBus,
+    WorkspaceFactory,
+    get_stored_hashes,
+)
 from needle.pointer import L
+
 
 def test_init_respects_existing_sidecar_baseline(tmp_path, monkeypatch):
     """
@@ -29,15 +35,18 @@ def test_init_respects_existing_sidecar_baseline(tmp_path, monkeypatch):
     # 获取 Lock 文件中记录的哈希
     hashes = get_stored_hashes(project_root, "src/lib.py")
     stored_yaml_hash = hashes.get("f", {}).get("baseline_yaml_content_hash")
-    
+
     # 计算预期哈希（Sidecar 的内容）
     expected_hash = hashlib.sha256("Sidecar Doc".encode("utf-8")).hexdigest()
-    
+
     # 验证 pump --reconcile 正确保留了 Sidecar 内容作为基线
-    assert stored_yaml_hash == expected_hash, f"Expected baseline to match Sidecar Doc ({expected_hash}), but got {stored_yaml_hash}"
-    
+    assert stored_yaml_hash == expected_hash, (
+        f"Expected baseline to match Sidecar Doc ({expected_hash}), but got {stored_yaml_hash}"
+    )
+
     # 验证输出消息（应该包含 Reconciled 信息）
     spy_bus.assert_id_called(L.pump.info.reconciled, level="info")
+
 
 def test_index_stats_should_distinguish_sidecars(tmp_path, monkeypatch):
     """
@@ -60,7 +69,11 @@ def test_index_stats_should_distinguish_sidecars(tmp_path, monkeypatch):
     # 验证消息中是否包含 sidecars 统计字段
     # 预期失败：目前 L.index.run.complete 可能不支持 sidecars 参数，或者参数为 0
     messages = spy_bus.get_messages()
-    index_complete_msg = next(m for m in messages if m["id"] == str(L.index.run.complete))
-    
-    assert "sidecars" in index_complete_msg["params"], "Index summary should include sidecar count"
+    index_complete_msg = next(
+        m for m in messages if m["id"] == str(L.index.run.complete)
+    )
+
+    assert "sidecars" in index_complete_msg["params"], (
+        "Index summary should include sidecar count"
+    )
     assert index_complete_msg["params"]["sidecars"] == 1

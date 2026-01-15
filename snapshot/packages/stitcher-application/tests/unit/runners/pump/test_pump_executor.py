@@ -45,6 +45,7 @@ def mock_lock_manager(mocker) -> MagicMock:
 @pytest.fixture
 def mock_lock_session(mocker) -> MagicMock:
     from stitcher.app.services.lock_session import LockSession
+
     return mocker.create_autospec(LockSession, instance=True)
 
 

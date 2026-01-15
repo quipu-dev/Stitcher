@@ -15,6 +15,8 @@ from stitcher.spec.interaction import InteractionContext
 from stitcher.analysis.schema import FileCheckResult as AnalysisFileCheckResult
 from stitcher.analysis.schema import Violation
 
+from stitcher.common.transaction import TransactionManager
+
 from .resolver import CheckResolver
 from .reporter import CheckReporter
 from .subject import IndexCheckSubjectAdapter, ASTCheckSubjectAdapter
