@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "修正 `test_init_sidecar_idempotency` 的哈希计算逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768452870.0894334, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 SidecarIndexerAdapter 绝对路径处理导致索引失败的问题", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768453570.7492943, "duration_ms": 0}}

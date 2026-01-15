@@ -1,137 +1,96 @@
-好的，我分析了 `test_init_sidecar_idempotency.py` 中的测试失败原因。
+简要回答
+好的，我将修复 `SidecarIndexerAdapter` 中的路径处理逻辑。
 
-#### 修正 `test_init_sidecar_idempotency` 的哈希计算逻辑
+## [WIP] fix: 修复 SidecarIndexerAdapter 绝对路径处理导致索引失败的问题
 
 ### 错误分析
+`test_init_sidecar_idempotency.py` 测试失败的根源在于 `stitcher.lock` 文件未被更新。进一步溯源发现，`DocumentManager` 未能加载 Sidecar 文件中的文档，导致 `PumpExecutor` 无法获取到文档内容来更新 Lock 文件。
+`DocumentManager` 依赖索引系统加载文档。虽然 `Workspace` 正确发现了 Sidecar 文件，但 `FileIndexer` 向 `SidecarIndexerAdapter.parse` 传递的是**绝对路径**。
+`SidecarIndexerAdapter` 直接使用该路径调用 `path_to_logical_fqn`。由于该函数期望项目相对路径，传入绝对路径会导致解析失败（抛出异常或返回空），进而导致该文件未能成功索引符号。
 
-测试 `test_init_respects_existing_sidecar_baseline` 失败，断言 `None == '...'`。这表明 `get_stored_hashes` 未能在 `stitcher.lock` 文件中找到预期的 `baseline_yaml_content_hash`。
+### 用户需求
+修复 `test_init_sidecar_idempotency` 测试失败。
 
-深入分析后，我发现两个问题：
+### 评论
+这是一个典型的集成层 Bug，组件间对路径格式（绝对 vs 相对）的假设不一致导致了静默失败（`FileIndexer` 捕获并忽略了异常）。
 
-1.  **测试逻辑的脆弱性**: 测试直接计算了 `"Sidecar Doc"` 字符串的 SHA256 哈希。然而，应用程序的内部逻辑更为复杂：它首先将文档字符串（View Data）解析为 `DocstringIR` 对象，然后将该 IR 对象序列化为一个标准的字典结构（Transfer Data），最后对这个字典的 JSON 字符串进行哈希。测试的哈希计算方式与应用的实际行为不匹配，导致测试非常脆弱，容易因内部实现变更而失败。
-2.  **（推断）核心逻辑缺陷**: 即使修复了哈希计算，`stored_yaml_hash` 的值为 `None` 意味着 `pump --reconcile` 流程没有成功地将计算出的哈希写入 `stitcher.lock` 文件。这指向了 `PumpExecutor` 或 `LockSession` 中可能存在的逻辑缺陷，即在“保留现有 YAML” (`HYDRATE_KEEP_EXISTING`) 的决策下，没有正确地更新文档基线指纹。
+### 目标
+1.  修改 `SidecarIndexerAdapter.parse` 方法。
+2.  在处理路径前，先将其转换为相对于 `root_path` 的相对路径。
+3.  确保 `path_to_logical_fqn` 和 `generate_symbol_uri` 使用的是相对路径。
 
-### 解决方案
+### 基本原理
+Stitcher 的索引和 URI 系统设计为基于工作区相对路径。适配器层有责任将物理层（可能为绝对路径）的输入规范化为逻辑层（相对路径）所需的格式。
 
-我将采取以下步骤来修复这个问题：
+### 标签
+#intent/fix #flow/ready #priority/high #comp/index #scope/core #ai/instruct #task/domain/indexing #task/object/sidecar-adapter #task/action/bugfix #task/state/end
 
-1.  **修正测试的哈希计算逻辑**：修改测试用例，不再硬编码哈希算法。而是利用测试中创建的 `app` 实例，调用其 `doc_manager` 来模拟应用内部的哈希计算过程。这确保了测试与应用的实现保持一致，使其更加健壮。
-2.  **修正核心执行逻辑（隐含）**：通过修正测试来强制暴露核心逻辑中的缺陷。即使我看不到所有代码，正确的测试也能确保 `run_init`（即 `pump --reconcile`）的最终结果——即 `stitcher.lock` 文件的内容——是正确的。我的计划将直接修正测试，这反过来验证并强制 `pump` 流程的正确性。
+---
 
 ### Script
 
-#### Acts 1: 修正 `test_init_sidecar_idempotency` 的哈希计算逻辑
-
-我将更新测试文件，使其使用 `app.doc_manager` 来计算预期的哈希值，确保测试的准确性和健壮性。
+#### Acts 1: 修复 SidecarIndexerAdapter 路径规范化
 
 ~~~~~act
 patch_file
-packages/stitcher-application/tests/integration/test_init_sidecar_idempotency.py
+packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/indexer.py
 ~~~~~
 ~~~~~python.old
-import hashlib
-from stitcher.test_utils import (
-    create_test_app,
-    SpyBus,
-    WorkspaceFactory,
-    get_stored_hashes,
-)
-from needle.pointer import L
+        # 2. Determine paths
+        # file_path passed here is relative to project root (physical path)
+        # We need to determine the companion Python file path for references
+        py_name = file_path.name.replace(".stitcher.yaml", ".py")
+        py_path_rel = file_path.with_name(py_name)
 
+        # Pre-calculate logical module FQN for linking
+        logical_module_fqn = path_to_logical_fqn(py_path_rel.as_posix())
 
-def test_init_respects_existing_sidecar_baseline(tmp_path, monkeypatch):
-    """
-    验证 init 不会破坏已存在的 Sidecar 基线。
-    场景：
-    - 源码中函数 f 的 doc 为 "Source Doc"
-    - Sidecar 文件中 f 的内容为 "Sidecar Doc"
-    - 执行 init 后，lock 文件中的基线哈希应当对应 "Sidecar Doc"
-    """
-    factory = WorkspaceFactory(tmp_path)
-    # 准备环境
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/lib.py", 'def f(): """Source Doc"""\n    pass')
-        .with_docs("src/lib.stitcher.yaml", {"f": "Sidecar Doc"})
-        .build()
-    )
+        # 3. Parse references with location info using the helper
+        loc_map = {
+            frag: (line, col) for frag, line, col in parse_doc_references(content)
+        }
 
-    app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
+        for fragment, value in data.items():
+            # Skip if it's not a valid key
+            if not isinstance(fragment, str):
+                continue
 
-    # 执行 init (现在等于 pump --reconcile)
-    with spy_bus.patch(monkeypatch):
-        app.run_init()
-
-    # 获取 Lock 文件中记录的哈希
-    hashes = get_stored_hashes(project_root, "src/lib.py")
-    stored_yaml_hash = hashes.get("f", {}).get("baseline_yaml_content_hash")
-
-    # 计算预期哈希（Sidecar 的内容）
-    expected_hash = hashlib.sha256("Sidecar Doc".encode("utf-8")).hexdigest()
-
-    # 验证 pump --reconcile 正确保留了 Sidecar 内容作为基线
-    assert stored_yaml_hash == expected_hash, (
-        f"Expected baseline to match Sidecar Doc ({expected_hash}), but got {stored_yaml_hash}"
-    )
-
-    # 验证输出消息（应该包含 Reconciled 信息）
-    spy_bus.assert_id_called(L.pump.info.reconciled, level="info")
+            # --- Build Symbol ---
+            suri = self.uri_generator.generate_symbol_uri(str(file_path), fragment)
+            lineno, col_offset = loc_map.get(fragment, (0, 0))
 ~~~~~
 ~~~~~python.new
-from stitcher.test_utils import (
-    create_test_app,
-    SpyBus,
-    WorkspaceFactory,
-    get_stored_hashes,
-)
-from needle.pointer import L
+        # 2. Determine paths
+        # file_path passed here might be absolute (from FileIndexer), ensure relative
+        if file_path.is_absolute():
+            try:
+                rel_path = file_path.relative_to(self.root_path)
+            except ValueError:
+                # Fallback if path is outside root (unlikely given discovery logic)
+                rel_path = file_path
+        else:
+            rel_path = file_path
 
+        py_name = rel_path.name.replace(".stitcher.yaml", ".py")
+        py_path_rel = rel_path.with_name(py_name)
 
-def test_init_respects_existing_sidecar_baseline(tmp_path, monkeypatch):
-    """
-    验证 init 不会破坏已存在的 Sidecar 基线。
-    场景：
-    - 源码中函数 f 的 doc 为 "Source Doc"
-    - Sidecar 文件中 f 的内容为 "Sidecar Doc"
-    - 执行 init 后，lock 文件中的基线哈希应当对应 "Sidecar Doc"
-    """
-    factory = WorkspaceFactory(tmp_path)
-    # 准备环境
-    project_root = (
-        factory.with_config({"scan_paths": ["src"]})
-        .with_source("src/lib.py", 'def f(): """Source Doc"""\n    pass')
-        .with_docs("src/lib.stitcher.yaml", {"f": "Sidecar Doc"})
-        .build()
-    )
+        # Pre-calculate logical module FQN for linking
+        logical_module_fqn = path_to_logical_fqn(py_path_rel.as_posix())
 
-    app = create_test_app(root_path=project_root)
-    spy_bus = SpyBus()
+        # 3. Parse references with location info using the helper
+        loc_map = {
+            frag: (line, col) for frag, line, col in parse_doc_references(content)
+        }
 
-    # 执行 init (现在等于 pump --reconcile)
-    with spy_bus.patch(monkeypatch):
-        app.run_init()
+        for fragment, value in data.items():
+            # Skip if it's not a valid key
+            if not isinstance(fragment, str):
+                continue
 
-    # 获取 Lock 文件中记录的哈希
-    hashes = get_stored_hashes(project_root, "src/lib.py")
-    stored_yaml_hash = hashes.get("f", {}).get("baseline_yaml_content_hash")
-
-    # 计算预期哈希（Sidecar 的内容）
-    # The hash is computed from the serialized DocstringIR, not the raw string.
-    # To test this correctly, we get the app's doc manager and simulate the hash calculation.
-    doc_manager = app.doc_manager
-
-    # When "Sidecar Doc" is loaded from YAML, the RawSerializer turns it into this IR:
-    ir = doc_manager.serializer.from_view_data("Sidecar Doc")
-
-    # The application then computes the baseline hash from this IR.
-    expected_hash = doc_manager.compute_ir_hash(ir)
-
-    # 验证 pump --reconcile 正确保留了 Sidecar 内容作为基线
-    assert stored_yaml_hash == expected_hash, (
-        f"Expected baseline to match Sidecar Doc ({expected_hash}), but got {stored_yaml_hash}"
-    )
-
-    # 验证输出消息（应该包含 Reconciled 信息）
-    spy_bus.assert_id_called(L.pump.info.reconciled, level="info")
+            # --- Build Symbol ---
+            suri = self.uri_generator.generate_symbol_uri(str(rel_path), fragment)
+            lineno, col_offset = loc_map.get(fragment, (0, 0))
 ~~~~~
+
+### 下一步建议
+运行测试验证修复。此修改应能解决 Sidecar 文件无法被正确索引的问题，从而使 `DocumentManager` 能够加载文档，最终使 `PumpExecutor` 正确更新 Lock 文件。
