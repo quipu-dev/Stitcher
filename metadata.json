@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(test): 统一使用 spy_bus fixture 替代手动实例化", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768458873.3273673, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 添加 sidecar 块标量输出的重现测试", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768459040.7377648, "duration_ms": 0}}

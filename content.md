@@ -1,78 +1,70 @@
-好的，重构工作已经圆满完成。现在我们将这些变更作为一个完整的逻辑单元提交到 Git 仓库。
+这是一个非常精准的直觉。在 YAML 处理中，尤其是使用 `ruamel.yaml` 时，普通 Python `dict` 的序列化行为有时会忽略特定的标量类型包装，除非显式配置或使用 `CommentedMap`。
 
-## [COMMIT] refactor(test): 统一使用 spy_bus fixture 替代手动实例化
+我将为你创建一个专门用于重现该问题的单元测试。
+
+## [WIP] test: 添加 sidecar 块标量输出的重现测试
 
 ### 用户需求
-完成对测试套件的重构，将所有手动创建 `SpyBus()` 的地方统一改为使用由 Pytest 注入的 `spy_bus` fixture，并提交更改。
+需要一个单元测试来验证 `SidecarAdapter` 在创建新的 `.stitcher.yaml` 文件时，是否正确地将文档字符串（即使是单行）序列化为 YAML 的 `|-`（Literal Block Scalar, Stripped）格式。
 
 ### 评论
-通过这次重构，我们显著提升了测试代码的规范性和可维护性。利用 Fixture 注入机制，我们消除了大量的样板代码，并确保了所有测试都在一个受控且一致的 Mock 环境下运行。保留类型提示（Type Hinting）则兼顾了开发体验和代码健壮性。
+当前的集成测试失败表明，系统可能在某些路径下（特别是新建文件时）将文档字符串退化为了普通的 YAML 字符串（单行显示），这破坏了 sidecar 文件易于人类阅读和编辑的设计目标。
 
 ### 目标
-1. 将所有修改过的测试文件添加到 Git 暂存区。
-2. 创建一个清晰、符合 Conventional Commits 规范的提交记录。
+1.  在 `test_sidecar_adapter.py` 中添加一个名为 `test_save_doc_irs_forces_literal_block_style_repro` 的测试用例。
+2.  该测试应模拟创建一个包含单行文档的新 sidecar 文件。
+3.  断言生成的文本中必须包含 `my_func: |-`。
 
 ### 基本原理
-按照项目的工程标准，所有的重构活动在验证通过后应当及时提交。这不仅是为了记录工作的进展，也是为了保持 Git 历史的清晰和可追溯性。通过 `[COMMIT]` 计划，我们完成了本次宏观任务的闭环。
+根据 `ADAP v1.0` 协议，我们首先建立确定性的观测。如果此单元测试失败，我们将定位到 `SidecarAdapter.save_doc_irs` 中“创建路径” (`# --- CREATE PATH ---`) 的逻辑缺陷。该逻辑目前将普通的 Python `dict` 传递给 `yaml.dump`，这可能导致 `ruamel.yaml` 的排版启发式算法覆盖了我们的 `LiteralScalarString` 意图。
 
 ### 标签
-#intent/tooling #flow/ready #priority/medium #comp/tests #ai/refine #task/domain/testing #task/object/spy-bus-fixture #task/action/refactor #task/state/end #task/status/completed
+#intent/tooling #flow/ready #priority/medium #comp/tests #concept/state #scope/dx #ai/instruct #task/domain/testing #task/object/sidecar-adapter-block-scalar #task/action/reproduction #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 提交变更
+#### Acts 1: 在 `test_sidecar_adapter.py` 中添加重现测试
 
-我们将把所有受影响的测试文件添加到暂存区并执行提交。
-
-~~~~~act
-git_add
-packages/stitcher-common/tests/unit/test_message_bus.py
-packages/stitcher-application/tests/test_check_regression.py
-packages/stitcher-application/tests/integration/test_check_command.py
-packages/stitcher-application/tests/integration/test_check_conflict.py
-packages/stitcher-application/tests/integration/test_check_file_tracking.py
-packages/stitcher-application/tests/integration/test_check_ignores_imports.py
-packages/stitcher-application/tests/integration/test_check_ignores_reexports.py
-packages/stitcher-application/tests/integration/test_check_interactive_flow.py
-packages/stitcher-application/tests/integration/test_check_policy.py
-packages/stitcher-application/tests/integration/test_check_signatures.py
-packages/stitcher-application/tests/integration/test_check_state_machine.py
-packages/stitcher-application/tests/integration/test_end_to_end.py
-packages/stitcher-application/tests/integration/test_init_command.py
-packages/stitcher-application/tests/integration/test_init_sidecar_idempotency.py
-packages/stitcher-application/tests/integration/test_lifecycle_commands.py
-packages/stitcher-application/tests/integration/test_parser_robustness.py
-packages/stitcher-application/tests/integration/test_pump_command.py
-packages/stitcher-application/tests/integration/test_pump_interactive_flow.py
-packages/stitcher-application/tests/integration/test_pump_test_files.py
-packages/stitcher-application/tests/integration/test_stub_package.py
-packages/stitcher-application/tests/integration/test_viewdiff_flow.py
-packages/stitcher-cli/tests/integration/test_error_handling.py
-packages/stitcher-cli/tests/integration/test_fidelity_principles.py
-packages/stitcher-cli/tests/integration/test_loglevel_option.py
-packages/stitcher-cli/tests/integration/test_pump_strip_interaction.py
-packages/stitcher-cli/tests/integration/test_refactor_command.py
-~~~~~
+我们将添加一个专门的测试用例，验证在创建新 sidecar 文件时是否强制使用了 `|-` 块标量语法。
 
 ~~~~~act
-git_commit
+patch_file
+packages/stitcher-lang-sidecar/tests/unit/test_sidecar_adapter.py
 ~~~~~
-~~~~~text
-refactor(test): unify SpyBus usage with pytest fixture
+~~~~~python.old
+    assert "z_function: |-\n  Original doc for Z" in content
+    assert "a_function: |-\n  Updated doc for A" in content
+    assert "b_function: |-\n  New doc for B" in content
+~~~~~
+~~~~~python.new
+    assert "z_function: |-\n  Original doc for Z" in content
+    assert "a_function: |-\n  Updated doc for A" in content
+    assert "b_function: |-\n  New doc for B" in content
 
-This commit refactors the entire test suite (including unit and integration tests) to use the 'spy_bus' fixture instead of manual 'SpyBus()' instantiation.
 
-Key changes:
-- Injected 'spy_bus' via function parameters in all relevant test cases.
-- Removed explicit 'spy_bus = SpyBus()' assignments within test functions.
-- Updated all 'with SpyBus().patch(...)' calls to 'with spy_bus.patch(...)'.
-- Maintained 'from stitcher.test_utils import SpyBus' imports for type hinting purposes.
+def test_save_doc_irs_forces_literal_block_style_repro(tmp_path: Path):
+    """
+    Reproduction test for the issue where new keys might not be using block scalars.
+    """
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
+    serializer = RawSerializer()
+    doc_path = tmp_path / "repro.stitcher.yaml"
 
-This alignment simplifies test logic, reduces boilerplate code, and ensures a more consistent testing environment across the monorepo by leveraging the global fixture defined in the root conftest.py.
+    # 使用一个简单的单行文档字符串进行测试
+    irs = {
+        "my_func": DocstringIR(summary="This is a docstring.")
+    }
+
+    adapter.save_doc_irs(doc_path, irs, serializer)
+    content = doc_path.read_text()
+
+    # 如果此处断言失败，则证明 LiteralScalarString 没有被正确应用或被 dump 过程忽略了。
+    assert "my_func: |-" in content
+    assert "  This is a docstring." in content
 ~~~~~
 
 ### 下一步建议
-- **CI 验证**: 提交后，请确保在 CI 环境中运行全量测试，以验证重构没有影响跨平台的兼容性。
-- **文档更新**: 如果有开发者指南涉及测试编写说明，建议更新相关示例，向新开发者推荐使用 fixture 的方式。
+- **如果测试失败**: 我将分析 `SidecarAdapter`。我怀疑是因为在创建新文件时，我们构建的是一个标准 Python `dict` 而不是 `ruamel.yaml.comments.CommentedMap`，这导致 `yaml.dump` 在处理非 TTY/Stream 环境时丢失了类型提示。
+- **修复方案**: 我们可能需要修改 `SidecarAdapter`，使其在创建新数据时也使用 `CommentedMap`。

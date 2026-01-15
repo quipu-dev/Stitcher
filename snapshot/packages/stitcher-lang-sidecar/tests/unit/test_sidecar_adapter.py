@@ -178,3 +178,24 @@ def test_save_doc_irs_update_path_preserves_order_and_comments(tmp_path: Path):
     assert "z_function: |-\n  Original doc for Z" in content
     assert "a_function: |-\n  Updated doc for A" in content
     assert "b_function: |-\n  New doc for B" in content
+
+
+def test_save_doc_irs_forces_literal_block_style_repro(tmp_path: Path):
+    """
+    Reproduction test for the issue where new keys might not be using block scalars.
+    """
+    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
+    serializer = RawSerializer()
+    doc_path = tmp_path / "repro.stitcher.yaml"
+
+    # 使用一个简单的单行文档字符串进行测试
+    irs = {
+        "my_func": DocstringIR(summary="This is a docstring.")
+    }
+
+    adapter.save_doc_irs(doc_path, irs, serializer)
+    content = doc_path.read_text()
+
+    # 如果此处断言失败，则证明 LiteralScalarString 没有被正确应用或被 dump 过程忽略了。
+    assert "my_func: |-" in content
+    assert "  This is a docstring." in content
