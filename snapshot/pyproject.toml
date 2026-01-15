@@ -52,6 +52,9 @@ members = [
     "packages/*",
 ]
 
+[project.scripts]
+stitcher = "stitcher.cli.main:app"
+
 [tool.uv.sources]
 stitcher-spec = { workspace = true }
 stitcher-common = { workspace = true }
