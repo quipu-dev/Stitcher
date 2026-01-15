@@ -26,6 +26,7 @@ from .runners.index import IndexRunner
 from .runners.check.resolver import CheckResolver
 from .runners.check.reporter import CheckReporter
 from .runners.pump.executor import PumpExecutor
+from .services.lock_session import LockSession
 from stitcher.analysis.engines import create_pump_engine, create_architecture_engine
 from stitcher.common.transaction import TransactionManager
 from typing import Callable
@@ -85,6 +86,15 @@ class StitcherApp:
             root_path, self.scanner, self.doc_manager, transformer
         )
 
+        # 4. Application Services
+        self.lock_session = LockSession(
+            self.lock_manager,
+            self.doc_manager,
+            self.workspace,
+            self.root_path,
+            self.uri_generator,
+        )
+
         # 3. Register Adapters
         search_paths = self.workspace.get_search_paths()
 
@@ -101,7 +111,7 @@ class StitcherApp:
         # The adapter itself filters for .stitcher.yaml files.
         self.file_indexer.register_adapter(".yaml", sidecar_adapter)
 
-        # 4. Runners (Command Handlers)
+        # 5. Runners (Command Handlers)
         check_resolver = CheckResolver(
             root_path,
             self.workspace,
@@ -136,6 +146,7 @@ class StitcherApp:
             transformer,
             self.merger,
             self.fingerprint_strategy,
+            self.lock_session,
         )
         self.pump_runner = PumpRunner(
             pump_engine=pump_engine,
@@ -158,7 +169,7 @@ class StitcherApp:
         self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
         self.architecture_engine = create_architecture_engine()
 
-        # 4. Refactor Runner (depends on Indexing)
+        # 6. Refactor Runner (depends on Indexing)
         self.refactor_runner = RefactorRunner(
             root_path, self.index_store, self.file_indexer, self.uri_generator
         )

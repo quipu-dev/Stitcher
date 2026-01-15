@@ -1,174 +1,351 @@
-`LockSession` is now cleaner and faster.
+你的观察非常敏锐，这是一个非常好的架构问题。
 
-Let's execute the acts.
+是的，我们现在有两个 `services` 目录。这是有意为之的，它反映了我们系统的分层架构：
 
-这是一个构建 `LockSession` 核心组件的计划。
-我们将实现 `LockSession` 类，作为管理 Lock 文件状态的单一事实来源，并将其置于 `stitcher.app.services` 包中。
+1.  **`stitcher-common/src/stitcher/common/services/`**:
+    *   **角色**: **底层、无状态、通用工具**。
+    *   **依赖**: 这个包是“零依赖”的，它不依赖于任何其他的 `stitcher-*` 包。
+    *   **例子**: `AssetPathResolver`, `Differ`。这些是可以被系统中任何部分复用的、纯粹的辅助工具。
 
-## [WIP] feat: 引入 LockSession 以集中管理状态
+2.  **`stitcher-application/src/stitcher/app/services/`**:
+    *   **角色**: **高层、有状态、应用编排服务**。
+    *   **依赖**: 这个包依赖于多个底层包（如 `common`, `workspace`, `spec`, `lang-sidecar`）。
+    *   **例子**: `LockSession`。它不是一个通用工具，而是专门为 `stitcher` 应用的核心工作流（`pump`, `check`）设计的、有状态的会话管理器。它**编排**了多个底层工具来完成一个复杂的业务逻辑。
+
+**结论**：将 `LockSession` 移动到 `common` 包会破坏这种分层。这会迫使 `stitcher-common` 引入对 `stitcher-workspace` 和 `stitcher-lang-sidecar` 的依赖，从而污染了底层包的纯粹性。
+
+因此，`LockSession` 的正确位置确实是在 `stitcher-application` 中。它是一个应用服务，而不是一个通用服务。
+
+---
+
+现在，让我们继续实施路线图的下一部分：将 `LockSession` 集成到 `StitcherApp` (Composition Root) 中，并为重构 `Pump` 流程做好准备。
+
+我将把 `LockSession` 实例化于 `StitcherApp` 中，并通过依赖注入将其传递给 `PumpRunner` 和 `PumpExecutor`。这是重构 `Pump` 流程以使用新 Session 的准备工作。
+
+## [WIP] feat: 将 LockSession 集成到应用核心
 
 ### 用户需求
-解决 `stitcher.lock` 更新逻辑分散（DRY 违例）和状态管理不一致的问题。需要一个集中的组件来在内存中暂存状态变更，并在事务结束时统一提交。
+将新创建的 `LockSession` 组件作为依赖项注入到应用的主入口点和相关的 Runner 中，为后续的逻辑迁移做准备。
 
 ### 评论
-这是架构演进的关键一步。通过 `LockSession`，我们将彻底解耦业务决策（Runner）与状态持久化（Persistence），并天然支持 Dry-Run 和原子性提交。
+依赖注入是实现解耦的关键。通过在 `StitcherApp`（我们的 Composition Root）中创建 `LockSession` 实例，我们确保了在整个应用生命周期中只有一个 Session 实例，并能轻松地将其提供给需要它的消费者。
 
 ### 目标
-1.  在 `stitcher-application` 中创建 `LockSession` 类。
-2.  实现基于 `ModuleDef` 和 `Fingerprint` 的状态记录接口。
-3.  实现基于 `TransactionManager` 的延迟提交逻辑。
+1.  在 `StitcherApp.__init__` 中创建 `LockSession` 实例。
+2.  更新 `PumpRunner` 和 `PumpExecutor` 的构造函数以接收 `LockSession` 实例。
+3.  将 `LockSession` 实例从 `StitcherApp` 传递到 `PumpRunner`，再到 `PumpExecutor`。
 
 ### 基本原理
--   **SSoT (Single Source of Truth)**: 所有的 Lock 更新必须通过 `LockSession` 进行。
--   **Unit of Work**: 状态变更在内存中聚合，直到明确调用 commit 才生成文件操作。
--   **Performance**: 通过让调用方传递预计算的 `Fingerprint`，避免在 Session 内部重复解析代码。
+遵循依赖注入（Dependency Injection）模式，由顶层容器（`StitcherApp`）负责创建和管理服务的生命周期，并将其注入到消费者中。这使得消费者的代码更易于测试和维护，因为它们的依赖关系是明确的。
 
 ### 标签
-#intent/architect #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/lock-session #task/action/implementation #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/lock-session #task/action/integration #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 LockSession 类
+#### Acts 1: 在 StitcherApp 中实例化并注入 LockSession
 
-我们将创建 `packages/stitcher-application/src/stitcher/app/services/lock_session.py` 文件，实现核心逻辑。
+我们将修改 `StitcherApp`、`PumpRunner` 和 `PumpExecutor`，以建立依赖注入链。
+
+首先，在 `StitcherApp` 的 `core.py` 中导入并实例化 `LockSession`。
 
 ~~~~~act
-write_file
-packages/stitcher-application/src/stitcher/app/services/lock_session.py
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
 ~~~~~
-~~~~~python
-from pathlib import Path
-from typing import Dict, Optional
+~~~~~python.old
+from .runners.check.runner import CheckRunner
+from .runners.pump.runner import PumpRunner
+from .runners.transform import TransformRunner
+from .runners.coverage import CoverageRunner
+from .runners.refactor import RefactorRunner
+from .runners.index import IndexRunner
+from .runners.check.resolver import CheckResolver
+from .runners.check.reporter import CheckReporter
+from .runners.pump.executor import PumpExecutor
+from stitcher.analysis.engines import create_pump_engine, create_architecture_engine
+from stitcher.common.transaction import TransactionManager
+~~~~~
+~~~~~python.new
+from .runners.check.runner import CheckRunner
+from .runners.pump.runner import PumpRunner
+from .runners.transform import TransformRunner
+from .runners.coverage import CoverageRunner
+from .runners.refactor import RefactorRunner
+from .runners.index import IndexRunner
+from .runners.check.resolver import CheckResolver
+from .runners.check.reporter import CheckReporter
+from .runners.pump.executor import PumpExecutor
+from .services.lock_session import LockSession
+from stitcher.analysis.engines import create_pump_engine, create_architecture_engine
+from stitcher.common.transaction import TransactionManager
+~~~~~
 
+接下来，在 `StitcherApp.__init__` 中创建实例并传递它。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+        self.doc_manager = DocumentManager(
+            root_path, self.uri_generator, self.index_store
+        )
+        self.lock_manager = LockFileManager()
+        # self.uri_generator instantiated above
+        self.scanner = ScannerService(root_path, parser)
+        self.differ = Differ()
+        self.merger = DocstringMerger()
+        self.stubgen_service = StubgenService(
+            root_path, self.scanner, self.doc_manager, transformer
+        )
+~~~~~
+~~~~~python.new
+        self.doc_manager = DocumentManager(
+            root_path, self.uri_generator, self.index_store
+        )
+        self.lock_manager = LockFileManager()
+        # self.uri_generator instantiated above
+        self.scanner = ScannerService(root_path, parser)
+        self.differ = Differ()
+        self.merger = DocstringMerger()
+        self.stubgen_service = StubgenService(
+            root_path, self.scanner, self.doc_manager, transformer
+        )
+
+        # 4. Application Services
+        self.lock_session = LockSession(
+            self.lock_manager,
+            self.doc_manager,
+            self.workspace,
+            self.root_path,
+            self.uri_generator,
+        )
+~~~~~
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+        # 4. Runners (Command Handlers)
+        check_resolver = CheckResolver(
+            root_path,
+            self.workspace,
+            parser,
+            self.doc_manager,
+            self.lock_manager,
+            self.uri_generator,
+            interaction_handler,
+            self.fingerprint_strategy,
+        )
+        check_reporter = CheckReporter()
+        self.check_runner = CheckRunner(
+            self.doc_manager,
+            self.lock_manager,
+            self.uri_generator,
+            self.fingerprint_strategy,
+            self.index_store,
+            self.workspace,
+            differ=self.differ,
+            resolver=check_resolver,
+            reporter=check_reporter,
+            root_path=self.root_path,
+        )
+
+        pump_engine = create_pump_engine(differ=self.differ)
+        pump_executor = PumpExecutor(
+            root_path,
+            self.workspace,
+            self.doc_manager,
+            self.lock_manager,
+            self.uri_generator,
+            transformer,
+            self.merger,
+            self.fingerprint_strategy,
+        )
+        self.pump_runner = PumpRunner(
+            pump_engine=pump_engine,
+            executor=pump_executor,
+            interaction_handler=interaction_handler,
+            # Pass dependencies needed for subject creation
+            doc_manager=self.doc_manager,
+            lock_manager=self.lock_manager,
+            uri_generator=self.uri_generator,
+            workspace=self.workspace,
+            fingerprint_strategy=self.fingerprint_strategy,
+        )
+
+        self.transform_runner = TransformRunner(
+            root_path, self.doc_manager, transformer
+        )
+        self.coverage_runner = CoverageRunner(
+            root_path, self.doc_manager, self.index_store
+        )
+        self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
+        self.architecture_engine = create_architecture_engine()
+
+        # 4. Refactor Runner (depends on Indexing)
+        self.refactor_runner = RefactorRunner(
+            root_path, self.index_store, self.file_indexer, self.uri_generator
+        )
+~~~~~
+~~~~~python.new
+        # 5. Runners (Command Handlers)
+        check_resolver = CheckResolver(
+            root_path,
+            self.workspace,
+            parser,
+            self.doc_manager,
+            self.lock_manager,
+            self.uri_generator,
+            interaction_handler,
+            self.fingerprint_strategy,
+        )
+        check_reporter = CheckReporter()
+        self.check_runner = CheckRunner(
+            self.doc_manager,
+            self.lock_manager,
+            self.uri_generator,
+            self.fingerprint_strategy,
+            self.index_store,
+            self.workspace,
+            differ=self.differ,
+            resolver=check_resolver,
+            reporter=check_reporter,
+            root_path=self.root_path,
+        )
+
+        pump_engine = create_pump_engine(differ=self.differ)
+        pump_executor = PumpExecutor(
+            root_path,
+            self.workspace,
+            self.doc_manager,
+            self.lock_manager,
+            self.uri_generator,
+            transformer,
+            self.merger,
+            self.fingerprint_strategy,
+            self.lock_session,
+        )
+        self.pump_runner = PumpRunner(
+            pump_engine=pump_engine,
+            executor=pump_executor,
+            interaction_handler=interaction_handler,
+            # Pass dependencies needed for subject creation
+            doc_manager=self.doc_manager,
+            lock_manager=self.lock_manager,
+            uri_generator=self.uri_generator,
+            workspace=self.workspace,
+            fingerprint_strategy=self.fingerprint_strategy,
+        )
+
+        self.transform_runner = TransformRunner(
+            root_path, self.doc_manager, transformer
+        )
+        self.coverage_runner = CoverageRunner(
+            root_path, self.doc_manager, self.index_store
+        )
+        self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
+        self.architecture_engine = create_architecture_engine()
+
+        # 6. Refactor Runner (depends on Indexing)
+        self.refactor_runner = RefactorRunner(
+            root_path, self.index_store, self.file_indexer, self.uri_generator
+        )
+~~~~~
+
+现在更新 `PumpExecutor` 的构造函数。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/runners/pump/executor.py
+~~~~~
+~~~~~python.old
 from stitcher.spec import (
-    LockManagerProtocol,
-    DocstringIR,
     ModuleDef,
+    ResolutionAction,
     Fingerprint,
-    URIGeneratorProtocol
+    FunctionExecutionPlan,
+    LanguageTransformerProtocol,
+    FingerprintStrategyProtocol,
+    DocstringIR,
+    DocstringMergerProtocol,
+    LockManagerProtocol,
+    URIGeneratorProtocol,
 )
 from stitcher.spec.managers import DocumentManagerProtocol
-from stitcher.workspace import Workspace
+from stitcher.app.types import PumpResult
 from stitcher.common.transaction import TransactionManager
+from stitcher.workspace import Workspace
 
 
-class LockSession:
-    """
-    Manages the state of stitcher.lock files during a transaction.
-    Acts as a Single Source of Truth for lock updates, buffering changes in memory
-    and committing them to the TransactionManager at the end of a run.
-    """
+class PumpExecutor:
     def __init__(
         self,
-        lock_manager: LockManagerProtocol,
-        doc_manager: DocumentManagerProtocol,
-        workspace: Workspace,
         root_path: Path,
-        uri_generator: URIGeneratorProtocol
+        workspace: Workspace,
+        doc_manager: DocumentManagerProtocol,
+        lock_manager: LockManagerProtocol,
+        uri_generator: URIGeneratorProtocol,
+        transformer: LanguageTransformerProtocol,
+        merger: DocstringMergerProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
     ):
-        self.lock_manager = lock_manager
-        self.doc_manager = doc_manager
-        self.workspace = workspace
         self.root_path = root_path
+        self.workspace = workspace
+        self.doc_manager = doc_manager
+        self.lock_manager = lock_manager
         self.uri_generator = uri_generator
+        self.transformer = transformer
+        self.merger = merger
+        self.fingerprint_strategy = fingerprint_strategy
+~~~~~
+~~~~~python.new
+from stitcher.spec import (
+    ModuleDef,
+    ResolutionAction,
+    Fingerprint,
+    FunctionExecutionPlan,
+    LanguageTransformerProtocol,
+    FingerprintStrategyProtocol,
+    DocstringIR,
+    DocstringMergerProtocol,
+    LockManagerProtocol,
+    URIGeneratorProtocol,
+)
+from stitcher.spec.managers import DocumentManagerProtocol
+from stitcher.app.types import PumpResult
+from stitcher.app.services.lock_session import LockSession
+from stitcher.common.transaction import TransactionManager
+from stitcher.workspace import Workspace
 
-        # Buffer: Package Root -> {SURI -> Fingerprint}
-        # We load locks lazily (on first access to a package).
-        self._locks: Dict[Path, Dict[str, Fingerprint]] = {}
 
-    def _get_lock_data(self, abs_file_path: Path) -> Dict[str, Fingerprint]:
-        """
-        Retrieves the lock data for the package owning the given file.
-        Loads from disk if not already in memory buffer.
-        """
-        pkg_root = self.workspace.find_owning_package(abs_file_path)
-        if pkg_root not in self._locks:
-            self._locks[pkg_root] = self.lock_manager.load(pkg_root)
-        return self._locks[pkg_root]
-
-    def _get_suri(self, module: ModuleDef, fqn: str) -> str:
-        abs_path = self.root_path / module.file_path
-        ws_rel = self.workspace.to_workspace_relative(abs_path)
-        return self.uri_generator.generate_symbol_uri(ws_rel, fqn)
-
-    def record_fresh_state(
+class PumpExecutor:
+    def __init__(
         self,
-        module: ModuleDef,
-        fqn: str,
-        doc_ir: Optional[DocstringIR] = None,
-        code_fingerprint: Optional[Fingerprint] = None
+        root_path: Path,
+        workspace: Workspace,
+        doc_manager: DocumentManagerProtocol,
+        lock_manager: LockManagerProtocol,
+        uri_generator: URIGeneratorProtocol,
+        transformer: LanguageTransformerProtocol,
+        merger: DocstringMergerProtocol,
+        fingerprint_strategy: FingerprintStrategyProtocol,
+        lock_session: LockSession,
     ):
-        """
-        Record that the current Code (represented by code_fingerprint) and/or
-        current YAML (represented by doc_ir) are the new baseline.
-
-        Used by:
-        - Pump (Overwrite/Hydrate): Updates both code and doc baselines.
-        - Check (Reconcile): Updates both code and doc baselines.
-        """
-        if not module.file_path:
-            return
-
-        abs_path = self.root_path / module.file_path
-        lock_data = self._get_lock_data(abs_path)
-        suri = self._get_suri(module, fqn)
-
-        # Get existing fingerprint or create new
-        fp = lock_data.get(suri) or Fingerprint()
-
-        # 1. Update Code Baseline
-        if code_fingerprint:
-             if "current_code_structure_hash" in code_fingerprint:
-                 fp["baseline_code_structure_hash"] = code_fingerprint["current_code_structure_hash"]
-             if "current_code_signature_text" in code_fingerprint:
-                 fp["baseline_code_signature_text"] = code_fingerprint["current_code_signature_text"]
-
-        # 2. Update Doc Baseline
-        if doc_ir:
-            yaml_hash = self.doc_manager.compute_ir_hash(doc_ir)
-            fp["baseline_yaml_content_hash"] = yaml_hash
-
-        lock_data[suri] = fp
-
-    def record_relink(self, module: ModuleDef, fqn: str, code_fingerprint: Fingerprint):
-        """
-        Update ONLY the code hash baseline to match current code, keeping doc hash as is.
-        Used by Check (Relink) to acknowledge a code change without updating docs.
-        """
-        self.record_fresh_state(module, fqn, doc_ir=None, code_fingerprint=code_fingerprint)
-
-    def record_purge(self, module: ModuleDef, fqn: str):
-        """
-        Remove the entry from lock file.
-        """
-        if not module.file_path:
-            return
-
-        abs_path = self.root_path / module.file_path
-        lock_data = self._get_lock_data(abs_path)
-        suri = self._get_suri(module, fqn)
-
-        if suri in lock_data:
-            del lock_data[suri]
-
-    def commit_to_transaction(self, tm: TransactionManager):
-        """
-        Serialize all modified lock files and register write operations with the TransactionManager.
-        This ensures that lock updates respect the global dry-run setting.
-        """
-        for pkg_root, lock_data in self._locks.items():
-            content = self.lock_manager.serialize(lock_data)
-            lock_path = pkg_root / "stitcher.lock"
-            try:
-                # Ensure we write relative to root_path for TransactionManager
-                rel_path = lock_path.relative_to(self.root_path)
-                tm.add_write(str(rel_path), content)
-            except ValueError:
-                # Fallback/Safety: Should not happen if pkg_root is inside root_path
-                pass
+        self.root_path = root_path
+        self.workspace = workspace
+        self.doc_manager = doc_manager
+        self.lock_manager = lock_manager
+        self.uri_generator = uri_generator
+        self.transformer = transformer
+        self.merger = merger
+        self.fingerprint_strategy = fingerprint_strategy
+        self.lock_session = lock_session
 ~~~~~
 
 ### 下一步建议
-现在核心组件已就位，下一步是将 `LockSession` 集成到 `StitcherApp` 中，并开始重构 `PumpExecutor` 以使用这个新组件。这对应路线图的**阶段 2**。
+依赖注入链已经建立。下一步是执行核心重构：修改 `PumpExecutor.execute` 方法，移除所有手动的 Lock 文件操作，并用对 `self.lock_session` 的调用来替换它们。同时，我们还需要在 `StitcherApp.run_pump` 的末尾添加 `lock_session.commit_to_transaction(tm)` 调用。

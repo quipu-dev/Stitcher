@@ -19,6 +19,7 @@ from stitcher.spec import (
 )
 from stitcher.spec.managers import DocumentManagerProtocol
 from stitcher.app.types import PumpResult
+from stitcher.app.services.lock_session import LockSession
 from stitcher.common.transaction import TransactionManager
 from stitcher.workspace import Workspace
 
@@ -34,6 +35,7 @@ class PumpExecutor:
         transformer: LanguageTransformerProtocol,
         merger: DocstringMergerProtocol,
         fingerprint_strategy: FingerprintStrategyProtocol,
+        lock_session: LockSession,
     ):
         self.root_path = root_path
         self.workspace = workspace
@@ -43,6 +45,7 @@ class PumpExecutor:
         self.transformer = transformer
         self.merger = merger
         self.fingerprint_strategy = fingerprint_strategy
+        self.lock_session = lock_session
 
     def _compute_fingerprints(self, module: ModuleDef) -> Dict[str, Fingerprint]:
         fingerprints: Dict[str, Fingerprint] = {}

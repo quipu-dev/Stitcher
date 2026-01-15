@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 引入 LockSession 以集中管理状态", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768450760.2771842, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 将 LockSession 集成到应用核心", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768450926.0430052, "duration_ms": 0}}
