@@ -23,7 +23,9 @@ class MockResolutionHandler(InteractionHandler):
         return self.actions * len(contexts) if len(self.actions) == 1 else self.actions
 
 
-def test_check_workflow_mixed_auto_and_interactive(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_check_workflow_mixed_auto_and_interactive(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Ensures that auto-reconciliation and interactive decisions can co-exist
     and are executed correctly in their respective phases.
@@ -158,7 +160,9 @@ def test_check_interactive_purge_removes_dangling_doc(
     spy_bus.assert_id_called(L.check.run.success)
 
 
-def test_check_interactive_skip_dangling_doc_fails(dangling_doc_workspace, monkeypatch, spy_bus: SpyBus):
+def test_check_interactive_skip_dangling_doc_fails(
+    dangling_doc_workspace, monkeypatch, spy_bus: SpyBus
+):
     """
     Verify that skipping a dangling doc conflict results in a check failure.
     """
@@ -182,7 +186,9 @@ def test_check_interactive_skip_dangling_doc_fails(dangling_doc_workspace, monke
     assert "dangling_func" in data
 
 
-def test_check_interactive_purge_deletes_empty_yaml(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_check_interactive_purge_deletes_empty_yaml(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verify that if purging the last entry makes the YAML file empty, the file is deleted.
     """
@@ -232,7 +238,9 @@ def drift_workspace(tmp_path):
     return project_root
 
 
-def test_check_interactive_relink_fixes_drift(drift_workspace, monkeypatch, spy_bus: SpyBus):
+def test_check_interactive_relink_fixes_drift(
+    drift_workspace, monkeypatch, spy_bus: SpyBus
+):
     handler = MockResolutionHandler([ResolutionAction.RELINK])
     app = create_test_app(root_path=drift_workspace, interaction_handler=handler)
 
@@ -256,7 +264,9 @@ def test_check_interactive_relink_fixes_drift(drift_workspace, monkeypatch, spy_
     spy_bus.assert_id_called(L.check.run.success)
 
 
-def test_check_interactive_skip_drift_fails_check(drift_workspace, monkeypatch, spy_bus: SpyBus):
+def test_check_interactive_skip_drift_fails_check(
+    drift_workspace, monkeypatch, spy_bus: SpyBus
+):
     handler = MockResolutionHandler([ResolutionAction.SKIP])
     app = create_test_app(root_path=drift_workspace, interaction_handler=handler)
 

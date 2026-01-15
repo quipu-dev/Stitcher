@@ -64,7 +64,9 @@ def test_inject_command_injects_docstrings(tmp_path, monkeypatch, spy_bus: SpyBu
     spy_bus.assert_id_called(L.inject.run.complete)
 
 
-def test_strip_command_removes_attribute_docstrings(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_strip_command_removes_attribute_docstrings(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     # Arrange
     factory = WorkspaceFactory(tmp_path)
     source_path = "src/main.py"

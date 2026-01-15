@@ -77,7 +77,9 @@ def test_generate_does_not_update_signatures(tmp_path, monkeypatch, spy_bus: Spy
     spy_bus.assert_id_called(L.check.state.signature_drift, level="error")
 
 
-def test_check_with_force_relink_reconciles_changes(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_check_with_force_relink_reconciles_changes(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verify the complete workflow of reconciling signature changes with `check --force-relink`.
     """

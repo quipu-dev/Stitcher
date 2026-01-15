@@ -28,7 +28,9 @@ def test_loglevel_default_is_info(workspace_factory, monkeypatch, spy_bus: SpyBu
     assert_id_not_called(spy_bus, L.debug.log.scan_path)
 
 
-def test_loglevel_warning_hides_info_and_success(workspace_factory, monkeypatch, spy_bus: SpyBus):
+def test_loglevel_warning_hides_info_and_success(
+    workspace_factory, monkeypatch, spy_bus: SpyBus
+):
     """Verifies --loglevel warning hides lower level messages."""
     # Setup a project with an untracked file, which triggers a WARNING
     workspace_factory.with_config({"scan_paths": ["src"]}).with_source(
@@ -52,7 +54,9 @@ def test_loglevel_warning_hides_info_and_success(workspace_factory, monkeypatch,
     spy_bus.assert_id_called(L.check.file.untracked_with_details, level="warning")
 
 
-def test_loglevel_debug_shows_debug_messages(workspace_factory, monkeypatch, spy_bus: SpyBus):
+def test_loglevel_debug_shows_debug_messages(
+    workspace_factory, monkeypatch, spy_bus: SpyBus
+):
     """Verifies --loglevel debug shows verbose debug messages."""
     workspace_factory.with_config({"scan_paths": ["src"]}).build()
 
@@ -66,7 +70,9 @@ def test_loglevel_debug_shows_debug_messages(workspace_factory, monkeypatch, spy
     spy_bus.assert_id_called(L.index.run.start, level="info")
 
 
-def test_loglevel_error_shows_only_errors(workspace_factory, monkeypatch, spy_bus: SpyBus):
+def test_loglevel_error_shows_only_errors(
+    workspace_factory, monkeypatch, spy_bus: SpyBus
+):
     """Verifies --loglevel error hides everything except errors."""
     # Setup a project with signature drift (ERROR) and an untracked file (WARNING)
     ws = workspace_factory.with_config({"scan_paths": ["src"]})

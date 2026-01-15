@@ -101,7 +101,9 @@ def test_check_passes_when_synced(tmp_path, monkeypatch, spy_bus: SpyBus):
     spy_bus.assert_id_called(L.check.run.success, level="success")
 
 
-def test_check_command_detects_circular_dependency(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_check_command_detects_circular_dependency(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     # 1. Arrange
     # Corrected: Using tmp_path to ensure isolation and prevent root pollution
     project_dir = tmp_path / "test_project_circ"

@@ -5,7 +5,9 @@ from stitcher.test_utils import SpyBus
 from needle.pointer import L
 
 
-def test_command_fails_gracefully_outside_workspace(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_command_fails_gracefully_outside_workspace(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that running a command outside a valid workspace
     (no .git, no pyproject.toml) fails with a user-friendly error.

@@ -9,7 +9,10 @@ from stitcher.test_utils import create_test_app
 from needle.pointer import L
 from stitcher.test_utils import SpyBus, WorkspaceFactory
 
-def test_generate_with_stub_package_creates_correct_structure(tmp_path, monkeypatch, spy_bus: SpyBus):
+
+def test_generate_with_stub_package_creates_correct_structure(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     End-to-end test for the PEP 561 stub package generation mode.
     """

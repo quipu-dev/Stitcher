@@ -36,7 +36,9 @@ def conflicting_workspace(tmp_path):
     )
 
 
-def test_pump_interactive_overwrite(spy_bus: SpyBus, conflicting_workspace, monkeypatch):
+def test_pump_interactive_overwrite(
+    spy_bus: SpyBus, conflicting_workspace, monkeypatch
+):
     """
     Verify that choosing [F]orce-hydrate (HYDRATE_OVERWRITE) correctly
     updates the YAML file with the content from the source code.
@@ -62,7 +64,9 @@ def test_pump_interactive_overwrite(spy_bus: SpyBus, conflicting_workspace, monk
     assert "YAML Doc" not in content
 
 
-def test_pump_interactive_reconcile(conflicting_workspace, monkeypatch, spy_bus: SpyBus):
+def test_pump_interactive_reconcile(
+    conflicting_workspace, monkeypatch, spy_bus: SpyBus
+):
     """
     Verify that choosing [R]econcile (HYDRATE_KEEP_EXISTING) preserves
     the existing content in the YAML file.
@@ -87,7 +91,9 @@ def test_pump_interactive_reconcile(conflicting_workspace, monkeypatch, spy_bus:
     assert "Code Doc" not in content
 
 
-def test_pump_interactive_skip_leads_to_failure(conflicting_workspace, monkeypatch, spy_bus: SpyBus):
+def test_pump_interactive_skip_leads_to_failure(
+    conflicting_workspace, monkeypatch, spy_bus: SpyBus
+):
     """
     Verify that choosing [S]kip leaves the conflict unresolved and causes
     the command to fail.
@@ -111,7 +117,9 @@ def test_pump_interactive_skip_leads_to_failure(conflicting_workspace, monkeypat
     assert "YAML Doc" in content
 
 
-def test_pump_interactive_abort_stops_process(conflicting_workspace, monkeypatch, spy_bus: SpyBus):
+def test_pump_interactive_abort_stops_process(
+    conflicting_workspace, monkeypatch, spy_bus: SpyBus
+):
     """
     Verify that choosing [A]bort stops the pumping and fails the command.
     """

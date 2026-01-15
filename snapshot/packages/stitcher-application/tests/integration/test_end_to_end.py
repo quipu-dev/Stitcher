@@ -136,7 +136,9 @@ stub_path = "typings/pkg_b"
     spy_bus.assert_id_called(L.generate.run.complete, level="success")
 
 
-def test_app_generates_stubs_for_plugins_and_sources(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_app_generates_stubs_for_plugins_and_sources(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     # 1. Arrange: Setup a workspace with both source code and a plugin definition
     factory = WorkspaceFactory(tmp_path)
     project_root = (

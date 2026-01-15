@@ -1,6 +1,5 @@
 import pytest
 import stitcher.common
-from stitcher.test_utils import SpyBus
 from needle.pointer import L
 from needle.operators import DictOperator
 

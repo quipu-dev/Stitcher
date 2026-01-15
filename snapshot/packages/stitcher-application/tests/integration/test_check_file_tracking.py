@@ -51,7 +51,9 @@ def test_check_reports_untracked_with_details(tmp_path, monkeypatch, spy_bus: Sp
     assert not any(msg["id"] == str(L.check.file.untracked) for msg in messages)
 
 
-def test_check_reports_simple_untracked_if_all_docs_present(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_check_reports_simple_untracked_if_all_docs_present(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that 'check' falls back to the simple UNTRACKED message if
     a new file has content, but all its public APIs already have docstrings
@@ -78,7 +80,9 @@ def test_check_reports_simple_untracked_if_all_docs_present(tmp_path, monkeypatc
     )
 
 
-def test_check_is_silent_for_empty_untracked_file(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_check_is_silent_for_empty_untracked_file(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that 'check' does NOT report UNTRACKED for an untracked file
     that contains no documentable content (e.g., an empty __init__.py).
@@ -104,7 +108,9 @@ def test_check_is_silent_for_empty_untracked_file(tmp_path, monkeypatch, spy_bus
     assert not any(msg["id"] == str(L.check.file.untracked) for msg in messages)
 
 
-def test_check_is_silent_for_boilerplate_untracked_file(tmp_path, monkeypatch, spy_bus: SpyBus):
+def test_check_is_silent_for_boilerplate_untracked_file(
+    tmp_path, monkeypatch, spy_bus: SpyBus
+):
     """
     Verifies that 'check' also ignores untracked files that only contain
     boilerplate like __all__ or __path__.

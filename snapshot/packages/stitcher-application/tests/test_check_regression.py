@@ -5,7 +5,9 @@ from stitcher.test_utils import WorkspaceFactory, SpyBus, get_stored_hashes
 from needle.pointer import L
 
 
-def test_check_persists_updates_in_multi_target_scan(tmp_path: Path, monkeypatch, spy_bus: SpyBus):
+def test_check_persists_updates_in_multi_target_scan(
+    tmp_path: Path, monkeypatch, spy_bus: SpyBus
+):
     """
     Regression Test: Ensures that 'doc_improvement' updates are persisted for ALL files,
     not just those in the last scanned batch.
