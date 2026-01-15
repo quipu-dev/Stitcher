@@ -1,70 +1,117 @@
-这是一个非常精准的直觉。在 YAML 处理中，尤其是使用 `ruamel.yaml` 时，普通 Python `dict` 的序列化行为有时会忽略特定的标量类型包装，除非显式配置或使用 `CommentedMap`。
+根据你的分析，问题的根源在于 `PumpExecutor` 绕过了 `SidecarAdapter.save_doc_irs` 方法，直接操作了数据结构并调用了 `dump_raw_data_to_string`。而 `dump_raw_data_to_string` 缺乏将普通字符串转换为 `ruamel.yaml` 的 `LiteralScalarString` 的逻辑，导致输出退化为普通字符串格式。
 
-我将为你创建一个专门用于重现该问题的单元测试。
+解决方案是修改 `SidecarAdapter.dump_raw_data_to_string`，使其在转储前对数据进行原地增强。
 
-## [WIP] test: 添加 sidecar 块标量输出的重现测试
+## [WIP] fix: 修复 Pump 操作中 Sidecar 输出格式退化的问题
+
+### 摘要头
+## [WIP] fix: 强制 dump_raw_data_to_string 使用块标量格式
+
+### 错误分析
+`PumpExecutor` 在执行 `pump` 或 `init` 操作时，通过 `DocumentManager.load_raw_data` 获取 `CommentedMap`，并在插入新文档字符串时使用了普通的 Python `str`。随后调用的 `dump_raw_data_to_string` 直接将该结构转储，没有像 `save_doc_irs` 那样进行 `LiteralScalarString` 的包装。这导致 `ruamel.yaml` 对简单的单行文档字符串使用了默认的标量输出（无 `|-`），破坏了 Sidecar 文件的格式一致性。
 
 ### 用户需求
-需要一个单元测试来验证 `SidecarAdapter` 在创建新的 `.stitcher.yaml` 文件时，是否正确地将文档字符串（即使是单行）序列化为 YAML 的 `|-`（Literal Block Scalar, Stripped）格式。
+确保无论通过何种路径（直接保存或通过 Pump 更新）修改 Sidecar 文件，所有的文档字符串值都必须持久化为 YAML 的 Literal Block Scalar (`|-`) 格式。
 
 ### 评论
-当前的集成测试失败表明，系统可能在某些路径下（特别是新建文件时）将文档字符串退化为了普通的 YAML 字符串（单行显示），这破坏了 sidecar 文件易于人类阅读和编辑的设计目标。
+这是一个典型的“殊途同归”问题。系统有两条写入路径，一条（`save_doc_irs`）是正确的，另一条（`dump_raw_data_to_string`）不仅漏掉了格式化逻辑，而且被核心业务流程（Pump）所使用。修复必须在底层适配器中进行，以覆盖所有上层调用。
 
 ### 目标
-1.  在 `test_sidecar_adapter.py` 中添加一个名为 `test_save_doc_irs_forces_literal_block_style_repro` 的测试用例。
-2.  该测试应模拟创建一个包含单行文档的新 sidecar 文件。
-3.  断言生成的文本中必须包含 `my_func: |-`。
+修改 `stitcher-lang-sidecar` 中的 `SidecarAdapter`，在 `dump_raw_data_to_string` 方法中增加递归的原地处理逻辑，将所有字符串值转换为 `LiteralScalarString`。
 
 ### 基本原理
-根据 `ADAP v1.0` 协议，我们首先建立确定性的观测。如果此单元测试失败，我们将定位到 `SidecarAdapter.save_doc_irs` 中“创建路径” (`# --- CREATE PATH ---`) 的逻辑缺陷。该逻辑目前将普通的 Python `dict` 传递给 `yaml.dump`，这可能导致 `ruamel.yaml` 的排版启发式算法覆盖了我们的 `LiteralScalarString` 意图。
+通过在 Dump 操作前对数据结构进行遍历和原地替换，我们可以确保即使上层逻辑（如 Pump）传入了普通字符串，底层适配器也能保证最终的文件格式符合规范。原地修改对于 `ruamel.yaml` 的 `CommentedMap` 是安全的，它能保留原有的注释和顺序信息。
 
 ### 标签
-#intent/tooling #flow/ready #priority/medium #comp/tests #concept/state #scope/dx #ai/instruct #task/domain/testing #task/object/sidecar-adapter-block-scalar #task/action/reproduction #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/sidecar-adapter #task/action/fix-serialization #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 在 `test_sidecar_adapter.py` 中添加重现测试
+#### Acts 1: 修复 `SidecarAdapter`
 
-我们将添加一个专门的测试用例，验证在创建新 sidecar 文件时是否强制使用了 `|-` 块标量语法。
+我们将修改 `packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py`，添加 `_ensure_block_scalars_inplace` 方法并在 `dump_raw_data_to_string` 中调用它。
 
 ~~~~~act
 patch_file
-packages/stitcher-lang-sidecar/tests/unit/test_sidecar_adapter.py
+packages/stitcher-lang-sidecar/src/stitcher/lang/sidecar/adapter.py
 ~~~~~
 ~~~~~python.old
-    assert "z_function: |-\n  Original doc for Z" in content
-    assert "a_function: |-\n  Updated doc for A" in content
-    assert "b_function: |-\n  New doc for B" in content
+    def dump_to_string(self, data: Dict[str, Any]) -> str:
+        string_stream = io.StringIO()
+        self._yaml.dump(self._to_literal_strings(data), string_stream)
+        return string_stream.getvalue()
+
+    def load_raw_data(self, path: Path) -> Dict[str, Any]:
+        if not path.exists():
+            return {}
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                # ruamel.yaml.load returns a special dict-like object that preserves structure
+                raw_data = self._yaml.load(f)
+            return raw_data if isinstance(raw_data, dict) else {}
+        except Exception:
+            return {}
+
+    def dump_raw_data_to_string(self, data: Dict[str, Any]) -> str:
+        """Dumps data while preserving formatting, for high-fidelity updates."""
+        string_stream = io.StringIO()
+        self._yaml.dump(data, string_stream)
+        return string_stream.getvalue()
+
+    def serialize_ir_for_transfer(
+        self, ir: DocstringIR, serializer: DocstringSerializerProtocol
+    ) -> Dict[str, Any]:
 ~~~~~
 ~~~~~python.new
-    assert "z_function: |-\n  Original doc for Z" in content
-    assert "a_function: |-\n  Updated doc for A" in content
-    assert "b_function: |-\n  New doc for B" in content
+    def dump_to_string(self, data: Dict[str, Any]) -> str:
+        string_stream = io.StringIO()
+        self._yaml.dump(self._to_literal_strings(data), string_stream)
+        return string_stream.getvalue()
 
+    def load_raw_data(self, path: Path) -> Dict[str, Any]:
+        if not path.exists():
+            return {}
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                # ruamel.yaml.load returns a special dict-like object that preserves structure
+                raw_data = self._yaml.load(f)
+            return raw_data if isinstance(raw_data, dict) else {}
+        except Exception:
+            return {}
 
-def test_save_doc_irs_forces_literal_block_style_repro(tmp_path: Path):
-    """
-    Reproduction test for the issue where new keys might not be using block scalars.
-    """
-    adapter = SidecarAdapter(root_path=tmp_path, uri_generator=PythonURIGenerator())
-    serializer = RawSerializer()
-    doc_path = tmp_path / "repro.stitcher.yaml"
+    def _ensure_block_scalars_inplace(self, data: Any) -> None:
+        """
+        Recursively updates the data structure in-place to convert strings to LiteralScalarString.
+        This preserves Comments/Structure of CommentedMap/CommentedSeq while enforcing block style.
+        """
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str):
+                    data[k] = LiteralScalarString(v)
+                elif isinstance(v, (dict, list)):
+                    self._ensure_block_scalars_inplace(v)
+        elif isinstance(data, list):
+            for i, v in enumerate(data):
+                if isinstance(v, str):
+                    data[i] = LiteralScalarString(v)
+                elif isinstance(v, (dict, list)):
+                    self._ensure_block_scalars_inplace(v)
 
-    # 使用一个简单的单行文档字符串进行测试
-    irs = {
-        "my_func": DocstringIR(summary="This is a docstring.")
-    }
+    def dump_raw_data_to_string(self, data: Dict[str, Any]) -> str:
+        """Dumps data while preserving formatting, for high-fidelity updates."""
+        # Enforce block scalar style for all string values in-place
+        self._ensure_block_scalars_inplace(data)
 
-    adapter.save_doc_irs(doc_path, irs, serializer)
-    content = doc_path.read_text()
+        string_stream = io.StringIO()
+        self._yaml.dump(data, string_stream)
+        return string_stream.getvalue()
 
-    # 如果此处断言失败，则证明 LiteralScalarString 没有被正确应用或被 dump 过程忽略了。
-    assert "my_func: |-" in content
-    assert "  This is a docstring." in content
+    def serialize_ir_for_transfer(
+        self, ir: DocstringIR, serializer: DocstringSerializerProtocol
+    ) -> Dict[str, Any]:
 ~~~~~
 
 ### 下一步建议
-- **如果测试失败**: 我将分析 `SidecarAdapter`。我怀疑是因为在创建新文件时，我们构建的是一个标准 Python `dict` 而不是 `ruamel.yaml.comments.CommentedMap`，这导致 `yaml.dump` 在处理非 TTY/Stream 环境时丢失了类型提示。
-- **修复方案**: 我们可能需要修改 `SidecarAdapter`，使其在创建新数据时也使用 `CommentedMap`。
+我们之前已经运行了单元测试（通过了，因为它是针对 `save_doc_irs` 的）。现在，您应该重新运行那个失败的集成测试 `packages/stitcher-application/tests/integration/test_init_command.py::test_init_extracts_docs_to_yaml` 来验证修复是否有效。

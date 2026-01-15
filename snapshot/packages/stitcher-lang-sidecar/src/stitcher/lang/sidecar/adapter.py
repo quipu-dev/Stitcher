@@ -179,8 +179,29 @@ class SidecarAdapter(LanguageAdapter):
         except Exception:
             return {}
 
+    def _ensure_block_scalars_inplace(self, data: Any) -> None:
+        """
+        Recursively updates the data structure in-place to convert strings to LiteralScalarString.
+        This preserves Comments/Structure of CommentedMap/CommentedSeq while enforcing block style.
+        """
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str):
+                    data[k] = LiteralScalarString(v)
+                elif isinstance(v, (dict, list)):
+                    self._ensure_block_scalars_inplace(v)
+        elif isinstance(data, list):
+            for i, v in enumerate(data):
+                if isinstance(v, str):
+                    data[i] = LiteralScalarString(v)
+                elif isinstance(v, (dict, list)):
+                    self._ensure_block_scalars_inplace(v)
+
     def dump_raw_data_to_string(self, data: Dict[str, Any]) -> str:
         """Dumps data while preserving formatting, for high-fidelity updates."""
+        # Enforce block scalar style for all string values in-place
+        self._ensure_block_scalars_inplace(data)
+
         string_stream = io.StringIO()
         self._yaml.dump(data, string_stream)
         return string_stream.getvalue()
