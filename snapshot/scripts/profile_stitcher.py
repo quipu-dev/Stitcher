@@ -1,45 +1,20 @@
 import sys
-import time
 import argparse
+import subprocess
 from pathlib import Path
-from stitcher.app.core import StitcherApp
-from stitcher.lang.python.parser.griffe import GriffePythonParser
-from stitcher.lang.python import PythonTransformer, PythonFingerprintStrategy
 
-# --- 1. 自动路径注入 (Automation of sys.path) ---
+# --- 1. Project Root Determination ---
+# This is now only used to set the CWD for the subprocess, which is correct.
 project_root = Path(__file__).parent.parent.resolve()
-packages_dir = project_root / "packages"
 
-
-def setup_paths():
-    added_count = 0
-    if packages_dir.exists():
-        for pkg in packages_dir.iterdir():
-            if pkg.is_dir():
-                src_path = pkg / "src"
-                if src_path.exists():
-                    sys.path.insert(0, str(src_path))
-                    added_count += 1
-    return added_count
-
-
-# 在任何可能触发导入的操作前执行路径设置
-pkgs_added = setup_paths()
-
-# --- 2. 采样分析器检查 ---
+# --- 2. Pyinstrument Check ---
 try:
-    from pyinstrument import Profiler
+    import pyinstrument
 except ImportError:
     print(
         "❌ Error: 'pyinstrument' not found. Please install it with: pip install pyinstrument"
     )
     sys.exit(1)
-
-# --- 3. 记录导入耗时 (Startup latency) ---
-t_start_imports = time.perf_counter()
-# 核心组件导入
-
-t_end_imports = time.perf_counter()
 
 
 def main():
@@ -55,69 +30,96 @@ def main():
             "inject",
             "strip",
             "index",
+            "refactor",
         ],
-        help="The stitcher command to profile",
+        help="The stitcher command to profile.",
     )
-    parser.add_argument("--html", action="store_true", help="Output results as HTML")
+    parser.add_argument(
+        "subcommand_args",
+        nargs=argparse.REMAINDER,
+        help="Additional arguments for the command (e.g., 'apply my-migration.py' for refactor).",
+    )
+    parser.add_argument(
+        "--html",
+        action="store_true",
+        help="Output results as HTML instead of printing to console.",
+    )
     args = parser.parse_args()
 
-    # --- 4. 应用初始化 ---
-    app_init_start = time.perf_counter()
+    # --- 3. Command Construction ---
+    # Use pyinstrument's CLI interface for robust subprocess profiling.
+    # We use sys.executable to ensure we're using the python from the current env.
 
-    st_parser = GriffePythonParser()
-    transformer = PythonTransformer()
-    strategy = PythonFingerprintStrategy()
+    output_renderer = "html" if args.html else "console"
+    output_file_name = f"profile_{args.command}.html"
 
-    app = StitcherApp(
-        root_path=project_root,
-        parser=st_parser,
-        transformer=transformer,
-        fingerprint_strategy=strategy,
+    cmd = [
+        sys.executable,
+        "-m",
+        "pyinstrument",
+        "--renderer",
+        output_renderer,
+    ]
+
+    if args.html:
+        cmd.extend(["--outfile", output_file_name])
+
+    # Add the stitcher command to be profiled
+    cmd.extend(
+        [
+            "-m",
+            "stitcher.cli.main",
+            args.command,
+        ]
     )
 
-    # 建立命令映射
-    commands = {
-        "cov": lambda: app.run_cov(),
-        "check": lambda: app.run_check(),
-        "init": lambda: app.run_init(),
-        "pump": lambda: app.run_pump(strip=False),
-        "generate": lambda: app.run_from_config(),
-        "inject": lambda: app.run_inject(),
-        "strip": lambda: app.run_strip(),
-        "index": lambda: app.run_index_build(),
-    }
+    # Add any remaining arguments
+    if args.subcommand_args:
+        cmd.extend(args.subcommand_args)
 
-    target_action = commands[args.command]
-    app_init_end = time.perf_counter()
-
-    # --- 5. 执行分析 ---
-    print("--- Stitcher Diagnostics ---")
-    print(f"Packages auto-loaded: {pkgs_added}")
-    print(f"Imports latency:      {(t_end_imports - t_start_imports) * 1000:.2f} ms")
-    print(f"App Init latency:     {(app_init_end - app_init_start) * 1000:.2f} ms")
+    # --- 4. Execution ---
+    print(f"🚀 Profiling: {' '.join(cmd)}")
+    print(f"📂 Working Directory: {project_root}")
     print("-" * 27)
 
-    profiler = Profiler(interval=0.001)
-
-    print(f"🚀 Profiling 'stitcher {args.command}'...")
-    profiler.start()
     try:
-        target_action()
-    except KeyboardInterrupt:
-        print("\n🛑 Profiling interrupted by user. Generating report...")
-    except Exception as e:
-        print(f"❌ Command failed during profiling: {e}")
-    finally:
-        profiler.stop()
+        # We run the command from the project root to ensure correct workspace discovery.
+        result = subprocess.run(
+            cmd,
+            cwd=project_root,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
 
-    # --- 6. 报告输出 ---
+        # Print stitcher's own output if not rendering to console
+        if args.html or output_renderer != "console":
+            print("--- Stitcher Output ---")
+            print(result.stdout)
+            if result.stderr:
+                print("--- Stitcher Stderr ---")
+                print(result.stderr)
+            print("-" * 23)
+
+    except subprocess.CalledProcessError as e:
+        print(f"\n❌ Profiling failed. Command exited with status {e.returncode}.")
+        print("--- Stderr ---")
+        print(e.stderr)
+        print("--- Stdout ---")
+        print(e.stdout)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\n🛑 Profiling interrupted by user.")
+        sys.exit(1)
+
+    # --- 5. Report ---
     if args.html:
-        output_file = project_root / f"profile_{args.command}.html"
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(profiler.output_html())
-        print(f"✨ HTML report saved to: {output_file}")
+        print(f"✨ HTML report saved to: {project_root / output_file_name}")
     else:
-        profiler.print()
+        # Pyinstrument with 'console' renderer prints directly to stdout.
+        # We captured it, so let's print it.
+        print(result.stdout)
 
 
 if __name__ == "__main__":
