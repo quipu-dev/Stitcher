@@ -1,7 +1,0 @@
-"DictOperator": |-
-  A Config Operator that provides values from an in-memory dictionary.
-  It automatically flavors (flattens) nested dictionaries upon initialization.
-"DictOperator.__call__": |-
-  Retrieves a value from the dictionary using the string representation of the key.
-"DictOperator.__init__": |-
-  Initializes the operator with a source dictionary.

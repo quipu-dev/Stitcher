@@ -1,7 +1,0 @@
-"OverlayOperator": |-
-  A pure composition operator that delegates to a list of child operators.
-  It returns the first non-None result found.
-"OverlayOperator.__call__": |-
-  Iterates through child operators and returns the first non-None result.
-"OverlayOperator.__init__": |-
-  Initializes with a prioritized list of operators (first has highest priority).

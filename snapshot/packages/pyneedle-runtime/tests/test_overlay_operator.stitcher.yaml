@@ -1,7 +1,0 @@
-"test_base_loader_adapter_behavior": |-
-  Verifies that BaseLoader subclasses now implement OperatorProtocol correctly,
-  using environment variables for context implicitly.
-"test_interop_overlay_nexus_inside_overlay_operator": |-
-  Verifies that legacy OverlayNexus instances can be wrapped inside the new OverlayOperator.
-"test_overlay_operator_pure_composition": |-
-  Verifies the core logic of OverlayOperator: try-first-return protocol.
