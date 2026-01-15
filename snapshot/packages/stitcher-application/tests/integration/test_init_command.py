@@ -24,11 +24,11 @@ def test_init_extracts_docs_to_yaml(tmp_path, monkeypatch):
 
     # 2. Act
     with spy_bus.patch(monkeypatch, "stitcher.common.bus"):
-        created_files = app.run_init()
+        app.run_init()
 
     # 3. Assert
     expected_yaml = project_root / "src/main.stitcher.yaml"
-    assert expected_yaml in created_files
+    assert expected_yaml.exists()
 
     content = expected_yaml.read_text()
     # Check for block style. ruamel.yaml is smart and won't quote simple keys.

@@ -169,7 +169,22 @@ class PumpExecutor:
                             fp["baseline_yaml_content_hash"] = (
                                 self.doc_manager.compute_ir_hash(ir_to_save)
                             )
+                            # fqn_was_updated is already true from code fingerprint update
+                        elif "baseline_yaml_content_hash" in fp:
+                            del fp["baseline_yaml_content_hash"]
+                    
+                    # ALWAYS sync the yaml hash with the final state of the yaml docs,
+                    # especially for `reconcile` cases where file doesn't change but lock must.
+                    ir_in_final_yaml = new_yaml_docs.get(fqn)
+                    if ir_in_final_yaml:
+                        new_yaml_hash = self.doc_manager.compute_ir_hash(ir_in_final_yaml)
+                        if fp.get("baseline_yaml_content_hash") != new_yaml_hash:
+                            fp["baseline_yaml_content_hash"] = new_yaml_hash
                             fqn_was_updated = True
+                    elif "baseline_yaml_content_hash" in fp:
+                        del fp["baseline_yaml_content_hash"]
+                        fqn_was_updated = True
+
 
                     if fqn_was_updated:
                         new_lock_data[suri] = fp
