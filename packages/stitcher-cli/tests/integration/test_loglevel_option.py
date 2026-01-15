@@ -2,19 +2,10 @@ import pytest
 from typer.testing import CliRunner
 
 from stitcher.cli.main import app
-from stitcher.test_utils import WorkspaceFactory, SpyBus
+from stitcher.test_utils import SpyBus
 from needle.pointer import L, SemanticPointer
 
 runner = CliRunner()
-
-
-@pytest.fixture
-def workspace_factory(tmp_path, monkeypatch):
-    # Use a fixture to ensure a clean workspace and chdir for each test
-    factory = WorkspaceFactory(tmp_path).init_git()
-    monkeypatch.chdir(tmp_path)
-    return factory
-
 
 def assert_id_not_called(spy_bus: SpyBus, msg_id: SemanticPointer):
     """Helper to assert that a specific message ID was NOT called."""

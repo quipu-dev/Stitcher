@@ -24,19 +24,19 @@ class MockAdapter:
         return [sym], []
 
 
-def test_index_files_git_discovery(tmp_path, store):
+def test_index_files_git_discovery(workspace_factory: WorkspaceFactory, store):
     """Test that indexer processes files found by Workspace via git."""
-    wf = WorkspaceFactory(tmp_path)
+    wf = workspace_factory
     wf.init_git()
     wf.with_source("tracked.py", "print('tracked')")
     wf.with_source("ignored.py", "print('ignored')")
     wf.with_raw_file(".gitignore", "ignored.py")
     wf.build()
 
-    workspace = Workspace(tmp_path)
+    workspace = Workspace(wf.root_path)
     files_to_index = workspace.discover_files()
 
-    indexer = FileIndexer(tmp_path, store)
+    indexer = FileIndexer(wf.root_path, store)
     stats = indexer.index_files(files_to_index)
 
     assert stats["added"] == 2  # tracked.py + .gitignore
@@ -45,14 +45,14 @@ def test_index_files_git_discovery(tmp_path, store):
     assert store.get_file_by_path("ignored.py") is None
 
 
-def test_index_files_stat_optimization(tmp_path, store):
+def test_index_files_stat_optimization(workspace_factory: WorkspaceFactory, store):
     """Test Phase 2 optimization: skip if mtime/size matches."""
-    wf = WorkspaceFactory(tmp_path).init_git()
+    wf = workspace_factory.init_git()
     wf.with_source("main.py", "content")
     wf.build()
 
-    workspace = Workspace(tmp_path)
-    indexer = FileIndexer(tmp_path, store)
+    workspace = Workspace(wf.root_path)
+    indexer = FileIndexer(wf.root_path, store)
 
     # First scan
     files1 = workspace.discover_files()
@@ -66,31 +66,31 @@ def test_index_files_stat_optimization(tmp_path, store):
     assert stats2["updated"] == 0
 
 
-def test_index_files_content_update(tmp_path, store):
+def test_index_files_content_update(workspace_factory: WorkspaceFactory, store):
     """Test Phase 3: Update if content changes."""
-    wf = WorkspaceFactory(tmp_path).init_git()
+    wf = workspace_factory.init_git()
     wf.with_source("main.py", "v1")
     wf.build()
 
-    workspace = Workspace(tmp_path)
-    indexer = FileIndexer(tmp_path, store)
+    workspace = Workspace(wf.root_path)
+    indexer = FileIndexer(wf.root_path, store)
     indexer.index_files(workspace.discover_files())
 
     time.sleep(0.01)
-    (tmp_path / "main.py").write_text("v2", encoding="utf-8")
+    (wf.root_path / "main.py").write_text("v2", encoding="utf-8")
 
     stats = indexer.index_files(workspace.discover_files())
     assert stats["updated"] == 1
 
 
-def test_index_files_binary_file(tmp_path, store):
+def test_index_files_binary_file(workspace_factory: WorkspaceFactory, store):
     """Test Phase 4: Binary files are tracked but not parsed."""
-    wf = WorkspaceFactory(tmp_path).init_git()
+    wf = workspace_factory.init_git()
     wf.build()
-    (tmp_path / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00")
+    (wf.root_path / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00")
 
-    workspace = Workspace(tmp_path)
-    indexer = FileIndexer(tmp_path, store)
+    workspace = Workspace(wf.root_path)
+    indexer = FileIndexer(wf.root_path, store)
     indexer.register_adapter(".png", MockAdapter())
 
     stats = indexer.index_files(workspace.discover_files())
@@ -101,14 +101,14 @@ def test_index_files_binary_file(tmp_path, store):
     assert len(store.get_symbols_by_file(rec.id)) == 0
 
 
-def test_index_files_adapter_integration(tmp_path, store):
+def test_index_files_adapter_integration(workspace_factory: WorkspaceFactory, store):
     """Test Phase 4: Adapter is called for text files."""
-    wf = WorkspaceFactory(tmp_path).init_git()
+    wf = workspace_factory.init_git()
     wf.with_source("app.py", "class Main: pass")
     wf.build()
 
-    workspace = Workspace(tmp_path)
-    indexer = FileIndexer(tmp_path, store)
+    workspace = Workspace(wf.root_path)
+    indexer = FileIndexer(wf.root_path, store)
     indexer.register_adapter(".py", MockAdapter())
 
     indexer.index_files(workspace.discover_files())
@@ -119,18 +119,18 @@ def test_index_files_adapter_integration(tmp_path, store):
     assert syms[0].name == "Main"
 
 
-def test_index_files_deletion(tmp_path, store):
+def test_index_files_deletion(workspace_factory: WorkspaceFactory, store):
     """Test deletion sync."""
-    wf = WorkspaceFactory(tmp_path).init_git()
+    wf = workspace_factory.init_git()
     wf.with_source("todelete.py", "pass")
     wf.build()
 
-    workspace = Workspace(tmp_path)
-    indexer = FileIndexer(tmp_path, store)
+    workspace = Workspace(wf.root_path)
+    indexer = FileIndexer(wf.root_path, store)
     indexer.index_files(workspace.discover_files())
     assert store.get_file_by_path("todelete.py") is not None
 
-    (tmp_path / "todelete.py").unlink()
+    (wf.root_path / "todelete.py").unlink()
 
     stats = indexer.index_files(workspace.discover_files())
     assert stats["deleted"] == 1

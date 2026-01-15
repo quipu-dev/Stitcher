@@ -3,9 +3,7 @@ from pathlib import Path
 from stitcher.test_utils import WorkspaceFactory, create_test_app
 
 
-def test_move_file_operation_updates_suri_in_lockfile(tmp_path: Path):
-    pkg_a_root = tmp_path / "packages" / "pkg-a"
-    workspace_factory = WorkspaceFactory(root_path=tmp_path)
+def test_move_file_operation_updates_suri_in_lockfile(workspace_factory: WorkspaceFactory):
     workspace_root = (
         workspace_factory.with_config({"scan_paths": ["packages/pkg-a/src"]})
         .with_pyproject("packages/pkg-a")
@@ -15,6 +13,7 @@ def test_move_file_operation_updates_suri_in_lockfile(tmp_path: Path):
         )
         .build()
     )
+    pkg_a_root = workspace_root / "packages" / "pkg-a"
 
     app = create_test_app(workspace_root)
     app.run_init()

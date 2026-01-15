@@ -5,7 +5,7 @@ from stitcher.test_utils.workspace import WorkspaceFactory
 from stitcher.workspace import Workspace
 
 
-def test_indexer_resolves_aliases_and_references(tmp_path, store):
+def test_indexer_resolves_aliases_and_references(workspace_factory: WorkspaceFactory, store):
     """
     End-to-end test for alias resolution and reference scanning.
     Verifies that:
@@ -14,7 +14,7 @@ def test_indexer_resolves_aliases_and_references(tmp_path, store):
     3. Usages of aliases create correct ReferenceRecords.
     """
     # 1. Setup: A multi-file python package
-    wf = WorkspaceFactory(tmp_path)
+    wf = workspace_factory
     wf.with_source("pkg/__init__.py", "")
     wf.with_source(
         "pkg/defs.py",

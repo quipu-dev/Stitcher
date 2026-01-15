@@ -4,7 +4,7 @@ from pathlib import Path
 from stitcher.test_utils import WorkspaceFactory, SpyBus, create_test_app
 
 
-def test_check_ignores_reexports_and_imports(tmp_path: Path, monkeypatch):
+def test_check_ignores_reexports_and_imports(workspace_factory: WorkspaceFactory, monkeypatch):
     """
     Verifies that 'stitcher check' correctly ignores:
     1. Symbols re-exported from another module in the same package.
@@ -12,7 +12,6 @@ def test_check_ignores_reexports_and_imports(tmp_path: Path, monkeypatch):
     It should only flag symbols physically defined in the file being checked.
     """
     # 1. Setup: Create a project with a re-export structure
-    workspace_factory = WorkspaceFactory(tmp_path)
     spy_bus = SpyBus()
     ws = (
         workspace_factory.with_config({"scan_paths": ["src"]})
