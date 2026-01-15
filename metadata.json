@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复重构后测试用例中的 NameError (tmp_path 未定义)", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768457890.381994, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(tests): 在各包集成测试中统一使用 workspace_factory 插件", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768458004.8686004, "duration_ms": 0}}
