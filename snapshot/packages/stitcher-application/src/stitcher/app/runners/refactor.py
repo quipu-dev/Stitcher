@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Callable, Optional
 from stitcher.workspace import StitcherConfig
 
-from stitcher.common import bus
+from stitcher.bus import bus
 from needle.pointer import L
 from stitcher.spec import IndexStoreProtocol
 from stitcher.index.indexer import FileIndexer

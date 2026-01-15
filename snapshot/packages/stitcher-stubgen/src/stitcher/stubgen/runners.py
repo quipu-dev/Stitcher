@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pathlib import Path
 
-from stitcher.common import bus
+from stitcher.bus import bus
 from needle.pointer import L
 from stitcher.workspace import StitcherConfig
 from typing import Dict

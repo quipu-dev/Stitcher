@@ -4,7 +4,7 @@ from typing import Optional
 
 from stitcher.app.core import StitcherApp
 from stitcher.spec.interaction import InteractionHandler
-from stitcher.common import stitcher_operator as nexus
+from stitcher.bus import stitcher_operator as nexus
 from stitcher.lang.python import (
     GriffePythonParser,
     PythonTransformer,

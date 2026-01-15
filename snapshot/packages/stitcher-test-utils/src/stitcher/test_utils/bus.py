@@ -28,8 +28,8 @@ class SpyBus:
         self._spy_renderer = SpyRenderer()
 
     @contextmanager
-    def patch(self, monkeypatch: Any, target: str = "stitcher.common.bus"):
-        real_bus = stitcher.common.bus
+    def patch(self, monkeypatch: Any, target: str = "stitcher.bus.bus"):
+        real_bus = stitcher.bus.bus
 
         def intercept_render(
             level: str, msg_id: Union[str, SemanticPointer], **kwargs: Any

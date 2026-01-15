@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 迁移 I18N 资产与工厂逻辑至 stitcher-bus", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768473568.0162761, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M core.py, M reporter.py, M resolver.py ... and 19 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768475037.2052941, "duration_ms": 0}}

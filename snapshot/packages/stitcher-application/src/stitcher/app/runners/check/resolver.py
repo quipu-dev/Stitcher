@@ -2,7 +2,7 @@ from pathlib import Path
 from collections import defaultdict
 from typing import List, Dict
 
-from stitcher.common import bus
+from stitcher.bus import bus
 from needle.pointer import L, SemanticPointer
 from stitcher.spec import (
     ModuleDef,

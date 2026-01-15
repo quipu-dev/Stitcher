@@ -1,6 +1,6 @@
 import typer
 
-from stitcher.common import bus, stitcher_operator as nexus
+from stitcher.bus import bus, stitcher_operator as nexus
 from needle.pointer import L
 from .rendering import CliRenderer, LogLevel
 

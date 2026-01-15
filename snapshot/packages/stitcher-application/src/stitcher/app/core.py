@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict, Any
 
-from stitcher.common import bus
+from stitcher.bus import bus
 from needle.pointer import L
 from stitcher.spec import (
     LanguageParserProtocol,

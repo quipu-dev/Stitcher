@@ -1,6 +1,6 @@
 import typer
 from pathlib import Path
-from stitcher.common import bus, stitcher_operator as nexus
+from stitcher.bus import bus, stitcher_operator as nexus
 from needle.pointer import L
 from stitcher.cli.factories import make_app
 from stitcher.workspace import WorkspaceNotFoundError

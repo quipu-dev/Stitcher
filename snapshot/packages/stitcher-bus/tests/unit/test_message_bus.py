@@ -1,5 +1,5 @@
 import pytest
-import stitcher.common
+import stitcher.bus
 from needle.pointer import L
 from needle.operators import DictOperator
 
@@ -9,13 +9,13 @@ def test_bus_forwards_to_renderer_with_spy(monkeypatch, spy_bus):
     # For this unit test, we still need to control the message source.
     # We patch the operator of the *global singleton* bus.
     operator = DictOperator({"greeting": "Hello {name}"})
-    monkeypatch.setattr(stitcher.common.bus, "_operator", operator)
+    monkeypatch.setattr(stitcher.bus.bus, "_operator", operator)
 
     # Act
     # Use the spy to patch the global bus's rendering mechanism
     with spy_bus.patch(monkeypatch):
-        stitcher.common.bus.info(L.greeting, name="World")
-        stitcher.common.bus.success(L.greeting, name="Stitcher")
+        stitcher.bus.bus.info(L.greeting, name="World")
+        stitcher.bus.bus.success(L.greeting, name="Stitcher")
 
     # Assert
     messages = spy_bus.get_messages()
@@ -37,7 +37,7 @@ def test_bus_identity_fallback_with_spy(monkeypatch, spy_bus):
     # A DictOperator with a missing key will return None from the operator,
     # forcing the bus to fall back to using the key itself as the template.
     operator = DictOperator({})
-    monkeypatch.setattr(stitcher.common.bus, "_operator", operator)
+    monkeypatch.setattr(stitcher.bus.bus, "_operator", operator)
 
     # Act
     with spy_bus.patch(monkeypatch):
@@ -45,7 +45,7 @@ def test_bus_identity_fallback_with_spy(monkeypatch, spy_bus):
         # Let's verify the spy bus also captures this correctly.
         # The spy captures the ID, not the final rendered string of the fallback.
         # So we should assert the ID was called.
-        stitcher.common.bus.info(L.nonexistent.key)
+        stitcher.bus.bus.info(L.nonexistent.key)
 
     # Assert
     # The spy captures the *intent*. The intent was to send "nonexistent.key".
@@ -59,6 +59,6 @@ def test_bus_does_not_fail_without_renderer():
     # We can confirm the global bus doesn't crash by simply calling it.
     try:
         # Act
-        stitcher.common.bus.info("some.id")
+        stitcher.bus.bus.info("some.id")
     except Exception as e:
         pytest.fail(f"Global MessageBus raised an exception: {e}")

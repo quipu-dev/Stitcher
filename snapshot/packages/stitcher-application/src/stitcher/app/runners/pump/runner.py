@@ -1,6 +1,6 @@
 from typing import List
 
-from stitcher.common import bus
+from stitcher.bus import bus
 from needle.pointer import L
 from stitcher.spec import (
     ModuleDef,

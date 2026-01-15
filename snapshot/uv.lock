@@ -18,7 +18,7 @@ members = [
     "stitcher-index",
     "stitcher-lang-python",
     "stitcher-lang-sidecar",
-    "stitcher-python",
+    "stitcher-monorepo",
     "stitcher-refactor",
     "stitcher-spec",
     "stitcher-stubgen",
@@ -868,9 +868,25 @@ requires-dist = [
 ]
 
 [[package]]
-name = "stitcher-python"
+name = "stitcher-monorepo"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "pyneedle" },
+    { name = "pyneedle-pointer" },
+    { name = "pyneedle-spec" },
+    { name = "stitcher-analysis" },
+    { name = "stitcher-application" },
+    { name = "stitcher-bus" },
+    { name = "stitcher-cli" },
+    { name = "stitcher-index" },
+    { name = "stitcher-lang-python" },
+    { name = "stitcher-lang-sidecar" },
+    { name = "stitcher-refactor" },
+    { name = "stitcher-stubgen" },
+    { name = "stitcher-test-utils" },
+    { name = "stitcher-workspace" },
+]
 
 [package.optional-dependencies]
 dev = [
@@ -899,24 +915,38 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "mypy", marker = "extra == 'dev'" },
+    { name = "pyneedle", editable = "../Needle/packages/pyneedle" },
     { name = "pyneedle", marker = "extra == 'dev'", editable = "../Needle/packages/pyneedle" },
+    { name = "pyneedle-pointer", editable = "../Needle/packages/pyneedle-pointer" },
     { name = "pyneedle-pointer", marker = "extra == 'dev'", editable = "../Needle/packages/pyneedle-pointer" },
+    { name = "pyneedle-spec", editable = "../Needle/packages/pyneedle-spec" },
     { name = "pyneedle-spec", marker = "extra == 'dev'", editable = "../Needle/packages/pyneedle-spec" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "pytest-mock", marker = "extra == 'dev'" },
     { name = "pytest-timeout", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'" },
+    { name = "stitcher-analysis", editable = "packages/stitcher-analysis" },
     { name = "stitcher-analysis", marker = "extra == 'dev'", editable = "packages/stitcher-analysis" },
+    { name = "stitcher-application", editable = "packages/stitcher-application" },
     { name = "stitcher-application", marker = "extra == 'dev'", editable = "packages/stitcher-application" },
+    { name = "stitcher-bus", editable = "packages/stitcher-bus" },
     { name = "stitcher-bus", marker = "extra == 'dev'", editable = "packages/stitcher-bus" },
+    { name = "stitcher-cli", editable = "packages/stitcher-cli" },
     { name = "stitcher-cli", marker = "extra == 'dev'", editable = "packages/stitcher-cli" },
+    { name = "stitcher-index", editable = "packages/stitcher-index" },
     { name = "stitcher-index", marker = "extra == 'dev'", editable = "packages/stitcher-index" },
+    { name = "stitcher-lang-python", editable = "packages/stitcher-lang-python" },
     { name = "stitcher-lang-python", marker = "extra == 'dev'", editable = "packages/stitcher-lang-python" },
+    { name = "stitcher-lang-sidecar", editable = "packages/stitcher-lang-sidecar" },
     { name = "stitcher-lang-sidecar", marker = "extra == 'dev'", editable = "packages/stitcher-lang-sidecar" },
+    { name = "stitcher-refactor", editable = "packages/stitcher-refactor" },
     { name = "stitcher-refactor", marker = "extra == 'dev'", editable = "packages/stitcher-refactor" },
+    { name = "stitcher-stubgen", editable = "packages/stitcher-stubgen" },
     { name = "stitcher-stubgen", marker = "extra == 'dev'", editable = "packages/stitcher-stubgen" },
+    { name = "stitcher-test-utils", editable = "packages/stitcher-test-utils" },
     { name = "stitcher-test-utils", marker = "extra == 'dev'", editable = "packages/stitcher-test-utils" },
+    { name = "stitcher-workspace", editable = "packages/stitcher-workspace" },
     { name = "stitcher-workspace", marker = "extra == 'dev'", editable = "packages/stitcher-workspace" },
 ]
 provides-extras = ["dev"]
