@@ -1,351 +1,339 @@
-你的观察非常敏锐，这是一个非常好的架构问题。
+这是一个重构 `Pump` 流程以使用 `LockSession` 的计划。
 
-是的，我们现在有两个 `services` 目录。这是有意为之的，它反映了我们系统的分层架构：
+我们将重构 `PumpExecutor.execute` 以移除手动的 Lock 文件操作，转而使用 `LockSession.record_fresh_state`，并在 `StitcherApp.run_pump` 中添加事务提交。
 
-1.  **`stitcher-common/src/stitcher/common/services/`**:
-    *   **角色**: **底层、无状态、通用工具**。
-    *   **依赖**: 这个包是“零依赖”的，它不依赖于任何其他的 `stitcher-*` 包。
-    *   **例子**: `AssetPathResolver`, `Differ`。这些是可以被系统中任何部分复用的、纯粹的辅助工具。
-
-2.  **`stitcher-application/src/stitcher/app/services/`**:
-    *   **角色**: **高层、有状态、应用编排服务**。
-    *   **依赖**: 这个包依赖于多个底层包（如 `common`, `workspace`, `spec`, `lang-sidecar`）。
-    *   **例子**: `LockSession`。它不是一个通用工具，而是专门为 `stitcher` 应用的核心工作流（`pump`, `check`）设计的、有状态的会话管理器。它**编排**了多个底层工具来完成一个复杂的业务逻辑。
-
-**结论**：将 `LockSession` 移动到 `common` 包会破坏这种分层。这会迫使 `stitcher-common` 引入对 `stitcher-workspace` 和 `stitcher-lang-sidecar` 的依赖，从而污染了底层包的纯粹性。
-
-因此，`LockSession` 的正确位置确实是在 `stitcher-application` 中。它是一个应用服务，而不是一个通用服务。
-
----
-
-现在，让我们继续实施路线图的下一部分：将 `LockSession` 集成到 `StitcherApp` (Composition Root) 中，并为重构 `Pump` 流程做好准备。
-
-我将把 `LockSession` 实例化于 `StitcherApp` 中，并通过依赖注入将其传递给 `PumpRunner` 和 `PumpExecutor`。这是重构 `Pump` 流程以使用新 Session 的准备工作。
-
-## [WIP] feat: 将 LockSession 集成到应用核心
+## [WIP] refactor(pump): 使用 LockSession 接管状态管理
 
 ### 用户需求
-将新创建的 `LockSession` 组件作为依赖项注入到应用的主入口点和相关的 Runner 中，为后续的逻辑迁移做准备。
+完成 **Pump 流程重构 (Phase 2)** 和 **应用编排 (Phase 4)** 的关键步骤，将 `stitcher.lock` 的更新逻辑从具体的执行器中剥离，交由 `LockSession` 统一管理。
 
 ### 评论
-依赖注入是实现解耦的关键。通过在 `StitcherApp`（我们的 Composition Root）中创建 `LockSession` 实例，我们确保了在整个应用生命周期中只有一个 Session 实例，并能轻松地将其提供给需要它的消费者。
+此次重构显著降低了 `PumpExecutor` 的复杂度，使其专注于业务决策（如是否覆盖文档、是否剥离源码）。同时，通过在 `StitcherApp` 层面统一提交 Lock 事务，我们消除了“Lock 文件写入泄露”的风险，增强了系统的健壮性。
 
 ### 目标
-1.  在 `StitcherApp.__init__` 中创建 `LockSession` 实例。
-2.  更新 `PumpRunner` 和 `PumpExecutor` 的构造函数以接收 `LockSession` 实例。
-3.  将 `LockSession` 实例从 `StitcherApp` 传递到 `PumpRunner`，再到 `PumpExecutor`。
+1.  重构 `PumpExecutor.execute`：
+    *   移除按包分组（Grouping by Package）的逻辑（Session 会自动处理）。
+    *   移除所有直接的 `lock_manager` 调用。
+    *   接入 `self.lock_session.record_fresh_state`。
+2.  更新 `StitcherApp.run_pump`：
+    *   在主循环结束后，调用 `self.lock_session.commit_to_transaction(tm)`。
 
 ### 基本原理
-遵循依赖注入（Dependency Injection）模式，由顶层容器（`StitcherApp`）负责创建和管理服务的生命周期，并将其注入到消费者中。这使得消费者的代码更易于测试和维护，因为它们的依赖关系是明确的。
+-   **关注点分离**: Executor 决定“变更发生了”，Session 决定“变更如何持久化”。
+-   **DRY**: 消除重复的 Hash 计算和 JSON 操作代码。
+-   **事务性**: 利用 `TransactionManager` 确保所有文件变更（Code, YAML, Lock）要么全做，要么全不做（Dry-Run）。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/lock-session #task/action/integration #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/lock-session #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 在 StitcherApp 中实例化并注入 LockSession
+#### Acts 1: 重构 PumpExecutor.execute
 
-我们将修改 `StitcherApp`、`PumpRunner` 和 `PumpExecutor`，以建立依赖注入链。
-
-首先，在 `StitcherApp` 的 `core.py` 中导入并实例化 `LockSession`。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
-~~~~~
-~~~~~python.old
-from .runners.check.runner import CheckRunner
-from .runners.pump.runner import PumpRunner
-from .runners.transform import TransformRunner
-from .runners.coverage import CoverageRunner
-from .runners.refactor import RefactorRunner
-from .runners.index import IndexRunner
-from .runners.check.resolver import CheckResolver
-from .runners.check.reporter import CheckReporter
-from .runners.pump.executor import PumpExecutor
-from stitcher.analysis.engines import create_pump_engine, create_architecture_engine
-from stitcher.common.transaction import TransactionManager
-~~~~~
-~~~~~python.new
-from .runners.check.runner import CheckRunner
-from .runners.pump.runner import PumpRunner
-from .runners.transform import TransformRunner
-from .runners.coverage import CoverageRunner
-from .runners.refactor import RefactorRunner
-from .runners.index import IndexRunner
-from .runners.check.resolver import CheckResolver
-from .runners.check.reporter import CheckReporter
-from .runners.pump.executor import PumpExecutor
-from .services.lock_session import LockSession
-from stitcher.analysis.engines import create_pump_engine, create_architecture_engine
-from stitcher.common.transaction import TransactionManager
-~~~~~
-
-接下来，在 `StitcherApp.__init__` 中创建实例并传递它。
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
-~~~~~
-~~~~~python.old
-        self.doc_manager = DocumentManager(
-            root_path, self.uri_generator, self.index_store
-        )
-        self.lock_manager = LockFileManager()
-        # self.uri_generator instantiated above
-        self.scanner = ScannerService(root_path, parser)
-        self.differ = Differ()
-        self.merger = DocstringMerger()
-        self.stubgen_service = StubgenService(
-            root_path, self.scanner, self.doc_manager, transformer
-        )
-~~~~~
-~~~~~python.new
-        self.doc_manager = DocumentManager(
-            root_path, self.uri_generator, self.index_store
-        )
-        self.lock_manager = LockFileManager()
-        # self.uri_generator instantiated above
-        self.scanner = ScannerService(root_path, parser)
-        self.differ = Differ()
-        self.merger = DocstringMerger()
-        self.stubgen_service = StubgenService(
-            root_path, self.scanner, self.doc_manager, transformer
-        )
-
-        # 4. Application Services
-        self.lock_session = LockSession(
-            self.lock_manager,
-            self.doc_manager,
-            self.workspace,
-            self.root_path,
-            self.uri_generator,
-        )
-~~~~~
-
-~~~~~act
-patch_file
-packages/stitcher-application/src/stitcher/app/core.py
-~~~~~
-~~~~~python.old
-        # 4. Runners (Command Handlers)
-        check_resolver = CheckResolver(
-            root_path,
-            self.workspace,
-            parser,
-            self.doc_manager,
-            self.lock_manager,
-            self.uri_generator,
-            interaction_handler,
-            self.fingerprint_strategy,
-        )
-        check_reporter = CheckReporter()
-        self.check_runner = CheckRunner(
-            self.doc_manager,
-            self.lock_manager,
-            self.uri_generator,
-            self.fingerprint_strategy,
-            self.index_store,
-            self.workspace,
-            differ=self.differ,
-            resolver=check_resolver,
-            reporter=check_reporter,
-            root_path=self.root_path,
-        )
-
-        pump_engine = create_pump_engine(differ=self.differ)
-        pump_executor = PumpExecutor(
-            root_path,
-            self.workspace,
-            self.doc_manager,
-            self.lock_manager,
-            self.uri_generator,
-            transformer,
-            self.merger,
-            self.fingerprint_strategy,
-        )
-        self.pump_runner = PumpRunner(
-            pump_engine=pump_engine,
-            executor=pump_executor,
-            interaction_handler=interaction_handler,
-            # Pass dependencies needed for subject creation
-            doc_manager=self.doc_manager,
-            lock_manager=self.lock_manager,
-            uri_generator=self.uri_generator,
-            workspace=self.workspace,
-            fingerprint_strategy=self.fingerprint_strategy,
-        )
-
-        self.transform_runner = TransformRunner(
-            root_path, self.doc_manager, transformer
-        )
-        self.coverage_runner = CoverageRunner(
-            root_path, self.doc_manager, self.index_store
-        )
-        self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
-        self.architecture_engine = create_architecture_engine()
-
-        # 4. Refactor Runner (depends on Indexing)
-        self.refactor_runner = RefactorRunner(
-            root_path, self.index_store, self.file_indexer, self.uri_generator
-        )
-~~~~~
-~~~~~python.new
-        # 5. Runners (Command Handlers)
-        check_resolver = CheckResolver(
-            root_path,
-            self.workspace,
-            parser,
-            self.doc_manager,
-            self.lock_manager,
-            self.uri_generator,
-            interaction_handler,
-            self.fingerprint_strategy,
-        )
-        check_reporter = CheckReporter()
-        self.check_runner = CheckRunner(
-            self.doc_manager,
-            self.lock_manager,
-            self.uri_generator,
-            self.fingerprint_strategy,
-            self.index_store,
-            self.workspace,
-            differ=self.differ,
-            resolver=check_resolver,
-            reporter=check_reporter,
-            root_path=self.root_path,
-        )
-
-        pump_engine = create_pump_engine(differ=self.differ)
-        pump_executor = PumpExecutor(
-            root_path,
-            self.workspace,
-            self.doc_manager,
-            self.lock_manager,
-            self.uri_generator,
-            transformer,
-            self.merger,
-            self.fingerprint_strategy,
-            self.lock_session,
-        )
-        self.pump_runner = PumpRunner(
-            pump_engine=pump_engine,
-            executor=pump_executor,
-            interaction_handler=interaction_handler,
-            # Pass dependencies needed for subject creation
-            doc_manager=self.doc_manager,
-            lock_manager=self.lock_manager,
-            uri_generator=self.uri_generator,
-            workspace=self.workspace,
-            fingerprint_strategy=self.fingerprint_strategy,
-        )
-
-        self.transform_runner = TransformRunner(
-            root_path, self.doc_manager, transformer
-        )
-        self.coverage_runner = CoverageRunner(
-            root_path, self.doc_manager, self.index_store
-        )
-        self.index_runner = IndexRunner(self.db_manager, self.file_indexer)
-        self.architecture_engine = create_architecture_engine()
-
-        # 6. Refactor Runner (depends on Indexing)
-        self.refactor_runner = RefactorRunner(
-            root_path, self.index_store, self.file_indexer, self.uri_generator
-        )
-~~~~~
-
-现在更新 `PumpExecutor` 的构造函数。
+我们将大幅简化 `execute` 方法，移除手动维护 Lock 数据的代码，转而委托给 `LockSession`。
 
 ~~~~~act
 patch_file
 packages/stitcher-application/src/stitcher/app/runners/pump/executor.py
 ~~~~~
 ~~~~~python.old
-from stitcher.spec import (
-    ModuleDef,
-    ResolutionAction,
-    Fingerprint,
-    FunctionExecutionPlan,
-    LanguageTransformerProtocol,
-    FingerprintStrategyProtocol,
-    DocstringIR,
-    DocstringMergerProtocol,
-    LockManagerProtocol,
-    URIGeneratorProtocol,
-)
-from stitcher.spec.managers import DocumentManagerProtocol
-from stitcher.app.types import PumpResult
-from stitcher.common.transaction import TransactionManager
-from stitcher.workspace import Workspace
-
-
-class PumpExecutor:
-    def __init__(
+    def execute(
         self,
-        root_path: Path,
-        workspace: Workspace,
-        doc_manager: DocumentManagerProtocol,
-        lock_manager: LockManagerProtocol,
-        uri_generator: URIGeneratorProtocol,
-        transformer: LanguageTransformerProtocol,
-        merger: DocstringMergerProtocol,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-    ):
-        self.root_path = root_path
-        self.workspace = workspace
-        self.doc_manager = doc_manager
-        self.lock_manager = lock_manager
-        self.uri_generator = uri_generator
-        self.transformer = transformer
-        self.merger = merger
-        self.fingerprint_strategy = fingerprint_strategy
+        modules: List[ModuleDef],
+        decisions: Dict[str, ResolutionAction],
+        tm: TransactionManager,
+        strip: bool,
+    ) -> PumpResult:
+        strip_jobs = defaultdict(list)
+        redundant_files_list: List[Path] = []
+        total_updated_keys = 0
+        total_reconciled_keys = 0
+        unresolved_conflicts_count = 0
+
+        # Group modules by package for Lock file batching
+        grouped_modules: Dict[Path, List[ModuleDef]] = defaultdict(list)
+        for module in modules:
+            if not module.file_path:
+                continue
+            abs_path = self.root_path / module.file_path
+            pkg_root = self.workspace.find_owning_package(abs_path)
+            grouped_modules[pkg_root].append(module)
+
+        for pkg_root, pkg_modules in grouped_modules.items():
+            # Load Lock Data once per package
+            current_lock_data = self.lock_manager.load(pkg_root)
+            new_lock_data = copy.deepcopy(current_lock_data)
+            lock_updated = False
+
+            for module in pkg_modules:
+                source_docs = self.doc_manager.flatten_module_docs(module)
+                file_plan = self._generate_execution_plan(
+                    module, decisions, strip, source_docs
+                )
+                current_yaml_docs = self.doc_manager.load_docs_for_module(module)
+                current_fingerprints = self._compute_fingerprints(module)
+
+                new_yaml_docs = current_yaml_docs.copy()
+
+                module_abs_path = self.root_path / module.file_path
+                module_ws_rel = self.workspace.to_workspace_relative(module_abs_path)
+
+                file_had_updates, file_has_errors, file_has_redundancy = (
+                    False,
+                    False,
+                    False,
+                )
+                updated_keys_in_file, reconciled_keys_in_file = [], []
+
+                for fqn, plan in file_plan.items():
+                    if fqn in decisions and decisions[fqn] == ResolutionAction.SKIP:
+                        unresolved_conflicts_count += 1
+                        file_has_errors = True
+                        bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
+                        continue
+
+                    if plan.hydrate_yaml and fqn in source_docs:
+                        src_ir, existing_ir = source_docs[fqn], new_yaml_docs.get(fqn)
+                        merged_ir = self.merger.merge(existing_ir, src_ir)
+                        if existing_ir != merged_ir:
+                            new_yaml_docs[fqn] = merged_ir
+                            updated_keys_in_file.append(fqn)
+                            file_had_updates = True
+
+                    # Generate SURI for lock lookup
+                    suri = self.uri_generator.generate_symbol_uri(module_ws_rel, fqn)
+                    fp = new_lock_data.get(suri) or Fingerprint()
+
+                    fqn_was_updated = False
+                    if plan.update_code_fingerprint:
+                        current_fp = current_fingerprints.get(fqn, Fingerprint())
+                        if "current_code_structure_hash" in current_fp:
+                            fp["baseline_code_structure_hash"] = current_fp[
+                                "current_code_structure_hash"
+                            ]
+                        if "current_code_signature_text" in current_fp:
+                            fp["baseline_code_signature_text"] = current_fp[
+                                "current_code_signature_text"
+                            ]
+                        fqn_was_updated = True
+
+                    if plan.update_doc_fingerprint and fqn in source_docs:
+                        ir_to_save = new_yaml_docs.get(fqn)
+                        if ir_to_save:
+                            fp["baseline_yaml_content_hash"] = (
+                                self.doc_manager.compute_ir_hash(ir_to_save)
+                            )
+                            fqn_was_updated = True
+
+                    if fqn_was_updated:
+                        new_lock_data[suri] = fp
+                        lock_updated = True
+
+                    if (
+                        fqn in decisions
+                        and decisions[fqn] == ResolutionAction.HYDRATE_KEEP_EXISTING
+                    ):
+                        reconciled_keys_in_file.append(fqn)
+                    if plan.strip_source_docstring:
+                        strip_jobs[module.file_path].append(fqn)
+                    if fqn in source_docs and not plan.strip_source_docstring:
+                        file_has_redundancy = True
+
+                if not file_has_errors:
+                    if file_had_updates:
+                        raw_data = self.doc_manager.load_raw_data(module.file_path)
+                        for fqn, ir in new_yaml_docs.items():
+                            raw_data[fqn] = self.doc_manager.serialize_ir_for_view(ir)
+
+                        doc_path = (self.root_path / module.file_path).with_suffix(
+                            ".stitcher.yaml"
+                        )
+                        yaml_content = self.doc_manager.dump_raw_data_to_string(
+                            raw_data
+                        )
+                        tm.add_write(
+                            str(doc_path.relative_to(self.root_path)), yaml_content
+                        )
+
+                    if file_has_redundancy:
+                        redundant_files_list.append(self.root_path / module.file_path)
+
+                if updated_keys_in_file:
+                    total_updated_keys += len(updated_keys_in_file)
+                    bus.success(
+                        L.pump.file.success,
+                        path=module.file_path,
+                        count=len(updated_keys_in_file),
+                    )
+                if reconciled_keys_in_file:
+                    total_reconciled_keys += len(reconciled_keys_in_file)
+                    bus.info(
+                        L.pump.info.reconciled,
+                        path=module.file_path,
+                        count=len(reconciled_keys_in_file),
+                    )
+
+            if lock_updated:
+                # To maintain transactionality, we write to the lock file via TM
+                # using the serialize() method we added to LockFileManager
+                lock_content = self.lock_manager.serialize(new_lock_data)
+                lock_path = pkg_root / "stitcher.lock"
+                tm.add_write(str(lock_path.relative_to(self.root_path)), lock_content)
 ~~~~~
 ~~~~~python.new
-from stitcher.spec import (
-    ModuleDef,
-    ResolutionAction,
-    Fingerprint,
-    FunctionExecutionPlan,
-    LanguageTransformerProtocol,
-    FingerprintStrategyProtocol,
-    DocstringIR,
-    DocstringMergerProtocol,
-    LockManagerProtocol,
-    URIGeneratorProtocol,
-)
-from stitcher.spec.managers import DocumentManagerProtocol
-from stitcher.app.types import PumpResult
-from stitcher.app.services.lock_session import LockSession
-from stitcher.common.transaction import TransactionManager
-from stitcher.workspace import Workspace
-
-
-class PumpExecutor:
-    def __init__(
+    def execute(
         self,
-        root_path: Path,
-        workspace: Workspace,
-        doc_manager: DocumentManagerProtocol,
-        lock_manager: LockManagerProtocol,
-        uri_generator: URIGeneratorProtocol,
-        transformer: LanguageTransformerProtocol,
-        merger: DocstringMergerProtocol,
-        fingerprint_strategy: FingerprintStrategyProtocol,
-        lock_session: LockSession,
-    ):
-        self.root_path = root_path
-        self.workspace = workspace
-        self.doc_manager = doc_manager
-        self.lock_manager = lock_manager
-        self.uri_generator = uri_generator
-        self.transformer = transformer
-        self.merger = merger
-        self.fingerprint_strategy = fingerprint_strategy
-        self.lock_session = lock_session
+        modules: List[ModuleDef],
+        decisions: Dict[str, ResolutionAction],
+        tm: TransactionManager,
+        strip: bool,
+    ) -> PumpResult:
+        strip_jobs = defaultdict(list)
+        redundant_files_list: List[Path] = []
+        total_updated_keys = 0
+        total_reconciled_keys = 0
+        unresolved_conflicts_count = 0
+
+        # Note: We iterate modules directly now. The LockSession handles
+        # aggregation of lock updates by package internally.
+        for module in modules:
+            if not module.file_path:
+                continue
+
+            source_docs = self.doc_manager.flatten_module_docs(module)
+            file_plan = self._generate_execution_plan(
+                module, decisions, strip, source_docs
+            )
+            current_yaml_docs = self.doc_manager.load_docs_for_module(module)
+            current_fingerprints = self._compute_fingerprints(module)
+
+            new_yaml_docs = current_yaml_docs.copy()
+
+            file_had_updates, file_has_errors, file_has_redundancy = (
+                False,
+                False,
+                False,
+            )
+            updated_keys_in_file, reconciled_keys_in_file = [], []
+
+            for fqn, plan in file_plan.items():
+                if fqn in decisions and decisions[fqn] == ResolutionAction.SKIP:
+                    unresolved_conflicts_count += 1
+                    file_has_errors = True
+                    bus.error(L.pump.error.conflict, path=module.file_path, key=fqn)
+                    continue
+
+                if plan.hydrate_yaml and fqn in source_docs:
+                    src_ir, existing_ir = source_docs[fqn], new_yaml_docs.get(fqn)
+                    merged_ir = self.merger.merge(existing_ir, src_ir)
+                    if existing_ir != merged_ir:
+                        new_yaml_docs[fqn] = merged_ir
+                        updated_keys_in_file.append(fqn)
+                        file_had_updates = True
+
+                # --- LockSession Integration ---
+                code_fp_for_lock = None
+                if plan.update_code_fingerprint:
+                    code_fp_for_lock = current_fingerprints.get(fqn)
+
+                doc_ir_for_lock = None
+                if plan.update_doc_fingerprint:
+                    # Use the updated doc IR (from source or merge)
+                    doc_ir_for_lock = new_yaml_docs.get(fqn)
+
+                if code_fp_for_lock or doc_ir_for_lock:
+                    self.lock_session.record_fresh_state(
+                        module,
+                        fqn,
+                        doc_ir=doc_ir_for_lock,
+                        code_fingerprint=code_fp_for_lock,
+                    )
+                # -------------------------------
+
+                if (
+                    fqn in decisions
+                    and decisions[fqn] == ResolutionAction.HYDRATE_KEEP_EXISTING
+                ):
+                    reconciled_keys_in_file.append(fqn)
+                if plan.strip_source_docstring:
+                    strip_jobs[module.file_path].append(fqn)
+                if fqn in source_docs and not plan.strip_source_docstring:
+                    file_has_redundancy = True
+
+            if not file_has_errors:
+                if file_had_updates:
+                    raw_data = self.doc_manager.load_raw_data(module.file_path)
+                    for fqn, ir in new_yaml_docs.items():
+                        raw_data[fqn] = self.doc_manager.serialize_ir_for_view(ir)
+
+                    doc_path = (self.root_path / module.file_path).with_suffix(
+                        ".stitcher.yaml"
+                    )
+                    yaml_content = self.doc_manager.dump_raw_data_to_string(raw_data)
+                    tm.add_write(
+                        str(doc_path.relative_to(self.root_path)), yaml_content
+                    )
+
+                if file_has_redundancy:
+                    redundant_files_list.append(self.root_path / module.file_path)
+
+            if updated_keys_in_file:
+                total_updated_keys += len(updated_keys_in_file)
+                bus.success(
+                    L.pump.file.success,
+                    path=module.file_path,
+                    count=len(updated_keys_in_file),
+                )
+            if reconciled_keys_in_file:
+                total_reconciled_keys += len(reconciled_keys_in_file)
+                bus.info(
+                    L.pump.info.reconciled,
+                    path=module.file_path,
+                    count=len(reconciled_keys_in_file),
+                )
+~~~~~
+
+#### Acts 2: 更新 StitcherApp.run_pump
+
+在 `run_pump` 中显式调用 `commit_to_transaction`，确保 Lock 文件被写入。
+
+~~~~~act
+patch_file
+packages/stitcher-application/src/stitcher/app/core.py
+~~~~~
+~~~~~python.old
+                result = self.pump_runner.run_batch(
+                    modules, config, tm, strip, force, reconcile
+                )
+                if not result.success:
+                    global_success = False
+                all_redundant.extend(result.redundant_files)
+
+        if self.scanner.had_errors:
+            global_success = False
+
+        tm.commit()
+        return PumpResult(success=global_success, redundant_files=all_redundant)
+~~~~~
+~~~~~python.new
+                result = self.pump_runner.run_batch(
+                    modules, config, tm, strip, force, reconcile
+                )
+                if not result.success:
+                    global_success = False
+                all_redundant.extend(result.redundant_files)
+
+        # Commit all lock changes buffered in the session to the transaction
+        self.lock_session.commit_to_transaction(tm)
+
+        if self.scanner.had_errors:
+            global_success = False
+
+        tm.commit()
+        return PumpResult(success=global_success, redundant_files=all_redundant)
 ~~~~~
 
 ### 下一步建议
-依赖注入链已经建立。下一步是执行核心重构：修改 `PumpExecutor.execute` 方法，移除所有手动的 Lock 文件操作，并用对 `self.lock_session` 的调用来替换它们。同时，我们还需要在 `StitcherApp.run_pump` 的末尾添加 `lock_session.commit_to_transaction(tm)` 调用。
+我们已经完成了 `Pump` 流程的重构和 `StitcherApp` 的编排更新。下一步是**阶段 3：重构 Check 流程**，将 `CheckResolver` 中的手动 Lock 操作也迁移到 `LockSession` 中。这将包括处理 Relink, Reconcile 和 Purge 等操作。

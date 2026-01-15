@@ -333,6 +333,9 @@ class StitcherApp:
                     global_success = False
                 all_redundant.extend(result.redundant_files)
 
+        # Commit all lock changes buffered in the session to the transaction
+        self.lock_session.commit_to_transaction(tm)
+
         if self.scanner.had_errors:
             global_success = False
 
