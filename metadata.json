@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(test): 统一使用 spy_bus fixture 替代手动实例化", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768458626.586277, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M test_stub_package.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768458755.389301, "duration_ms": 0}}
