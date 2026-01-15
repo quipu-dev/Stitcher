@@ -7,7 +7,7 @@ from needle.pointer import L
 from needle.operators import I18NFactoryOperator, OverlayOperator
 from needle.runtime import _find_project_root
 from .formatting import format_docstring, parse_docstring
-from .messaging.bus import FeedbackBus
+from stitcher.bus.bus import FeedbackBus
 from stitcher.spec.persistence import DocumentAdapter
 
 # --- Composition Root ---

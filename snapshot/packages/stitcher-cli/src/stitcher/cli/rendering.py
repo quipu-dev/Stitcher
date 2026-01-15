@@ -1,5 +1,5 @@
 import typer
-from stitcher.common.messaging import protocols
+from stitcher.bus import protocols
 from enum import Enum
 
 

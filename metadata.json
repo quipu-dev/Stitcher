@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M uv.lock", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768471854.9696784, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: A bus.py, A bus.stitcher.yaml, A protocols.py ... and 10 more files", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768471941.0733287, "duration_ms": 0}}

@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Optional, Union
 
 # Import the actual singleton to patch it in-place
 import stitcher.common
-from stitcher.common.messaging.protocols import Renderer
+from stitcher.bus.protocols import Renderer
 from needle.pointer import SemanticPointer
 
 # This creates a dependency, but it's a necessary and deliberate one for a test utility

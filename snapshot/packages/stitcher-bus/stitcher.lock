@@ -1,0 +1,66 @@
+{
+  "fingerprints": {
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus": {
+      "baseline_code_signature_text": "class FeedbackBus:",
+      "baseline_code_structure_hash": "7deb756b2b17cf076baa1237a420d12b6f6eb487e0522b17991cdaa36fcd3782",
+      "baseline_yaml_content_hash": "7487b23722e3f4137f6209e33842d50647b6e6f2565683d00f8c39a60fcc39b9"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus.__init__": {
+      "baseline_code_signature_text": "def __init__(self, operator: Callable[[Union[str, SemanticPointer]], str]):",
+      "baseline_code_structure_hash": "846e52773ff07823ad4aba827a5f846d034a3d943dcb5123a1784015a51190ef",
+      "baseline_yaml_content_hash": "e2db44e42d6cb736ab06fba7470c50e86c9d05858af66c1a28a8a127340b567b"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus._operator": {},
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus._render": {
+      "baseline_code_signature_text": "def _render(self, level: str, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "f099d8527b0191b6e1ab31ed584439a758f0f95899752428e7ef4cd8e362d051"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus._renderer": {},
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus.debug": {
+      "baseline_code_signature_text": "def debug(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "5b525873dfc92b815010b05320d2fe42c27d0917cc7d901f7810d2b56d2a263a",
+      "baseline_yaml_content_hash": "116ee7664738df3eaa1b36d6b4aa74eab08d68c690fb27514f65127d20b7f2a9"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus.error": {
+      "baseline_code_signature_text": "def error(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "c5e349c7916d1623e1d664bb9335198f77596e281587b1ebcfdb1acaaf8c950f",
+      "baseline_yaml_content_hash": "20fb09318cffb40022e523d74281346e1f98ba976ebfb28edce2270ac2407008"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus.info": {
+      "baseline_code_signature_text": "def info(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "c513649ec26c01d93e600e8617ef242d072791db4ec9ca70a5c33bd460740ef7",
+      "baseline_yaml_content_hash": "54d7fb6d92b6c57c854c25b642cf1fbb342865512db9f778f3c9d9df11117c45"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus.render_to_string": {
+      "baseline_code_signature_text": "def render_to_string(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> str:",
+      "baseline_code_structure_hash": "1b64f52f8f359bab1e4b62a356a7a8661abbb1cd4d278eb2b7b076236eb9765c",
+      "baseline_yaml_content_hash": "b4dc81596fc642eb6253325acd98db1964a99b70d19e06d51fbe3224445dfdea"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus.set_renderer": {
+      "baseline_code_signature_text": "def set_renderer(self, renderer: Renderer):",
+      "baseline_code_structure_hash": "ce3ded2742fb947176e357aadf1a2a16da320a95d72c9a6c393d91f26a2c70a4",
+      "baseline_yaml_content_hash": "32c475a3a4a2a3ef6b471630597b070198c053a28a2e0f9dcea491a00bc269a8"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus.success": {
+      "baseline_code_signature_text": "def success(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "3e4e073f5175b379a480a69e878d06d1e7054d3436fd3f6dfc2787b3d6ce1fdd",
+      "baseline_yaml_content_hash": "422f7993dcae4503a2a67af0983e5956cddf2086ffd50b0cb1b0a8ad2c014474"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/bus.py#FeedbackBus.warning": {
+      "baseline_code_signature_text": "def warning(self, msg_id: Union[str, SemanticPointer], **kwargs: Any = {}) -> None:",
+      "baseline_code_structure_hash": "651c2c0ba80fe486d970ac50dcb73eed32e7f6693bcda46f1444cb5564847723",
+      "baseline_yaml_content_hash": "4b0537d3ebde829e79b41e10fee688cdda6d5b6b337863a8e659e7a8b4465cb6"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/protocols.py#Renderer": {
+      "baseline_code_signature_text": "class Renderer(Protocol):",
+      "baseline_code_structure_hash": "8342694db8d308b36ba5d1ecf2dc07bba1460712ac3a9a9438c5abba24852b3d",
+      "baseline_yaml_content_hash": "83bec4084a7574a9e359e7f6fa317a0185ad8c12ef11bafcd6194f6b65b96ce0"
+    },
+    "py://packages/stitcher-bus/src/stitcher/bus/protocols.py#Renderer.render": {
+      "baseline_code_signature_text": "def render(self, message: str, level: str) -> None:",
+      "baseline_code_structure_hash": "5ee01c65ceae57a45c16a7c14d696ccdbefeca3e86709a97c1f828eeae4eedec",
+      "baseline_yaml_content_hash": "c6575c398ab0a2bacfff0380eb7565a64a279019d42f4f860b711728bdb9d1d1"
+    }
+  },
+  "version": "1.0"
+}
