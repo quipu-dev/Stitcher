@@ -1,9 +1,24 @@
 [project]
-name = "stitcher-python"
+name = "stitcher-monorepo"
 version = "0.1.0"
 description = "Stitching the gap between dynamic code and static analysis."
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pyneedle",
+    "pyneedle-pointer",
+    "pyneedle-spec",
+    "stitcher-cli",
+    "stitcher-application",
+    "stitcher-stubgen",
+    "stitcher-test-utils",
+    "stitcher-refactor",
+    "stitcher-index",
+    "stitcher-workspace",
+    "stitcher-lang-python",
+    "stitcher-lang-sidecar",
+    "stitcher-analysis",
+    "stitcher-bus",
+]
 
 [project.optional-dependencies]
 dev = [

@@ -133,8 +133,8 @@
     },
     "py://packages/stitcher-cli/src/stitcher/cli/main.py#refactor_app": {},
     "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#CliRenderer": {
-      "baseline_code_signature_text": "class CliRenderer(protocols.Renderer):",
-      "baseline_code_structure_hash": "be99441fa563ad512ea7af90b657f1a2cca2298be2167ba456a763f9103e9a72",
+      "baseline_code_signature_text": "class CliRenderer(Renderer):",
+      "baseline_code_structure_hash": "8007414900955aae60b45dc023c965dd3c7fffcf654e749d4e90e2a3ae655779",
       "baseline_yaml_content_hash": "945b7c2f3960d9e1ee5e85aa55735bb7eeca69d267b87fe917b2e0532e506fba"
     },
     "py://packages/stitcher-cli/src/stitcher/cli/rendering.py#CliRenderer.__init__": {
