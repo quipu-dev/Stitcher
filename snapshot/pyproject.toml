@@ -26,6 +26,7 @@ dev = [
     "stitcher-lang-python",
     "stitcher-lang-sidecar",
     "stitcher-analysis",
+    "stitcher-bus",
 ]
 
 [tool.setuptools.packages.find]
@@ -49,6 +50,7 @@ stitcher-workspace = { workspace = true }
 stitcher-lang-python = { workspace = true }
 stitcher-lang-sidecar = { workspace = true }
 stitcher-analysis = { workspace = true }
+stitcher-bus = { workspace = true }
 pyneedle = { path = "../Needle/packages/pyneedle", editable = true }
 pyneedle-pointer = { path = "../Needle/packages/pyneedle-pointer", editable = true }
 pyneedle-spec = { path = "../Needle/packages/pyneedle-spec", editable = true }
@@ -70,6 +72,7 @@ pythonpath = [
     "packages/stitcher-test-utils/src",
     "packages/stitcher-lang-python/src",
     "packages/stitcher-analysis/src",
+    "packages/stitcher-bus/src",
 ]
 
 [tool.stitcher.targets.stitcher]
@@ -86,6 +89,7 @@ scan_paths = [
     "packages/stitcher-test-utils/src",
     "packages/stitcher-lang-python/src",
     "packages/stitcher-analysis/src",
+    "packages/stitcher-bus/src",
 ]
 stub_package = "packages/stitcher-stubs"
 
@@ -104,4 +108,5 @@ extraPaths = [
     "packages/stitcher-workspace/src",
     "packages/stitcher-lang-python/src",
     "packages/stitcher-analysis/src",
+    "packages/stitcher-bus/src",
 ]

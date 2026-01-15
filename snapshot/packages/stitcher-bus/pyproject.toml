@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stitcher-bus"
+version = "0.1.0"
+description = "Event and message orchestration for Stitcher."
+requires-python = ">=3.10"
+dependencies = [
+    "pyneedle-pointer",
+    "pyneedle-spec",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stitcher"]
+
+[tool.uv.sources]
+pyneedle-pointer = { workspace = true }
+pyneedle-spec = { workspace = true }
