@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(analysis): 调整循环依赖报告结构，确保代码片段与文件名对齐", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768533318.5886889, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M circular_dependency.py", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1768725758.3296585, "duration_ms": 0}}

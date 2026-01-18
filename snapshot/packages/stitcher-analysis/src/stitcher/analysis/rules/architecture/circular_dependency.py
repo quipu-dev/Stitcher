@@ -29,9 +29,9 @@ class CircularDependencyRule(ArchitectureRule):
                     u = cycle[0]
                     reasons = graph[u][u].get("reasons", [])
                     reason_str = reasons[0] if reasons else "self-reference"
-                    details.append(f"\n  - In `{u}`:")
+                    details.append(f"\n  1. In {u}:")
                     details.append(
-                        f"    - Causes dependency on itself via `{reason_str}`"
+                        f"\n   - ( {reason_str} )"
                     )
                 else:
                     cycle_len = len(cycle)
@@ -41,7 +41,7 @@ class CircularDependencyRule(ArchitectureRule):
 
                         reasons = graph[u][v].get("reasons", [])
                         if not reasons:
-                            details.append(f"\n  {u} -> {v} (reason unavailable)")
+                            details.append(f"\n   - ({u} -> {v} <reason unavailable>)")
                             continue
 
                         first_reason = reasons[0]
@@ -69,9 +69,9 @@ class CircularDependencyRule(ArchitectureRule):
                             except Exception:
                                 snippet = "    <Could not read source file>"
 
-                        details.append(f"\n  - In `{u}`:")
+                        details.append(f"\n   - In {u}:")
                         details.append(
-                            f"    - Causes dependency on `{v}` via import of `{first_reason}`"
+                            f"\n   - ({u} -> {first_reason} == {v})"
                         )
                         if snippet:
                             details.append(f"\n{snippet}")
