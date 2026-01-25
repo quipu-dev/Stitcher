@@ -4,9 +4,9 @@ version = "0.1.0"
 description = "Stitching the gap between dynamic code and static analysis."
 requires-python = ">=3.10"
 dependencies = [
-    "pyneedle",
-    "pyneedle-pointer",
-    "pyneedle-spec",
+    "pyneedle == 0.1.0",
+    "pyneedle-pointer == 0.1.0",
+    "pyneedle-spec == 0.1.0",
     "stitcher-cli",
     "stitcher-application",
     "stitcher-stubgen",
@@ -28,9 +28,9 @@ dev = [
     "pytest-mock",
     "ruff",
     "mypy",
-    "pyneedle",
-    "pyneedle-pointer",
-    "pyneedle-spec",
+    "pyneedle == 0.1.0",
+    "pyneedle-pointer == 0.1.0",
+    "pyneedle-spec == 0.1.0",
     "stitcher-cli",
     "stitcher-application",
     "stitcher-stubgen",
@@ -69,10 +69,6 @@ stitcher-lang-python = { workspace = true }
 stitcher-lang-sidecar = { workspace = true }
 stitcher-analysis = { workspace = true }
 stitcher-bus = { workspace = true }
-pyneedle = { path = "../Needle/packages/pyneedle", editable = true }
-pyneedle-pointer = { path = "../Needle/packages/pyneedle-pointer", editable = true }
-pyneedle-spec = { path = "../Needle/packages/pyneedle-spec", editable = true }
-pyneedle-runtime = { path = "../Needle/packages/pyneedle-runtime", editable = true }
 
 [tool.pytest.ini_options]
 addopts = "-ra --cov=stitcher --cov-report=term-missing"
