@@ -30,9 +30,7 @@ class CircularDependencyRule(ArchitectureRule):
                     reasons = graph[u][u].get("reasons", [])
                     reason_str = reasons[0] if reasons else "self-reference"
                     details.append(f"\n  1. In {u}:")
-                    details.append(
-                        f"\n   - ( {reason_str} )"
-                    )
+                    details.append(f"\n   - ( {reason_str} )")
                 else:
                     cycle_len = len(cycle)
                     for i in range(cycle_len):
@@ -70,9 +68,7 @@ class CircularDependencyRule(ArchitectureRule):
                                 snippet = "    <Could not read source file>"
 
                         details.append(f"\n   - In {u}:")
-                        details.append(
-                            f"\n   - ({u} -> {first_reason} == {v})"
-                        )
+                        details.append(f"\n   - ({u} -> {first_reason} == {v})")
                         if snippet:
                             details.append(f"\n{snippet}")
 
