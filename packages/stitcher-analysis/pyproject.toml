@@ -12,7 +12,7 @@ dependencies = [
     "stitcher-common",
     "stitcher-index",
     "stitcher-workspace",
-    "pyneedle-pointer == 0.1.0",
+    "pyneedle-pointer ~= 0.1.0",
     "griffe",
     "networkx",
 ]

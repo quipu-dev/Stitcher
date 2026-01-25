@@ -10,7 +10,7 @@ requires-python = ">=3.10"
 dependencies = [
     "stitcher-application",
     "stitcher-lang-python",
-    "pyneedle == 0.1.0",
+    "pyneedle ~= 0.1.0",
     "typer",
     "tomli; python_version < '3.11'",
 ]
