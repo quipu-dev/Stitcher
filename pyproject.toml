@@ -5,7 +5,7 @@ description = "Stitching the gap between dynamic code and static analysis."
 requires-python = ">=3.10"
 dependencies = [
     "pyneedle ~= 0.1.0",
-    "pyneedle-pointer ~= 0.1.0",
+    "pyneedle-pointer ~= 0.2.0",
     "pyneedle-spec ~= 0.1.0",
     "stitcher-cli",
     "stitcher-application",
@@ -28,7 +28,7 @@ dev = [
     "ruff",
     "mypy",
     "pyneedle ~= 0.1.0",
-    "pyneedle-pointer ~= 0.1.0",
+    "pyneedle-pointer ~= 0.2.0",
     "pyneedle-spec ~= 0.1.0",
     "stitcher-cli",
     "stitcher-application",

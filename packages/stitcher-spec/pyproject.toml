@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Intermediate Representation (IR) models for Stitcher."
 requires-python = ">=3.10"
 dependencies = [
-    "pyneedle-pointer ~= 0.1.0",
+    "pyneedle-pointer ~= 0.2.0",
 ]
 
 [tool.hatch.build.targets.wheel]
